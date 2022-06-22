@@ -1,0 +1,66 @@
+# Spring for Apache Pulsar
+
+This project provides a basic Spring friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
+
+Most of the ideas in this project are borrowed from the Spring for Apache Kafka project, thus a familiarity with the Spring support available in Spring for Apache Kafka would help a lot.
+
+
+** #IMPORTANT#: This is a WIP project. Many of the support available at the moment are prototypes and experimental.
+
+## Quick Introduction
+
+The current prototype supports a basic `PulsarTemplate` for publishing to a Pulsar topic, `PulsarListner` annotation for consuming from a topic.
+It also provides Spring Boot auto-configuration for these components.
+
+### Writing a quick Spring Boot based Pulsar application.
+
+Let's take a look at the application below.
+This captures the current support available for publishing to and consuming from a Pulsar topic.
+
+```
+@SpringBootApplication
+public class PulsarBootApp {
+
+	public static void main(String[] args) {
+		SpringApplication.run(PulsarBootApp.class, args);
+	}
+
+	@Bean
+	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
+		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive");
+		return args -> {
+			for (int i = 0; i < 100; i ++) {
+				pulsarTemplate.send("This is message " + (i + 1));
+			}
+
+		};
+	}
+
+	@PulsarListener(subscriptionName = "test-exclusive-sub", topics = "hello-pulsar-exclusive")
+	public void listen(String foo) {
+		System.out.println("Message Received: " + foo);
+	}
+}
+```
+
+This is a complete Spring Boot application that is sending messages to a topic in Apache Pulsar and consuming from that topic.
+
+`PulsarTemplate` is the template mechanism available in Spring for Apache Pulsar that enables you to publish messages to a topic.
+The project provides Spring Boot auto-configuration for this `PulsarTemplate` which we inject in the application above.
+
+We use `PulsarListener` annotation to consume from the same topic where the template is publishing to.
+
+At the moment, we only support the `Exclusive` subscription mode. 
+
+### Building the project
+
+```
+./gradlew clean build
+```
+
+### More support to come -- stay tuned...
+
+
+
+
+
