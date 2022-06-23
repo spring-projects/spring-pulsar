@@ -44,7 +44,7 @@ public class PulsarTemplate<T> {
 
 	public MessageId send(T message) throws PulsarClientException {
 		final Schema<T> schema = SchemaUtils.getSchema(message);
-		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory);
+		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
 		Producer<T> producer = producerCache.get(schemaTopic);
 		if (producer == null) {
 			producer = this.pulsarProducerFactory.createProducer(schema);
@@ -55,7 +55,7 @@ public class PulsarTemplate<T> {
 
 	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
 		final Schema<T> schema = SchemaUtils.getSchema(message);
-		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory);
+		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
 		Producer<T> producer = producerCache.get(schemaTopic);
 		if (producer == null) {
 			producer = this.pulsarProducerFactory.createProducer(schema);
@@ -66,7 +66,7 @@ public class PulsarTemplate<T> {
 
 	public CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter) throws PulsarClientException {
 		final Schema<T> schema = SchemaUtils.getSchema(message);
-		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory);
+		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, messageRouter);
 		Producer<T> producer = producerCache.get(schemaTopic);
 		if (producer == null) {
 			producer = this.pulsarProducerFactory.createProducer(schema, messageRouter);
@@ -75,8 +75,8 @@ public class PulsarTemplate<T> {
 		return producer.sendAsync(message);
 	}
 
-	private SchemaTopic getSchemaTopic(Schema<T> schema, PulsarProducerFactory<T> pulsarProducerFactory) {
-		return new SchemaTopic(schema, (String) pulsarProducerFactory.getProducerConfig().get("topicName"));
+	private SchemaTopic getSchemaTopic(Schema<T> schema, PulsarProducerFactory<T> pulsarProducerFactory, MessageRouter messageRouter) {
+		return new SchemaTopic(schema, (String) pulsarProducerFactory.getProducerConfig().get("topicName"), messageRouter);
 	}
 
 	public void setDefaultTopicName(String defaultTopicName) {
@@ -88,18 +88,12 @@ public class PulsarTemplate<T> {
 
 		final Schema<T> schema;
 		final String topicName;
+		final MessageRouter messageRouter;
 
-		public SchemaTopic(Schema<T> schema, String topicName) {
+		public SchemaTopic(Schema<T> schema, String topicName, MessageRouter messageRouter) {
 			this.schema = schema;
 			this.topicName = topicName;
-		}
-
-		public Schema<T> getSchema() {
-			return schema;
-		}
-
-		public String getTopicName() {
-			return topicName;
+			this.messageRouter = messageRouter;
 		}
 
 		@Override
@@ -107,12 +101,21 @@ public class PulsarTemplate<T> {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			SchemaTopic that = (SchemaTopic) o;
-			return Objects.equals(schema, that.schema) && Objects.equals(topicName, that.topicName);
+			if (this.messageRouter == null && that.messageRouter == null) {
+				return schema.equals(that.schema) && topicName.equals(that.topicName);
+			}
+			else if (this.messageRouter == null) {
+				return false;
+			}
+			else if (that.messageRouter == null) {
+				return false;
+			}
+			return schema.equals(that.schema) && topicName.equals(that.topicName) && messageRouter.equals(that.messageRouter);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(schema, topicName);
+			return Objects.hash(schema, topicName, messageRouter);
 		}
 	}
 }
