@@ -43,16 +43,16 @@ public class PulsarBatchMessagingMessageListenerAdapter <V> extends PulsarMessag
 		super(bean, method);
 	}
 
-	public void setBatchMessageConverter(PulsarBatchMessageConverter messageConverter) {
+	public void setBatchMessageConverter(PulsarBatchMessageConverter<V> messageConverter) {
 		Assert.notNull(messageConverter, "'messageConverter' cannot be null");
 		this.batchMessageConverter = messageConverter;
-		PulsarRecordMessageConverter recordMessageConverter = messageConverter.getRecordMessageConverter();
+		PulsarRecordMessageConverter<V> recordMessageConverter = messageConverter.getRecordMessageConverter();
 		if (recordMessageConverter != null) {
 			setMessageConverter(recordMessageConverter);
 		}
 	}
 
-	protected final PulsarBatchMessageConverter getBatchMessageConverter() {
+	protected final PulsarBatchMessageConverter<V> getBatchMessageConverter() {
 		return this.batchMessageConverter;
 	}
 

@@ -100,6 +100,7 @@ public class PulsarTemplate<T> {
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
+			@SuppressWarnings("unchecked")
 			SchemaTopic that = (SchemaTopic) o;
 			if (this.messageRouter == null && that.messageRouter == null) {
 				return schema.equals(that.schema) && topicName.equals(that.topicName);

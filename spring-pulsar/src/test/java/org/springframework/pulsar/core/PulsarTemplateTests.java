@@ -108,7 +108,7 @@ public class PulsarTemplateTests extends AbstractContainerBaseTest {
 				PulsarClient client = PulsarClient.builder()
 						.serviceUrl(pulsarBrokerUrl)
 						.build();
-				Consumer consumer = client.newConsumer()
+				Consumer<byte[]> consumer = client.newConsumer()
 						.topic(TEST_TOPIC)
 						.subscriptionName("test-subs")
 						.subscribe();
@@ -117,8 +117,8 @@ public class PulsarTemplateTests extends AbstractContainerBaseTest {
 						.create()
 		) {
 			producer.send("test containers".getBytes());
-			CompletableFuture<Message> future = consumer.receiveAsync();
-			Message message = future.get(5, TimeUnit.SECONDS);
+			CompletableFuture<Message<byte[]>> future = consumer.receiveAsync();
+			Message<byte[]> message = future.get(5, TimeUnit.SECONDS);
 
 			assertThat(new String(message.getData()))
 					.isEqualTo("test containers");

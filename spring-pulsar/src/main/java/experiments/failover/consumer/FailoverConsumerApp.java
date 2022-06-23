@@ -1,5 +1,7 @@
 package experiments.failover.consumer;
 
+import java.io.Serial;
+
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.TopicMetadata;
@@ -53,6 +55,8 @@ public class FailoverConsumerApp {
 	}
 
 	static class FooRouter implements MessageRouter {
+		@Serial
+		private static final long serialVersionUID = -1L;
 
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
@@ -61,6 +65,8 @@ public class FailoverConsumerApp {
 	}
 
 	static class BarRouter implements MessageRouter {
+		@Serial
+		private static final long serialVersionUID = -1L;
 
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
@@ -69,6 +75,8 @@ public class FailoverConsumerApp {
 	}
 
 	static class BuzzRouter implements MessageRouter {
+		@Serial
+		private static final long serialVersionUID = -1L;
 
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {

@@ -31,12 +31,10 @@ import org.springframework.pulsar.support.MessageConverter;
  */
 public interface PulsarBatchMessageConverter<T> extends MessageConverter {
 
-	@NonNull
 	Message<?> toMessage(Messages<T> records, Consumer<T> consumer, Type payloadType);
 
 	T fromMessage(Messages<T> message, String defaultTopic);
 
-	@Nullable
 	default PulsarRecordMessageConverter<T> getRecordMessageConverter() {
 		return null;
 	}

@@ -60,7 +60,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private volatile CountDownLatch startLatch = new CountDownLatch(1);
 
-	private final AbstractPulsarMessageListenerContainer thisOrParentContainer;
+	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
 
 	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory, PulsarContainerProperties pulsarContainerProperties) {
 		super(pulsarConsumerFactory, pulsarContainerProperties);
@@ -180,7 +180,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private volatile Thread consumerThread;
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({"unchecked", "rawtypes"})
 		Listener(MessageListener<?> messageListener) {
 			if (messageListener instanceof PulsarBatchMessageListener) {
 				this.batchMessageHandler = (PulsarBatchMessageListener<T>) messageListener;

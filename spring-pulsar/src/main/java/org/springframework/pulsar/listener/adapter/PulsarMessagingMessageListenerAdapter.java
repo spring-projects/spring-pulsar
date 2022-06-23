@@ -71,7 +71,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 	private boolean converterSet;
 
-	private PulsarRecordMessageConverter messageConverter = new PulsarMessagingMessageConverter<V>();
+	private PulsarRecordMessageConverter<V> messageConverter = new PulsarMessagingMessageConverter<V>();
 
 	private Type fallbackType = Object.class;
 
@@ -80,12 +80,12 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		this.inferredType = determineInferredType(method);
 	}
 
-	public void setMessageConverter(PulsarRecordMessageConverter messageConverter) {
+	public void setMessageConverter(PulsarRecordMessageConverter<V> messageConverter) {
 		this.messageConverter = messageConverter;
 		this.converterSet = true;
 	}
 
-	protected final PulsarRecordMessageConverter getMessageConverter() {
+	protected final PulsarRecordMessageConverter<V> getMessageConverter() {
 		return this.messageConverter;
 	}
 

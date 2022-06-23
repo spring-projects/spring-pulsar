@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.core;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,21 +66,16 @@ public class FailoverConsumerTests extends AbstractContainerBaseTest {
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(3);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setMessageListener(new MessageListener() {
-			@Override
-			public void received(Consumer consumer, Message msg) {
-				latch.countDown();
-			}
-		});
+		pulsarContainerProperties.setMessageListener((MessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
 		pulsarContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer(
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer(
+		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container1.start();
-		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer(
+		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container2.start();
 		Map<String, Object> prodConfig = new HashMap<>();
@@ -98,6 +94,9 @@ public class FailoverConsumerTests extends AbstractContainerBaseTest {
 
 	static class FooRouter implements MessageRouter {
 
+		@Serial
+		private static final long serialVersionUID = -1L;
+
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 0;
@@ -106,6 +105,9 @@ public class FailoverConsumerTests extends AbstractContainerBaseTest {
 
 	static class BarRouter implements MessageRouter {
 
+		@Serial
+		private static final long serialVersionUID = -1L;
+
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 1;
@@ -113,6 +115,9 @@ public class FailoverConsumerTests extends AbstractContainerBaseTest {
 	}
 
 	static class BuzzRouter implements MessageRouter {
+
+		@Serial
+		private static final long serialVersionUID = -1L;
 
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {

@@ -36,14 +36,14 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
  */
 public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessageConverter<T> {
 
-	private final PulsarRecordMessageConverter recordConverter;
+	private final PulsarRecordMessageConverter<T> recordConverter;
 
 
 	public PulsarBatchMessagingMessageConverter() {
 		this(null);
 	}
 
-	public PulsarBatchMessagingMessageConverter(PulsarRecordMessageConverter recordConverter) {
+	public PulsarBatchMessagingMessageConverter(PulsarRecordMessageConverter<T> recordConverter) {
 		this.recordConverter = recordConverter;
 	}
 

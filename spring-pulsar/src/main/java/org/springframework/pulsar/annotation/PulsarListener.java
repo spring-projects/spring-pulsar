@@ -38,8 +38,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
  * Processing of {@code @PulsarListener} annotations is performed by registering a
  * {@link PulsarListenerAnnotationBeanPostProcessor}. This can be done manually or, more
  * conveniently, through {@link EnablePulsar} annotation.
- *
- * <p>
+ * </p>
  *
  * @author Soby Chacko
  */

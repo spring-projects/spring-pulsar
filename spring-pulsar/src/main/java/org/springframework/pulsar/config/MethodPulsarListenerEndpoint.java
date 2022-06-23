@@ -95,6 +95,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	protected PulsarMessagingMessageListenerAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
 

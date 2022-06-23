@@ -135,7 +135,7 @@ subprojects { subproject ->
 	eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
 	jacoco {
-		toolVersion = '0.8.6'
+		toolVersion = '0.8.7'
 	}
 
 	configurations {

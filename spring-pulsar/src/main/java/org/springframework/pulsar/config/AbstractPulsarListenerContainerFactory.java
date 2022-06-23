@@ -39,7 +39,7 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		implements PulsarListenerContainerFactory<C>, ApplicationEventPublisherAware, InitializingBean,
 		ApplicationContextAware {
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
+	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass())); // NOSONAR protected
 
 	private final PulsarContainerProperties containerProperties = new PulsarContainerProperties();
 

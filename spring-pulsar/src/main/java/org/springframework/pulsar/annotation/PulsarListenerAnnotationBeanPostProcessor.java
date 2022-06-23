@@ -380,6 +380,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void resolvePulsarProperties(MethodPulsarListenerEndpoint<?> endpoint, String[] propertyStrings) {
 		if (propertyStrings.length > 0) {
 			Properties properties = new Properties();
@@ -393,8 +394,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 						loadProperty(properties, prop, prop);
 					}
 				}
-				else if (value instanceof Collection) {
-					Collection<?> values = (Collection<?>) value;
+				else if (value instanceof Collection<?> values) {
 					if (values.size() > 0 && values.iterator().next() instanceof String) {
 						for (String prop : (Collection<String>) value) {
 							loadProperty(properties, prop, prop);
@@ -486,6 +486,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		return value;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void resolveAsString(Object resolvedValue, List<String> result) {
 		if (resolvedValue instanceof String[]) {
 			for (Object object : (String[]) resolvedValue) {
