@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -199,20 +198,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			try {
 				final PulsarContainerProperties pulsarContainerProperties = getPulsarContainerProperties();
 				Map<String, Object> propertiesToOverride = extractPropertiesToOverride(pulsarContainerProperties);
-				if (this.containerProperties.isBatchReceive() || this.containerProperties.isBatchAsyncReceive()) {
-					final BatchReceivePolicy batchReceivePolicy = BatchReceivePolicy.DEFAULT_POLICY;
-					this.consumer = getPulsarConsumerFactory().createConsumer(
-							(Schema) pulsarContainerProperties.getSchema(),
-							batchReceivePolicy, propertiesToOverride);
-				}
-				else if (this.containerProperties.isAsyncReceive()) {
-					this.consumer = getPulsarConsumerFactory().createConsumer(
-							(Schema) pulsarContainerProperties.getSchema(), propertiesToOverride);
-				}
-				else {
-					this.consumer = getPulsarConsumerFactory().createConsumer(
-							(Schema) pulsarContainerProperties.getSchema(), propertiesToOverride);
-				}
+
+				final BatchReceivePolicy batchReceivePolicy = BatchReceivePolicy.DEFAULT_POLICY;
+				this.consumer = getPulsarConsumerFactory().createConsumer(
+						(Schema) pulsarContainerProperties.getSchema(),
+						batchReceivePolicy, propertiesToOverride);
 			}
 			catch (PulsarClientException e) {
 				e.printStackTrace(); //TODO - Proper logging
@@ -244,73 +234,45 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		@Override
-		@SuppressWarnings({"unchecked", "rawtypes"})
 		public void run() {
 			publishConsumerStartingEvent();
 			this.consumerThread = Thread.currentThread();
 
 			publishConsumerStartedEvent();
 			while (isRunning()) {
-				Message<T> msg = null;
+				Messages<T> messages = null;
 				try {
-					// Wait for a message
-					if (this.containerProperties.isBatchReceive()) {
-						Messages<T> messages  = consumer.batchReceive();
-						this.batchMessageHandler.received(consumer, messages);
-						consumer.acknowledge(messages);
-					}
-					else if (this.containerProperties.isBatchAsyncReceive()) {
-						final CompletableFuture<Messages<T>> messagesCompletableFuture = consumer.batchReceiveAsync();
-
-						messagesCompletableFuture.thenAccept(messages -> {
-							if (messages != null) {
-								this.batchMessageHandler.received(consumer, messages);
-								if (this.containerProperties.getAckMode() != PulsarContainerProperties.AckMode.MANUAL) {
-									try {
-										consumer.acknowledge(messages);
-									}
-									catch (PulsarClientException e) {
-										consumer.negativeAcknowledge(messages);
-									}
-								}
-							}
-						});
-						//consumer can do other things - but nothing ATM.
-					}
-					else if (this.containerProperties.isAsyncReceive()) {
-						final CompletableFuture<Message<T>> messageCompletableFuture = consumer.receiveAsync();
-						messageCompletableFuture.thenAccept(messages1 -> {
-							if (messages1 != null) {
-								this.listener.received(consumer, messages1);
-								if (this.containerProperties.getAckMode() != PulsarContainerProperties.AckMode.MANUAL) {
-									try {
-										consumer.acknowledge(messages1);
-									}
-									catch (PulsarClientException e) {
-										consumer.negativeAcknowledge(messages1);
-									}
-								}
-							}
-						});
-						//consumer can do other things - but nothing ATM.
-						//we may make this mode as the default rather than the sync mode below.
-					}
-					else {
+					// Always receive messages in batch mode.
+					messages = consumer.batchReceive();
+					// TODO Async receive - both record and batch.
+					if (this.containerProperties.isBatchListener()) {
 						try {
-							msg = consumer.receive();
-							this.listener.received(consumer, msg);
-							if (this.containerProperties.getAckMode() != PulsarContainerProperties.AckMode.MANUAL) {
-								consumer.acknowledge(msg);
-							}
+							this.batchMessageHandler.received(consumer, messages);
+							this.consumer.acknowledge(messages);
 						}
 						catch (Exception e) {
-							consumer.negativeAcknowledge(msg);
+							// Message failed to process, redeliver later
+							this.consumer.negativeAcknowledge(messages);
+						}
+					}
+					else {
+						for (Message<T> message : messages) {
+							try {
+								this.listener.received(consumer, message);
+								if (this.containerProperties.getAckMode() != PulsarContainerProperties.AckMode.MANUAL) {
+									this.consumer.acknowledge(message);
+								}
+							}
+							catch (Exception e) {
+								this.consumer.negativeAcknowledge(message);
+							}
 						}
 					}
 				}
 				catch (Exception e) {
-					// Message failed to process, redeliver later
-					consumer.negativeAcknowledge(msg);
+					if (messages != null) {
+						this.consumer.negativeAcknowledge(messages);
+					}
 				}
 			}
 		}

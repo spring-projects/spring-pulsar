@@ -143,7 +143,7 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	protected void initializeContainer(C instance, PulsarListenerEndpoint endpoint) {
 		PulsarContainerProperties properties = instance.getPulsarContainerProperties();
 		BeanUtils.copyProperties(this.containerProperties, properties, "topics", "messageListener",
-				"batchReceive", "subscriptionName", "subscriptionType");
+				"batchListener", "subscriptionName", "subscriptionType");
 
 		Boolean autoStart = endpoint.getAutoStartup();
 		if (autoStart != null) {

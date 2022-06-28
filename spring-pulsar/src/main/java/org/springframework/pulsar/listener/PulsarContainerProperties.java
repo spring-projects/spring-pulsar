@@ -48,7 +48,7 @@ public class PulsarContainerProperties extends PulsarConsumerProperties {
 	private int maxNumBytes = 10 * 1024 * 1024;
 	private int batchTimeout = 100;
 
-	private boolean batchReceive;
+	private boolean batchListener;
 	private boolean batchAsyncReceive;
 
 	private boolean asyncReceive;
@@ -107,12 +107,12 @@ public class PulsarContainerProperties extends PulsarConsumerProperties {
 		this.batchTimeout = batchTimeout;
 	}
 
-	public boolean isBatchReceive() {
-		return batchReceive;
+	public boolean isBatchListener() {
+		return batchListener;
 	}
 
-	public void setBatchReceive(boolean batchReceive) {
-		this.batchReceive = batchReceive;
+	public void setBatchListener(boolean batchListener) {
+		this.batchListener = batchListener;
 	}
 
 	public boolean isBatchAsyncReceive() {

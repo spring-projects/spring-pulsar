@@ -47,7 +47,7 @@ public class PulsarListenerContainerFactoryImpl<C, T> extends AbstractPulsarList
 			properties.setSubscriptionName(endpoint.getSubscriptionName());
 		}
 		if (endpoint.isBatchListener()) {
-			properties.setBatchReceive(endpoint.isBatchListener());
+			properties.setBatchListener(endpoint.isBatchListener());
 		}
 		final SubscriptionType subscriptionType = endpoint.getSubscriptionType();
 		if (subscriptionType != null) {

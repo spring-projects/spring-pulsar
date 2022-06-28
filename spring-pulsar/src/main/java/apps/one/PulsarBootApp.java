@@ -1,4 +1,4 @@
-package experiments.basic;
+package apps.one;
 
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
