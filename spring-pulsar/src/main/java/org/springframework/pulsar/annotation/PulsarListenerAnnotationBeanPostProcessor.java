@@ -39,7 +39,9 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -350,7 +352,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		endpoint.setId(getEndpointId(pulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setSubscriptionType(getEndpointSubscriptionType(pulsarListener));
-
+		endpoint.setSchemaType(pulsarListener.schemaType());
 
 		String autoStartup = pulsarListener.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {

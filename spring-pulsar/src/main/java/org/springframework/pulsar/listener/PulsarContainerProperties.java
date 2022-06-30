@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.util.Assert;
@@ -55,6 +56,8 @@ public class PulsarContainerProperties {
 
 
 	private Schema<?> schema;
+
+	private SchemaType schemaType;
 
 	private Object messageListener;
 	private AsyncListenableTaskExecutor consumerTaskExecutor;
@@ -204,5 +207,13 @@ public class PulsarContainerProperties {
 
 	public void setSubscriptionName(String subscriptionName) {
 		this.subscriptionName = subscriptionName;
+	}
+
+	public SchemaType getSchemaType() {
+		return schemaType;
+	}
+
+	public void setSchemaType(SchemaType schemaType) {
+		this.schemaType = schemaType;
 	}
 }

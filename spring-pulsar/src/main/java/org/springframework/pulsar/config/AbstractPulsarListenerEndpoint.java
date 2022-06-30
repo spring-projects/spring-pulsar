@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -51,6 +52,8 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 	private String subscriptionName;
 
 	private SubscriptionType subscriptionType;
+
+	private SchemaType schemaType;
 
 	private String id;
 
@@ -194,5 +197,13 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 
 	public void setSubscriptionType(SubscriptionType subscriptionType) {
 		this.subscriptionType = subscriptionType;
+	}
+
+	public SchemaType getSchemaType() {
+		return schemaType;
+	}
+
+	public void setSchemaType(SchemaType schemaType) {
+		this.schemaType = schemaType;
 	}
 }

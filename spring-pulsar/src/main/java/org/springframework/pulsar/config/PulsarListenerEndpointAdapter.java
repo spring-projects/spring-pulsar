@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
@@ -62,5 +63,10 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 	@Override
 	public boolean isBatchListener() {
 		return false;
+	}
+
+	@Override
+	public SchemaType getSchemaType() {
+		return null;
 	}
 }

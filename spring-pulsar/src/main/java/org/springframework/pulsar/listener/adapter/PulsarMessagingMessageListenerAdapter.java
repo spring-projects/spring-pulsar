@@ -137,12 +137,13 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 										 Consumer<V> consumer) {
 
 		try {
-			if (data instanceof List && !this.isConsumerRecordList) {
-				return this.handlerMethod.invoke(message, consumer);
-			}
-			else {
-					return this.handlerMethod.invoke(message, data, consumer);
-			}
+			return this.handlerMethod.invoke(message, data, consumer);
+//			if (data instanceof List && !this.isConsumerRecordList) {
+//				return this.handlerMethod.invoke(message, consumer);
+//			}
+//			else {
+//					return this.handlerMethod.invoke(message, data, consumer);
+//			}
 		}
 		catch (Exception ex) {
 			throw new MessageConversionException("Cannot handle message", ex);

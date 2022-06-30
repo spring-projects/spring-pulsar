@@ -54,6 +54,8 @@ public class PulsarListenerContainerFactoryImpl<C, T> extends AbstractPulsarList
 			properties.setSubscriptionType(subscriptionType);
 		}
 
+		properties.setSchemaType(endpoint.getSchemaType());
+
 		return new DefaultPulsarMessageListenerContainer<T>(getPulsarConsumerFactory(), properties);
 	}
 

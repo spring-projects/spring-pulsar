@@ -1,4 +1,4 @@
-package org.springframework.pulsar.core;
+package apps.non.boot;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -12,6 +12,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
+import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarTemplate;
 
 public class Sender {
 

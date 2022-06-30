@@ -17,21 +17,52 @@ public class PulsarBootApp {
 	}
 
 	@Bean
-	public ApplicationRunner runner(PulsarTemplate<Integer> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive-1");
+	public ApplicationRunner runner(PulsarTemplate<Foo> pulsarTemplate) {
+		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive-2");
 		return args -> {
 //			for (int i = 0; i < 100; i ++) {
 //				pulsarTemplate.send("This is message " + (i + 1));
 //			}
-
-			pulsarTemplate.send(250);
+			Foo foo = new Foo();
+			foo.setFoo("Foo");
+			foo.setBar("Bar");
+			pulsarTemplate.send(foo);
 
 		};
 	}
 
-	@PulsarListener(subscriptionName = "test-exclusive-sub", topics = "hello-pulsar-exclusive-1", schemaType = SchemaType.AVRO)
-	public void listen(int foo) {
-		System.out.println("Message Received: " + foo);
+	@PulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive-2", schemaType = SchemaType.JSON)
+	public void listen(Foo foo) {
+		System.out.println("Message received: " + foo);
+	}
+
+	static class Foo {
+		String foo;
+		String bar;
+
+		public String getFoo() {
+			return foo;
+		}
+
+		public void setFoo(String foo) {
+			this.foo = foo;
+		}
+
+		public String getBar() {
+			return bar;
+		}
+
+		public void setBar(String bar) {
+			this.bar = bar;
+		}
+
+		@Override
+		public String toString() {
+			return "Foo{" +
+					"foo='" + foo + '\'' +
+					", bar='" + bar + '\'' +
+					'}';
+		}
 	}
 
 

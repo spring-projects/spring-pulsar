@@ -19,6 +19,7 @@ package org.springframework.pulsar.config;
 import java.util.Collection;
 
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.support.MessageConverter;
@@ -47,4 +48,6 @@ public interface PulsarListenerEndpoint {
 								@Nullable MessageConverter messageConverter);
 
 	boolean isBatchListener();
+
+	SchemaType getSchemaType();
 }
