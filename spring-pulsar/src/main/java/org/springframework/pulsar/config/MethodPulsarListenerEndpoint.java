@@ -17,11 +17,13 @@
 package org.springframework.pulsar.config;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
@@ -99,7 +101,19 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			final Class<?> type = methodParameters[0].getParameter().getType();
 			final DefaultPulsarMessageListenerContainer<?> containerInstance = (DefaultPulsarMessageListenerContainer<?>) container;
 			final PulsarContainerProperties pulsarContainerProperties = containerInstance.getPulsarContainerProperties();
-			switch (type.getName()) {
+
+			String typeName = null;
+			if (type.isAssignableFrom(List.class)) {
+				final ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameters[0]);
+				final ResolvableType generic = resolvableType.getGeneric(0);
+				if (generic.getRawClass() != null) {
+					typeName = generic.getRawClass().getName();
+				}
+			}
+			if (typeName == null) {
+				typeName = type.getName();
+			}
+			switch (typeName) {
 				case "java.lang.String" -> pulsarContainerProperties.setSchema(Schema.STRING);
 				case "[B" -> pulsarContainerProperties.setSchema(Schema.BYTES);
 				case "java.lang.Byte", "byte" -> pulsarContainerProperties.setSchema(Schema.INT8);

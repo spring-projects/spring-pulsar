@@ -56,7 +56,6 @@ public class PulsarListenerTests extends AbstractContainerBaseTest {
 	}
 
 	@Test
-	@Disabled
 	void testBatchListener() throws Exception {
 		SpringApplication app = new SpringApplication(BatchListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
