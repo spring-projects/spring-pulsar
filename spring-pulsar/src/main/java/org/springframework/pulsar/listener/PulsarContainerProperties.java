@@ -17,6 +17,7 @@
 package org.springframework.pulsar.listener;
 
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -27,7 +28,7 @@ import org.springframework.util.Assert;
 /**
  * @author Soby Chacko
  */
-public class PulsarContainerProperties extends PulsarConsumerProperties {
+public class PulsarContainerProperties {
 
 	private static final Duration DEFAULT_CONSUMER_START_TIMEOUT = Duration.ofSeconds(30);
 
@@ -38,11 +39,25 @@ public class PulsarContainerProperties extends PulsarConsumerProperties {
 		MANUAL;
 	}
 
-	private Schema<?> schema = Schema.BYTES;
+	/**
+	 * Topic names.
+	 */
+	private String[] topics;
+
+	/**
+	 * Topic pattern.
+	 */
+	private Pattern topicsPattern;
+
+	private String subscriptionName;
+
+	private SubscriptionType subscriptionType;
+
+
+	private Schema<?> schema;
 
 	private Object messageListener;
 	private AsyncListenableTaskExecutor consumerTaskExecutor;
-	private SubscriptionType subscriptionType;
 
 	private int maxNumMessages = -1;
 	private int maxNumBytes = 10 * 1024 * 1024;
@@ -56,7 +71,13 @@ public class PulsarContainerProperties extends PulsarConsumerProperties {
 	private AckMode ackMode;
 
 	public PulsarContainerProperties(String... topics) {
-		super(topics);
+		this.topics = topics.clone();
+		this.topicsPattern = null;
+	}
+
+	public PulsarContainerProperties(Pattern topicPattern) {
+		this.topicsPattern = topicPattern;
+		this.topics = null;
 	}
 
 	public Object getMessageListener() {
@@ -159,5 +180,29 @@ public class PulsarContainerProperties extends PulsarConsumerProperties {
 
 	public void setSchema(Schema<?> schema) {
 		this.schema = schema;
+	}
+
+	public String[] getTopics() {
+		return topics;
+	}
+
+	public void setTopics(String[] topics) {
+		this.topics = topics;
+	}
+
+	public Pattern getTopicsPattern() {
+		return topicsPattern;
+	}
+
+	public void setTopicsPattern(Pattern topicsPattern) {
+		this.topicsPattern = topicsPattern;
+	}
+
+	public String getSubscriptionName() {
+		return subscriptionName;
+	}
+
+	public void setSubscriptionName(String subscriptionName) {
+		this.subscriptionName = subscriptionName;
 	}
 }

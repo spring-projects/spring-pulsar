@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.SpringApplication;
@@ -55,6 +56,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTest {
 	}
 
 	@Test
+	@Disabled
 	void testBatchListener() throws Exception {
 		SpringApplication app = new SpringApplication(BatchListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);

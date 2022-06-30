@@ -17,6 +17,7 @@
 package org.springframework.pulsar.config;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
@@ -142,8 +143,12 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 
 	protected void initializeContainer(C instance, PulsarListenerEndpoint endpoint) {
 		PulsarContainerProperties properties = instance.getPulsarContainerProperties();
-		BeanUtils.copyProperties(this.containerProperties, properties, "topics", "messageListener",
-				"batchListener", "subscriptionName", "subscriptionType");
+//		BeanUtils.copyProperties(this.containerProperties, properties, "topics", "messageListener",
+//				"batchListener", "subscriptionName", "subscriptionType", "schema");
+		if (properties.getSchema() == null) {
+			properties.setSchema(Schema.BYTES);
+		}
+
 
 		Boolean autoStart = endpoint.getAutoStartup();
 		if (autoStart != null) {

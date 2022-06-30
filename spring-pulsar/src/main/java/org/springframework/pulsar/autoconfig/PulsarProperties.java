@@ -32,6 +32,7 @@ import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
@@ -59,12 +60,6 @@ public class PulsarProperties {
 		Map<String, Object> properties = new HashMap<>();
 		properties.putAll(this.producer.buildProperties());
 		return properties;
-	}
-
-	public enum Schema {
-		STRING,
-		BYTES,
-		BYTEBUFFER;
 	}
 
 	public Consumer getConsumer() {
@@ -753,15 +748,7 @@ public class PulsarProperties {
 
 	public static class Listener {
 
-		private PulsarProperties.Schema schema = Schema.STRING;
 
-		public PulsarProperties.Schema getSchema() {
-			return schema;
-		}
-
-		public void setSchema(PulsarProperties.Schema schema) {
-			this.schema = schema;
-		}
 	}
 
 	@SuppressWarnings("serial")

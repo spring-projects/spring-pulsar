@@ -80,5 +80,8 @@ public class HandlerAdapter {
 		}
 	}
 
+	public InvocableHandlerMethod getInvokerHandlerMethod() {
+		return invokerHandlerMethod;
+	}
 }
 

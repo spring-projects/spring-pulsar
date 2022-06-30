@@ -22,6 +22,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.common.schema.SchemaType;
+
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
 /**
@@ -68,6 +71,8 @@ public @interface PulsarListener {
 	 * @return the {@code subscriptionType} for this listener
 	 */
 	String subscriptionType() default "";
+
+	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
 	 * Specific container factory to use on this listener.

@@ -54,15 +54,15 @@ public class PulsarAnnotationDrivenConfiguration {
 
 		final PulsarContainerProperties containerProperties = factory.getContainerProperties();
 
-		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-		PulsarProperties.Listener properties = this.pulsarProperties.getListener();
+//		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+//		PulsarProperties.Listener properties = this.pulsarProperties.getListener();
 
-		map.from(properties::getSchema).as(
-				schema1 -> switch (schema1) {
-					case STRING -> Schema.STRING;
-					case BYTES -> Schema.BYTES;
-					case BYTEBUFFER -> Schema.BYTEBUFFER;
-				}).to(containerProperties::setSchema);
+//		map.from(properties::getSchema).as(
+//				schema1 -> switch (schema1) {
+//					case STRING -> Schema.STRING;
+//					case BYTES -> Schema.BYTES;
+//					case JSON -> Schema.JSON();
+//				}).to(containerProperties::setSchema);
 
 		return factory;
 	}

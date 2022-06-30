@@ -31,6 +31,9 @@ public class SchemaUtils {
 		else if (message.getClass() == String.class) {
 			return (Schema<T>) Schema.STRING;
 		}
+		else if (message.getClass() == Integer.class) {
+			return (Schema<T>) Schema.INT32;
+		}
 		return (Schema<T>) Schema.BYTES;
 	}
 }

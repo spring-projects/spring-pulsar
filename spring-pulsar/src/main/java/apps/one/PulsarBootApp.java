@@ -1,5 +1,7 @@
 package apps.one;
 
+import org.apache.pulsar.common.schema.SchemaType;
+
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,20 +17,20 @@ public class PulsarBootApp {
 	}
 
 	@Bean
-	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive");
+	public ApplicationRunner runner(PulsarTemplate<Integer> pulsarTemplate) {
+		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive-1");
 		return args -> {
 //			for (int i = 0; i < 100; i ++) {
 //				pulsarTemplate.send("This is message " + (i + 1));
 //			}
 
-			pulsarTemplate.send("This is message ");
+			pulsarTemplate.send(250);
 
 		};
 	}
 
-	@PulsarListener(subscriptionName = "test-exclusive-sub", topics = "hello-pulsar-exclusive")
-	public void listen(String foo) {
+	@PulsarListener(subscriptionName = "test-exclusive-sub", topics = "hello-pulsar-exclusive-1", schemaType = SchemaType.AVRO)
+	public void listen(int foo) {
 		System.out.println("Message Received: " + foo);
 	}
 

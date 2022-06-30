@@ -19,13 +19,17 @@ package org.springframework.pulsar.config;
 import java.lang.reflect.Method;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.Schema;
 
+import org.springframework.core.MethodParameter;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
@@ -83,10 +87,37 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
 		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
-		messageListener.setHandlerMethod(configureListenerAdapter(messageListener));
+		final HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
+		messageListener.setHandlerMethod(handlerMethod);
 
+		//Since we have access to the handler method here, check if we can type infer the Schema used.
+
+		//TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
+
+		final MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
+		if (methodParameters.length == 1) {
+			final Class<?> type = methodParameters[0].getParameter().getType();
+			final DefaultPulsarMessageListenerContainer<?> containerInstance = (DefaultPulsarMessageListenerContainer<?>) container;
+			final PulsarContainerProperties pulsarContainerProperties = containerInstance.getPulsarContainerProperties();
+			switch (type.getName()) {
+				case "java.lang.String" -> pulsarContainerProperties.setSchema(Schema.STRING);
+				case "[B" -> pulsarContainerProperties.setSchema(Schema.BYTES);
+				case "java.lang.Byte", "byte" -> pulsarContainerProperties.setSchema(Schema.INT8);
+				case "java.lang.Short", "short" -> pulsarContainerProperties.setSchema(Schema.INT16);
+				case "java.lang.Integer", "int" -> pulsarContainerProperties.setSchema(Schema.INT32);
+				case "java.lang.Long", "long" -> pulsarContainerProperties.setSchema(Schema.INT64);
+				case "java.lang.Boolean", "boolean" -> pulsarContainerProperties.setSchema(Schema.BOOL);
+				case "java.nio.ByteBuffer" -> pulsarContainerProperties.setSchema(Schema.BYTEBUFFER);
+				case "java.util.Date" -> pulsarContainerProperties.setSchema(Schema.DATE);
+				case "java.lang.Double", "double" -> pulsarContainerProperties.setSchema(Schema.DOUBLE);
+				case "java.lang.Float", "float" -> pulsarContainerProperties.setSchema(Schema.FLOAT);
+				case "java.time.Instant" -> pulsarContainerProperties.setSchema(Schema.INSTANT);
+				case "java.time.LocalDate" -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE);
+				case "java.time.LocalDateTime" -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE_TIME);
+				case "java.time.LocalTime" -> pulsarContainerProperties.setSchema(Schema.LOCAL_TIME);
+			}
+		}
 		return messageListener;
-
 	}
 
 	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {
