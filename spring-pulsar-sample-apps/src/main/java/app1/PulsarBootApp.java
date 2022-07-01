@@ -1,4 +1,4 @@
-package apps.one;
+package app1;
 
 import org.apache.pulsar.common.schema.SchemaType;
 

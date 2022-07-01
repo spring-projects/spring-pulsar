@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package apps.non.boot;
+package org.springframework.pulsar.core;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.autoconfig;
+package org.springframework.pulsar.autoconfigure;
 
 import java.util.HashMap;
 import java.util.Map;

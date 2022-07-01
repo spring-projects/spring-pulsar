@@ -1,4 +1,4 @@
-package apps.non.boot;
+package app6;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
