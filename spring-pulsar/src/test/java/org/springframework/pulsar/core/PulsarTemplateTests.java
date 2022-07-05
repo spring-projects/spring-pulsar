@@ -35,17 +35,17 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Soby Chacko
  */
-public class PulsarTemplateTests extends AbstractContainerBaseTest {
+class PulsarTemplateTests extends AbstractContainerBaseTest {
 
 	public static final String TEST_TOPIC = "test_topic";
 
 	@Test
-	public void testUsage() throws Exception {
+	void testUsage() throws Exception {
 		testPulsarFunctionality(getPulsarBrokerUrl());
 	}
 
 	@Test
-	public void testSendAsync() throws Exception {
+	void testSendAsync() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		config.put("topicName", "foo-bar-123");
 		Map<String, Object> clientConfig = new HashMap<>();
@@ -79,7 +79,7 @@ public class PulsarTemplateTests extends AbstractContainerBaseTest {
 	}
 
 	@Test
-	public void testSendSync() throws Exception {
+	void testSendSync() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		config.put("topicName", "foo-bar-123");
 		Map<String, Object> clientConfig = new HashMap<>();

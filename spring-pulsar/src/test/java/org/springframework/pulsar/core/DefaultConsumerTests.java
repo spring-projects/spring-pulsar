@@ -37,11 +37,11 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
 /**
  * @author Soby Chacko
  */
-public class DefaultConsumerTests extends AbstractContainerBaseTest {
+class DefaultConsumerTests extends AbstractContainerBaseTest {
 
 
 	@Test
-	public void testDefaultConsumer() throws Exception {
+	void testDefaultConsumer() throws Exception {
 //		try (PulsarContainer pulsar = new PulsarContainer(PULSAR_IMAGE)) {
 //			pulsar.start();
 			Map<String, Object> config = new HashMap<>();

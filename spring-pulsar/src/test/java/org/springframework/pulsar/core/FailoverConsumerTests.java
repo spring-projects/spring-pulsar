@@ -43,10 +43,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Soby Chacko
  */
-public class FailoverConsumerTests extends AbstractContainerBaseTest {
+class FailoverConsumerTests extends AbstractContainerBaseTest {
 
 	@Test
-	public void testFailOverConsumersOnPartitionedTopic() throws Exception {
+	void testFailOverConsumersOnPartitionedTopic() throws Exception {
 		PulsarAdmin admin = PulsarAdmin.builder()
 				.serviceHttpUrl(getHttpServiceUrl())
 				.build();
