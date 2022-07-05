@@ -372,7 +372,7 @@ public class PulsarProperties {
 
 		private int batchingMaxMessages = 1000;
 
-		private boolean batchingEnabled = false;
+		private boolean batchingEnabled = true;
 
 		private boolean chunkingEnabled = false;
 

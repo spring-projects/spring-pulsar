@@ -48,21 +48,25 @@ public class PulsarAutoConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(PulsarClientFactoryBean.class)
 	public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
 		return new PulsarClientFactoryBean(pulsarClientConfiguration);
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(PulsarClientConfiguration.class)
 	public PulsarClientConfiguration pulsarClientConfiguration() {
 		return new PulsarClientConfiguration(this.properties.buildClientProperties());
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(PulsarProducerFactory.class)
 	public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient) {
 		return new DefaultPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties());
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(PulsarTemplate.class)
 	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory) {
 		return new PulsarTemplate<>(pulsarProducerFactory);
 	}

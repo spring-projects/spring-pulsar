@@ -4,13 +4,114 @@ This project provides a basic Spring friendly API for developing https://pulsar.
 
 Most of the ideas in this project are borrowed from the Spring for Apache Kafka project, thus a familiarity with the Spring support available in Spring for Apache Kafka would help a lot.
 
-
 ** #IMPORTANT#: This is a WIP project. Many of the support available at the moment are prototypes and experimental.
 
-## Quick Introduction
+### Building the project
 
-The current prototype supports a basic `PulsarTemplate` for publishing to a Pulsar topic, `PulsarListner` annotation for consuming from a topic.
-It also provides Spring Boot auto-configuration for these components.
+```
+./gradlew clean build
+```
+
+The build will produce two artifacts -- `spring-pulsar` and `spring-pulsar-boot-autoconfigure`
+
+### Spring Boot Auto Configuration
+
+We recommend using the library `spring-pulsar` in association with Spring Boot and therefore should also use `spring-pulsar-boot-autoconfigure`.
+If you simply use the module `spring-pulsar-boot-autoconfigure`, then that will transitively include `spring-pulsar`.
+
+#### Pulsar Client
+
+When using `spring-pulsar-boot-autoconfigure`, you get the `PulsarClient` auto-configured.
+This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object `PulsarClientConfiguration`.
+By default, the application tries to connect a local Pulsar instance available at `pulsar://localhost:6650`.
+
+The properties listed below are available to be set on the Pulsar client.
+
+The same defaults expected by the Pulsar client are honored when no configuration provided for these properties.
+
+```
+spring.pulsar.client.serviceUrl
+spring.pulsar.client.authPluginClassName
+spring.pulsar.client.authParams
+spring.pulsar.client.operationTimeoutMs
+spring.pulsar.client.statsIntervalSeconds
+spring.pulsar.client.numIoThreads
+spring.pulsar.client.useTcpNoDelayuseTls
+spring.pulsar.client.tlsAllowInsecureConnection
+spring.pulsar.client.tlsHostnameVerificationEnable
+spring.pulsar.client.concurrentLookupRequest
+spring.pulsar.client.maxLookupRequest
+spring.pulsar.client.maxNumberOfRejectedRequestPerConnection
+spring.pulsar.client.keepAliveIntervalSeconds
+spring.pulsar.client.connectionTimeoutMs
+spring.pulsar.client.requestTimeoutMs
+spring.pulsar.client.initialBackoffIntervalNanos
+spring.pulsar.client.maxBackoffIntervalNanos;
+```
+
+#### Pulsar Producer
+
+On the Pulsar producer side, Sprig Boot auto-configuration will provide a `PulsarTemplate` which is backed by a `PulsarProducerFactory`.
+We will see more details of these components later in this document, but in this section, let us look at the configuration properties available on the producer.
+
+These properties must be prefixed with `spring.pulsar.producer`.
+
+The same defaults expected by the Pulsar producer are honored when no configuration provided for these properties.
+
+```
+spring.pulsar.producer.topicName
+spring.pulsar.producer.producerName
+spring.pulsar.producer.sendTimeoutMs
+spring.pulsar.producer.blockIfQueueFull
+spring.pulsar.producer.maxPendingMessages
+spring.pulsar.producer.maxPendingMessagesAcrossPartitions
+spring.pulsar.producer.messageRoutingMode
+spring.pulsar.producer.hashingScheme
+spring.pulsar.producer.cryptoFailureAction
+spring.pulsar.producer.batchingMaxPublishDelayMicros
+spring.pulsar.producer.batchingMaxMessages
+spring.pulsar.producer.batchingEnabled
+spring.pulsar.producer.chunkingEnabled
+spring.pulsar.producer.compressionType
+spring.pulsar.producer.initialSubscriptionName
+```
+
+#### Pulsar Consumer
+
+When it comes to Pulsar consumer, we recommend the end user applications to make use of the `PulsarListener` annotation.
+In order to use `PulsarListener`, you need to use the `EnablePulsar` annotation.
+When using the Spring Boot support, it automatically enables this annotation and configures all the components necessary for `PulsarListener` such as the message listener infrastructure which is responsible for creating the Pulsar consumer.
+`PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` in order to create and manage the Pulsar consumer.
+This consumer factory is auto-configured through Spring Boot.
+Following are the consumer properties that you can configure through the Boot support.
+
+The same defaults expected by the Pulsar consumer are honored when no configuration provided for these properties.
+
+```
+spring.pulsar.consumer.topicNames
+spring.pulsar.consumer.topicsPattern
+spring.pulsar.consumer.subscriptionName
+spring.pulsar.consumer.subscriptionType
+spring.pulsar.consumer.receiverQueueSize
+spring.pulsar.consumer.acknowledgementsGroupTimeMicros
+spring.pulsar.consumer.negativeAckRedeliveryDelayMicros
+spring.pulsar.consumer.maxTotalReceiverQueueSizeAcrossPartitions
+spring.pulsar.consumer.consumerName
+spring.pulsar.consumer.ackTimeoutMillis
+spring.pulsar.consumer.tickDurationMillis
+spring.pulsar.consumer.priorityLevel
+spring.pulsar.consumer.cryptoFailureAction
+spring.pulsar.consumer.properties
+spring.pulsar.consumer.readCompacted
+spring.pulsar.consumer.subscriptionInitialPosition
+spring.pulsar.consumer.patternAutoDiscoveryPeriod
+spring.pulsar.consumer.regexSubscriptionMode
+spring.pulsar.consumer.autoUpdatePartitions
+spring.pulsar.consumer.replicateSubscriptionState
+spring.pulsar.consumer.autoAckOldestChunkedMessageOnQueueFull
+spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
+spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
+```
 
 ### Writing a quick Spring Boot based Pulsar application.
 
@@ -52,11 +153,7 @@ We use `PulsarListener` annotation to consume from the same topic where the temp
 
 At the moment, we only support the `Exclusive` subscription mode. 
 
-### Building the project
 
-```
-./gradlew clean build
-```
 
 ### More support to come -- stay tuned...
 
