@@ -276,6 +276,8 @@ project ('spring-pulsar-boot-autoconfigure') {
 	description = 'Spring Boot Pulsar Autoconfiguration'
 
 	dependencies {
+		annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:$springBootVersion"
+
 		api "org.springframework.boot:spring-boot:$springBootVersion"
 		api "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
 		api "org.springframework.boot:spring-boot-starter:$springBootVersion"
