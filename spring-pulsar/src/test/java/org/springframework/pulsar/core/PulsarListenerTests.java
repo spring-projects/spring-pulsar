@@ -27,7 +27,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.autoconfigure.PulsarAutoConfiguration;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -72,7 +75,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTest {
 		}
 	}
 
-	@EnableAutoConfiguration
+	@Configuration
+	@Import(PulsarAutoConfiguration.class)
 	public static class BasicListenerConfig {
 
 		@PulsarListener(subscriptionName = "test-exclusive-sub-1", topics = "hello-pulsar-exclusive")
@@ -82,7 +86,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTest {
 		}
 	}
 
-	@EnableAutoConfiguration
+	@Configuration
+	@Import(PulsarAutoConfiguration.class)
 	public static class BatchListenerConfig {
 
 		@PulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive", batch = "true")
