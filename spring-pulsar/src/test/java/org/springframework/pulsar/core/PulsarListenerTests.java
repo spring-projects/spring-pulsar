@@ -37,7 +37,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Soby Chacko
  */
-public class PulsarListenerTests extends AbstractContainerBaseTest {
+class PulsarListenerTests extends AbstractContainerBaseTest {
 
 	static CountDownLatch latch1 = new CountDownLatch(1);
 	static CountDownLatch latch2 = new CountDownLatch(10);
