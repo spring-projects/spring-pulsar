@@ -281,7 +281,7 @@ We can switch to the `failover` subscription mode and add three separate consume
 Here is an example.
 
 ```
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "failover")
 public void listen1(String foo) {
     System.out.println("Message Received 1: " + foo);
 }
@@ -292,12 +292,88 @@ public void listen2(String foo) {
 }
 
 @PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = "failover")
-public void listen(String foo) {
+public void liste3n(String foo) {
     System.out.println("Message Received 3: " + foo);
 }
 ```
 
 When following this approach, you can see that a single partition always gets consumed by a dedicated consumer.
+
+In the similar vein, if you want to use Pulsar's shared consumer type, you can use the subscription type `shared`.
+Keep in mind though, that when using the `shared` mode, you lose any ordering guarantees as a single consumer may receive messages from all the partitions before another consumer gets a chance.
+
+Here is an example.
+
+```
+@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "shared")
+public void listen1(String foo) {
+    System.out.println("Message Received 1: " + foo);
+}
+
+@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "shared")
+public void listen2(String foo) {
+    System.out.println("Message Received 2: " + foo);
+}
+```
+
+#### Consuming Messages in Batch Mode
+
+In the examples above, we used `PulsarListener` in record mode, i.e. we receive a single message on each method invocation.
+Sometimes, for various reasons, we may want to receive Pulsar messages in batch mode. Here is a `PulsarListener` that is enabled with batch consumption.
+
+```
+@PulsarListener(subscriptionName = "batch-subscription", topics = "hello-pulsar", batch = "true")
+public void listen(List<String> records) {
+    System.out.println("Message Received from batch: " + records);
+}
+```
+
+In order to enable batch consumption, you need to set the `batch` property to `true` on `PulsarListener`.
+Then you can receive the records as a `List` type.
+Based on the actual type that the `List` holds, the framework tries to infer the schema to use.
+If the `List` contains a complex type, then the `schemaType` still needs to be provided on `PulsarListener`.
+
+#### Accessing the Pulsar Message Object
+
+In your `PulsarListener` method, you can receive the record directly as a Pulsar Message instead of the actual payload type.
+Here is an example.
+
+```
+@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+public void listen(org.apache.pulsar.client.api.Message<String> message) {
+    System.out.println("Data Received: " + message.getValue());
+}
+```
+
+#### Accessing the Pulsar Messages Object
+
+When consuming messages in batch mode using `PulsarListener`, instead of receiving them as a `List, you can receive them as Pulsar Messages type.
+Here is an example.
+
+```
+@PulsarListener(subscriptionName = "batch-subscription", topics = "hello-pulsar", batch = "true")
+public void listen(org.apache.pulsar.client.api.Messages<String> messages) {
+    // Iterate on the messages
+    // Each iteration gives access to a org.apache.pulsar.client.api.Message object
+}
+```
+
+#### Accessing the Pulsar Consumer Object
+
+Sometimes, it is necessary to gain direct access to the Pulsar Consumer object.
+Here is how you may do so.
+
+```
+@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+public void listen(String message, org.apache.pulsar.client.api.Consumer<String> consumer) {
+    System.out.println("Message Received: " + message);
+    ConsumerStats stats = consumer.getStats();
+    ...
+}
+```
+
+When accessing the `Consumer` object this way, make sure NOT to invoke any operations that would change the Consumer's cursor by invoking any receive methods.
+All such operations must be done by the container.
 
 ### More support to come -- stay tuned...
 
