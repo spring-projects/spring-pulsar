@@ -204,6 +204,101 @@ Then it provides that schema to the consumer.
 For all the primitive types in Java, the framework does this inference.
 For any complex types, such as JSON, AVRO etc. the framework cannot do this inference and the user needs to provide the schema type on the annotation using the `schemaType` property.
 
+In the example above, and in the ones that follows below, we provide both producer and consumer as part of the same application.
+However, in real apps, you might find it as convenient to separate them especially if you are following a microservice style architecture.
+
+#### Partitioned topics - Publishing and Consuming.
+
+In the sample below, we are publishing to a topic called `hello-pulsar-partitioned`.
+It is a topic that is partitioned and for this sample we assume that the topic is already created with three partitions.
+
+```
+@SpringBootApplication
+public class PulsarBootPartitioned {
+
+	public static void main(String[] args) {
+		SpringApplication.run(PulsarBootPartitioned.class, args);
+	}
+
+	@Bean
+	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
+		pulsarTemplate.setDefaultTopicName("hello-pulsar-partitioned");
+		return args -> {
+			for (int i = 0; i < 10; i++) {
+				pulsarTemplate.sendAsync("hello john doe 0 ", new FooRouter());
+				pulsarTemplate.sendAsync("hello alice doe 1", new BarRouter());
+				pulsarTemplate.sendAsync("hello buzz doe 2", new BuzzRouter());
+			}
+		};
+	}
+
+	@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned")
+	public void listen(String message) {
+		System.out.println("Message Received: " + message);
+	}
+
+    static class FooRouter implements MessageRouter {
+
+		@Override
+		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
+			return 0;
+		}
+	}
+
+	static class BarRouter implements MessageRouter {
+
+		@Override
+		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
+			return 1;
+		}
+	}
+
+	static class BuzzRouter implements MessageRouter {
+
+		@Override
+		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
+			return 2;
+		}
+	}
+
+}
+```
+
+A few things require explanation in the application above.
+We are publishing to a partitioned topic and we would like to publish some data segment to a specific partition.
+If you leave it to Pulsar's default, it follows a round-robin mode of partition assignments and we would like to override that.
+In order to do that, we are providing a message router object with the send method.
+Look at the three message routers implemented.
+`FooRouter` always sends data to partition `0`, `BarRouter` to partition `1` and `BuzzRouter` to partition `2`.
+Also note that, we are now using the `sendAsync` method of `PulsarTemplate` that returns a `CompletableFuture`.
+
+On the consumer side, we are using a `PulsarListener` with the exclusive subscription type.
+This means that data from all the partitions will end up in the same consumer and there is no ordering guarantee.
+
+What can we do if we want each partition to be consumed by a single distinct consumer?
+We can switch to the `failover` subscription mode and add three separate consumers.
+
+Here is an example.
+
+```
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+public void listen1(String foo) {
+    System.out.println("Message Received 1: " + foo);
+}
+
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+public void listen2(String foo) {
+    System.out.println("Message Received 2: " + foo);
+}
+
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+public void listen(String foo) {
+    System.out.println("Message Received 3: " + foo);
+}
+```
+
+When following this approach, you can see that a single partition always gets consumed by a dedicated consumer.
+
 ### More support to come -- stay tuned...
 
 
