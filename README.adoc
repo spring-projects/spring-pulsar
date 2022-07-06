@@ -113,47 +113,96 @@ spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMess
 spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
 ```
 
-### Writing a quick Spring Boot based Pulsar application.
+### Sample Applications
 
-Let's take a look at the application below.
-This captures the current support available for publishing to and consuming from a Pulsar topic.
+In this section, we will show a number of various applications to demonstrate how you can use the Spring for Apache Pulsar library using Spring Boot.
+
+Here are the maven coordinates of the artifacts needed for using this library.
+
+```
+<dependency>
+    <groupId>org.springframework.pulsar</groupId>
+    <artifactId>spring-pulsar</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.pulsar</groupId>
+    <artifactId>spring-pulsar-boot-autoconfiguration</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+If you simply include the `spring-pulsar-boot-autoconfiguration` module, then that will transitively include the `spring-pulsar` module.
+
+#### Quick Primer on Publishing to and Consuming from an Apache Pulsar Topic
+
+In order to publish to a Pulsar topic, the easiest way is to use the `PulsarTemplate` API.
+Similarly, the easiest way to consume from a Pulsar topic is to use the `PulsarListener` annotation.
+
+The following is a complete Spring Boot application that publishes to a Pulsar topic called `hello-pulsar` and then consumes from it.
 
 ```
 @SpringBootApplication
-public class PulsarBootApp {
+public class PulsarBootHelloWorld {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PulsarBootApp.class, args);
+		SpringApplication.run(PulsarBootHelloWorld.class, args);
 	}
 
 	@Bean
 	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive");
+		pulsarTemplate.setDefaultTopicName("hello-pulsar");
 		return args -> {
-			for (int i = 0; i < 100; i ++) {
+			for (int i = 0; i < 10; i ++) {
 				pulsarTemplate.send("This is message " + (i + 1));
 			}
 
 		};
 	}
 
-	@PulsarListener(subscriptionName = "test-exclusive-sub", topics = "hello-pulsar-exclusive")
-	public void listen(String foo) {
-		System.out.println("Message Received: " + foo);
+	@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+	public void listen(String message) {
+		System.out.println("Message Received: " + message);
 	}
 }
 ```
 
-This is a complete Spring Boot application that is sending messages to a topic in Apache Pulsar and consuming from that topic.
+Although this is a very trivial application, it conveys several important concepts nonetheless. Let's take a look at them.
 
-`PulsarTemplate` is the template mechanism available in Spring for Apache Pulsar that enables you to publish messages to a topic.
-The project provides Spring Boot auto-configuration for this `PulsarTemplate` which we inject in the application above.
+`PulsarTemplate` is autoconfigured by Spring Boot, and we are injecting that in the application.
+There is a producer factory behind the scenes and properties can be provided to it using `spring.pulsar.producer...` (See above for more details).
+When injecting, note that, we can provide a specific type - `String` in this case.
+If we have a need for a different `PulsarTemplate` with a different type in the same application, then we can add another injection with that type.
+`PulsarTemplate` currently requires the application to set a default topic.
+Once the topic is set, then we can call the various `send` methods on it.
+In this example, we are calling the very basic `send` method that calls the synchronous send from the Pulsar producer internally that returns the `MessageId`.
+We are ignoring the return value in this quick sample application.
+`PulsarTemplate` also provides API's for sending asynchronously among other send methods.
+We will look at the details of it, later on in the reference documentation.
 
-We use `PulsarListener` annotation to consume from the same topic where the template is publishing to.
+We use the `PulsarListener` annotation to consume from the topic.
+We are providing the subscription and topic names as annotation arguments.
+These are optional and the application may prefer to set them using the `spring.pulsar.consumer..` properties provided above.
+However, if properties are provided as annotation arguments, they get precedence.
+There are four consumer level properties that you can set on the `PulsarListener` annotation - they are `topics`, `topicPattern`, `subscriptionName` and `subscriptionType`.
+When providing on the annotation, they get preference regardless of what is set through consumer properties.
 
-At the moment, we only support the `Exclusive` subscription mode. 
+By default, `PulsarListener` uses an exclusive subscription type and this can be changed by using the `subscriptionType` property on the annotation or through the consumer property.
 
+`PulsarListner` internally creates a message listener container.
+The message listener container is responsible for creating the Pulsar Consumer using a consumer factory.
+When the consumer receives data, the container calls a message listener.
+This message listener is an adapter around the user provided method - the `listen` method in this case.
+The message listener container delegates to the adapter with the received data and the adapter then invokes the user method.
 
+In order to complete the discussion about this sample application, we also need to chime in on how data conversion is done.
+In the user method, we receive the data as `String`, but we don't specify any schema types.
+Internally, the framework by default relies on Pulsar's schema mechanism to convert the data to the required type.
+The framework detects that you are expecting the `String` type and then infer the schema type based on that information.
+Then it provides that schema to the consumer.
+For all the primitive types in Java, the framework does this inference.
+For any complex types, such as JSON, AVRO etc. the framework cannot do this inference and the user needs to provide the schema type on the annotation using the `schemaType` property.
 
 ### More support to come -- stay tuned...
 
