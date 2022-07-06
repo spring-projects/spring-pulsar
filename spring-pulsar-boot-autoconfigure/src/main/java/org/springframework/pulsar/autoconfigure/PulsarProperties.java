@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
+import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
@@ -380,6 +381,8 @@ public class PulsarProperties {
 
 		private String initialSubscriptionName;
 
+		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
+
 		public String getTopicName() {
 			return topicName;
 		}
@@ -500,6 +503,14 @@ public class PulsarProperties {
 			this.initialSubscriptionName = initialSubscriptionName;
 		}
 
+		public ProducerAccessMode getProducerAccessMode() {
+			return producerAccessMode;
+		}
+
+		public void setProducerAccessMode(ProducerAccessMode producerAccessMode) {
+			this.producerAccessMode = producerAccessMode;
+		}
+
 		public Map<String, Object> buildProperties() {
 			PulsarProperties.Properties properties = new Properties();
 
@@ -520,6 +531,7 @@ public class PulsarProperties {
 			map.from(this::isChunkingEnabled).to(properties.in("chunkingEnabled"));
 			map.from(this::getCompressionType).to(properties.in("compressionType"));
 			map.from(this::getInitialSubscriptionName).to(properties.in("initialSubscriptionName"));
+			map.from(this::getProducerAccessMode).to(properties.in("accessMode"));
 
 			return properties;
 		}

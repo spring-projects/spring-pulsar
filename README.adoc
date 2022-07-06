@@ -74,6 +74,7 @@ spring.pulsar.producer.batchingEnabled
 spring.pulsar.producer.chunkingEnabled
 spring.pulsar.producer.compressionType
 spring.pulsar.producer.initialSubscriptionName
+spring.pulsar.producer.accessMode
 ```
 
 #### Pulsar Consumer
@@ -217,7 +218,7 @@ It is a topic that is partitioned and for this sample we assume that the topic i
 public class PulsarBootPartitioned {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PulsarBootPartitioned.class, args);
+		SpringApplication.run(PulsarBootPartitioned.class, "--spring.pulsar.producer.messageRoutingMode=CustomPartition");
 	}
 
 	@Bean
@@ -266,11 +267,12 @@ public class PulsarBootPartitioned {
 
 A few things require explanation in the application above.
 We are publishing to a partitioned topic and we would like to publish some data segment to a specific partition.
-If you leave it to Pulsar's default, it follows a round-robin mode of partition assignments and we would like to override that.
+If you leave it to Pulsar's default, it follows a round-robin mode of partition assignments, and we would like to override that.
 In order to do that, we are providing a message router object with the send method.
 Look at the three message routers implemented.
 `FooRouter` always sends data to partition `0`, `BarRouter` to partition `1` and `BuzzRouter` to partition `2`.
 Also note that, we are now using the `sendAsync` method of `PulsarTemplate` that returns a `CompletableFuture`.
+When running the application, we also need to set the `messageRoutingMode` on the producer to `CustomPartition` (`spring.pulsar.producer.messageRoutingMode`).
 
 On the consumer side, we are using a `PulsarListener` with the exclusive subscription type.
 This means that data from all the partitions will end up in the same consumer and there is no ordering guarantee.
