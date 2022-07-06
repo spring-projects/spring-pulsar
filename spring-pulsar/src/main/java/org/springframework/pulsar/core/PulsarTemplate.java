@@ -38,12 +38,14 @@ public class PulsarTemplate<T> {
 
 	private String defaultTopicName;
 
+	private Schema<T> schema;
+
 	public PulsarTemplate(PulsarProducerFactory<T> pulsarProducerFactory) {
 		this.pulsarProducerFactory = pulsarProducerFactory;
 	}
 
 	public MessageId send(T message) throws PulsarClientException {
-		final Schema<T> schema = SchemaUtils.getSchema(message);
+		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
 		Producer<T> producer = producerCache.get(schemaTopic);
 		if (producer == null) {
@@ -54,7 +56,7 @@ public class PulsarTemplate<T> {
 	}
 
 	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		final Schema<T> schema = SchemaUtils.getSchema(message);
+		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
 		Producer<T> producer = producerCache.get(schemaTopic);
 		if (producer == null) {
@@ -65,7 +67,7 @@ public class PulsarTemplate<T> {
 	}
 
 	public CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter) throws PulsarClientException {
-		final Schema<T> schema = SchemaUtils.getSchema(message);
+		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, messageRouter);
 		Producer<T> producer = producerCache.get(schemaTopic);
 		if (producer == null) {
@@ -82,6 +84,14 @@ public class PulsarTemplate<T> {
 	public void setDefaultTopicName(String defaultTopicName) {
 		this.defaultTopicName = defaultTopicName;
 		this.pulsarProducerFactory.getProducerConfig().put("topicName", defaultTopicName);
+	}
+
+	public Schema<T> getSchema() {
+		return schema;
+	}
+
+	public void setSchema(Schema<T> schema) {
+		this.schema = schema;
 	}
 
 	private class SchemaTopic {

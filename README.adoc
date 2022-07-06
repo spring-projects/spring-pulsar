@@ -372,12 +372,12 @@ public void listen(String message, org.apache.pulsar.client.api.Consumer<String>
 }
 ```
 
-When accessing the `Consumer` object this way, make sure NOT to invoke any operations that would change the Consumer's cursor by invoking any receive methods.
+When accessing the `Consumer` object this way, make sure NOT to invoke any operations that would change the Consumer's cursor position by invoking any receive methods.
 All such operations must be done by the container.
 
 #### Specify schema information
 
-As indicated above, for normal Java types (the imperative ones), Spring Pulsar framework can infer the proper Schema to use on the `PulsarListener`.
+As indicated above, for normal Java types (the primitive ones), Spring Pulsar framework can infer the proper Schema to use on the `PulsarListener`.
 However, for more complex types such as JSON or AVRO, you need to specify the schema type on the annotation.
 Here is how you provide that.
 
@@ -387,6 +387,10 @@ public void listen(Foo foo) {
     System.out.println("Message received: " + foo);
 }
 ```
+
+On the producer side also, for the Java primitive types, the framework can infer the Schema, but for any other types, you need set that on the `PulsarTemmplate`.
+
+#### PulsarTemplate API details
 
 ### More support to come -- stay tuned...
 
