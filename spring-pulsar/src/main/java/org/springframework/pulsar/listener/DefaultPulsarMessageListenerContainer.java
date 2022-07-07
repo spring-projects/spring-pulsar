@@ -112,10 +112,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	@Override
 	public void stop() {
 		setRunning(false);
-		System.out.println("Pausing this consumer.");
+		this.logger.info("Pausing this consumer.");
 		this.listenerConsumer.consumer.pause();
 		try {
-			System.out.println("Closing this consumer.");
+			this.logger.info("Closing this consumer.");
 			this.listenerConsumer.consumer.close();
 		}
 		catch (PulsarClientException e) {
