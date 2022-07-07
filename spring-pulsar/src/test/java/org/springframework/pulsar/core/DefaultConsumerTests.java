@@ -28,8 +28,6 @@ import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PulsarContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -37,7 +35,7 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
 /**
  * @author Soby Chacko
  */
-class DefaultConsumerTests extends AbstractContainerBaseTest {
+class DefaultConsumerTests extends AbstractContainerBaseTests {
 
 
 	@Test

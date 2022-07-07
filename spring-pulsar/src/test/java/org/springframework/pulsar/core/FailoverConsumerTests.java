@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
-import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.MessageRouter;
@@ -43,7 +42,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Soby Chacko
  */
-class FailoverConsumerTests extends AbstractContainerBaseTest {
+class FailoverConsumerTests extends AbstractContainerBaseTests {
 
 	@Test
 	void testFailOverConsumersOnPartitionedTopic() throws Exception {
