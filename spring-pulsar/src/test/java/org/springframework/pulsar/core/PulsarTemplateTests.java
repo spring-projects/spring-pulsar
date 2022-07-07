@@ -35,7 +35,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Soby Chacko
  */
-class PulsarTemplateTests extends AbstractContainerBaseTest {
+class PulsarTemplateTests extends AbstractContainerBaseTests {
 
 	public static final String TEST_TOPIC = "test_topic";
 
