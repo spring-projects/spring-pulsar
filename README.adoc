@@ -10,8 +10,9 @@ Most of the ideas in this project are borrowed from the Spring for Apache Kafka 
 
 #### Minimum Supported Versions
 
-JDK - JDK 17
-Apache Pulsar - 2.10.0
+**JDK** - JDK 17
+
+**Apache Pulsar** - 2.10.0
 
 ```
 ./gradlew clean build
