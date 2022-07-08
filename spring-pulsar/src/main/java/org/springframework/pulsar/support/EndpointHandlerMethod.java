@@ -28,6 +28,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
 /**
+ * Handler method for endpoints.
+ *
  * @author Soby Chacko
  */
 public class EndpointHandlerMethod {

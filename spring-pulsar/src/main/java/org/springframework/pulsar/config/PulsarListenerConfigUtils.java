@@ -17,6 +17,8 @@
 package org.springframework.pulsar.config;
 
 /**
+ * Configuration constants for internal sharing across subpackages.
+ *
  * @author Soby Chacko
  */
 public abstract class PulsarListenerConfigUtils {

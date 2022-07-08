@@ -20,6 +20,8 @@ import org.springframework.expression.Expression;
 import org.springframework.lang.Nullable;
 
 /**
+ * The result of a method invocation.
+ *
  * @author Soby Chacko
  */
 public final class InvocationResult {

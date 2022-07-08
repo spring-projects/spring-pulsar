@@ -22,6 +22,8 @@ import java.util.Map;
 import org.springframework.util.Assert;
 
 /**
+ * Configuration for the Pulsar client.
+ *
  * @author Soby Chacko
  */
 public class PulsarClientConfiguration {
@@ -39,6 +41,6 @@ public class PulsarClientConfiguration {
 	}
 
 	public Map<String, Object> getConfigs() {
-		return configs;
+		return this.configs;
 	}
 }

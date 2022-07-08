@@ -28,16 +28,17 @@ import org.apache.pulsar.client.api.Messages;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
-import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 
 /**
+ * Batch records message converter.
+ *
+ * @param <T> message type.
+ *
  * @author Soby Chacko
  */
 public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessageConverter<T> {
 
 	private final PulsarRecordMessageConverter<T> recordConverter;
-
 
 	public PulsarBatchMessagingMessageConverter() {
 		this(null);

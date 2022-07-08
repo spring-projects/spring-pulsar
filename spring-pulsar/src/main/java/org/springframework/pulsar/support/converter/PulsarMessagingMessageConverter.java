@@ -29,6 +29,12 @@ import org.springframework.messaging.support.GenericMessage;
 import org.springframework.messaging.support.MessageBuilder;
 
 /**
+ *
+ * A Messaging {@link org.springframework.pulsar.support.MessageConverter} implementation for a message listener that
+ * receives individual messages.
+ *
+ * @param <V> message type
+ *
  * @author Soby Chacko
  */
 public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageConverter<V> {

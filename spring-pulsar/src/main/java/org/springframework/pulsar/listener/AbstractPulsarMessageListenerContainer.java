@@ -29,6 +29,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 
 /**
+ * Base implementation for the {@link PulsarMessageListenerContainer}.
+ *
+ * @param <T> message type.
+ *
  * @author Soby Chacko
  */
 public abstract class AbstractPulsarMessageListenerContainer<T>
@@ -49,9 +53,10 @@ public abstract class AbstractPulsarMessageListenerContainer<T>
 	private int phase;
 
 	@SuppressWarnings("unchecked")
-	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,PulsarContainerProperties pulsarContainerProperties) {
+	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
+													PulsarContainerProperties pulsarContainerProperties) {
 		this.pulsarContainerProperties = pulsarContainerProperties;
-		this.pulsarConsumerFactory = (PulsarConsumerFactory<T>)pulsarConsumerFactory;
+		this.pulsarConsumerFactory = (PulsarConsumerFactory<T>) pulsarConsumerFactory;
 
 	}
 
@@ -99,11 +104,11 @@ public abstract class AbstractPulsarMessageListenerContainer<T>
 	}
 
 	public PulsarContainerProperties getPulsarContainerProperties() {
-		return pulsarContainerProperties;
+		return this.pulsarContainerProperties;
 	}
 
 	public PulsarConsumerFactory<? super T> getPulsarConsumerFactory() {
-		return pulsarConsumerFactory;
+		return this.pulsarConsumerFactory;
 	}
 
 	@Override

@@ -21,12 +21,14 @@ import java.lang.reflect.Type;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
 
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.pulsar.support.MessageConverter;
 
 /**
+ * Pulsar batch message converter strategy.
+ *
+ * @param <T> message type.
+ *
  * @author Soby Chacko
  */
 public interface PulsarBatchMessageConverter<T> extends MessageConverter {

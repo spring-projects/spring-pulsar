@@ -19,7 +19,6 @@ package org.springframework.pulsar.config;
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Schema;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -27,13 +26,18 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.support.JavaUtils;
 import org.springframework.pulsar.support.MessageConverter;
-import org.springframework.pulsar.core.PulsarConsumerFactory;
-import org.springframework.pulsar.listener.PulsarContainerProperties;
 
 /**
+ * Base {@link PulsarListenerContainerFactory} implementation.
+ *
+ * @param <C> the {@link AbstractPulsarMessageListenerContainer} implementation type.
+ * @param <T> Message payload type.
+ *
  * @author Soby Chacko
  */
 public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractPulsarMessageListenerContainer<T>, T>

@@ -19,6 +19,8 @@ package org.springframework.pulsar.annotation;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 
 /**
+ * Allow custom configuration on PulsarListener endpoint registry.
+ *
  * @author Soby Chacko
  */
 public interface PulsarListenerConfigurer {

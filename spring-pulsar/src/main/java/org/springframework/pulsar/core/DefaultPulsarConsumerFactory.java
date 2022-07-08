@@ -31,6 +31,10 @@ import org.apache.pulsar.client.api.Schema;
 import org.springframework.util.CollectionUtils;
 
 /**
+ * Default implementation for {@link PulsarConsumerFactory}.
+ *
+ * @param <T> underlying payload type for the consumer.
+ *
  * @author Soby Chacko
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
@@ -60,7 +64,7 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			consumerBuilder.loadConf(properties);
 		}
 		Consumer<T> consumer = consumerBuilder.subscribe();
-		consumers.add(consumer);
+		this.consumers.add(consumer);
 		return consumer;
 	}
 
@@ -77,12 +81,12 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 
 		consumerBuilder.batchReceivePolicy(batchReceivePolicy);
 		Consumer<T> consumer = consumerBuilder.subscribe();
-		consumers.add(consumer);
+		this.consumers.add(consumer);
 		return consumer;
 	}
 
 	public Map<String, Object> getConsumerConfig() {
-		return consumerConfig;
+		return this.consumerConfig;
 	}
 
 }

@@ -43,6 +43,12 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.util.Assert;
 
 /**
+ * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter
+ * providing the necessary infrastructure to extract the payload from a
+ * Pulsar message.
+ *
+ * @param <V> payload type.
+ *
  * @author Soby Chacko
  */
 public abstract class PulsarMessagingMessageListenerAdapter<V> {
@@ -134,7 +140,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 	}
 
 	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
-										 Consumer<V> consumer) {
+										Consumer<V> consumer) {
 
 		try {
 			return this.handlerMethod.invoke(message, data, consumer);

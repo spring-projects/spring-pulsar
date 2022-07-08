@@ -37,12 +37,16 @@ import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
+import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.util.Assert;
 
 /**
+ * Base implementation for {@link PulsarListenerEndpoint}.
+ *
+ * @param <K> Message payload type.
+ *
  * @author Soby Chacko
  */
 public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
@@ -152,14 +156,14 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 
 	@Override
 	public void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
-									   @Nullable MessageConverter messageConverter) {
+									@Nullable MessageConverter messageConverter) {
 
 		setupMessageListener(listenerContainer, messageConverter);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void setupMessageListener(PulsarMessageListenerContainer container,
-									  @Nullable MessageConverter messageConverter) {
+									@Nullable MessageConverter messageConverter) {
 
 		PulsarMessagingMessageListenerAdapter<K> adapter = createMessageListener(container, messageConverter);
 		Object messageListener = adapter;
@@ -170,7 +174,7 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 	}
 
 	protected abstract PulsarMessagingMessageListenerAdapter<K> createMessageListener(PulsarMessageListenerContainer container,
-																					  @Nullable MessageConverter messageConverter);
+																					@Nullable MessageConverter messageConverter);
 
 	public void setConsumerProperties(Properties consumerProperties) {
 		this.consumerProperties = consumerProperties;
@@ -192,7 +196,7 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 
 
 	public SubscriptionType getSubscriptionType() {
-		return subscriptionType;
+		return this.subscriptionType;
 	}
 
 	public void setSubscriptionType(SubscriptionType subscriptionType) {
@@ -200,7 +204,7 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 	}
 
 	public SchemaType getSchemaType() {
-		return schemaType;
+		return this.schemaType;
 	}
 
 	public void setSchemaType(SchemaType schemaType) {

@@ -24,6 +24,10 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 /**
+ * Pulsar consumer factory interface.
+ *
+ * @param <T> payload type for the consumer.
+ *
  * @author Soby Chacko
  */
 public interface PulsarConsumerFactory<T> {

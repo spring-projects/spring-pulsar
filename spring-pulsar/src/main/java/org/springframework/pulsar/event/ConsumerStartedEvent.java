@@ -17,6 +17,8 @@
 package org.springframework.pulsar.event;
 
 /**
+ * Event to publish when the consumer is started.
+ *
  * @author Soby Chacko
  */
 public class ConsumerStartedEvent extends PulsarEvent {

@@ -20,7 +20,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.pulsar.annotation.PulsarListenerAnnotationBeanPostProcessor;
 import org.springframework.pulsar.config.PulsarListenerConfigUtils;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 
@@ -30,7 +29,7 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
  * a default {@link PulsarListenerEndpointRegistry}.
  *
  * <p>This configuration class is automatically imported when using the @{@link EnablePulsar}
- * annotation.  
+ * annotation.
  *
  * @author Soby Chacko
  *

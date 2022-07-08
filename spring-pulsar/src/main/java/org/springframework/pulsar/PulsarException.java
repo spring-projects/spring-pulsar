@@ -19,8 +19,11 @@ package org.springframework.pulsar;
 import org.springframework.core.NestedRuntimeException;
 
 /**
+ * Spring Pulsar specific {@link NestedRuntimeException} implementation.
+ *
  * @author Soby Chacko
  */
+@SuppressWarnings("serial")
 public class PulsarException extends NestedRuntimeException {
 
 	public PulsarException(String msg) {

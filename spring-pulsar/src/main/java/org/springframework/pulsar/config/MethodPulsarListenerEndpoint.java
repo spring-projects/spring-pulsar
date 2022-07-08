@@ -50,6 +50,11 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.util.Assert;
 
 /**
+ * A {@link PulsarListenerEndpoint} providing the method to invoke to process
+ * an incoming message for this endpoint.
+ *
+ * @param <V> Message payload type
+ *
  * @author Soby Chacko
  */
 public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpoint<V> {
@@ -91,7 +96,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	@Override
 	protected PulsarMessagingMessageListenerAdapter<V> createMessageListener(PulsarMessageListenerContainer container,
-																			 @Nullable MessageConverter messageConverter) {
+																			@Nullable MessageConverter messageConverter) {
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
 		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
@@ -225,6 +230,5 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	public void setMessagingConverter(SmartMessageConverter messagingConverter) {
 		this.messagingConverter = messagingConverter;
 	}
-
 
 }
