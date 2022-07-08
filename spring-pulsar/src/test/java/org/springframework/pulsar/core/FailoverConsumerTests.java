@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,8 +38,6 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * @author Soby Chacko

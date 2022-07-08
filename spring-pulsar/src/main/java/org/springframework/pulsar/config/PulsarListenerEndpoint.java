@@ -22,10 +22,14 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.pulsar.support.MessageConverter;
 
 /**
+ * Model for a Pulsar listener endpoint. Can be used against a
+ * {@link org.springframework.pulsar.annotation.PulsarListenerConfigurer}
+ * to register endpoints programmatically.
+ *
  * @author Soby Chacko
  */
 public interface PulsarListenerEndpoint {

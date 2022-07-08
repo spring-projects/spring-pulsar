@@ -33,12 +33,16 @@ import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 
 /**
+ * Configuration properties for Spring for Apache Pulsar.
+ * <p>
+ * Users should refer to Pulsar documentation for complete descriptions of these
+ * properties.
+ *
  * @author Soby Chacko
  */
 @ConfigurationProperties(prefix = "spring.pulsar")
@@ -380,7 +384,7 @@ public class PulsarProperties {
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
 
 		public String getTopicName() {
-			return topicName;
+			return this.topicName;
 		}
 
 		public void setTopicName(String topicName) {
@@ -388,7 +392,7 @@ public class PulsarProperties {
 		}
 
 		public String getProducerName() {
-			return producerName;
+			return this.producerName;
 		}
 
 		public void setProducerName(String producerName) {
@@ -396,7 +400,7 @@ public class PulsarProperties {
 		}
 
 		public long getSendTimeoutMs() {
-			return sendTimeoutMs;
+			return this.sendTimeoutMs;
 		}
 
 		public void setSendTimeoutMs(long sendTimeoutMs) {
@@ -404,7 +408,7 @@ public class PulsarProperties {
 		}
 
 		public boolean isBlockIfQueueFull() {
-			return blockIfQueueFull;
+			return this.blockIfQueueFull;
 		}
 
 		public void setBlockIfQueueFull(boolean blockIfQueueFull) {
@@ -569,7 +573,7 @@ public class PulsarProperties {
 
 		private int requestTimeoutMs = 60000;
 
-		private long initialBackoffIntervalNanos = TimeUnit.MILLISECONDS.toNanos(100);;
+		private long initialBackoffIntervalNanos = TimeUnit.MILLISECONDS.toNanos(100);
 
 		private long maxBackoffIntervalNanos = TimeUnit.SECONDS.toNanos(30);
 

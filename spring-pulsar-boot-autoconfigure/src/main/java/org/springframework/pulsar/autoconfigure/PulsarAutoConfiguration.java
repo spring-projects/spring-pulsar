@@ -24,15 +24,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
-import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
+import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
+import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 
 /**
+ * {@link org.springframework.boot.autoconfigure.EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
+ *
  * @author Soby Chacko
  */
 @AutoConfiguration

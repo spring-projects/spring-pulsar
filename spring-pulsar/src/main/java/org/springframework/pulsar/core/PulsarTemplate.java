@@ -28,6 +28,10 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 /**
+ * Template implementation for publishing to Pulsar topics.
+ *
+ * @param <T> message type.
+ *
  * @author Soby Chacko
  */
 public class PulsarTemplate<T> {
@@ -47,10 +51,10 @@ public class PulsarTemplate<T> {
 	public MessageId send(T message) throws PulsarClientException {
 		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
-		Producer<T> producer = producerCache.get(schemaTopic);
+		Producer<T> producer = this.producerCache.get(schemaTopic);
 		if (producer == null) {
 			producer = this.pulsarProducerFactory.createProducer(schema);
-			producerCache.put(schemaTopic, producer);
+			this.producerCache.put(schemaTopic, producer);
 		}
 		return producer.send(message);
 	}
@@ -58,10 +62,10 @@ public class PulsarTemplate<T> {
 	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
 		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
-		Producer<T> producer = producerCache.get(schemaTopic);
+		Producer<T> producer = this.producerCache.get(schemaTopic);
 		if (producer == null) {
 			producer = this.pulsarProducerFactory.createProducer(schema);
-			producerCache.put(schemaTopic, producer);
+			this.producerCache.put(schemaTopic, producer);
 		}
 		return producer.sendAsync(message);
 	}
@@ -69,10 +73,10 @@ public class PulsarTemplate<T> {
 	public CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter) throws PulsarClientException {
 		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, messageRouter);
-		Producer<T> producer = producerCache.get(schemaTopic);
+		Producer<T> producer = this.producerCache.get(schemaTopic);
 		if (producer == null) {
 			producer = this.pulsarProducerFactory.createProducer(schema, messageRouter);
-			producerCache.put(schemaTopic, producer);
+			this.producerCache.put(schemaTopic, producer);
 		}
 		return producer.sendAsync(message);
 	}
@@ -87,7 +91,7 @@ public class PulsarTemplate<T> {
 	}
 
 	public Schema<T> getSchema() {
-		return schema;
+		return this.schema;
 	}
 
 	public void setSchema(Schema<T> schema) {
@@ -100,7 +104,7 @@ public class PulsarTemplate<T> {
 		final String topicName;
 		final MessageRouter messageRouter;
 
-		public SchemaTopic(Schema<T> schema, String topicName, MessageRouter messageRouter) {
+		SchemaTopic(Schema<T> schema, String topicName, MessageRouter messageRouter) {
 			this.schema = schema;
 			this.topicName = topicName;
 			this.messageRouter = messageRouter;
@@ -108,12 +112,16 @@ public class PulsarTemplate<T> {
 
 		@Override
 		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
 			@SuppressWarnings("unchecked")
 			SchemaTopic that = (SchemaTopic) o;
 			if (this.messageRouter == null && that.messageRouter == null) {
-				return schema.equals(that.schema) && topicName.equals(that.topicName);
+				return this.schema.equals(that.schema) && this.topicName.equals(that.topicName);
 			}
 			else if (this.messageRouter == null) {
 				return false;
@@ -121,12 +129,12 @@ public class PulsarTemplate<T> {
 			else if (that.messageRouter == null) {
 				return false;
 			}
-			return schema.equals(that.schema) && topicName.equals(that.topicName) && messageRouter.equals(that.messageRouter);
+			return this.schema.equals(that.schema) && this.topicName.equals(that.topicName) && this.messageRouter.equals(that.messageRouter);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(schema, topicName, messageRouter);
+			return Objects.hash(this.schema, this.topicName, this.messageRouter);
 		}
 	}
 }

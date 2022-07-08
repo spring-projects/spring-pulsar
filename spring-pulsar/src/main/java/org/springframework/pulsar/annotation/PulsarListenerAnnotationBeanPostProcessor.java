@@ -39,9 +39,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
-import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -124,6 +122,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
+	/**
+	 * The bean name of the default {@link org.springframework.pulsar.config.PulsarListenerContainerFactory}.
+	 */
 	public static final String DEFAULT_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "pulsarListenerContainerFactory";
 
 	private static final String THE_LEFT = "The [";
@@ -289,7 +290,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	}
 
 	protected void processListener(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener PulsarListener,
-								   Object bean, String beanName, String[] topics) {
+								Object bean, String beanName, String[] topics) {
 
 		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics);
 
@@ -302,7 +303,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 	@Nullable
 	private PulsarListenerContainerFactory<?> resolveContainerFactory(PulsarListener PulsarListener,
-																	  Object factoryTarget, String beanName) {
+																	Object factoryTarget, String beanName) {
 
 		String containerFactory = PulsarListener.containerFactory();
 		if (!StringUtils.hasText(containerFactory)) {
@@ -344,7 +345,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	}
 
 	private void processPulsarListenerAnnotation(MethodPulsarListenerEndpoint<?> endpoint,
-												 PulsarListener pulsarListener, Object bean, String[] topics) {
+												PulsarListener pulsarListener, Object bean, String[] topics) {
 
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);

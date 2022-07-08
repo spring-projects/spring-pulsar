@@ -17,6 +17,8 @@
 package org.springframework.pulsar.event;
 
 /**
+ * Event to publish when the consumer is failed to start.
+ *
  * @author Soby Chacko
  */
 public class ConsumerFailedToStartEvent extends PulsarEvent {

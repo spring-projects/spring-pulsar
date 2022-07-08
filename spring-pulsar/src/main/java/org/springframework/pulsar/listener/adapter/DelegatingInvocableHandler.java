@@ -41,10 +41,14 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.PayloadMethodArgumentResolver;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.PulsarException;
-import org.springframework.pulsar.listener.adapter.InvocationResult;
 import org.springframework.validation.Validator;
 
 /**
+ * Delegates to an {@link InvocableHandlerMethod} based on the message payload type.
+ * Matches a single, non-annotated parameter or one that is annotated with
+ * {@link org.springframework.messaging.handler.annotation.Payload}. Matches must be
+ * unambiguous.
+ *
  * @author Soby Chacko
  */
 public class DelegatingInvocableHandler {
@@ -75,11 +79,10 @@ public class DelegatingInvocableHandler {
 	private final PayloadValidator validator;
 
 	public DelegatingInvocableHandler(List<InvocableHandlerMethod> handlers,
-									  @Nullable InvocableHandlerMethod defaultHandler, Object bean,
-									  @Nullable BeanExpressionResolver beanExpressionResolver,
-									  @Nullable BeanExpressionContext beanExpressionContext,
-									  @Nullable BeanFactory beanFactory, @Nullable Validator validator) {
-
+									@Nullable InvocableHandlerMethod defaultHandler, Object bean,
+									@Nullable BeanExpressionResolver beanExpressionResolver,
+									@Nullable BeanExpressionContext beanExpressionContext,
+									@Nullable BeanFactory beanFactory, @Nullable Validator validator) {
 		this.handlers = new ArrayList<>();
 		for (InvocableHandlerMethod handler : handlers) {
 			this.handlers.add(wrapIfNecessary(handler));
@@ -210,7 +213,7 @@ public class DelegatingInvocableHandler {
 	}
 
 	private MethodParameter findCandidate(Class<? extends Object> payloadClass, Method method,
-										  Annotation[][] parameterAnnotations) {
+										Annotation[][] parameterAnnotations) {
 		MethodParameter foundCandidate = null;
 		for (int i = 0; i < parameterAnnotations.length; i++) {
 			MethodParameter methodParameter = new MethodParameter(method, i);

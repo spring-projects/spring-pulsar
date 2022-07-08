@@ -1,10 +1,4 @@
 buildscript {
-//	repositories {
-//		mavenCentral()
-//		maven { url 'https://plugins.gradle.org/m2' }
-//		maven { url 'https://repo.spring.io/plugins-release' }
-//		mavenLocal()
-//	}
 	repositories {
 		mavenCentral()
 		gradlePluginPortal()
@@ -17,7 +11,7 @@ plugins {
 	id 'project-report'
 	id 'idea'
 	id 'org.sonarqube' version '2.8'
-//	id 'org.ajoberstar.grgit' version '4.0.1' apply false
+	id 'org.ajoberstar.grgit' version '4.0.1' apply false
 	id 'io.spring.nohttp' version '0.0.5.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.10.RELEASE' apply false
 	id 'com.jfrog.artifactory' version '4.18.2' apply false
@@ -28,36 +22,47 @@ plugins {
 
 apply plugin: 'io.spring.nohttp'
 
-//def gitPresent = new File('.git').exists()
+def gitPresent = new File('.git').exists()
 
-//if(gitPresent) {
-//	apply plugin: 'org.ajoberstar.grgit'
-//}
+if(gitPresent) {
+	apply plugin: 'org.ajoberstar.grgit'
+}
 
 description = 'Spring for Apache Pulsar'
 
 ext {
-//	if (gitPresent) {
-//		modifiedFiles =
-//			files(grgit.status().unstaged.modified).filter{ f -> f.name.endsWith('.java') || f.name.endsWith('.kt') }
-//	}
+	linkHomepage = 'https://github.com/spring-projects-experimental/spring-pulsar'
+	linkIssue = 'https://github.com/spring-projects-experimental/spring-pulsar/issues'
+	linkScmUrl = 'https://github.com/spring-projects-experimental/spring-pulsar'
+	linkScmConnection = 'https://github.com/spring-projects-experimental/spring-pulsar.git'
+	linkScmDevConnection = 'git@github.com:spring-projects-experimental/spring-pulsar.git'
+	docResourcesVersion = '0.2.5'
 
-	assertjVersion = '3.21.0'
-	awaitilityVersion = '4.1.1'
+	javadocLinks = [
+			'https://docs.oracle.com/en/java/javase/17/docs/api/',
+			'https://docs.spring.io/spring-framework/docs/current/javadoc-api/'
+	] as String[]
+
+	if (gitPresent) {
+		modifiedFiles =
+				files(grgit.status().unstaged.modified).filter{ f -> f.name.endsWith('.java') || f.name.endsWith('.kt') }
+	}
+
+	assertjVersion = '3.22.0'
+	awaitilityVersion = '4.2.0'
 	googleJsr305Version = '3.0.2'
 	hamcrestVersion = '2.2'
-	hibernateValidationVersion = '6.2.3.Final'
-	jacksonBomVersion = '2.13.2.20220328'
+	hibernateValidationVersion = '7.0.4.Final'
+	jacksonBomVersion = '2.13.3'
 	jaywayJsonPathVersion = '2.6.0'
 	junit4Version = '4.13.2'
 	junitJupiterVersion = '5.8.2'
 	pulsarVersion = '2.10.0'
 	log4jVersion = '2.17.2'
-//	micrometerVersion = '2.0.0-SNAPSHOT'
-	mockitoVersion = '4.0.0'
+	mockitoVersion = '4.5.1'
 	reactorVersion = '2020.0.17'
 	springBootVersion = '3.0.0-SNAPSHOT' // docs module
-	springRetryVersion = '1.3.2'
+	springRetryVersion = '1.3.3'
 	springVersion = '6.0.0-SNAPSHOT'
 
 	idPrefix = 'pulsar'
@@ -105,11 +110,11 @@ allprojects {
 subprojects { subproject ->
 	apply plugin: 'java-library'
 	apply plugin: 'java'
-//	apply from: "${rootProject.projectDir}/publish-maven.gradle"
+	apply from: "${rootProject.projectDir}/publish-maven.gradle"
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'
 	apply plugin: 'jacoco'
-//	apply plugin: 'checkstyle'
+	apply plugin: 'checkstyle'
 
 	java {
 		withJavadocJar()
@@ -162,12 +167,9 @@ subprojects { subproject ->
 		testImplementation "org.hamcrest:hamcrest-core:$hamcrestVersion"
 		optionalApi "org.assertj:assertj-core:$assertjVersion"
 
-
-
 		testImplementation("org.testcontainers:pulsar:1.17.2") {
 			exclude module: 'log4j-to-slf4j'
 		}
-
 	}
 
 	// enable all compiler warnings; individual projects may customize further
@@ -208,15 +210,68 @@ subprojects { subproject ->
 		}
 	}
 
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				suppressAllPomMetadataWarnings()
+				from components.java
+				pom.withXml {
+					def pomDeps = asNode().dependencies.first()
+					subproject.configurations.providedImplementation.allDependencies.each { dep ->
+						pomDeps.remove(pomDeps.'*'.find { it.artifactId.text() == dep.name })
+						pomDeps.appendNode('dependency').with {
+							it.appendNode('groupId', dep.group)
+							it.appendNode('artifactId', dep.name)
+							it.appendNode('version', dep.version)
+							it.appendNode('scope', 'provided')
+						}
+					}
+				}
+			}
+		}
+	}
+
+	task updateCopyrights {
+		onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
+		if (gitPresent) {
+			inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+		}
+		outputs.dir('build')
+
+		doLast {
+			def now = Calendar.instance.get(Calendar.YEAR) as String
+			inputs.files.each { file ->
+				def line
+				file.withReader { reader ->
+					while (line = reader.readLine()) {
+						def matcher = line =~ /Copyright (20\d\d)-?(20\d\d)?/
+						if (matcher.count) {
+							def beginningYear = matcher[0][1]
+							if (now != beginningYear && now != matcher[0][2]) {
+								def years = "$beginningYear-$now"
+								def sourceCode = file.text
+								sourceCode = sourceCode.replaceFirst(/20\d\d(-20\d\d)?/, years)
+								file.write(sourceCode)
+								println "Copyright updated for file: $file"
+							}
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+
 	jar {
 		manifest {
 			attributes(
 					'Implementation-Version': archiveVersion,
-//					'Created-By': "JDK ${System.properties['java.version']} (${System.properties['java.specification.vendor']})",
+					'Created-By': "JDK ${System.properties['java.version']} (${System.properties['java.specification.vendor']})",
 					'Implementation-Title': subproject.name,
 					'Implementation-Vendor-Id': subproject.group,
 					'Implementation-Vendor': 'Pivotal Software, Inc.',
-//					'Implementation-URL': linkHomepage,
+					'Implementation-URL': linkHomepage,
 					'Automatic-Module-Name': subproject.name.replace('-', '.')  // for Jigsaw
 			)
 		}
@@ -226,6 +281,10 @@ subprojects { subproject ->
 			include 'notice.txt'
 			into 'META-INF'
 			expand(copyright: new Date().format('yyyy'), version: project.version)
+		}
+		from("${rootProject.projectDir}") {
+			include 'LICENSE.txt'
+			into 'META-INF'
 		}
 	}
 
@@ -262,13 +321,10 @@ project ('spring-pulsar') {
 		optionalApi "com.jayway.jsonpath:json-path:$jaywayJsonPathVersion"
 
 		optionalApi 'io.projectreactor:reactor-core'
-//		optionalApi "io.micrometer:micrometer-core:$micrometerVersion"
 
 		testImplementation 'io.projectreactor:reactor-test'
 		testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
 		testImplementation "org.hibernate.validator:hibernate-validator:$hibernateValidationVersion"
-
-		testImplementation project (':spring-pulsar-boot-autoconfigure')
 	}
 }
 
@@ -295,4 +351,15 @@ project ('spring-pulsar-sample-apps') {
 		api project (':spring-pulsar-boot-autoconfigure')
 	}
 }
+
+sonarqube {
+	properties {
+		property 'sonar.links.homepage', linkHomepage
+		property 'sonar.links.ci', linkCi
+		property 'sonar.links.issue', linkIssue
+		property 'sonar.links.scm', linkScmUrl
+		property 'sonar.links.scm_dev', linkScmDevConnection
+	}
+}
+
 

@@ -45,6 +45,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 
 /**
+ * Default implementation for {@link PulsarMessageListenerContainer}.
+ *
+ * @param <T> message type.
+ *
  * @author Soby Chacko
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
@@ -243,11 +247,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Messages<T> messages = null;
 				try {
 					// Always receive messages in batch mode.
-					messages = consumer.batchReceive();
+					messages = this.consumer.batchReceive();
 					// TODO Async receive - both record and batch.
 					if (this.containerProperties.isBatchListener()) {
 						try {
-							this.batchMessageHandler.received(consumer, messages);
+							this.batchMessageHandler.received(this.consumer, messages);
 							this.consumer.acknowledge(messages);
 						}
 						catch (Exception e) {
@@ -258,7 +262,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					else {
 						for (Message<T> message : messages) {
 							try {
-								this.listener.received(consumer, message);
+								this.listener.received(this.consumer, message);
 								if (this.containerProperties.getAckMode() != PulsarContainerProperties.AckMode.MANUAL) {
 									this.consumer.acknowledge(message);
 								}

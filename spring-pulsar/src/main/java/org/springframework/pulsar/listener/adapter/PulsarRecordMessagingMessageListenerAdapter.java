@@ -23,8 +23,15 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageListener;
 
 /**
+ * A {@link MessageListener MessageListener}
+ * adapter that invokes a configurable {@link HandlerAdapter}; used when the factory is
+ * configured for the listener to receive individual messages.
+ *
+ * @param <V> payload type.
+ *
  * @author Soby Chacko
  */
+@SuppressWarnings("serial")
 public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
 		implements MessageListener<V> {
 

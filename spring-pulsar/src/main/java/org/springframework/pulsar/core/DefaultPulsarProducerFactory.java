@@ -32,6 +32,10 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.util.CollectionUtils;
 
 /**
+ * Default implementation for {@link PulsarProducerFactory}.
+ *
+ * @param <T> producer type.
+ *
  * @author Soby Chacko
  */
 public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>, DisposableBean {
@@ -60,7 +64,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 			producerBuilder.loadConf(this.producerConfig);
 		}
 		this.producer = producerBuilder.create();
-		return producer;
+		return this.producer;
 	}
 
 	@Override
@@ -73,12 +77,12 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		}
 		producerBuilder.messageRouter(messageRouter);
 		this.producer = producerBuilder.create();
-		return producer;
+		return this.producer;
 	}
 
 	@Override
 	public Map<String, Object> getProducerConfig() {
-		return producerConfig;
+		return this.producerConfig;
 	}
 
 	@Override

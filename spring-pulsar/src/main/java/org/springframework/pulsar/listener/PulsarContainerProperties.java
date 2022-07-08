@@ -27,6 +27,8 @@ import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.util.Assert;
 
 /**
+ * Contains runtime properties for a listener container.
+ *
  * @author Soby Chacko
  */
 public class PulsarContainerProperties {
@@ -35,38 +37,41 @@ public class PulsarContainerProperties {
 
 	private Duration consumerStartTimeout = DEFAULT_CONSUMER_START_TIMEOUT;
 
+	/**
+	 * Enumeration for ack mode.
+	 */
 	public enum AckMode {
 
+		/**
+		 * Manual ack mode.
+		 */
 		MANUAL;
 	}
 
-	/**
-	 * Topic names.
-	 */
 	private String[] topics;
 
-	/**
-	 * Topic pattern.
-	 */
 	private Pattern topicsPattern;
 
 	private String subscriptionName;
 
 	private SubscriptionType subscriptionType;
 
-
 	private Schema<?> schema;
 
 	private SchemaType schemaType;
 
 	private Object messageListener;
+
 	private AsyncListenableTaskExecutor consumerTaskExecutor;
 
 	private int maxNumMessages = -1;
+
 	private int maxNumBytes = 10 * 1024 * 1024;
+
 	private int batchTimeout = 100;
 
 	private boolean batchListener;
+
 	private boolean batchAsyncReceive;
 
 	private boolean asyncReceive;
@@ -84,7 +89,7 @@ public class PulsarContainerProperties {
 	}
 
 	public Object getMessageListener() {
-		return messageListener;
+		return this.messageListener;
 	}
 
 	public void setMessageListener(Object messageListener) {
@@ -100,7 +105,7 @@ public class PulsarContainerProperties {
 	}
 
 	public SubscriptionType getSubscriptionType() {
-		return subscriptionType;
+		return this.subscriptionType;
 	}
 
 	public void setSubscriptionType(SubscriptionType subscriptionType) {
@@ -108,7 +113,7 @@ public class PulsarContainerProperties {
 	}
 
 	public int getMaxNumMessages() {
-		return maxNumMessages;
+		return this.maxNumMessages;
 	}
 
 	public void setMaxNumMessages(int maxNumMessages) {
@@ -116,7 +121,7 @@ public class PulsarContainerProperties {
 	}
 
 	public int getMaxNumBytes() {
-		return maxNumBytes;
+		return this.maxNumBytes;
 	}
 
 	public void setMaxNumBytes(int maxNumBytes) {
@@ -124,7 +129,7 @@ public class PulsarContainerProperties {
 	}
 
 	public int getBatchTimeout() {
-		return batchTimeout;
+		return this.batchTimeout;
 	}
 
 	public void setBatchTimeout(int batchTimeout) {
@@ -132,7 +137,7 @@ public class PulsarContainerProperties {
 	}
 
 	public boolean isBatchListener() {
-		return batchListener;
+		return this.batchListener;
 	}
 
 	public void setBatchListener(boolean batchListener) {
@@ -140,7 +145,7 @@ public class PulsarContainerProperties {
 	}
 
 	public boolean isBatchAsyncReceive() {
-		return batchAsyncReceive;
+		return this.batchAsyncReceive;
 	}
 
 	public void setBatchAsyncReceive(boolean batchAsyncReceive) {
@@ -148,7 +153,7 @@ public class PulsarContainerProperties {
 	}
 
 	public boolean isAsyncReceive() {
-		return asyncReceive;
+		return this.asyncReceive;
 	}
 
 	public void setAsyncReceive(boolean asyncReceive) {
@@ -156,7 +161,7 @@ public class PulsarContainerProperties {
 	}
 
 	public AckMode getAckMode() {
-		return ackMode;
+		return this.ackMode;
 	}
 
 	public void setAckMode(AckMode ackMode) {
@@ -178,7 +183,7 @@ public class PulsarContainerProperties {
 	}
 
 	public Schema<?> getSchema() {
-		return schema;
+		return this.schema;
 	}
 
 	public void setSchema(Schema<?> schema) {
@@ -186,7 +191,7 @@ public class PulsarContainerProperties {
 	}
 
 	public String[] getTopics() {
-		return topics;
+		return this.topics;
 	}
 
 	public void setTopics(String[] topics) {
@@ -194,7 +199,7 @@ public class PulsarContainerProperties {
 	}
 
 	public Pattern getTopicsPattern() {
-		return topicsPattern;
+		return this.topicsPattern;
 	}
 
 	public void setTopicsPattern(Pattern topicsPattern) {
@@ -202,7 +207,7 @@ public class PulsarContainerProperties {
 	}
 
 	public String getSubscriptionName() {
-		return subscriptionName;
+		return this.subscriptionName;
 	}
 
 	public void setSubscriptionName(String subscriptionName) {
@@ -210,7 +215,7 @@ public class PulsarContainerProperties {
 	}
 
 	public SchemaType getSchemaType() {
-		return schemaType;
+		return this.schemaType;
 	}
 
 	public void setSchemaType(SchemaType schemaType) {

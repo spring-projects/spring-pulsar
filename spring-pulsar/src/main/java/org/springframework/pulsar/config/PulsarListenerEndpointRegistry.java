@@ -43,6 +43,18 @@ import org.springframework.pulsar.support.EndpointHandlerMethod;
 import org.springframework.util.Assert;
 
 /**
+ * Creates the necessary {@link PulsarMessageListenerContainer} instances for the
+ * registered {@linkplain PulsarListenerEndpoint endpoints}. Also manages the
+ * lifecycle of the listener containers, in particular within the lifecycle
+ * of the application context.
+ *
+ * <p>Contrary to {@link PulsarMessageListenerContainer}s created manually, listener
+ * containers managed by registry are not beans in the application context and
+ * are not candidates for autowiring. Use {@link #getListenerContainers()} if
+ * you need to access this registry's listener containers for management purposes.
+ * If you need to access to a specific message listener container, use
+ * {@link #getListenerContainer(String)} with the id of the endpoint.
+ *
  * @author Soby Chacko
  */
 public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRegistry, DisposableBean, SmartLifecycle,
@@ -96,7 +108,7 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 	}
 
 	public void registerListenerContainer(PulsarListenerEndpoint endpoint, PulsarListenerContainerFactory<?> factory,
-										  boolean startImmediately) {
+										boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");
 
@@ -115,7 +127,7 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 	}
 
 	protected PulsarMessageListenerContainer createListenerContainer(PulsarListenerEndpoint endpoint,
-																	 PulsarListenerContainerFactory<?> factory) {
+																	PulsarListenerContainerFactory<?> factory) {
 
 		if (endpoint instanceof MethodPulsarListenerEndpoint) {
 			MethodPulsarListenerEndpoint<?> mkle = (MethodPulsarListenerEndpoint<?>) endpoint;

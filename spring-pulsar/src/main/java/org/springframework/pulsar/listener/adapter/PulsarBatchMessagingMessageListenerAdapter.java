@@ -25,16 +25,23 @@ import org.apache.pulsar.client.api.Messages;
 
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
 import org.springframework.pulsar.listener.PulsarBatchMessageListener;
+import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarBatchMessagingMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
 
 /**
+ * A {@link org.apache.pulsar.client.api.MessageListener MessageListener}
+ * adapter that invokes a configurable {@link HandlerAdapter}; used when the factory is
+ * configured for the listener to receive batches of messages.
+ *
+ * @param <V> payload type.
+ *
  * @author Soby Chacko
  */
-public class PulsarBatchMessagingMessageListenerAdapter <V> extends PulsarMessagingMessageListenerAdapter<V>
+@SuppressWarnings("serial")
+public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
 		implements PulsarBatchMessageListener<V> {
 
 	private PulsarBatchMessageConverter<V> batchMessageConverter = new PulsarBatchMessagingMessageConverter<V>();
@@ -78,7 +85,7 @@ public class PulsarBatchMessagingMessageListenerAdapter <V> extends PulsarMessag
 	}
 
 	protected void invoke(Object records, Consumer<V> consumer,
-						  final Message<?> messageArg) {
+						final Message<?> messageArg) {
 
 		Message<?> message = messageArg;
 		try {
@@ -91,7 +98,6 @@ public class PulsarBatchMessagingMessageListenerAdapter <V> extends PulsarMessag
 			throw e;
 		}
 	}
-
 
 	protected Message<?> toMessagingMessage(Messages<V> msg, Consumer<V> consumer) {
 

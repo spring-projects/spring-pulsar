@@ -22,9 +22,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.springframework.pulsar.annotation.PulsarListener;
-
 /**
+ * Container annotation for aggregating several {@link PulsarListener} annotations.
+ *
  * @author Soby Chacko
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })

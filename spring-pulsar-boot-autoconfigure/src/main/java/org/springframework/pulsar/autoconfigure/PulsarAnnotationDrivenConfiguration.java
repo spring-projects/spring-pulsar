@@ -28,6 +28,8 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 
 /**
+ * Configuration for Pulsar annotation-driven support.
+ *
  * @author Soby Chacko
  */
 @Configuration(proxyBeanMethods = false)

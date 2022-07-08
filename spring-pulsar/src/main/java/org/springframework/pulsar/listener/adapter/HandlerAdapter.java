@@ -20,6 +20,10 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 
 /**
+ * A wrapper for either an {@link InvocableHandlerMethod} or
+ * {@link DelegatingInvocableHandler}. All methods delegate to the
+ * underlying handler.
+ *
  * @author Soby Chacko
  */
 public class HandlerAdapter {
@@ -81,7 +85,7 @@ public class HandlerAdapter {
 	}
 
 	public InvocableHandlerMethod getInvokerHandlerMethod() {
-		return invokerHandlerMethod;
+		return this.invokerHandlerMethod;
 	}
 }
 

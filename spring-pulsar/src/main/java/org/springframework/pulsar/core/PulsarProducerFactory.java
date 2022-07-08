@@ -20,11 +20,14 @@ import java.util.Map;
 
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
-import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 /**
+ * Pulsar producer factory interface.
+ *
+ * @param <T> producer payload type.
+ *
  * @author Soby Chacko
  */
 public interface PulsarProducerFactory<T> {

@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -29,8 +31,6 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * @author Soby Chacko
@@ -62,11 +62,10 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 			final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(client, config);
 			final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			final CompletableFuture<MessageId> future = pulsarTemplate.sendAsync("hello john doe");
-			future.thenAccept(m -> System.out.println("Got " + m));
+			future.thenAccept(m -> { });
 			try {
 				Thread.sleep(2000);
-				final MessageId messageId = future.get();
-				System.out.println();
+				future.get();
 			}
 			catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();

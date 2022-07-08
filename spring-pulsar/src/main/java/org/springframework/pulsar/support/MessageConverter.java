@@ -17,6 +17,8 @@
 package org.springframework.pulsar.support;
 
 /**
+ * Pulsar specific message converter.
+ *
  * @author Soby Chacko
  */
 public interface MessageConverter {

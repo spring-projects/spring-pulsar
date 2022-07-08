@@ -20,9 +20,10 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 
 /**
+ * A registry for listener containers.
+ *
  * @author Soby Chacko
  */
 public interface PulsarListenerContainerRegistry {

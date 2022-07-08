@@ -1,7 +1,7 @@
 /*
  * Copyright 2022 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License";
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -20,9 +20,15 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 
 /**
+ * Utility class for Pulsar schema inference.
+ *
  * @author Soby Chacko
  */
-public class SchemaUtils {
+public final class SchemaUtils {
+
+	private SchemaUtils() {
+
+	}
 
 	@SuppressWarnings("unchecked")
 	public static <T>  Schema<T> getSchema(T message) {

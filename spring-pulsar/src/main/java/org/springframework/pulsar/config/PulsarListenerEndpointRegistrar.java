@@ -31,26 +31,30 @@ import org.springframework.util.Assert;
 import org.springframework.validation.Validator;
 
 /**
+ * Helper bean for registering {@link PulsarListenerEndpoint} with
+ * a {@link PulsarListenerEndpointRegistry}.
+ *
  * @author Soby Chacko
  */
 public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, InitializingBean {
 
 	private final List<PulsarListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
-	private PulsarListenerEndpointRegistry endpointRegistry;
 
+	private PulsarListenerEndpointRegistry endpointRegistry;
 
 	private List<HandlerMethodArgumentResolver> customMethodArgumentResolvers = new ArrayList<>();
 
 	private Validator validator;
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
+
 	private PulsarListenerContainerFactory<?> containerFactory;
+
 	private String containerFactoryBeanName;
+
 	private BeanFactory beanFactory;
 
-
 	private boolean startImmediately;
-
 
 	public void setEndpointRegistry(PulsarListenerEndpointRegistry endpointRegistry) {
 		this.endpointRegistry = endpointRegistry;
@@ -119,7 +123,6 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 			this.startImmediately = true;  // trigger immediate startup
 		}
 	}
-
 
 	private PulsarListenerContainerFactory<?> resolveContainerFactory(PulsarListenerEndpointDescriptor descriptor) {
 		if (descriptor.containerFactory != null) {

@@ -26,6 +26,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * Chained utility methods to simplify some Java repetitive code. Obtain a reference to
+ * the singleton {@link #INSTANCE} and then chain calls to the utility methods.
+ *
  * @author Soby Chacko
  */
 public final class JavaUtils {

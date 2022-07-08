@@ -22,10 +22,12 @@ import java.util.Collections;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
-import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.pulsar.support.MessageConverter;
 
 /**
+ * Adapter to avoid having to implement all methods.
+ *
  * @author Soby Chacko
  */
 public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
