@@ -1,7 +1,12 @@
 name: CI PRs
-on: [pull_request]
+
+on:
+  pull_request:
+    branches: [ main ]
+
 jobs:
   build:
+    if: github.repository == 'spring-projects-experimental/spring-pulsar'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -11,6 +16,14 @@ jobs:
         with:
           java-version: 17
           distribution: 'temurin'
-          cache: gradle
-      - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+      - name: Run Gradle build
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: clean build
+      - name: Capture Test Results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: '*/build/reports/tests/**/*.*'
+          retention-days: 3
