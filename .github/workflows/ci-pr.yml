@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
 jobs:
   build:
     if: github.repository == 'spring-projects-experimental/spring-pulsar'
@@ -15,11 +19,22 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: 17
-          distribution: 'temurin'
-      - name: Run Gradle build
+          distribution: temurin
+      - name: Setup Gradle user name
+        run: |
+          mkdir -p ~/.gradle
+          echo 'systemProp.user.name=spring-builds+github' >> ~/.gradle/gradle.properties
+      - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        with:
-          arguments: clean build
+        env:
+          GRADLE_USER_HOME: ~/.gradle
+      - name: Run Gradle build
+        #        env:
+        #          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
+        #          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+        #          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+        run: |
+          ./gradlew clean build -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
       - name: Capture Test Results
         if: failure()
         uses: actions/upload-artifact@v3

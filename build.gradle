@@ -109,7 +109,7 @@ allprojects {
 subprojects { subproject ->
 	apply plugin: 'java-library'
 	apply plugin: 'java'
-	apply from: "${rootProject.projectDir}/publish-maven.gradle"
+	apply from: "${rootProject.projectDir}/gradle/publish-artifactory.gradle"
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'
 	apply plugin: 'jacoco'
@@ -361,4 +361,19 @@ sonarqube {
 	}
 }
 
+// skip publishing the root module
+artifactoryPublish.skip = true
 
+artifactory {
+	contextUrl = 'https://repo.spring.io'
+	publish {
+		repository {
+			repoKey = 'libs-snapshot-local'
+			username = "${artifactoryUsername}"
+			password = "${artifactoryPassword}"
+		}
+		defaults {
+			publications('mavenJava')
+		}
+	}
+}
