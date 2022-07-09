@@ -364,16 +364,18 @@ sonarqube {
 // skip publishing the root module
 artifactoryPublish.skip = true
 
-artifactory {
-	contextUrl = 'https://repo.spring.io'
-	publish {
-		repository {
-			repoKey = 'libs-snapshot-local'
-			username = "${artifactoryUsername}"
-			password = "${artifactoryPassword}"
-		}
-		defaults {
-			publications('mavenJava')
+if (project.hasProperty('artifactoryUsername')) {
+	artifactory {
+		contextUrl = 'https://repo.spring.io'
+		publish {
+			repository {
+				repoKey = 'libs-snapshot-local'
+				username = "${artifactoryUsername}"
+				password = "${artifactoryPassword}"
+			}
+			defaults {
+				publications('mavenJava')
+			}
 		}
 	}
 }
