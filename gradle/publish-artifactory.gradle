@@ -26,9 +26,18 @@ publishing {
                     connection = linkScmConnection
                     developerConnection = linkScmDevConnection
                 }
-//                developers {
-//
-//                }
+                developers {
+                    developer {
+                        id = "schacko"
+                        name = "Soby Chacko"
+                        email = "chackos@vmware.com"
+                    }
+                    developer {
+                        id = "onobc"
+                        name = "Chris Bono"
+                        email = "cbono@vmware.com"
+                    }
+                }
                 issueManagement {
                     system = 'GitHub'
                     url = linkIssue
