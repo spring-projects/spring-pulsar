@@ -51,8 +51,7 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 		try (ConfigurableApplicationContext context = app.run("--spring.pulsar.client.serviceUrl=" + AbstractContainerBaseTests.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive");
-			pulsarTemplate.send("John Doe");
+			pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
 			final boolean await = latch1.await(20, TimeUnit.SECONDS);
 			assertThat(await).isTrue();
 		}
@@ -66,9 +65,8 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 		try (ConfigurableApplicationContext context = app.run("--spring.pulsar.client.serviceUrl=" + AbstractContainerBaseTests.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive");
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("John Doe");
+				pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
 			}
 			final boolean await = latch2.await(10, TimeUnit.SECONDS);
 			assertThat(await).isTrue();

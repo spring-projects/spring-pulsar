@@ -36,21 +36,23 @@ public interface PulsarProducerFactory<T> {
 	/**
 	 * Create a producer.
 	 *
+	 * @param topic the topic the producer will send messages to or {@code null} to use the default topic
 	 * @param schema the schema of the messages to be sent
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(Schema<T> schema) throws PulsarClientException;
+	Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException;
 
 	/**
 	 * Create a producer.
 	 *
+	 * @param topic the topic the producer will send messages to or {@code null} to use the default topic
 	 * @param schema the schema of the messages to be sent
 	 * @param messageRouter the optional message router to use
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException;
+	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException;
 
 	/**
 	 * Return a map of configuration options to use when creating producers.

@@ -43,9 +43,9 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
-	private final Map<String, Object> producerConfig = new HashMap<>();
+	// TODO add caching of producers per schema/topic w/ ttl
 
-	private Producer<T> producer;
+	private final Map<String, Object> producerConfig = new HashMap<>();
 
 	private final PulsarClient pulsarClient;
 
@@ -57,12 +57,13 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	@Override
-	public Producer<T> createProducer(Schema<T> schema) throws PulsarClientException {
-		return createProducer(schema, null);
+	public Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException {
+		return createProducer(topic, schema, null);
 	}
 
 	@Override
-	public Producer<T> createProducer(Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
+		this.logger.trace(() -> String.format("Creating producer for '%s' topic", topic));
 		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
 		if (!CollectionUtils.isEmpty(this.producerConfig)) {
 			producerBuilder.loadConf(this.producerConfig);
@@ -70,8 +71,10 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		if (messageRouter != null) {
 			producerBuilder.messageRouter(messageRouter);
 		}
-		this.producer = producerBuilder.create();
-		return this.producer;
+		if (topic != null) {
+			producerBuilder.topic(topic);
+		}
+		return producerBuilder.create();
 	}
 
 	@Override
@@ -80,8 +83,6 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	@Override
-	public void destroy() throws Exception {
-		this.logger.info("Closing producer");
-		this.producer.close();
+	public void destroy() {
 	}
 }

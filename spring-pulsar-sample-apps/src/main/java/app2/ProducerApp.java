@@ -42,13 +42,13 @@ public class ProducerApp {
 
 	@Bean
 	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("failover-demo-topic");
+		String topic = "failover-demo-topic";
 		return args -> {
 			for (int i = 0; i < 100; i++) {
-				pulsarTemplate.sendAsync("hello john doex " + new Random().nextInt(), new FooRouter());
-				pulsarTemplate.sendAsync("hello alice doex " + new Random().nextInt(), new BarRouter());
+				pulsarTemplate.sendAsync(topic, "hello john doex " + new Random().nextInt(), new FooRouter());
+				pulsarTemplate.sendAsync(topic, "hello alice doex " + new Random().nextInt(), new BarRouter());
 				if (i % 2 == 0) {
-					pulsarTemplate.sendAsync("hello buzz doex " + new Random().nextInt(), new BuzzRouter());
+					pulsarTemplate.sendAsync(topic, "hello buzz doex " + new Random().nextInt(), new BuzzRouter());
 				}
 				Thread.sleep(5_000);
 			}

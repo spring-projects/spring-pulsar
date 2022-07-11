@@ -41,12 +41,12 @@ public class FailoverConsumerApp {
 
 	@Bean
 	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("failover-demo-topic");
+		String topic = "failover-demo-topic";
 		return args -> {
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.sendAsync("hello john doe 0 ", new FooRouter());
-				pulsarTemplate.sendAsync("hello alice doe 1", new BarRouter());
-				pulsarTemplate.sendAsync("hello buzz doe 2", new BuzzRouter());
+				pulsarTemplate.sendAsync(topic, "hello john doe 0 ", new FooRouter());
+				pulsarTemplate.sendAsync(topic, "hello alice doe 1", new BarRouter());
+				pulsarTemplate.sendAsync(topic, "hello buzz doe 2", new BuzzRouter());
 				Thread.sleep(1_000);
 			}
 			System.exit(0);
