@@ -32,15 +32,16 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.util.CollectionUtils;
 
 /**
- * Default implementation for {@link PulsarProducerFactory}.
+ * Default implementation of {@link PulsarProducerFactory}.
  *
  * @param <T> producer type.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>, DisposableBean {
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
 	private final Map<String, Object> producerConfig = new HashMap<>();
 
@@ -57,25 +58,18 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema) throws PulsarClientException {
-
-		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
-
-		if (!CollectionUtils.isEmpty(this.producerConfig)) {
-			producerBuilder.loadConf(this.producerConfig);
-		}
-		this.producer = producerBuilder.create();
-		return this.producer;
+		return createProducer(schema, null);
 	}
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
-
 		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
-
 		if (!CollectionUtils.isEmpty(this.producerConfig)) {
 			producerBuilder.loadConf(this.producerConfig);
 		}
-		producerBuilder.messageRouter(messageRouter);
+		if (messageRouter != null) {
+			producerBuilder.messageRouter(messageRouter);
+		}
 		this.producer = producerBuilder.create();
 		return this.producer;
 	}
@@ -87,7 +81,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public void destroy() throws Exception {
-		this.logger.info("Closing the producer");
+		this.logger.info("Closing producer");
 		this.producer.close();
 	}
 }

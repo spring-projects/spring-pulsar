@@ -25,10 +25,10 @@ import java.lang.annotation.Target;
 import org.springframework.context.annotation.Import;
 
 /**
- * Enable Pulsar listener annotated endpoints that are created under the covers by a
- * {@link org.springframework.pulsar.config.AbstractPulsarListenerContainerFactory}.
+ * Enables detection of {@link PulsarListener} annotations on any Spring-managed bean in the container.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -36,4 +36,3 @@ import org.springframework.context.annotation.Import;
 @Import(PulsarListenerConfigurationSelector.class)
 public @interface EnablePulsar {
 }
-

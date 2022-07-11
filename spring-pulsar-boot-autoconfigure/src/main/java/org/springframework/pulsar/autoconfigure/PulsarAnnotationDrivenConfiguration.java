@@ -22,8 +22,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
-import org.springframework.pulsar.config.PulsarListenerConfigUtils;
-import org.springframework.pulsar.config.PulsarListenerContainerFactoryImpl;
+import org.springframework.pulsar.config.DefaultPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 
@@ -31,6 +31,7 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
  * Configuration for Pulsar annotation-driven support.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EnablePulsar.class)
@@ -44,9 +45,9 @@ public class PulsarAnnotationDrivenConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean(name = "pulsarListenerContainerFactory")
-	PulsarListenerContainerFactoryImpl<?, ?> pulsarListenerContainerFactory(
+	DefaultPulsarListenerContainerFactory<?, ?> pulsarListenerContainerFactory(
 			ObjectProvider<PulsarConsumerFactory<Object>> pulsarConsumerFactory) {
-		PulsarListenerContainerFactoryImpl<Object, Object> factory = new PulsarListenerContainerFactoryImpl<>();
+		DefaultPulsarListenerContainerFactory<Object, Object> factory = new DefaultPulsarListenerContainerFactory<>();
 
 		final PulsarConsumerFactory<Object> pulsarConsumerFactory1 = pulsarConsumerFactory.getIfAvailable();
 		factory.setPulsarConsumerFactory(pulsarConsumerFactory1);
@@ -68,7 +69,7 @@ public class PulsarAnnotationDrivenConfiguration {
 
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
-	@ConditionalOnMissingBean(name = PulsarListenerConfigUtils.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
+	@ConditionalOnMissingBean(name = PulsarListenerBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
 	static class EnableKafkaConfiguration {
 
 	}

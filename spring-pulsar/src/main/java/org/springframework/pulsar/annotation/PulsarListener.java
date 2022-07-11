@@ -25,6 +25,8 @@ import java.lang.annotation.Target;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.pulsar.config.PulsarListenerContainerFactory;
+import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 
 /**
  * Annotation that marks a method to be the target of a Pulsar message listener on the
@@ -43,6 +45,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
  * </p>
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
@@ -55,7 +58,7 @@ public @interface PulsarListener {
 	 * <p>If none is specified an auto-generated id is used.
 	 * <p>SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
 	 * @return the {@code id} for the container managing for this endpoint.
-	 * @see org.springframework.pulsar.config.PulsarListenerEndpointRegistry#getListenerContainer(String)
+	 * @see PulsarListenerEndpointRegistry#getListenerContainer(String)
 	 */
 	String id() default "";
 
@@ -74,8 +77,13 @@ public @interface PulsarListener {
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
-	 * Specific container factory to use on this listener.
-	 * @return {@code containerFactory} to use on this Pulsar listener.
+	 * The bean name of the {@link PulsarListenerContainerFactory}
+	 * to use to create the message listener container responsible to serve this endpoint.
+	 * <p>
+	 * If not specified, the default container factory is used, if any. If a SpEL
+	 * expression is provided ({@code #{...}}), the expression can either evaluate to a
+	 * container factory instance or a bean name.
+	 * @return the container factory bean name.
 	 */
 	String containerFactory() default "";
 
@@ -108,7 +116,7 @@ public @interface PulsarListener {
 	 *
 	 * @return whether this listener is in batch mode or not.
 	 */
-	String batch() default "";
+	boolean batch() default false;
 
 	/**
 	 * A pseudo bean name used in SpEL expressions within this annotation to reference
@@ -120,5 +128,25 @@ public @interface PulsarListener {
 	 */
 	String beanRef() default "__listener";
 
+	/**
+	 * Pulsar consumer properties; they will supersede any properties with the same name
+	 * defined in the consumer factory (if the consumer factory supports property overrides).
+	 * <p>
+	 * <b>Supported Syntax</b>
+	 * <p>The supported syntax for key-value pairs is the same as the
+	 * syntax defined for entries in a Java
+	 * {@linkplain java.util.Properties#load(java.io.Reader) properties file}:
+	 * <ul>
+	 * <li>{@code key=value}</li>
+	 * <li>{@code key:value}</li>
+	 * <li>{@code key value}</li>
+	 * </ul>
+	 * {@code group.id} and {@code client.id} are ignored.
+	 * <p>SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * SpEL expressions must resolve to a {@link String}, a @{link String[]} or a
+	 * {@code Collection<String>} where each member of the array or collection is a
+	 * property name + value with the above formats.
+	 * @return the properties.
+	 */
 	String[] properties() default {};
 }

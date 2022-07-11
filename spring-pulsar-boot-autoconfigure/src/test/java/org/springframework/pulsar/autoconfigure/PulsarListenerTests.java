@@ -33,7 +33,10 @@ import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.PulsarTemplate;
 
 /**
+ * Tests for {@link PulsarListener}.
+ *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 class PulsarListenerTests extends AbstractContainerBaseTests {
 
@@ -86,7 +89,7 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 	@Import(PulsarAutoConfiguration.class)
 	public static class BatchListenerConfig {
 
-		@PulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive", batch = "true")
+		@PulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive", batch = true)
 		public void listen(List<String> foo) {
 			foo.forEach(t -> latch2.countDown());
 		}

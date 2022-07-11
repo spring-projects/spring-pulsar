@@ -47,7 +47,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -61,7 +60,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.MethodIntrospector;
-import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -80,8 +78,9 @@ import org.springframework.messaging.handler.annotation.support.MessageHandlerMe
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.config.MethodPulsarListenerEndpoint;
-import org.springframework.pulsar.config.PulsarListenerConfigUtils;
+import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
+import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.util.Assert;
@@ -92,12 +91,12 @@ import org.springframework.validation.Validator;
 /**
  * Bean post-processor that registers methods annotated with {@link PulsarListener}
  * to be invoked by a Pulsar message listener container created under the covers
- * by a {@link org.springframework.pulsar.config.PulsarListenerContainerFactory}
+ * by a {@link PulsarListenerContainerFactory}
  * according to the parameters of the annotation.
  *
  * <p>Annotated methods can use flexible arguments as defined by {@link PulsarListener}.
  *
- * <p>This post-processor is automatically registered by Spring's {@link EnablePulsar}
+ * <p>This post-processor is automatically registered by the {@link EnablePulsar}
  * annotation.
  *
  * <p>Auto-detect any {@link PulsarListenerConfigurer} instances in the container,
@@ -109,13 +108,14 @@ import org.springframework.validation.Validator;
  * @param <V> the value type.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  *
  * @see PulsarListener
  * @see EnablePulsar
  * @see PulsarListenerConfigurer
  * @see PulsarListenerEndpointRegistrar
  * @see PulsarListenerEndpointRegistry
- * @see org.springframework.pulsar.config.PulsarListenerEndpoint
+ * @see PulsarListenerEndpoint
  * @see MethodPulsarListenerEndpoint
  */
 public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
@@ -136,17 +136,20 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	private static final String GENERATED_ID_PREFIX = "org.springframework.Pulsar.PulsarListenerEndpointContainer#";
 
 	private ApplicationContext applicationContext;
+
 	private BeanFactory beanFactory;
+
 	private BeanExpressionResolver resolver;
+
 	private BeanExpressionContext expressionContext;
+
 	private PulsarListenerEndpointRegistry endpointRegistry;
 
 	private String defaultContainerFactoryBeanName = DEFAULT_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME;
 
 	private final PulsarListenerEndpointRegistrar registrar = new PulsarListenerEndpointRegistrar();
-	private final PulsarHandlerMethodFactoryAdapter messageHandlerMethodFactory =
-			new PulsarHandlerMethodFactoryAdapter();
 
+	private final PulsarHandlerMethodFactoryAdapter messageHandlerMethodFactory = new PulsarHandlerMethodFactoryAdapter();
 
 	private Charset charset = StandardCharsets.UTF_8;
 
@@ -179,23 +182,20 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	}
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
+	public void afterPropertiesSet() {
 		buildEnhancer();
 	}
 
 	private void buildEnhancer() {
 		if (this.applicationContext != null) {
-			Map<String, AnnotationEnhancer> enhancersMap =
-					this.applicationContext.getBeansOfType(AnnotationEnhancer.class, false, false);
-			if (enhancersMap.size() > 0) {
-				List<AnnotationEnhancer> enhancers = enhancersMap.values()
-						.stream()
-						.sorted(new OrderComparator())
-						.collect(Collectors.toList());
+			List<AnnotationEnhancer> enhancers = this.applicationContext
+					.getBeanProvider(AnnotationEnhancer.class, false)
+					.orderedStream()
+					.toList();
+			if (!enhancers.isEmpty()) {
 				this.enhancer = (attrs, element) -> {
-					Map<String, Object> newAttrs = attrs;
 					for (AnnotationEnhancer enh : enhancers) {
-						newAttrs = enh.apply(newAttrs, element);
+						attrs = enh.apply(attrs, element);
 					}
 					return attrs;
 				};
@@ -207,20 +207,15 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	public void afterSingletonsInstantiated() {
 		this.registrar.setBeanFactory(this.beanFactory);
 
-		if (this.beanFactory instanceof ListableBeanFactory) {
-			Map<String, PulsarListenerConfigurer> instances =
-					((ListableBeanFactory) this.beanFactory).getBeansOfType(PulsarListenerConfigurer.class);
-			for (PulsarListenerConfigurer configurer : instances.values()) {
-				configurer.configurePulsarListeners(this.registrar);
-			}
-		}
+		this.beanFactory.getBeanProvider(PulsarListenerConfigurer.class)
+				.forEach(c -> c.configurePulsarListeners(this.registrar));
 
 		if (this.registrar.getEndpointRegistry() == null) {
 			if (this.endpointRegistry == null) {
 				Assert.state(this.beanFactory != null,
 						"BeanFactory must be set to find endpoint registry by bean name");
 				this.endpointRegistry = this.beanFactory.getBean(
-						PulsarListenerConfigUtils.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
+						PulsarListenerBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
 						PulsarListenerEndpointRegistry.class);
 			}
 			this.registrar.setEndpointRegistry(this.endpointRegistry);
@@ -230,7 +225,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
 
-		// Set the custom handler method factory once resolved by the configurer
+		// Set the custom handler method factory once resolved by the configurer - otherwise register default formatters
 		MessageHandlerMethodFactory handlerMethodFactory = this.registrar.getMessageHandlerMethodFactory();
 		if (handlerMethodFactory != null) {
 			this.messageHandlerMethodFactory.setHandlerMethodFactory(handlerMethodFactory);
@@ -252,7 +247,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
 		if (!this.nonAnnotatedClasses.contains(bean.getClass())) {
 			Class<?> targetClass = AopUtils.getTargetClass(bean);
-			Collection<PulsarListener> classLevelListeners = findListenerAnnotations(targetClass);
 			Map<Method, Set<PulsarListener>> annotatedMethods = MethodIntrospector.selectMethods(targetClass,
 					(MethodIntrospector.MetadataLookup<Set<PulsarListener>>) method -> {
 						Set<PulsarListener> listenerMethods = findListenerAnnotations(method);
@@ -360,9 +354,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
 		}
 		resolvePulsarProperties(endpoint, pulsarListener.properties());
-		if (StringUtils.hasText(pulsarListener.batch())) {
-			endpoint.setBatchListener(Boolean.parseBoolean(pulsarListener.batch()));
-		}
+		endpoint.setBatchListener(pulsarListener.batch());
 		endpoint.setBeanFactory(this.beanFactory);
 	}
 
@@ -588,26 +580,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 
 	private void addFormatters(FormatterRegistry registry) {
-		for (Converter<?, ?> converter : getBeansOfType(Converter.class)) {
-			registry.addConverter(converter);
-		}
-		for (GenericConverter converter : getBeansOfType(GenericConverter.class)) {
-			registry.addConverter(converter);
-		}
-		for (Formatter<?> formatter : getBeansOfType(Formatter.class)) {
-			registry.addFormatter(formatter);
-		}
-	}
-
-	private <T> Collection<T> getBeansOfType(Class<T> type) {
-		if (PulsarListenerAnnotationBeanPostProcessor.this.beanFactory instanceof ListableBeanFactory) {
-			return ((ListableBeanFactory) PulsarListenerAnnotationBeanPostProcessor.this.beanFactory)
-					.getBeansOfType(type)
-					.values();
-		}
-		else {
-			return Collections.emptySet();
-		}
+		this.beanFactory.getBeanProvider(Converter.class).forEach(registry::addConverter);
+		this.beanFactory.getBeanProvider(GenericConverter.class).forEach(registry::addConverter);
+		this.beanFactory.getBeanProvider(Formatter.class).forEach(registry::addFormatter);
 	}
 
 	@Override
@@ -802,4 +777,3 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 
 }
-

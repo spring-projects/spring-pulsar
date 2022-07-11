@@ -32,8 +32,9 @@ import org.springframework.util.StringUtils;
  * @param <T> message type in the listener.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
-public class PulsarListenerContainerFactoryImpl<C, T> extends AbstractPulsarListenerContainerFactory<DefaultPulsarMessageListenerContainer<T>, T> {
+public class DefaultPulsarListenerContainerFactory<C, T> extends AbstractPulsarListenerContainerFactory<DefaultPulsarMessageListenerContainer<T>, T> {
 
 	@Override
 	protected DefaultPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
