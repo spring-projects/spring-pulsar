@@ -16,16 +16,22 @@
 
 package org.springframework.pulsar.config;
 
+import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.PulsarClient;
 
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.core.log.LogAccessor;
 
 /**
- * {@link org.springframework.beans.factory.FactoryBean} implementation for the {@link PulsarClient}.
+ * {@link FactoryBean} implementation for the {@link PulsarClient}.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarClientFactoryBean extends AbstractFactoryBean<PulsarClient> {
+
+	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
 	private final PulsarClientConfiguration pulsarClientConfiguration;
 
@@ -48,7 +54,7 @@ public class PulsarClientFactoryBean extends AbstractFactoryBean<PulsarClient> {
 	@Override
 	protected void destroyInstance(PulsarClient instance) throws Exception {
 		if (instance != null) {
-			this.logger.info("Closing the client: " + instance);
+			this.logger.info(() -> "Closing client " + instance);
 			instance.close();
 		}
 	}

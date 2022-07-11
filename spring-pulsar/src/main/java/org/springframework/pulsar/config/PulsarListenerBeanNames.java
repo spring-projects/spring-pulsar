@@ -17,29 +17,23 @@
 package org.springframework.pulsar.config;
 
 /**
- * Configuration constants for internal sharing across subpackages.
+ * Constants for bean names that need to be accessed in multiple places by name.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
-public abstract class PulsarListenerConfigUtils {
+public abstract class PulsarListenerBeanNames {
 
 	/**
-	 * The bean name of the internally managed Kafka listener annotation processor.
+	 * The bean name of the internally managed Pulsar listener annotation processor.
 	 */
 	public static final String PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME =
 			"org.springframework.pulsar.config.internalKafkaListenerAnnotationProcessor";
 
 	/**
-	 * The bean name of the internally managed Kafka listener endpoint registry.
+	 * The bean name of the internally managed Pulsar listener endpoint registry.
 	 */
 	public static final String PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME =
 			"org.springframework.pulsar.config.internalKafkaListenerEndpointRegistry";
 
-	/**
-	 * The bean name of the internally managed Kafka consumer back off manager.
-	 */
-	public static final String PULSAR_CONSUMER_BACK_OFF_MANAGER_BEAN_NAME =
-			"org.springframework.pulsar.config.internalKafkaConsumerBackOffManager";
-
 }
-

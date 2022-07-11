@@ -23,9 +23,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Container annotation for aggregating several {@link PulsarListener} annotations.
+ * Container annotation that aggregates several {@link PulsarListener} annotations.
+ * <p>
+ * Can be used natively, declaring several nested {@link PulsarListener} annotations.
+ * Can also be used in conjunction with Java 8's support for repeatable annotations,
+ * where {@link PulsarListener} can simply be declared several times on the same method
+ * (or class), implicitly generating this container annotation.
  *
  * @author Soby Chacko
+ * @author Chris Bono
+ *
+ * @see PulsarListener
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)

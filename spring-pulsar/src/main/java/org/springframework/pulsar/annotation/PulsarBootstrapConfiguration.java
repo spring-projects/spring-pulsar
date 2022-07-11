@@ -20,7 +20,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.pulsar.config.PulsarListenerConfigUtils;
+import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 
 /**
@@ -32,6 +32,7 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
  * annotation.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  *
  * @see PulsarListenerAnnotationBeanPostProcessor
  * @see PulsarListenerEndpointRegistry
@@ -41,15 +42,13 @@ public class PulsarBootstrapConfiguration implements ImportBeanDefinitionRegistr
 
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-		if (!registry.containsBeanDefinition(
-				PulsarListenerConfigUtils.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
-
-			registry.registerBeanDefinition(PulsarListenerConfigUtils.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME,
+		if (!registry.containsBeanDefinition(PulsarListenerBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+			registry.registerBeanDefinition(PulsarListenerBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME,
 					new RootBeanDefinition(PulsarListenerAnnotationBeanPostProcessor.class));
 		}
 
-		if (!registry.containsBeanDefinition(PulsarListenerConfigUtils.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)) {
-			registry.registerBeanDefinition(PulsarListenerConfigUtils.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
+		if (!registry.containsBeanDefinition(PulsarListenerBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)) {
+			registry.registerBeanDefinition(PulsarListenerBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
 					new RootBeanDefinition(PulsarListenerEndpointRegistry.class));
 		}
 	}

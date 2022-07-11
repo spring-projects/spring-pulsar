@@ -24,17 +24,38 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 /**
- * Pulsar producer factory interface.
+ * The strategy to produce a {@link Producer} instance(s).
  *
- * @param <T> producer payload type.
+ * @param <T> producer payload type
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public interface PulsarProducerFactory<T> {
 
+	/**
+	 * Create a producer.
+	 *
+	 * @param schema the schema of the messages to be sent
+	 * @return the producer
+	 * @throws PulsarClientException if any error occurs
+	 */
 	Producer<T> createProducer(Schema<T> schema) throws PulsarClientException;
 
+	/**
+	 * Create a producer.
+	 *
+	 * @param schema the schema of the messages to be sent
+	 * @param messageRouter the optional message router to use
+	 * @return the producer
+	 * @throws PulsarClientException if any error occurs
+	 */
 	Producer<T> createProducer(Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException;
 
+	/**
+	 * Return a map of configuration options to use when creating producers.
+	 *
+	 * @return the map of configuration options
+	 */
 	Map<String, Object> getProducerConfig();
 }
