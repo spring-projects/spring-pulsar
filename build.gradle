@@ -142,12 +142,6 @@ subprojects { subproject ->
 		toolVersion = '0.8.7'
 	}
 
-	configurations {
-		all {
-			exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-		}
-	}
-
 	// dependencies that are common across all java projects
 	dependencies {
 		implementation "com.google.code.findbugs:jsr305:$googleJsr305Version"

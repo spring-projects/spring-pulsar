@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -123,7 +124,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			this.listenerConsumer.consumer.close();
 		}
 		catch (PulsarClientException e) {
-			e.printStackTrace();
+			this.logger.error(e, () -> "Error closing Pulsar Client.");
 		}
 	}
 
@@ -209,7 +210,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						batchReceivePolicy, propertiesToOverride);
 			}
 			catch (PulsarClientException e) {
-				e.printStackTrace(); //TODO - Proper logging
+				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
 			}
 
 		}
@@ -221,7 +222,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				propertiesToOverride.put("subscriptionType", subscriptionType);
 			}
 			final String[] topics = pulsarContainerProperties.getTopics();
-			final HashSet<String> strings = new HashSet<>(Arrays.stream(topics).toList());
+			final Set<String> strings = new HashSet<>(Arrays.stream(topics).toList());
 			if (!strings.isEmpty()) {
 				propertiesToOverride.put("topicNames", strings);
 			}
