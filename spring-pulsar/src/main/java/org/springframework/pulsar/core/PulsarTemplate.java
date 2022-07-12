@@ -16,125 +16,88 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
+import org.springframework.core.log.LogAccessor;
+import org.springframework.util.StringUtils;
+
 /**
- * Template implementation for publishing to Pulsar topics.
+ * A thread-safe template for executing high-level Pulsar operations.
  *
- * @param <T> message type.
+ * @param <T> the message payload type
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
-public class PulsarTemplate<T> {
+public class PulsarTemplate<T> implements PulsarOperations<T> {
 
-	private final Map<SchemaTopic, Producer<T>> producerCache = new ConcurrentHashMap<>();
+	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
-	private final PulsarProducerFactory<T> pulsarProducerFactory;
+	private final PulsarProducerFactory<T> producerFactory;
 
-	private String defaultTopicName;
-
-	private Schema<T> schema;
-
-	public PulsarTemplate(PulsarProducerFactory<T> pulsarProducerFactory) {
-		this.pulsarProducerFactory = pulsarProducerFactory;
+	/**
+	 * Constructs a template instance.
+	 * @param producerFactory the producer factory used to create the backing Pulsar producers.
+	 */
+	public PulsarTemplate(PulsarProducerFactory<T> producerFactory) {
+		this.producerFactory = producerFactory;
 	}
 
-	public MessageId send(T message) throws PulsarClientException {
-		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
-		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
-		Producer<T> producer = this.producerCache.get(schemaTopic);
-		if (producer == null) {
-			producer = this.pulsarProducerFactory.createProducer(schema);
-			this.producerCache.put(schemaTopic, producer);
+	@Override
+	public MessageId send(String topic, T message) throws PulsarClientException {
+		try {
+			return this.sendAsync(topic, message).get();
 		}
-		return producer.send(message);
-	}
-
-	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
-		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, null);
-		Producer<T> producer = this.producerCache.get(schemaTopic);
-		if (producer == null) {
-			producer = this.pulsarProducerFactory.createProducer(schema);
-			this.producerCache.put(schemaTopic, producer);
+		catch (Exception ex) {
+			throw PulsarClientException.unwrap(ex);
 		}
-		return producer.sendAsync(message);
 	}
 
-	public CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter) throws PulsarClientException {
-		final Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
-		final SchemaTopic schemaTopic = getSchemaTopic(schema, this.pulsarProducerFactory, messageRouter);
-		Producer<T> producer = this.producerCache.get(schemaTopic);
-		if (producer == null) {
-			producer = this.pulsarProducerFactory.createProducer(schema, messageRouter);
-			this.producerCache.put(schemaTopic, producer);
+	@Override
+	public CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+		final String topicName = resolveTopicName(topic);
+		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
+		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
+		return producer.sendAsync(message)
+				.whenComplete((msgId, ex) -> {
+					if (ex == null) {
+						this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
+						// TODO success metrics
+					}
+					else {
+						this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
+						// TODO fail metrics
+					}
+					closeProducerAsync(producer);
+				});
+	}
+
+	private String resolveTopicName(String userSpecifiedTopic) {
+		if (StringUtils.hasText(userSpecifiedTopic)) {
+			return userSpecifiedTopic;
 		}
-		return producer.sendAsync(message);
+		return Optional.ofNullable(this.producerFactory.getProducerConfig().get("topicName"))
+				.map(Object::toString)
+				.orElseThrow(() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
 	}
 
-	private SchemaTopic getSchemaTopic(Schema<T> schema, PulsarProducerFactory<T> pulsarProducerFactory, MessageRouter messageRouter) {
-		return new SchemaTopic(schema, (String) pulsarProducerFactory.getProducerConfig().get("topicName"), messageRouter);
+	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+		Schema<T> schema = SchemaUtils.getSchema(message);
+		return this.producerFactory.createProducer(topic, schema, messageRouter);
 	}
 
-	public void setDefaultTopicName(String defaultTopicName) {
-		this.defaultTopicName = defaultTopicName;
-		this.pulsarProducerFactory.getProducerConfig().put("topicName", defaultTopicName);
-	}
-
-	public Schema<T> getSchema() {
-		return this.schema;
-	}
-
-	public void setSchema(Schema<T> schema) {
-		this.schema = schema;
-	}
-
-	private class SchemaTopic {
-
-		final Schema<T> schema;
-		final String topicName;
-		final MessageRouter messageRouter;
-
-		SchemaTopic(Schema<T> schema, String topicName, MessageRouter messageRouter) {
-			this.schema = schema;
-			this.topicName = topicName;
-			this.messageRouter = messageRouter;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) {
-				return true;
-			}
-			if (o == null || getClass() != o.getClass()) {
-				return false;
-			}
-			@SuppressWarnings("unchecked")
-			SchemaTopic that = (SchemaTopic) o;
-			if (this.messageRouter == null && that.messageRouter == null) {
-				return this.schema.equals(that.schema) && this.topicName.equals(that.topicName);
-			}
-			else if (this.messageRouter == null) {
-				return false;
-			}
-			else if (that.messageRouter == null) {
-				return false;
-			}
-			return this.schema.equals(that.schema) && this.topicName.equals(that.topicName) && this.messageRouter.equals(that.messageRouter);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.schema, this.topicName, this.messageRouter);
-		}
+	private void closeProducerAsync(Producer<T> producer) {
+		producer.closeAsync().exceptionally(e -> {
+			this.logger.warn(e, () -> String.format("Failed to close producer %s:%s", producer.getProducerName(), producer.getTopic()));
+			return null;
+		});
 	}
 }

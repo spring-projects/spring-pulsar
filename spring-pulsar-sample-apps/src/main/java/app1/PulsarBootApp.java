@@ -34,15 +34,15 @@ public class PulsarBootApp {
 
 	@Bean
 	public ApplicationRunner runner(PulsarTemplate<Foo> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("hello-pulsar-exclusive-2");
+		String topic = "hello-pulsar-exclusive-2";
 		return args -> {
 //			for (int i = 0; i < 100; i ++) {
-//				pulsarTemplate.send("This is message " + (i + 1));
+//				pulsarTemplate.send(topic, "This is message " + (i + 1));
 //			}
 			Foo foo = new Foo();
 			foo.setFoo("Foo");
 			foo.setBar("Bar");
-			pulsarTemplate.send(foo);
+			pulsarTemplate.send(topic, foo);
 
 		};
 	}
