@@ -41,7 +41,14 @@ public class PulsarContainerProperties {
 	 * Enumeration for ack mode.
 	 */
 	public enum AckMode {
-
+		/**
+		 * Batch ack mode.
+		 */
+		BATCH,
+		/**
+		 * Recod ack mode.
+		 */
+		RECORD,
 		/**
 		 * Manual ack mode.
 		 */
@@ -76,7 +83,7 @@ public class PulsarContainerProperties {
 
 	private boolean asyncReceive;
 
-	private AckMode ackMode;
+	private AckMode ackMode = AckMode.BATCH;
 
 	public PulsarContainerProperties(String... topics) {
 		this.topics = topics.clone();

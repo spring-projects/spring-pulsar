@@ -42,6 +42,7 @@ import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
 import org.springframework.pulsar.event.ConsumerStartedEvent;
 import org.springframework.pulsar.event.ConsumerStartingEvent;
 import org.springframework.scheduling.SchedulingAwareRunnable;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 
@@ -49,7 +50,6 @@ import org.springframework.util.concurrent.ListenableFuture;
  * Default implementation for {@link PulsarMessageListenerContainer}.
  *
  * @param <T> message type.
- *
  * @author Soby Chacko
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
@@ -178,7 +178,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final MessageListener<T> listener;
 		private final PulsarBatchMessageListener<T> batchMessageHandler;
-		Consumer<T> consumer;
+		private Consumer<T> consumer;
 
 		private final PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -189,7 +189,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			if (messageListener instanceof PulsarBatchMessageListener) {
 				this.batchMessageHandler = (PulsarBatchMessageListener<T>) messageListener;
 				this.listener = null;
-
 			}
 			else if (messageListener != null) {
 				this.listener = (MessageListener<T>) messageListener;
@@ -199,7 +198,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.listener = null;
 				this.batchMessageHandler = null;
 			}
-
 			try {
 				final PulsarContainerProperties pulsarContainerProperties = getPulsarContainerProperties();
 				Map<String, Object> propertiesToOverride = extractPropertiesToOverride(pulsarContainerProperties);
@@ -212,7 +210,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			catch (PulsarClientException e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
 			}
-
 		}
 
 		private Map<String, Object> extractPropertiesToOverride(PulsarContainerProperties pulsarContainerProperties) {
@@ -246,37 +243,54 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			publishConsumerStartedEvent();
 			while (isRunning()) {
 				Messages<T> messages = null;
+
+				// Always receive messages in batch mode.
 				try {
-					// Always receive messages in batch mode.
 					messages = this.consumer.batchReceive();
-					// TODO Async receive - both record and batch.
-					if (this.containerProperties.isBatchListener()) {
-						try {
-							this.batchMessageHandler.received(this.consumer, messages);
-							this.consumer.acknowledge(messages);
-						}
-						catch (Exception e) {
-							// Message failed to process, redeliver later
-							this.consumer.negativeAcknowledge(messages);
-						}
+				}
+				catch (PulsarClientException e) {
+					DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Error receiving messages.");
+				}
+				Assert.isTrue(messages != null, "Messages cannot be null.");
+				if (this.containerProperties.isBatchListener()) {
+					try {
+						this.batchMessageHandler.received(this.consumer, messages);
+						this.consumer.acknowledge(messages);
 					}
-					else {
-						for (Message<T> message : messages) {
-							try {
-								this.listener.received(this.consumer, message);
-								if (this.containerProperties.getAckMode() != PulsarContainerProperties.AckMode.MANUAL) {
+					catch (Exception e) {
+						// Message failed to process, redeliver later
+						this.consumer.negativeAcknowledge(messages);
+					}
+				}
+				else {
+					for (Message<T> message : messages) {
+						try {
+							this.listener.received(this.consumer, message);
+							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
+								try {
 									this.consumer.acknowledge(message);
 								}
+								catch (PulsarClientException pce) {
+									// acknowledge failed - nack it
+									if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
+										this.consumer.negativeAcknowledge(message);
+									}
+								}
 							}
-							catch (Exception e) {
+						}
+						catch (Exception e) {
+							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
 								this.consumer.negativeAcknowledge(message);
 							}
 						}
 					}
-				}
-				catch (Exception e) {
-					if (messages != null) {
-						this.consumer.negativeAcknowledge(messages);
+					if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
+						try {
+							this.consumer.acknowledge(messages);
+						}
+						catch (PulsarClientException pce) {
+							this.consumer.negativeAcknowledge(messages);
+						}
 					}
 				}
 			}
