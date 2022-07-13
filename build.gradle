@@ -91,6 +91,7 @@ allprojects {
 			mavenBom "org.junit:junit-bom:$junitJupiterVersion"
 			mavenBom "org.springframework:spring-framework-bom:$springVersion"
 			mavenBom "io.projectreactor:reactor-bom:$reactorVersion"
+			mavenBom "org.apache.logging.log4j:log4j-bom:$log4jVersion"
 		}
 	}
 
@@ -152,7 +153,8 @@ subprojects { subproject ->
 		// To avoid compiler warnings about @API annotations in JUnit code
 		testCompileOnly 'org.apiguardian:apiguardian-api:1.0.0'
 
-		testRuntimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
+		testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
+		testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
 
 		testImplementation("org.awaitility:awaitility:$awaitilityVersion") {
 			exclude group: 'org.hamcrest'
@@ -160,9 +162,7 @@ subprojects { subproject ->
 		testImplementation "org.hamcrest:hamcrest-core:$hamcrestVersion"
 		optionalApi "org.assertj:assertj-core:$assertjVersion"
 
-		testImplementation("org.testcontainers:pulsar:1.17.2") {
-			exclude module: 'log4j-to-slf4j'
-		}
+		testImplementation "org.testcontainers:pulsar:1.17.2"
 	}
 
 	// enable all compiler warnings; individual projects may customize further
@@ -330,7 +330,6 @@ project ('spring-pulsar-boot-autoconfigure') {
 		api "org.springframework.boot:spring-boot:$springBootVersion"
 		api "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
 		api "org.springframework.boot:spring-boot-starter:$springBootVersion"
-		api "org.springframework.boot:spring-boot-starter-logging:$springBootVersion"
 		api "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
 
 		api project (':spring-pulsar')
