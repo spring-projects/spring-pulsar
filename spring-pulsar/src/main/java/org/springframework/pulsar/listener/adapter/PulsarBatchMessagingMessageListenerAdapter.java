@@ -89,7 +89,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 
 		Message<?> message = messageArg;
 		try {
-			Object result = invokeHandler(records, message, consumer);
+			Object result = invokeHandler(records, message, consumer, null);
 //			if (result != null) {
 //				handleResult(result, records, message);
 //			}

@@ -38,6 +38,7 @@ import org.springframework.expression.spel.support.StandardTypeConverter;
 import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.support.converter.PulsarMessagingMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
@@ -140,10 +141,10 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 	}
 
 	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
-										Consumer<V> consumer) {
+										Consumer<V> consumer, Acknowledgement acknowledgement) {
 
 		try {
-			return this.handlerMethod.invoke(message, data, consumer);
+			return this.handlerMethod.invoke(message, data, consumer, acknowledgement);
 //			if (data instanceof List && !this.isConsumerRecordList) {
 //				return this.handlerMethod.invoke(message, consumer);
 //			}

@@ -22,6 +22,10 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageListener;
 
+import org.springframework.lang.Nullable;
+import org.springframework.pulsar.listener.Acknowledgement;
+import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
+
 /**
  * A {@link MessageListener MessageListener}
  * adapter that invokes a configurable {@link HandlerAdapter}; used when the factory is
@@ -33,14 +37,14 @@ import org.apache.pulsar.client.api.MessageListener;
  */
 @SuppressWarnings("serial")
 public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
-		implements MessageListener<V> {
+		implements PulsarAcknowledgingMessageListener<V> {
 
 	public PulsarRecordMessagingMessageListenerAdapter(Object bean, Method method) {
 		super(bean, method);
 	}
 
 	@Override
-	public void received(Consumer<V> consumer, Message<V> record) {
+	public void received(Consumer<V> consumer, Message<V> record, @Nullable Acknowledgement acknowledgement) {
 		org.springframework.messaging.Message<?> message = null;
 		if (isConversionNeeded()) {
 			message = toMessagingMessage(record, consumer);
@@ -52,7 +56,7 @@ public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessag
 			this.logger.debug("Processing [" + message + "]");
 		}
 		try {
-			Object result = invokeHandler(record, message, consumer);
+			Object result = invokeHandler(record, message, consumer, acknowledgement);
 			if (result != null) {
 				//handleResult(result, record, message);
 			}

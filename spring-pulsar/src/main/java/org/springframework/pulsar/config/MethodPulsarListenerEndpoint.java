@@ -37,6 +37,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
@@ -110,8 +111,10 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		final MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
 		MethodParameter methodParameter = null;
 		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters).filter(
-				methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)).findFirst();
-		final long count = Arrays.stream(methodParameters).filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)).count();
+				methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)).findFirst();
+		final long count = Arrays.stream(methodParameters).filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+				&& !methodParameter1.getParameterType().equals(Acknowledgement.class)).count();
 		Assert.isTrue(count == 1, "More than 1 expected payload types found");
 		if (parameter.isPresent()) {
 			methodParameter = parameter.get();

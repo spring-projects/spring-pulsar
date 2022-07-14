@@ -16,10 +16,13 @@
 
 package org.springframework.pulsar.listener;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -176,9 +179,13 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private final class Listener implements SchedulingAwareRunnable {
 
-		private final MessageListener<T> listener;
+		private final PulsarRecordMessageListener<T> listener;
+
 		private final PulsarBatchMessageListener<T> batchMessageHandler;
+
 		private Consumer<T> consumer;
+
+		private List<Message<T>> nackableMessages = new ArrayList<>();
 
 		private final PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -191,7 +198,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.listener = null;
 			}
 			else if (messageListener != null) {
-				this.listener = (MessageListener<T>) messageListener;
+				this.listener = (PulsarRecordMessageListener<T>) messageListener;
 				this.batchMessageHandler = null;
 			}
 			else {
@@ -265,7 +272,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				else {
 					for (Message<T> message : messages) {
 						try {
-							this.listener.received(this.consumer, message);
+							if (this.listener instanceof PulsarAcknowledgingMessageListener) {
+								this.listener.received(this.consumer, message,
+										this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.MANUAL ?
+												new ConsumerAcknowledgment(this.consumer, message) : null);
+							}
+							else if (this.listener != null) {
+								this.listener.received(this.consumer, message);
+							}
 							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
 								try {
 									this.consumer.acknowledge(message);
@@ -282,18 +296,72 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
 								this.consumer.negativeAcknowledge(message);
 							}
+							else if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
+								this.nackableMessages.add(message);
+							}
 						}
 					}
 					if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
-						try {
-							this.consumer.acknowledge(messages);
+						if (this.nackableMessages.isEmpty()) {
+							try {
+								if (messages.size() > 0) {
+									this.consumer.acknowledge(messages);
+								}
+							}
+							catch (PulsarClientException pce) {
+								this.consumer.negativeAcknowledge(messages);
+							}
 						}
-						catch (PulsarClientException pce) {
-							this.consumer.negativeAcknowledge(messages);
+						else {
+							for (Message<T> message : messages) {
+								final Optional<Message<T>> foundMessage = this.nackableMessages.stream()
+										.filter(m -> m.getMessageId().compareTo(message.getMessageId()) == 0)
+										.findFirst();
+								if (foundMessage.isPresent()) {
+									final Message<T> msg = foundMessage.get();
+									this.consumer.negativeAcknowledge(msg);
+									this.nackableMessages.remove(msg);
+								}
+								else {
+									try {
+										this.consumer.acknowledge(message);
+									}
+									catch (PulsarClientException pce) {
+										this.consumer.negativeAcknowledge(message);
+									}
+								}
+							}
 						}
 					}
 				}
 			}
+		}
+	}
+
+	private static final class ConsumerAcknowledgment implements Acknowledgement {
+
+		private final Consumer<?> consumer;
+
+		private final Message<?> message;
+
+		ConsumerAcknowledgment(Consumer<?> consumer, Message<?> message) {
+			this.consumer = consumer;
+			this.message = message;
+		}
+
+		@Override
+		public void acknowledge() {
+			try {
+				this.consumer.acknowledge(this.message);
+			}
+			catch (PulsarClientException e) {
+				this.consumer.negativeAcknowledge(this.message);
+			}
+		}
+
+		@Override
+		public void nack() {
+			this.consumer.negativeAcknowledge(this.message);
 		}
 	}
 }

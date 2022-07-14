@@ -24,13 +24,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 
 /**
  * @author Soby Chacko
@@ -51,7 +51,7 @@ class DefaultConsumerTests extends AbstractContainerBaseTests {
 		CountDownLatch latch = new CountDownLatch(1);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener(
-				(MessageListener<?>) (consumer, msg) -> latch.countDown());
+				(PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);

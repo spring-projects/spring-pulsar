@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -38,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 
 /**
  * @author Soby Chacko
@@ -65,7 +65,7 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(3);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setMessageListener((MessageListener<?>) (consumer, msg) -> latch.countDown());
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(

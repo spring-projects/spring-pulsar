@@ -22,6 +22,7 @@ import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.HashMap;
@@ -33,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 import org.springframework.util.Assert;
 
 /**
@@ -63,7 +64,8 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener(
-				(MessageListener<?>) (consumer, msg) -> { });
+				(PulsarRecordMessageListener<?>) (consumer, msg) -> {
+				});
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.RECORD);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
@@ -106,7 +108,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
 		pulsarContainerProperties.setMessageListener(
-				(MessageListener<?>) (consumer, msg) -> latch.countDown());
+				(PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -127,6 +129,49 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		pulsarClient.close();
 	}
 
+	@Test
+	void testBatchAckButSomeRecordsFail() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		final Set<String> strings = new HashSet<>();
+		strings.add("foobar-014");
+		config.put("topicNames", strings);
+		config.put("subscriptionName", "foobar-sb-014");
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(getPulsarBrokerUrl())
+				.build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		CountDownLatch latch = new CountDownLatch(10);
+		pulsarContainerProperties.setMessageListener(
+				(PulsarRecordMessageListener<?>) (consumer, msg) -> {
+					latch.countDown();
+					if (latch.getCount() % 2 == 0) {
+						throw new RuntimeException("fail");
+					}
+				}
+		);
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+		final Consumer<?> containerConsumer = spyOnConsumer(container);
+
+		Map<String, Object> prodConfig = new HashMap<>();
+		prodConfig.put("topicName", "foobar-014");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 0; i < 10; i++) {
+			pulsarTemplate.sendAsync("hello john doe");
+		}
+		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+		// Half of the message get acknowledged, and the other half gets nacked.
+		verify(containerConsumer, times(5)).acknowledge(any(Message.class));
+		verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class));
+		container.stop();
+		pulsarClient.close();
+	}
+
 	private Consumer<?> spyOnConsumer(DefaultPulsarMessageListenerContainer<String> container) {
 		Consumer<?> consumer = getPropertyValue(container, "listenerConsumer.consumer", Consumer.class);
 		consumer = spy(consumer);
@@ -138,7 +183,8 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 	/**
 	 * Uses nested {@link DirectFieldAccessor}s to obtain a property using dotted notation to traverse fields; e.g.
 	 * "foo.bar.baz" will obtain a reference to the baz field of the bar field of foo. Adopted from Spring Integration.
-	 * @param root The object.
+	 *
+	 * @param root         The object.
 	 * @param propertyPath The path.
 	 * @return The field.
 	 */
@@ -169,6 +215,4 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		}
 		return (T) value;
 	}
-
-
 }
