@@ -25,8 +25,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -40,7 +42,9 @@ import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
+import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 import org.springframework.util.Assert;
@@ -168,6 +172,59 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		// Half of the message get acknowledged, and the other half gets nacked.
 		verify(containerConsumer, times(5)).acknowledge(any(Message.class));
 		verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class));
+		container.stop();
+		pulsarClient.close();
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void testManualAckForRecordListener() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		final Set<String> strings = new HashSet<>();
+		strings.add("foobar-013");
+		config.put("topicNames", strings);
+		config.put("subscriptionName", "foobar-sb-013");
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(getPulsarBrokerUrl())
+				.build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		final List<Acknowledgement> acksObjects = new ArrayList<>();
+		PulsarAcknowledgingMessageListener<?> pulsarAcknowledgingMessageListener = (consumer, msg, acknowledgement) -> {
+			acksObjects.add(acknowledgement);
+			acknowledgement.acknowledge();
+		};
+
+		pulsarContainerProperties.setMessageListener(pulsarAcknowledgingMessageListener);
+
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+		final Consumer<?> containerConsumer = spyOnConsumer(container);
+
+		CountDownLatch latch = new CountDownLatch(10);
+
+		willAnswer(invocation -> {
+			latch.countDown();
+			return invocation.callRealMethod();
+		}).given(containerConsumer)
+				.acknowledge(any(Message.class));
+
+		Map<String, Object> prodConfig = new HashMap<>();
+		prodConfig.put("topicName", "foobar-013");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 0; i < 10; i++) {
+			pulsarTemplate.sendAsync("hello john doe");
+		}
+		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+		//We are asserting that we got 10 valid ack objects through the receive method invocation.
+		assertThat(acksObjects.size()).isEqualTo(10);
+		verify(containerConsumer, times(10)).acknowledge(any(Message.class));
+
 		container.stop();
 		pulsarClient.close();
 	}

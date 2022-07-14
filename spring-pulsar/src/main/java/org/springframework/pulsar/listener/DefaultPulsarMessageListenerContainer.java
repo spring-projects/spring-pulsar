@@ -16,11 +16,9 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -185,7 +183,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private Consumer<T> consumer;
 
-		private List<Message<T>> nackableMessages = new ArrayList<>();
+		private final Set<Message<T>> nackableMessages = new HashSet<>();
 
 		private final PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -285,10 +283,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 									this.consumer.acknowledge(message);
 								}
 								catch (PulsarClientException pce) {
-									// acknowledge failed - nack it
-									if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
-										this.consumer.negativeAcknowledge(message);
-									}
+									this.consumer.negativeAcknowledge(message);
+
 								}
 							}
 						}
