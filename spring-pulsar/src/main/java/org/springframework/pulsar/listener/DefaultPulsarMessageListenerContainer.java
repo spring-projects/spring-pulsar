@@ -74,15 +74,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	@Override
 	public void start() {
-		try {
-			doStart();
-		}
-		catch (PulsarClientException e) {
-			e.printStackTrace(); //TODO: proper logging
-		}
+		doStart();
 	}
 
-	private void doStart() throws PulsarClientException {
+	private void doStart()  {
 
 		PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -279,13 +274,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 								this.listener.received(this.consumer, message);
 							}
 							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.RECORD) {
-								try {
-									this.consumer.acknowledge(message);
-								}
-								catch (PulsarClientException pce) {
-									this.consumer.negativeAcknowledge(message);
-
-								}
+								handleAck(message);
 							}
 						}
 						catch (Exception e) {
@@ -297,39 +286,48 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 							}
 						}
 					}
+					// All the records are processed at this point. Handle acks.
 					if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
-						if (this.nackableMessages.isEmpty()) {
-							try {
-								if (messages.size() > 0) {
-									this.consumer.acknowledge(messages);
-								}
-							}
-							catch (PulsarClientException pce) {
-								this.consumer.negativeAcknowledge(messages);
-							}
-						}
-						else {
-							for (Message<T> message : messages) {
-								final Optional<Message<T>> foundMessage = this.nackableMessages.stream()
-										.filter(m -> m.getMessageId().compareTo(message.getMessageId()) == 0)
-										.findFirst();
-								if (foundMessage.isPresent()) {
-									final Message<T> msg = foundMessage.get();
-									this.consumer.negativeAcknowledge(msg);
-									this.nackableMessages.remove(msg);
-								}
-								else {
-									try {
-										this.consumer.acknowledge(message);
-									}
-									catch (PulsarClientException pce) {
-										this.consumer.negativeAcknowledge(message);
-									}
-								}
-							}
-						}
+						handleAcks(messages);
 					}
 				}
+			}
+		}
+
+		private void handleAcks(Messages<T> messages) {
+			if (this.nackableMessages.isEmpty()) {
+				try {
+					if (messages.size() > 0) {
+						this.consumer.acknowledge(messages);
+					}
+				}
+				catch (PulsarClientException pce) {
+					this.consumer.negativeAcknowledge(messages);
+				}
+			}
+			else {
+				for (Message<T> message : messages) {
+					final Optional<Message<T>> foundMessage = this.nackableMessages.stream()
+							.filter(m -> m.getMessageId().compareTo(message.getMessageId()) == 0)
+							.findFirst();
+					if (foundMessage.isPresent()) {
+						final Message<T> msg = foundMessage.get();
+						this.consumer.negativeAcknowledge(msg);
+						this.nackableMessages.remove(msg);
+					}
+					else {
+						handleAck(message);
+					}
+				}
+			}
+		}
+
+		private void handleAck(Message<T> message) {
+			try {
+				this.consumer.acknowledge(message);
+			}
+			catch (PulsarClientException pce) {
+				this.consumer.negativeAcknowledge(message);
 			}
 		}
 	}
