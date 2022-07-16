@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-/**
- * @author Soby Chacko
- */
 package org.springframework.pulsar.listener;
 
 import org.apache.pulsar.client.api.Consumer;
-import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 
-public interface PulsarBatchMessageListener<T> extends PulsarRecordMessageListener<T> {
+public interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchMessageListener<T> {
 
-	default void received(Consumer<T> consumer, Message<T> msg) {
-		throw new UnsupportedOperationException();
+	default void received(Consumer<T> consumer, Messages<T> msg) {
+		throw new UnsupportedOperationException("Not Supported.");
 	}
 
-	default void received(Consumer<T> consumer, Messages<T> msg, Acknowledgement acknowledgement) {
-		throw new UnsupportedOperationException();
-	}
-
-	void received(Consumer<T> consumer, Messages<T> msg);
+	void received(Consumer<T> consumer, Messages<T> msg, Acknowledgement acknowledgement);
 }

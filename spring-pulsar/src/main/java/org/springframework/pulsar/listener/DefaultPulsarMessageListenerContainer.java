@@ -19,6 +19,7 @@ package org.springframework.pulsar.listener;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -77,7 +79,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		doStart();
 	}
 
-	private void doStart()  {
+	private void doStart() {
 
 		PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -174,7 +176,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final PulsarRecordMessageListener<T> listener;
 
-		private final PulsarBatchMessageListener<T> batchMessageHandler;
+		private final PulsarBatchMessageListener<T> batchMessageListener;
 
 		private Consumer<T> consumer;
 
@@ -187,22 +189,26 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		Listener(MessageListener<?> messageListener) {
 			if (messageListener instanceof PulsarBatchMessageListener) {
-				this.batchMessageHandler = (PulsarBatchMessageListener<T>) messageListener;
+				this.batchMessageListener = (PulsarBatchMessageListener<T>) messageListener;
 				this.listener = null;
 			}
 			else if (messageListener != null) {
 				this.listener = (PulsarRecordMessageListener<T>) messageListener;
-				this.batchMessageHandler = null;
+				this.batchMessageListener = null;
 			}
 			else {
 				this.listener = null;
-				this.batchMessageHandler = null;
+				this.batchMessageListener = null;
 			}
 			try {
 				final PulsarContainerProperties pulsarContainerProperties = getPulsarContainerProperties();
 				Map<String, Object> propertiesToOverride = extractPropertiesToOverride(pulsarContainerProperties);
 
-				final BatchReceivePolicy batchReceivePolicy = BatchReceivePolicy.DEFAULT_POLICY;
+				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
+						.maxNumMessages(pulsarContainerProperties.getMaxNumMessages())
+						.maxNumBytes(pulsarContainerProperties.getMaxNumBytes())
+						.timeout(pulsarContainerProperties.getBatchTimeout(), TimeUnit.MILLISECONDS)
+						.build();
 				this.consumer = getPulsarConsumerFactory().createConsumer(
 						(Schema) pulsarContainerProperties.getSchema(),
 						batchReceivePolicy, propertiesToOverride);
@@ -254,11 +260,27 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Assert.isTrue(messages != null, "Messages cannot be null.");
 				if (this.containerProperties.isBatchListener()) {
 					try {
-						this.batchMessageHandler.received(this.consumer, messages);
-						this.consumer.acknowledge(messages);
+						if (messages.size() > 0) {
+							if (this.batchMessageListener instanceof PulsarBatchAcknowledgingMessageListener) {
+								this.batchMessageListener.received(this.consumer, messages,
+										this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.MANUAL ?
+												new ConsumerBatchAcknowledgment(this.consumer) : null);
+							}
+							else {
+								this.batchMessageListener.received(this.consumer, messages);
+							}
+							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
+								try {
+									this.consumer.acknowledge(messages);
+								}
+								catch (PulsarClientException pce) {
+									this.consumer.negativeAcknowledge(messages);
+								}
+							}
+						}
 					}
 					catch (Exception e) {
-						// Message failed to process, redeliver later
+						// the whole batch is negatively acknowledged in the event of an exception from the handler method.
 						this.consumer.negativeAcknowledge(messages);
 					}
 				}
@@ -354,8 +376,74 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		@Override
+		public void acknowledge(MessageId messageId) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void acknowledge(List<MessageId> messageIds) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public void nack() {
 			this.consumer.negativeAcknowledge(this.message);
+		}
+
+		@Override
+		public void nack(MessageId messageId) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private static final class ConsumerBatchAcknowledgment implements Acknowledgement {
+
+		private final Consumer<?> consumer;
+
+		ConsumerBatchAcknowledgment(Consumer<?> consumer) {
+			this.consumer = consumer;
+		}
+
+		@Override
+		public void acknowledge() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void acknowledge(MessageId messageId) {
+			try {
+				this.consumer.acknowledge(messageId);
+			}
+			catch (PulsarClientException e) {
+				this.consumer.negativeAcknowledge(messageId);
+			}
+		}
+
+		@Override
+		public void acknowledge(List<MessageId> messageIds) {
+			try {
+				this.consumer.acknowledge(messageIds);
+			}
+			catch (PulsarClientException e) {
+				for (MessageId messageId : messageIds) {
+					try {
+						this.consumer.acknowledge(messageId);
+					}
+					catch (PulsarClientException ex) {
+						this.consumer.negativeAcknowledge(messageId);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void nack() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void nack(MessageId messageId) {
+			this.consumer.negativeAcknowledge(messageId);
 		}
 	}
 }

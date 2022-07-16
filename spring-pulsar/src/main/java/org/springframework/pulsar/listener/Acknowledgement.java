@@ -16,9 +16,19 @@
 
 package org.springframework.pulsar.listener;
 
+import java.util.List;
+
+import org.apache.pulsar.client.api.MessageId;
+
 public interface Acknowledgement {
 
 	void acknowledge();
 
+	void acknowledge(MessageId messageId);
+
+	void acknowledge(List<MessageId> messageIds);
+
 	void nack();
+
+	void nack(MessageId messageId);
 }
