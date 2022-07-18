@@ -40,7 +40,6 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
@@ -51,6 +50,7 @@ import org.springframework.pulsar.listener.PulsarBatchMessageListener;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 import org.springframework.util.Assert;
+
 
 /**
  * @author Soby Chacko
@@ -137,7 +137,6 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 	}
 
 	@Test
-	@Disabled("Will look into see why this test fails sometimes when running the whole battery")
 	void testBatchAckButSomeRecordsFail() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
@@ -173,6 +172,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+		Thread.sleep(1_000);
 		// Half of the message get acknowledged, and the other half gets negatively acknowledged.
 		verify(containerConsumer, times(5)).acknowledge(any(Message.class));
 		verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class));
@@ -321,7 +321,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
-		Thread.sleep(1_000);
+		Thread.sleep(2_000);
 		verify(containerConsumer, times(1)).negativeAcknowledge(any(Messages.class));
 		verify(containerConsumer, never()).acknowledge(any(Messages.class));
 		container.stop();
