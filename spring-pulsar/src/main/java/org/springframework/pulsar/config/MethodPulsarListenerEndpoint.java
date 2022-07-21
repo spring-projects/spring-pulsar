@@ -152,7 +152,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				final Class<?> type = methodParameter.getParameter().getType();
 
 				String typeName = null;
-				if (type.isAssignableFrom(List.class) || type.isAssignableFrom(Message.class) || type.isAssignableFrom(Messages.class)) {
+				if (isContainerType(type)) {
 					final ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameters[0]);
 					final ResolvableType generic = resolvableType.getGeneric(0);
 					if (generic.getRawClass() != null) {
@@ -188,9 +188,17 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	}
 
 	private Schema<?> getRequiredSchema(MethodParameter methodParameter, PulsarContainerProperties pulsarContainerProperties) {
-		final ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
+		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
 		final Class<?> rawClass = resolvableType.getRawClass();
-		return JSONSchema.of(rawClass);
+		if (rawClass != null && isContainerType(rawClass)) {
+			resolvableType = resolvableType.getGeneric(0);
+		}
+		final Class<?> rawClazz = resolvableType.getRawClass();
+		return JSONSchema.of(rawClazz);
+	}
+
+	private boolean isContainerType(Class<?> rawClass) {
+		return rawClass.isAssignableFrom(List.class) || rawClass.isAssignableFrom(Message.class) || rawClass.isAssignableFrom(Messages.class);
 	}
 
 	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {
