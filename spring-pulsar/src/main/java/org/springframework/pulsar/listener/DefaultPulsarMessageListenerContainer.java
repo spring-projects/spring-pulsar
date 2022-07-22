@@ -39,7 +39,6 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
 import org.springframework.pulsar.event.ConsumerStartedEvent;
@@ -58,8 +57,6 @@ import org.springframework.util.concurrent.ListenableFuture;
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
 	private volatile boolean running = false;
-
-	private String beanName;
 
 	private volatile ListenableFuture<?> listenerConsumerFuture;
 
@@ -133,16 +130,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	protected void setRunning(boolean running) {
 		this.running = running;
-	}
-
-	/**
-	 * Return the bean name.
-	 *
-	 * @return the bean name.
-	 */
-	@Nullable
-	public String getBeanName() {
-		return this.beanName;
 	}
 
 	@Override
