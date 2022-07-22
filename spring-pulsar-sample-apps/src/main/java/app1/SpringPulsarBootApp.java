@@ -102,17 +102,7 @@ public class SpringPulsarBootApp {
 		this.logger.info("Message received :" + message);
 	}
 
-	record Foo(String foo, String bar) {
-		@Override
-		public String toString() {
-			return "Foo{" +
-					"foo='" + this.foo + '\'' +
-					", bar='" + this.bar + '\'' +
-					'}';
-		}
-	}
-
-	/**
+	/*
 	 * Publish and then use PulsarListener in batch listening mode.
 	 */
 	@Bean
@@ -132,6 +122,16 @@ public class SpringPulsarBootApp {
 		this.logger.info("records received :" + messages.size());
 		for (Foo message : messages) {
 			this.logger.info("record : " + message);
+		}
+	}
+
+	record Foo(String foo, String bar) {
+		@Override
+		public String toString() {
+			return "Foo{" +
+					"foo='" + this.foo + '\'' +
+					", bar='" + this.bar + '\'' +
+					'}';
 		}
 	}
 
