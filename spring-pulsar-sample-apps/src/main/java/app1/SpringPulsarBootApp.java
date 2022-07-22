@@ -16,6 +16,7 @@
 
 package app1;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.pulsar.common.schema.SchemaType;
@@ -38,6 +39,10 @@ public class SpringPulsarBootApp {
 		SpringApplication.run(SpringPulsarBootApp.class, args);
 	}
 
+	/*
+	 * Basic publisher using PulsarTemplate<String> and a PulsarListener using
+	 * an exclusive subscription to consume.
+	 */
 	@Bean
 	public ApplicationRunner runner1(PulsarTemplate<String> pulsarTemplate) {
 
@@ -55,6 +60,10 @@ public class SpringPulsarBootApp {
 		this.logger.info(message);
 	}
 
+	/*
+	 * Basic publisher using PulsarTemplate<Integer> and a PulsarListener using
+	 * an exclusive subscription to consume.
+	 */
 	@Bean
 	public ApplicationRunner runner2(PulsarTemplate<Integer> pulsarTemplate) {
 
@@ -72,6 +81,10 @@ public class SpringPulsarBootApp {
 		this.logger.info("Message received :" + message);
 	}
 
+	/*
+	 * Demonstrating more complex types for publishing using JSON schema and the associated
+	 * PulsarListener using an exclusive subscription.
+	 */
 	@Bean
 	public ApplicationRunner runner3(PulsarTemplate<Foo> pulsarTemplate) {
 
@@ -98,4 +111,28 @@ public class SpringPulsarBootApp {
 					'}';
 		}
 	}
+
+	/**
+	 * Publish and then use PulsarListener in batch listening mode.
+	 */
+	@Bean
+	public ApplicationRunner runner4(PulsarTemplate<Foo> pulsarTemplate) {
+
+		String topic = "hello-pulsar-exclusive-4";
+		return args -> {
+			for (int i = 0; i < 100; i++) {
+				Foo foo = new Foo(i + "-" + "Foo-" + UUID.randomUUID(), i + "-" + "Bar-" + UUID.randomUUID());
+				pulsarTemplate.send(topic, foo);
+			}
+		};
+	}
+
+	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-exclusive-4", schemaType = SchemaType.JSON, batch = true)
+	public void listen4(List<Foo> messages) {
+		this.logger.info("records received :" + messages.size());
+		for (Foo message : messages) {
+			this.logger.info("record : " + message);
+		}
+	}
+
 }
