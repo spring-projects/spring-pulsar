@@ -79,10 +79,6 @@ public class PulsarContainerProperties {
 
 	private boolean batchListener;
 
-	private boolean batchAsyncReceive;
-
-	private boolean asyncReceive;
-
 	private AckMode ackMode = AckMode.BATCH;
 
 	public PulsarContainerProperties(String... topics) {
@@ -149,22 +145,6 @@ public class PulsarContainerProperties {
 
 	public void setBatchListener(boolean batchListener) {
 		this.batchListener = batchListener;
-	}
-
-	public boolean isBatchAsyncReceive() {
-		return this.batchAsyncReceive;
-	}
-
-	public void setBatchAsyncReceive(boolean batchAsyncReceive) {
-		this.batchAsyncReceive = batchAsyncReceive;
-	}
-
-	public boolean isAsyncReceive() {
-		return this.asyncReceive;
-	}
-
-	public void setAsyncReceive(boolean asyncReceive) {
-		this.asyncReceive = asyncReceive;
 	}
 
 	public AckMode getAckMode() {
