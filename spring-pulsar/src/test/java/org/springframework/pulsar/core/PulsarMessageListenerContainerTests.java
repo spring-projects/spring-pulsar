@@ -172,7 +172,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
-		Thread.sleep(1_000);
+		Thread.sleep(5_000); //Rework this
 		// Half of the message get acknowledged, and the other half gets negatively acknowledged.
 		verify(containerConsumer, times(5)).acknowledge(any(Message.class));
 		verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class));

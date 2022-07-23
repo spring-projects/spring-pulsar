@@ -23,9 +23,11 @@ import java.util.List;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
 
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.pulsar.listener.PulsarBatchMessageListener;
+import org.springframework.pulsar.listener.Acknowledgement;
+import org.springframework.pulsar.listener.PulsarBatchAcknowledgingMessageListener;
 import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarBatchMessagingMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
@@ -42,7 +44,7 @@ import org.springframework.util.Assert;
  */
 @SuppressWarnings("serial")
 public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
-		implements PulsarBatchMessageListener<V> {
+		implements PulsarBatchAcknowledgingMessageListener<V> {
 
 	private PulsarBatchMessageConverter<V> batchMessageConverter = new PulsarBatchMessagingMessageConverter<V>();
 
@@ -63,7 +65,8 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		return this.batchMessageConverter;
 	}
 
-	public void received(Consumer<V> consumer, Messages<V> msg) {
+	@Override
+	public void received(Consumer<V> consumer, Messages<V> msg, @Nullable Acknowledgement acknowledgement) {
 		Message<?> message;
 		if (!isConsumerRecordList()) {
 			if (isMessageList()) {
@@ -81,15 +84,15 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 			message = null; // optimization since we won't need any conversion to invoke
 		}
 		logger.debug(() -> "Processing [" + message + "]");
-		invoke(msg, consumer, message);
+		invoke(msg, consumer, message, acknowledgement);
 	}
 
 	protected void invoke(Object records, Consumer<V> consumer,
-						final Message<?> messageArg) {
+						final Message<?> messageArg, Acknowledgement acknowledgement) {
 
 		Message<?> message = messageArg;
 		try {
-			Object result = invokeHandler(records, message, consumer, null);
+			Object result = invokeHandler(records, message, consumer, acknowledgement);
 //			if (result != null) {
 //				handleResult(result, records, message);
 //			}
