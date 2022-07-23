@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -167,7 +166,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private Consumer<T> consumer;
 
-		private final Set<Message<T>> nackableMessages = new HashSet<>();
+		private final Set<MessageId> nackableMessages = new HashSet<>();
 
 		private final PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -291,7 +290,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 								this.consumer.negativeAcknowledge(message);
 							}
 							else if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
-								this.nackableMessages.add(message);
+								this.nackableMessages.add(message.getMessageId());
 							}
 						}
 					}
@@ -316,13 +315,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			else {
 				for (Message<T> message : messages) {
-					final Optional<Message<T>> foundMessage = this.nackableMessages.stream()
-							.filter(m -> m.getMessageId().compareTo(message.getMessageId()) == 0)
-							.findFirst();
-					if (foundMessage.isPresent()) {
-						final Message<T> msg = foundMessage.get();
-						this.consumer.negativeAcknowledge(msg);
-						this.nackableMessages.remove(msg);
+					if (this.nackableMessages.contains(message.getMessageId())) {
+						this.consumer.negativeAcknowledge(message);
+						this.nackableMessages.remove(message.getMessageId());
 					}
 					else {
 						handleAck(message);
