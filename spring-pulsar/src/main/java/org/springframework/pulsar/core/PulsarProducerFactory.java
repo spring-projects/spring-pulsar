@@ -24,7 +24,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 /**
- * The strategy to produce a {@link Producer} instance(s).
+ * The strategy to create a {@link Producer} instance(s).
  *
  * @param <T> producer payload type
  *

@@ -27,7 +27,6 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.util.CollectionUtils;
 
@@ -39,11 +38,9 @@ import org.springframework.util.CollectionUtils;
  * @author Soby Chacko
  * @author Chris Bono
  */
-public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>, DisposableBean {
+public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T> {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
-
-	// TODO add caching of producers per schema/topic w/ ttl
 
 	private final Map<String, Object> producerConfig = new HashMap<>();
 
@@ -63,16 +60,19 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
-		this.logger.trace(() -> String.format("Creating producer for '%s' topic", topic));
+		return doCreateProducer(topic, schema, messageRouter);
+	}
+
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
+		final String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
+		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
 		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
 		if (!CollectionUtils.isEmpty(this.producerConfig)) {
 			producerBuilder.loadConf(this.producerConfig);
 		}
+		producerBuilder.topic(resolvedTopic);
 		if (messageRouter != null) {
 			producerBuilder.messageRouter(messageRouter);
-		}
-		if (topic != null) {
-			producerBuilder.topic(topic);
 		}
 		return producerBuilder.create();
 	}
@@ -80,9 +80,5 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Map<String, Object> getProducerConfig() {
 		return this.producerConfig;
-	}
-
-	@Override
-	public void destroy() {
 	}
 }

@@ -70,7 +70,7 @@ public class PulsarAnnotationDrivenConfiguration {
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
 	@ConditionalOnMissingBean(name = PulsarListenerBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
-	static class EnableKafkaConfiguration {
+	static class EnablePulsarConfiguration {
 
 	}
 

@@ -63,7 +63,7 @@ ext {
 	springBootVersion = '3.0.0-SNAPSHOT' // docs module
 	springRetryVersion = '1.3.3'
 	springVersion = '6.0.0-SNAPSHOT'
-
+	caffeineVersion = '3.1.1'
 	idPrefix = 'pulsar'
 }
 
@@ -163,6 +163,9 @@ subprojects { subproject ->
 		optionalApi "org.assertj:assertj-core:$assertjVersion"
 
 		testImplementation "org.testcontainers:pulsar:1.17.2"
+
+		testImplementation "org.springframework:spring-test"
+
 	}
 
 	// enable all compiler warnings; individual projects may customize further
@@ -302,6 +305,8 @@ project ('spring-pulsar') {
 		api "org.apache.pulsar:pulsar-client-admin:$pulsarVersion"
 		api "org.apache.pulsar:pulsar-client-admin-api:$pulsarVersion"
 
+		api "com.github.ben-manes.caffeine:caffeine:$caffeineVersion"
+
 		optionalApi 'com.fasterxml.jackson.core:jackson-core'
 		optionalApi 'com.fasterxml.jackson.core:jackson-databind'
 		optionalApi 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
@@ -333,6 +338,8 @@ project ('spring-pulsar-boot-autoconfigure') {
 		api "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
 
 		api project (':spring-pulsar')
+
+		testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 	}
 }
 

@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.logging.LogFactory;
@@ -27,7 +26,6 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.util.StringUtils;
 
 /**
  * A thread-safe template for executing high-level Pulsar operations.
@@ -63,7 +61,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
-		final String topicName = resolveTopicName(topic);
+		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
 		return producer.sendAsync(message)
@@ -76,28 +74,12 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 						this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
 						// TODO fail metrics
 					}
-					closeProducerAsync(producer);
+					ProducerUtils.closeProducerAsync(producer, this.logger);
 				});
-	}
-
-	private String resolveTopicName(String userSpecifiedTopic) {
-		if (StringUtils.hasText(userSpecifiedTopic)) {
-			return userSpecifiedTopic;
-		}
-		return Optional.ofNullable(this.producerFactory.getProducerConfig().get("topicName"))
-				.map(Object::toString)
-				.orElseThrow(() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
 	}
 
 	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
 		Schema<T> schema = SchemaUtils.getSchema(message);
 		return this.producerFactory.createProducer(topic, schema, messageRouter);
-	}
-
-	private void closeProducerAsync(Producer<T> producer) {
-		producer.closeAsync().exceptionally(e -> {
-			this.logger.warn(e, () -> String.format("Failed to close producer %s:%s", producer.getProducerName(), producer.getTopic()));
-			return null;
-		});
 	}
 }

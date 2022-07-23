@@ -19,13 +19,16 @@ package org.springframework.pulsar.autoconfigure;
 import org.apache.pulsar.client.api.PulsarClient;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
+import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -33,9 +36,10 @@ import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 
 /**
- * {@link org.springframework.boot.autoconfigure.EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
+ * {@link EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @AutoConfiguration
 @ConditionalOnClass(PulsarTemplate.class)
@@ -50,21 +54,32 @@ public class PulsarAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarClientFactoryBean.class)
-	public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
-		return new PulsarClientFactoryBean(pulsarClientConfiguration);
-	}
-
-	@Bean
 	@ConditionalOnMissingBean(PulsarClientConfiguration.class)
 	public PulsarClientConfiguration pulsarClientConfiguration() {
 		return new PulsarClientConfiguration(this.properties.buildClientProperties());
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(PulsarClientFactoryBean.class)
+	public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
+		return new PulsarClientFactoryBean(pulsarClientConfiguration);
+	}
+
+	@Bean
 	@ConditionalOnMissingBean(PulsarProducerFactory.class)
+	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "false")
 	public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient) {
 		return new DefaultPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(PulsarProducerFactory.class)
+	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "true", matchIfMissing = true)
+	public PulsarProducerFactory<?> cachingPulsarProducerFactory(PulsarClient pulsarClient) {
+		return new CachingPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties(),
+				this.properties.getProducer().getCache().getExpireAfterAccess(),
+				this.properties.getProducer().getCache().getMaximumSize(),
+				this.properties.getProducer().getCache().getInitialCapacity());
 	}
 
 	@Bean
@@ -76,9 +91,6 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(PulsarConsumerFactory.class)
 	public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-		DefaultPulsarConsumerFactory<Object> factory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				this.properties.buildConsumerProperties());
-		return factory;
+		return new DefaultPulsarConsumerFactory<>(pulsarClient, this.properties.buildConsumerProperties());
 	}
-
 }

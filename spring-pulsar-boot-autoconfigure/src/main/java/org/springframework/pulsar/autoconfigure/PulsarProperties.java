@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.autoconfigure;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -383,6 +384,8 @@ public class PulsarProperties {
 
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
 
+		private Cache cache = new Cache();
+
 		public String getTopicName() {
 			return this.topicName;
 		}
@@ -511,6 +514,10 @@ public class PulsarProperties {
 			this.producerAccessMode = producerAccessMode;
 		}
 
+		public Cache getCache() {
+			return this.cache;
+		}
+
 		public Map<String, Object> buildProperties() {
 			PulsarProperties.Properties properties = new Properties();
 
@@ -534,6 +541,43 @@ public class PulsarProperties {
 			map.from(this::getProducerAccessMode).to(properties.in("accessMode"));
 
 			return properties;
+		}
+
+	}
+
+	public static class Cache {
+
+		/** Time period to expire unused entries in the cache. */
+		private Duration expireAfterAccess = Duration.ofMinutes(1);
+
+		/** Maximum size of cache (entries). */
+		private Long maximumSize = 1000L;
+
+		/** Initial size of cache. */
+		private Integer initialCapacity = 50;
+
+		public Duration getExpireAfterAccess() {
+			return this.expireAfterAccess;
+		}
+
+		public void setExpireAfterAccess(Duration expireAfterAccess) {
+			this.expireAfterAccess = expireAfterAccess;
+		}
+
+		public Long getMaximumSize() {
+			return this.maximumSize;
+		}
+
+		public void setMaximumSize(Long maximumSize) {
+			this.maximumSize = maximumSize;
+		}
+
+		public Integer getInitialCapacity() {
+			return this.initialCapacity;
+		}
+
+		public void setInitialCapacity(Integer initialCapacity) {
+			this.initialCapacity = initialCapacity;
 		}
 	}
 
