@@ -30,6 +30,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,10 +46,17 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 	protected PulsarClient pulsarClient;
 
 	@BeforeEach
-	void setup() throws PulsarClientException {
+	void createPulsarClient() throws PulsarClientException {
 		pulsarClient = PulsarClient.builder()
 				.serviceUrl(getPulsarBrokerUrl())
 				.build();
+	}
+
+	@AfterEach
+	void closePulsarClient() throws PulsarClientException {
+		if (pulsarClient != null && !pulsarClient.isClosed()) {
+			pulsarClient.close();
+		}
 	}
 
 	@Test

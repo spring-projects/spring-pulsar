@@ -38,7 +38,7 @@ public interface PulsarOperations<T> {
 	 * @throws PulsarClientException if an error occurs
 	 */
 	default MessageId send(T message) throws PulsarClientException {
-		return send(null, message);
+		return send(null, message, null);
 	}
 
 	/**
@@ -48,7 +48,30 @@ public interface PulsarOperations<T> {
 	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(String topic, T message) throws PulsarClientException;
+	default MessageId send(String topic, T message) throws PulsarClientException {
+		return send(topic, message, null);
+	}
+
+	/**
+	 * Sends a message to the default topic in a blocking manner.
+	 * @param message the message to send
+	 * @param messageRouter the optional message router to use
+	 * @return the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default MessageId send(T message, MessageRouter messageRouter) throws PulsarClientException {
+		return send(null, message, messageRouter);
+	}
+
+	/**
+	 * Sends a message to the specified topic in a blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the default topic
+	 * @param message the message to send
+	 * @param messageRouter the optional message router to use
+	 * @return the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a blocking manner.
@@ -57,7 +80,7 @@ public interface PulsarOperations<T> {
 	 * @throws PulsarClientException if an error occurs
 	 */
 	default CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		return sendAsync(null, message);
+		return sendAsync(null, message, null);
 	}
 
 	/**

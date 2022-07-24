@@ -79,6 +79,7 @@
 					  value="org.assertj.core.api.Assertions.*,
 				org.awaitility.Awaitility.*,
 				org.junit.jupiter.api.Assertions.*,
+				org.junit.jupiter.params.provider.Arguments.*,
 				org.junit.Assert.*,
 				org.junit.Assume.*,
 				org.junit.internal.matchers.ThrowableMessageMatcher.*,

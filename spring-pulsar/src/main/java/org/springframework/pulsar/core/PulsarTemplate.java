@@ -50,9 +50,9 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public MessageId send(String topic, T message) throws PulsarClientException {
+	public MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
 		try {
-			return this.sendAsync(topic, message).get();
+			return this.sendAsync(topic, message, messageRouter).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
