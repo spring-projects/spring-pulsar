@@ -121,7 +121,6 @@ spring.pulsar.consumer.autoUpdatePartitions
 spring.pulsar.consumer.replicateSubscriptionState
 spring.pulsar.consumer.autoAckOldestChunkedMessageOnQueueFull
 spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
-spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
 ```
 
 ### Sample Applications
@@ -187,21 +186,20 @@ When injecting, note that, we can provide a specific type - `String` in this cas
 If we have a need for a different `PulsarTemplate` with a different type in the same application, then we can add another injection with that type.
 `PulsarTemplate` currently requires the application to set a default topic.
 Once the topic is set, then we can call the various `send` methods on it.
-In this example, we are calling the very basic `send` method that calls the synchronous send from the Pulsar producer internally that returns the `MessageId`.
+In this example, we are calling the very basic synchronous `send` method that is internally forwarded to the Pulsar producer that returns the `MessageId`.
 We are ignoring the return value in this quick sample application.
-`PulsarTemplate` also provides API's for sending asynchronously among other send methods.
+`PulsarTemplate` also provides APIs for sending asynchronously among other send methods.
 We will look at the details of it, later on in the reference documentation.
 
 We use the `PulsarListener` annotation to consume from the topic.
 We are providing the subscription and topic names as annotation arguments.
 These are optional and the application may prefer to set them using the `spring.pulsar.consumer..` properties provided above.
-However, if properties are provided as annotation arguments, they get precedence.
 There are four consumer level properties that you can set on the `PulsarListener` annotation - they are `topics`, `topicPattern`, `subscriptionName` and `subscriptionType`.
-When providing on the annotation, they get preference regardless of what is set through consumer properties.
+When provided on the annotation, they get preference regardless of what is set through consumer properties.
 
 By default, `PulsarListener` uses an exclusive subscription type and this can be changed by using the `subscriptionType` property on the annotation or through the consumer property.
 
-`PulsarListner` internally creates a message listener container.
+`PulsarListener` internally creates a message listener container.
 The message listener container is responsible for creating the Pulsar Consumer using a consumer factory.
 When the consumer receives data, the container calls a message listener.
 This message listener is an adapter around the user provided method - the `listen` method in this case.
@@ -359,7 +357,7 @@ public void listen(org.apache.pulsar.client.api.Message<String> message) {
 
 #### Accessing the Pulsar Messages Object
 
-When consuming messages in batch mode using `PulsarListener`, instead of receiving them as a `List, you can receive them as Pulsar Messages type.
+When consuming messages in batch mode using `PulsarListener`, instead of receiving them as a `List`, you can receive them as Pulsar Messages type.
 Here is an example.
 
 ```
