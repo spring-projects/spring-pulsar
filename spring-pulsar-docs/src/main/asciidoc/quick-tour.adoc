@@ -1,0 +1,105 @@
+[[quick-tour]]
+=== Quick Tour
+
+In this section, we will take a quick tour of Spring for Apache Pulsar.
+
+#### Minimum Supported Versions
+
+The following are the minimum supported versions of the underlying libraries required by Spring for Apache Pulsar
+
+**JDK** - JDK 17
+
+**Apache Pulsar** - 2.10.0
+
+**Spring Boot** - 3.0.0
+
+**Spring Framework** - 6.0.0
+
+### Building the Project
+
+Spring for Apache Pulsar uses gradle as it's build tool.
+Use the following command to do a full build of the project.
+
+```
+./gradlew clean build
+```
+
+The build will produce the following artifacts.
+
+* spring-pulsar
+* spring-pulsar-boot-autoconfigure
+
+### Maven Coordinates
+
+Here are the maven coordinates of the modules, if you want to directly include them in an application.
+
+Here are the maven coordinates of the artifacts needed for using this library.
+
+```
+<dependency>
+    <groupId>org.springframework.pulsar</groupId>
+    <artifactId>spring-pulsar</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.pulsar</groupId>
+    <artifactId>spring-pulsar-boot-autoconfiguration</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+If you include the `spring-pulsar-boot-autoconfiguration` module, then that brings the `spring-pulsar` module transitively.
+
+We recommend the usage of a Spring-Boot-First-Approach for Spring for Apache Pulsar based application as that simplifies things tremendously.
+Therefore, most often, simply including the `spring-pulsar-boot-autoconfiguration` module is all you need in the application's dependencies.
+
+### Quick Sample
+
+In the following sample Spring Boot application, we show how to write a publisher and consumer using Spring for Apache Pulsar.
+This is a complete application and does not require any additional configuration as long as you have Pulsar cluster running on the default location - `localhost:6650`.
+
+```
+@SpringBootApplication
+public class PulsarBootHelloWorld {
+
+	public static void main(String[] args) {
+		SpringApplication.run(PulsarBootHelloWorld.class, args);
+	}
+
+	@Bean
+	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
+		return args -> {
+			for (int i = 0; i < 10; i ++) {
+				pulsarTemplate.send("hello-pulsar", This is message " + (i + 1));
+			}
+
+		};
+	}
+
+	@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+	public void listen(String message) {
+		System.out.println("Message Received: " + message);
+	}
+}
+```
+
+Let us go through the higher-level details of this application quickly.
+Later on in this documentation, we will see these components in much more detail.
+
+In the sample above, we are heavily relying on Spring Boot auto-configuration.
+Spring Boot auto-configures several components for our application.
+It automatically provides a `PulsarClient` for the application which is used by both the producer and the consumer.
+
+`PulsarTemplate` also is auto-configured by Spring Boot which we inject in the application and start sending records to a Pulsar topic.
+The application sends messages to a topic named `hello-pulsar`.
+Note that the application does not specify any schema information.
+That is because Spring for Apache Pulsar library automatically infers the schema type from the type of the data that you are sending.
+
+We use `PulsarListener` annotation to consume from the `hello-pulsar` topic where we publish the data.
+`PulsarListener` is a convenient annotation that wraps the message listener container infrastructure in Spring for Apache Pulsar.
+Behind the scenes, it creates a message listener container which creates and manages the Pulsar consumer.
+As with a regular Pulsar consumer, the default subscription type when using `PulsarListener` is the `Exclusive` mode.
+As records are published in to the `hello-pulsar` topic, the `Pulsarlistener` consumes them and prints them on the console.
+Here also, the framework infers the schema type used from the data type that the `PulsarListner` method uses as the payload - `String` in this case.
+
