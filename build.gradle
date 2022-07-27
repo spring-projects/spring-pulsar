@@ -347,6 +347,8 @@ project ('spring-pulsar-boot-autoconfigure') {
 project ('spring-pulsar-docs') {
 	description = 'Spring Pulsar Code Snippets For Docs'
 
+	artifactoryPublish.skip = true
+
 	dependencies {
 		api "org.springframework.boot:spring-boot-starter:$springBootVersion"
 		api project (':spring-pulsar')
@@ -357,6 +359,8 @@ project ('spring-pulsar-docs') {
 
 project ('spring-pulsar-sample-apps') {
 	description = 'Spring Pulsar Sample Applications'
+
+	artifactoryPublish.skip = true
 
 	dependencies {
 		api project (':spring-pulsar-boot-autoconfigure')
@@ -392,12 +396,14 @@ if (project.hasProperty('artifactoryUsername')) {
 	}
 }
 
+task dist(dependsOn: assemble) {
+	group = 'Distribution'
+	description = 'Builds -dist, -docs distribution archives.'
+}
 
 configurations {
 	docs
 }
-
-
 
 dependencies {
 	docs "io.spring.docresources:spring-doc-resources:${docResourcesVersion}@zip"
@@ -470,15 +476,7 @@ asciidoctor {
 			include 'images/*', 'css/**', 'js/**'
 		}
 	}
-
 }
-
-task reference(dependsOn: asciidoctor) {
-	group = 'Documentation'
-	description = 'Generate the reference documentation'
-}
-
-reference.onlyIf { "$System.env.NO_REFERENCE_TASK" != 'true' || project.hasProperty('ignoreEnvToStopReference') }
 
 task api(type: Javadoc) {
 	group = 'Documentation'
@@ -497,13 +495,27 @@ task api(type: Javadoc) {
 	}
 
 	source subprojects.collect { project ->
-		project.sourceSets.main.allJava
+		if (project.name != 'spring-pulsar-sample-apps') {
+			project.sourceSets.main.allJava
+		}
 	}
 
 	classpath = files(subprojects.collect { project ->
-		project.sourceSets.main.compileClasspath
+		if (project.name != 'spring-pulsar-sample-apps') {
+			project.sourceSets.main.compileClasspath
+		}
 	})
 	destinationDir = new File(buildDir, 'api')
+}
+
+
+task reference(dependsOn: asciidoctor) {
+	group = 'Documentation'
+	description = 'Generate the reference documentation'
+}
+
+reference.onlyIf {
+	"$System.env.NO_REFERENCE_TASK" != 'true' || project.hasProperty('ignoreEnvToStopReference')
 }
 
 task docsZip(type: Zip, dependsOn: [reference]) {
@@ -568,12 +580,7 @@ artifacts {
 	archives docsZip
 }
 
-task dist(dependsOn: assemble) {
-	group = 'Distribution'
-	description = 'Builds -dist, -docs distribution archives.'
-}
-
-apply from: "${rootProject.projectDir}/publish-maven.gradle"
+apply from: "${rootProject.projectDir}/gradle/publish-artifactory.gradle"
 
 publishing {
 	publications {
@@ -585,4 +592,3 @@ publishing {
 }
 
 apply from: "${rootDir}/gradle/docs.gradle"
-

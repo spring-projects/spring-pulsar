@@ -13,9 +13,3 @@ javadocJar {
 publishMavenJavaPublicationToMavenLocal {
     enabled = false
 }
-
-project.afterEvaluate {
-
-    project.tasks.artifactoryPublish.enabled(false)
-
-}
