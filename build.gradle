@@ -347,23 +347,44 @@ project ('spring-pulsar-boot-autoconfigure') {
 project ('spring-pulsar-docs') {
 	description = 'Spring Pulsar Code Snippets For Docs'
 
-	artifactoryPublish.skip = true
-
 	dependencies {
 		api "org.springframework.boot:spring-boot-starter:$springBootVersion"
 		api project (':spring-pulsar')
 		optionalApi 'com.fasterxml.jackson.core:jackson-core'
 		optionalApi 'com.fasterxml.jackson.core:jackson-databind'
 	}
+
+	jar {
+		enabled = false
+	}
+
+	sourcesJar {
+		enabled = false
+	}
+
+	javadocJar {
+		enabled = false
+	}
+
+	publishMavenJavaPublicationToMavenLocal {
+		enabled = false
+	}
+
+	project.afterEvaluate {
+		project.tasks.artifactoryPublish.enabled(false)
+	}
+
 }
 
 project ('spring-pulsar-sample-apps') {
 	description = 'Spring Pulsar Sample Applications'
 
-	artifactoryPublish.skip = true
-
 	dependencies {
 		api project (':spring-pulsar-boot-autoconfigure')
+	}
+
+	project.afterEvaluate {
+		project.tasks.artifactoryPublish.enabled(false)
 	}
 }
 
