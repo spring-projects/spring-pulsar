@@ -25,6 +25,7 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
+import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.springframework.core.log.LogAccessor;
 
 /**
@@ -50,9 +51,10 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+	public MessageId send(String topic, T message, MessageRouter messageRouter,
+						  TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
 		try {
-			return this.sendAsync(topic, message, messageRouter).get();
+			return this.sendAsync(topic, message, messageRouter, typedMessageBuilderCustomizer).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
@@ -60,11 +62,15 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
-		return producer.sendAsync(message)
+		TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
+		if (typedMessageBuilderCustomizer != null) {
+			messageBuilder = typedMessageBuilderCustomizer.apply(messageBuilder);
+		}
+		return messageBuilder.sendAsync()
 				.whenComplete((msgId, ex) -> {
 					if (ex == null) {
 						this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
