@@ -18,8 +18,8 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -82,11 +82,10 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		CountDownLatch latch = new CountDownLatch(10);
 
-		willAnswer(invocation -> {
+		doAnswer(invocation -> {
 			latch.countDown();
 			return invocation.callRealMethod();
-		}).given(containerConsumer)
-				.acknowledge(any(Message.class));
+		}).when(containerConsumer).acknowledge(any(Message.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-011");
@@ -211,11 +210,10 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		CountDownLatch latch = new CountDownLatch(10);
 
-		willAnswer(invocation -> {
+		doAnswer(invocation -> {
 			latch.countDown();
 			return invocation.callRealMethod();
-		}).given(containerConsumer)
-				.acknowledge(any(Message.class));
+		}).when(containerConsumer).acknowledge(any(Message.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-014");
@@ -253,10 +251,10 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		CountDownLatch latch = new CountDownLatch(1);
 		final PulsarBatchMessageListener<?> pulsarBatchMessageListener = mock(PulsarBatchMessageListener.class);
 
-		willAnswer(invocation -> {
+		doAnswer(invocation -> {
 			latch.countDown();
 			return null;
-		}).given(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
+		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
 
 		pulsarContainerProperties.setMessageListener(
 				pulsarBatchMessageListener);
@@ -300,10 +298,10 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		final PulsarBatchMessageListener<?> pulsarBatchMessageListener = mock(PulsarBatchMessageListener.class);
 		CountDownLatch latch = new CountDownLatch(1);
 
-		willAnswer(invocation -> {
+		doAnswer(invocation -> {
 			latch.countDown();
 			throw new RuntimeException();
-		}).given(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
+		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
 
 		pulsarContainerProperties.setMessageListener(
 				pulsarBatchMessageListener);
