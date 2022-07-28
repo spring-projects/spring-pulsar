@@ -18,11 +18,9 @@ package org.springframework.pulsar.core;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -32,11 +30,14 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.common.protocol.schema.SchemaHash;
 
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -63,7 +64,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
-	private final Cache<SchemaTopic<T>, Producer<T>> producerCache;
+	private final Cache<ProducerCacheKey<T>, Producer<T>> producerCache;
 
 	/**
 	 * Construct a caching producer factory with the specified values for the cache configuration.
@@ -82,7 +83,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 				.maximumSize(cacheMaximumSize)
 				.initialCapacity(cacheInitialCapacity)
 				.scheduler(Scheduler.systemScheduler())
-				.evictionListener((RemovalListener<SchemaTopic<T>, Producer<T>>) (schemaTopic, producer, cause) -> {
+				.evictionListener((RemovalListener<ProducerCacheKey<T>, Producer<T>>) (producerCacheKey, producer, cause) -> {
 					this.logger.debug(() -> String.format("Producer %s evicted from cache due to %s",
 							ProducerUtils.formatProducer(producer), cause));
 					closeProducer(producer);
@@ -92,10 +93,10 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
-		SchemaTopic<T> schemaTopic = new SchemaTopic<>(schema, topicName, messageRouter);
-		return this.producerCache.get(schemaTopic, (st) -> {
+		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter);
+		return this.producerCache.get(producerCacheKey, (st) -> {
 			try {
-				return this.doCreateProducer(st.topicName, st.schema, messageRouter);
+				return this.doCreateProducer(st.topic, st.schema, st.router);
 			}
 			catch (PulsarClientException ex) {
 				throw new RuntimeException(ex);
@@ -116,7 +117,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		factory.addAdvice(new MethodInterceptor() {
 			@Nullable
 			@Override
-			public Object invoke(@Nonnull MethodInvocation invocation) throws Throwable {
+			public Object invoke(@NonNull MethodInvocation invocation) throws Throwable {
 				if (invocation.getMethod().getName().equals("close")) {
 					closeCallback.accept((Producer<T>) invocation.getThis());
 					return null;
@@ -133,8 +134,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	@Override
 	public void destroy() {
-		this.producerCache.asMap().forEach((schemaTopic, producer) -> {
-			this.producerCache.invalidate(schemaTopic);
+		this.producerCache.asMap().forEach((producerCacheKey, producer) -> {
+			this.producerCache.invalidate(producerCacheKey);
 			closeProducer(producer);
 		});
 	}
@@ -151,18 +152,50 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	/**
-	 * Holder for a schema, topic and optional message router used as unique identifier of a producer in cache key.
-	 *
-	 * @param schema schema of the message
-	 * @param topicName topic to send the message to
-	 * @param messageRouter router to use to send the topic
+	 * Uniquely identifies a producer that was handed out by the factory.
 	 *
 	 * @param <T> type of the schema
 	 */
-	record SchemaTopic<T>(Schema<T> schema, String topicName, MessageRouter messageRouter) {
-		public SchemaTopic {
+	static class ProducerCacheKey<T> {
+
+		private final Schema<T> schema;
+		private final SchemaHash schemaHash;
+		private final String topic;
+		private final MessageRouter router;
+
+		/**
+		 * Constructs an instance.
+		 *
+		 * @param schema the schema the producer is configured to use
+		 * @param topic the topic the producer is configured to send to
+		 * @param router the custom message router the producer is configured to use
+		 */
+		ProducerCacheKey(Schema<T> schema, String topic, @Nullable MessageRouter router) {
 			Assert.notNull(schema, () -> "'schema' must be non-null");
-			Assert.notNull(topicName, () -> "'topicName' must be non-null");
+			Assert.notNull(topic, () -> "'topic' must be non-null");
+			this.schema = schema;
+			this.schemaHash = SchemaHash.of(this.schema);
+			this.topic = topic;
+			this.router = router;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			ProducerCacheKey<?> that = (ProducerCacheKey<?>) o;
+			return this.topic.equals(that.topic) &&
+					this.schemaHash.equals(that.schemaHash) &&
+						Objects.equals(this.router, that.router);
+		}
+
+		@Override
+		public int hashCode() {
+			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router);
 		}
 	}
 }
