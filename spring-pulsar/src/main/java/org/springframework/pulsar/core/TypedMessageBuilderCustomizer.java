@@ -16,15 +16,19 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.function.Function;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
 
 /**
- * The function to customize a {@link TypedMessageBuilder}.
- *
- * @param <T> the message payload type
+ * The interface to customize a {@link TypedMessageBuilder}.
  *
  * @author Alexander Preuß
  */
-public interface TypedMessageBuilderCustomizer<T> extends Function<TypedMessageBuilder<T>, TypedMessageBuilder<T>> {
+@FunctionalInterface
+public interface TypedMessageBuilderCustomizer {
+
+    /**
+     * Customizes a {@link TypedMessageBuilder}.
+     * @param messageBuilder the messageBuilder to customize
+     */
+    void customize(TypedMessageBuilder<?> messageBuilder);
 }
