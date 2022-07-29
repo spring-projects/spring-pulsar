@@ -19,6 +19,7 @@ package org.springframework.pulsar.autoconfigure;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
@@ -54,15 +55,11 @@ public class PulsarAnnotationDrivenConfiguration {
 
 		final PulsarContainerProperties containerProperties = factory.getContainerProperties();
 
-//		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-//		PulsarProperties.Listener properties = this.pulsarProperties.getListener();
+		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+		PulsarProperties.Listener properties = this.pulsarProperties.getListener();
 
-//		map.from(properties::getSchema).as(
-//				schema1 -> switch (schema1) {
-//					case STRING -> Schema.STRING;
-//					case BYTES -> Schema.BYTES;
-//					case JSON -> Schema.JSON();
-//				}).to(containerProperties::setSchema);
+		map.from(properties::getSchemaType).to(containerProperties::setSchemaType);
+		map.from(properties::getAckMode).to(containerProperties::setAckMode);
 
 		return factory;
 	}

@@ -34,9 +34,11 @@ import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
 
 /**
  * Configuration properties for Spring for Apache Pulsar.
@@ -50,6 +52,7 @@ import org.springframework.boot.context.properties.PropertyMapper;
 public class PulsarProperties {
 
 	private final Consumer consumer = new Consumer();
+
 	private final Client client = new Client();
 
 	private final Listener listener = new Listener();
@@ -804,7 +807,25 @@ public class PulsarProperties {
 
 	public static class Listener {
 
+		private PulsarContainerProperties.AckMode ackMode;
 
+		private SchemaType schemaType;
+
+		public PulsarContainerProperties.AckMode getAckMode() {
+			return this.ackMode;
+		}
+
+		public void setAckMode(PulsarContainerProperties.AckMode ackMode) {
+			this.ackMode = ackMode;
+		}
+
+		public SchemaType getSchemaType() {
+			return this.schemaType;
+		}
+
+		public void setSchemaType(SchemaType schemaType) {
+			this.schemaType = schemaType;
+		}
 	}
 
 	@SuppressWarnings("serial")
