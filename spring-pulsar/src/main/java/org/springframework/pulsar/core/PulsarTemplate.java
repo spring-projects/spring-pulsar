@@ -24,8 +24,8 @@ import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-
 import org.apache.pulsar.client.api.TypedMessageBuilder;
+
 import org.springframework.core.log.LogAccessor;
 
 /**
@@ -35,6 +35,7 @@ import org.springframework.core.log.LogAccessor;
  *
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public class PulsarTemplate<T> implements PulsarOperations<T> {
 
@@ -61,7 +62,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(String topic, T message,TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
