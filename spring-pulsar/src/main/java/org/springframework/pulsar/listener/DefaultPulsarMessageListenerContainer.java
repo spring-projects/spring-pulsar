@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +37,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.task.AsyncListenableTaskExecutor;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
@@ -45,7 +46,6 @@ import org.springframework.pulsar.event.ConsumerStartingEvent;
 import org.springframework.scheduling.SchedulingAwareRunnable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import org.springframework.util.concurrent.ListenableFuture;
 
 /**
  * Default implementation for {@link PulsarMessageListenerContainer}.
@@ -57,7 +57,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private volatile boolean running = false;
 
-	private volatile ListenableFuture<?> listenerConsumerFuture;
+	private volatile CompletableFuture<?> listenerConsumerFuture;
 
 	private volatile Listener listenerConsumer;
 
@@ -80,7 +80,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
 		Object messageListenerObject = containerProperties.getMessageListener();
-		AsyncListenableTaskExecutor consumerExecutor = containerProperties.getConsumerTaskExecutor();
+		AsyncTaskExecutor consumerExecutor = containerProperties.getConsumerTaskExecutor();
 
 		@SuppressWarnings("unchecked")
 		MessageListener<T> messageListener = (MessageListener<T>) messageListenerObject;
@@ -94,7 +94,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		this.listenerConsumer = new Listener(messageListener);
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
-		this.listenerConsumerFuture = consumerExecutor.submitListenable(this.listenerConsumer);
+		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
 
 		try {
 			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(), TimeUnit.MILLISECONDS)) {

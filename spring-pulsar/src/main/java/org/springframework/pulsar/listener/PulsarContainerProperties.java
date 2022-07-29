@@ -23,7 +23,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
-import org.springframework.core.task.AsyncListenableTaskExecutor;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.util.Assert;
 
 /**
@@ -69,7 +69,7 @@ public class PulsarContainerProperties {
 
 	private Object messageListener;
 
-	private AsyncListenableTaskExecutor consumerTaskExecutor;
+	private AsyncTaskExecutor consumerTaskExecutor;
 
 	private int maxNumMessages = -1;
 
@@ -99,11 +99,11 @@ public class PulsarContainerProperties {
 		this.messageListener = messageListener;
 	}
 
-	public AsyncListenableTaskExecutor getConsumerTaskExecutor() {
+	public AsyncTaskExecutor getConsumerTaskExecutor() {
 		return this.consumerTaskExecutor;
 	}
 
-	public void setConsumerTaskExecutor(AsyncListenableTaskExecutor consumerExecutor) {
+	public void setConsumerTaskExecutor(AsyncTaskExecutor consumerExecutor) {
 		this.consumerTaskExecutor = consumerExecutor;
 	}
 
