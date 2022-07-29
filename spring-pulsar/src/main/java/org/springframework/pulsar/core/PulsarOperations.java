@@ -53,7 +53,7 @@ public interface PulsarOperations<T> {
 	}
 
 	/**
-	 * Sends a message to the specified topic in a blocking manner.
+	 * Sends a message to the default topic in a blocking manner.
 	 * @param message the message to send
 	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
 	 * @return the id of the sent message
@@ -177,7 +177,7 @@ public interface PulsarOperations<T> {
 	}
 
 	/**
-	 * Sends a message to the specified topic in a non-blocking manner.
+	 * Sends a message to the default in a non-blocking manner.
 	 * @param message the message to send
 	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
 	 * @param messageRouter the optional message router to use
