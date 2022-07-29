@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
  * @param <T> the message payload type
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public interface PulsarOperations<T> {
 
