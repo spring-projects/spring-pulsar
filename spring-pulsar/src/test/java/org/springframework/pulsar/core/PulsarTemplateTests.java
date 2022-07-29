@@ -50,12 +50,17 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 class PulsarTemplateTests extends AbstractContainerBaseTests {
 
+	private static final String SAMPLE_MESSAGE_KEY = "sample-key";
+	private static final TypedMessageBuilderCustomizer sampleMessageKeyCustomizer =
+			messageBuilder -> messageBuilder.key(SAMPLE_MESSAGE_KEY);
+
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sendMessageTestProvider")
-	void sendMessageTest(String topic, Map<String, Object> producerConfig, SendHandler<Object> handler, MessageRouter router) throws Exception {
+	void sendMessageTest(String topic, Map<String, Object> producerConfig, SendHandler<Object> handler, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter router) throws Exception {
 		String subscription = topic + "-sub";
 		String msgPayload = topic + "-msg";
 		if (router != null) {
@@ -68,7 +73,7 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 				PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client, producerConfig);
 				PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 
-				Object sendResponse = handler.doSend(pulsarTemplate, topic, msgPayload, router);
+				Object sendResponse = handler.doSend(pulsarTemplate, topic, msgPayload, typedMessageBuilderCustomizer, router);
 				if (sendResponse instanceof CompletableFuture) {
 					sendResponse = ((CompletableFuture<?>) sendResponse).get(3, TimeUnit.SECONDS);
 				}
@@ -76,6 +81,9 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 
 				CompletableFuture<Message<String>> receiveMsgFuture = consumer.receiveAsync();
 				Message<String> msg = receiveMsgFuture.get(3, TimeUnit.SECONDS);
+				if (typedMessageBuilderCustomizer != null) {
+					assertThat(msg.getKey()).isEqualTo(SAMPLE_MESSAGE_KEY);
+				}
 				assertThat(msg.getData()).asString().isEqualTo(msgPayload);
 
 				// Make sure the producer was closed by the template (albeit indirectly as client removes closed producers)
@@ -87,29 +95,71 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 
 	static Stream<Arguments> sendMessageTestProvider() {
 		return Stream.of(
-				arguments(Named.of("sendMessageToDefaultTopicNoRouter", "smt-topic-1"), Collections.singletonMap("topicName", "smt-topic-1"),
-						(SendHandler<MessageId>) (template, topic, msg, router) -> template.send(msg),
+
+
+				arguments(Named.of("sendMessageToDefaultTopic", "smt-topic-1"), Collections.singletonMap("topicName", "smt-topic-1"),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(msg),
+						null,
 						null),
 				arguments(Named.of("sendMessageToDefaultTopicWithRouter", "smt-topic-2"), Collections.singletonMap("topicName", "smt-topic-2"),
-						(SendHandler<MessageId>) (template, topic, msg, router) -> template.send(msg, router),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(msg, router),
+						null,
 						mockRouter()),
-				arguments(Named.of("sendMessageToSpecificTopicNoRouter", "smt-topic-3"), Collections.emptyMap(),
-						(SendHandler<MessageId>) (template, topic, msg, router) -> template.send(topic, msg),
+				arguments(Named.of("sendMessageToDefaultTopicWithCustomizer", "smt-topic-3"), Collections.singletonMap("topicName", "smt-topic-3"),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(msg, customizer),
+						sampleMessageKeyCustomizer,
 						null),
-				arguments(Named.of("sendMessageToSpecificTopicWithRouter", "smt-topic-4"), Collections.emptyMap(),
+				arguments(Named.of("sendMessageToDefaultTopicWithCustomizerAndRouter", "smt-topic-4"), Collections.singletonMap("topicName", "smt-topic-4"),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(msg, customizer, router),
+						sampleMessageKeyCustomizer,
+						mockRouter()),
+				arguments(Named.of("sendMessageToSpecificTopic", "smt-topic-5"), Collections.emptyMap(),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(topic, msg),
+						null,
+						null),
+				arguments(Named.of("sendMessageToSpecificTopicWithRouter", "smt-topic-6"), Collections.emptyMap(),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(topic, msg, null, router),
+						null,
+						mockRouter()),
+				arguments(Named.of("sendMessageToSpecificTopicWithCustomizer", "smt-topic-7"), Collections.emptyMap(),
+						(SendHandler<MessageId>) (template, topic, msg, customizer, router) -> template.send(topic, msg, customizer),
+						sampleMessageKeyCustomizer,
+						null),
+				arguments(Named.of("sendMessageToSpecificTopicWithCustomizerAndRouter", "smt-topic-8"), Collections.emptyMap(),
 						(SendHandler<MessageId>) PulsarTemplate::send,
+						sampleMessageKeyCustomizer,
 						mockRouter()),
-				arguments(Named.of("sendAsyncMessageToDefaultTopicNoRouter", "smt-topic-5"), Collections.singletonMap("topicName", "smt-topic-5"),
-						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, router) -> template.sendAsync(msg),
+				arguments(Named.of("sendAsyncMessageToDefaultTopic", "smt-topic-9"), Collections.singletonMap("topicName", "smt-topic-9"),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(msg),
+						null,
 						null),
-				arguments(Named.of("sendAsyncMessageToDefaultTopicWithRouter", "smt-topic-6"), Collections.singletonMap("topicName", "smt-topic-6"),
-						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, router) -> template.sendAsync(msg, router),
+				arguments(Named.of("sendAsyncMessageToDefaultTopicWithRouter", "smt-topic-10"), Collections.singletonMap("topicName", "smt-topic-10"),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(msg, router),
+						null,
 						mockRouter()),
-				arguments(Named.of("sendAsyncMessageToSpecificTopicNoRouter", "smt-topic-7"), Collections.emptyMap(),
-						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, router) -> template.sendAsync(topic, msg),
+				arguments(Named.of("sendAsyncMessageToDefaultTopicWithCustomizer", "smt-topic-11"), Collections.singletonMap("topicName", "smt-topic-11"),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(msg, customizer),
+						sampleMessageKeyCustomizer,
 						null),
-				arguments(Named.of("sendAsyncMessageToSpecificTopicWithRouter", "smt-topic-8"), Collections.emptyMap(),
+				arguments(Named.of("sendAsyncMessageToDefaultTopicWithCustomizerAndRouter", "smt-topic-12"), Collections.singletonMap("topicName", "smt-topic-12"),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(msg, customizer, router),
+						sampleMessageKeyCustomizer,
+						mockRouter()),
+				arguments(Named.of("sendAsyncMessageToSpecificTopic", "smt-topic-13"), Collections.emptyMap(),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(topic, msg),
+						null,
+						null),
+				arguments(Named.of("sendAsyncMessageToSpecificTopicWithRouter", "smt-topic-14"), Collections.emptyMap(),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(topic, msg, null, router),
+						null,
+						mockRouter()),
+				arguments(Named.of("sendAsyncMessageToSpecificTopicWithCustomizer", "smt-topic-15"), Collections.emptyMap(),
+						(SendHandler<CompletableFuture<MessageId>>) (template, topic, msg, customizer, router) -> template.sendAsync(topic, msg, customizer),
+						sampleMessageKeyCustomizer,
+						null),
+				arguments(Named.of("sendAsyncMessageToSpecificTopicWithCustomizerAndRouter", "smt-topic-16"), Collections.emptyMap(),
 						(SendHandler<CompletableFuture<MessageId>>) PulsarTemplate::sendAsync,
+						sampleMessageKeyCustomizer,
 						mockRouter())
 		);
 	}
@@ -122,6 +172,6 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 
 	@FunctionalInterface
 	interface SendHandler<V>  {
-		V doSend(PulsarTemplate<String> template, String topic, String msg, MessageRouter router) throws PulsarClientException;
+		V doSend(PulsarTemplate<String> template, String topic, String msg, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter router) throws PulsarClientException;
 	}
 }
