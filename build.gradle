@@ -612,4 +612,13 @@ publishing {
 	}
 }
 
+artifactoryPublish {
+	publications(publishing.publications.mavenJava)
+	properties {
+		mavenJava '*:*:*:*@zip', 'zip.name': 'spring-pulsar', 'zip.displayname': 'Spring Pulsar', 'zip.deployed': false
+		mavenJava '*:*:*:docs@zip', 'zip.type': 'docs'
+		mavenJava '*:*:*:dist@zip', 'zip.type': 'dist'
+	}
+}
+
 apply from: "${rootDir}/gradle/docs.gradle"
