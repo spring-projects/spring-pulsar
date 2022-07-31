@@ -590,3 +590,9 @@ public void listen(Foo foo) {
 ```
 
 On the producer side also, for the Java primitive types, the framework can infer the Schema, but for any other types, you need set that on the `PulsarTemmplate`.
+
+=== Appendix
+The reference documentation has the following appendices:
+
+[horizontal]
+<<application-properties#appendix.application-properties,Application Properties>> :: Application properties that you can use to configure your Pulsar application.

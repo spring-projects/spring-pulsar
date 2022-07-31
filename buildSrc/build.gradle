@@ -1,0 +1,49 @@
+plugins {
+	id "java-gradle-plugin"
+	id "io.spring.javaformat" version "${javaFormatVersion}"
+	id "checkstyle"
+}
+
+repositories {
+	mavenCentral()
+	gradlePluginPortal()
+	maven { url 'https://repo.spring.io/release' }
+	maven { url 'https://repo.spring.io/milestone' }
+	if (version.endsWith('SNAPSHOT')) {
+		maven { url 'https://repo.spring.io/snapshot' }
+	}
+}
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+dependencies {
+	checkstyle "io.spring.javaformat:spring-javaformat-checkstyle:${javaFormatVersion}"
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
+	implementation("org.springframework:spring-core")
+	implementation("org.springframework:spring-web")
+	implementation("com.fasterxml.jackson.core:jackson-databind")
+	implementation("org.gradle:test-retry-gradle-plugin:${testRetryVersion}")
+	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:${javaFormatVersion}")
+	testImplementation("org.assertj:assertj-core")
+	testImplementation("org.apache.logging.log4j:log4j-core")
+	testImplementation("org.junit.jupiter:junit-jupiter")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+checkstyle {
+	toolVersion = "${checkstyleToolVersion}"
+}
+
+gradlePlugin {
+	plugins {
+		configurationProperties {
+			id = 'org.springframework.pulsar.configuration-properties'
+			implementationClass = 'org.springframework.pulsar.build.configprops.ConfigurationPropertiesPlugin'
+		}
+	}
+}
+
+test {
+	useJUnitPlatform()
+}

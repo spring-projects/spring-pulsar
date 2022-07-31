@@ -1,11 +1,3 @@
-buildscript {
-	repositories {
-		mavenCentral()
-		gradlePluginPortal()
-		maven { url 'https://repo.spring.io/plugins-release' }
-	}
-}
-
 plugins {
 	id 'base'
 	id 'project-report'
@@ -320,6 +312,8 @@ project ('spring-pulsar') {
 project ('spring-pulsar-boot-autoconfigure') {
 	description = 'Spring Boot Pulsar Autoconfiguration'
 
+	apply plugin: 'org.springframework.pulsar.configuration-properties'
+
 	dependencies {
 		annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:$springBootVersion"
 
@@ -327,7 +321,6 @@ project ('spring-pulsar-boot-autoconfigure') {
 		api "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
 		api "org.springframework.boot:spring-boot-starter:$springBootVersion"
 		api "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
-
 		api project (':spring-pulsar')
 
 		testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
