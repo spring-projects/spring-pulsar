@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.build.configprops;
+package org.springframework.pulsar.build.docs.configprops;
 
 /**
  * Abstract class for rows in {@link Table}.

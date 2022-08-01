@@ -19,6 +19,7 @@ targetCompatibility = 17
 
 dependencies {
 	checkstyle "io.spring.javaformat:spring-javaformat-checkstyle:${javaFormatVersion}"
+	implementation("org.asciidoctor:asciidoctor-gradle-jvm:3.3.2")
 	implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
 	implementation("org.springframework:spring-core")
 	implementation("org.springframework:spring-web")
@@ -39,7 +40,11 @@ gradlePlugin {
 	plugins {
 		configurationProperties {
 			id = 'org.springframework.pulsar.configuration-properties'
-			implementationClass = 'org.springframework.pulsar.build.configprops.ConfigurationPropertiesPlugin'
+			implementationClass = 'org.springframework.pulsar.build.docs.configprops.ConfigurationPropertiesPlugin'
+		}
+		conventionsPlugin {
+			id = "org.springframework.pulsar.conventions"
+			implementationClass = "org.springframework.pulsar.build.ConventionsPlugin"
 		}
 	}
 }

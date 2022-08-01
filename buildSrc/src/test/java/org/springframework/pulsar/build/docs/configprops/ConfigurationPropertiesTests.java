@@ -14,34 +14,27 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.build.configprops;
+package org.springframework.pulsar.build.docs.configprops;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.File;
+import java.util.Arrays;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Asciidoctor table listing configuration properties sharing to a common theme.
+ * Tests for {@link ConfigurationProperties}
  *
- * @author Brian Clozel
+ * @author Andy Wilkinson
  */
-class Table {
+class ConfigurationPropertiesTests {
 
-	private final Set<Row> rows = new TreeSet<>();
-
-	void addRow(Row row) {
-		this.rows.add(row);
-	}
-
-	void write(Asciidoc asciidoc) {
-		asciidoc.appendln("[cols=\"4,3,3\", options=\"header\"]");
-		asciidoc.appendln("|===");
-		asciidoc.appendln("|Name|Description|Default Value");
-		asciidoc.appendln();
-		this.rows.forEach((entry) -> {
-			entry.write(asciidoc);
-			asciidoc.appendln();
-		});
-		asciidoc.appendln("|===");
+	@Test
+	void whenJsonHasAnIntegerDefaultValueThenItRemainsAnIntegerWhenRead() {
+		ConfigurationProperties properties = ConfigurationProperties
+				.fromFiles(Arrays.asList(new File("src/test/resources/spring-configuration-metadata.json")));
+		assertThat(properties.get("example.counter").getDefaultValue()).isEqualTo(0);
 	}
 
 }

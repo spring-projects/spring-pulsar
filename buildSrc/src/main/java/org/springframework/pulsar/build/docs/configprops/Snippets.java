@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.build.configprops;
+package org.springframework.pulsar.build.docs.configprops;
 
 import java.io.IOException;
 import java.io.OutputStream;

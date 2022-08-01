@@ -25,7 +25,7 @@ Copies of this document may be made for your own use and for distribution to oth
 
 include::preface.adoc[]
 
-
+[[quick-intro]]
 == Introduction
 
 This first part of the reference documentation is a high-level quick-tour of Spring for Apache Pulsar.
@@ -39,7 +39,6 @@ This part of the reference documentation goes through the details of the various
 include::pulsar.adoc[]
 
 [[resources]]
-
 == Other Resources
 
 In addition to this reference documentation, we recommend a number of other resources that may help you learn about Spring and Apache Pulsar.

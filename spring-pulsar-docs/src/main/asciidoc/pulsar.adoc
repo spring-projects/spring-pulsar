@@ -2,7 +2,7 @@
 == Using Spring for Apache Pulsar
 
 This section offers detailed explanations of the various concerns that impact using Spring for Apache Pulsar.
-For a quick but less detailed introduction, see <<quick-tour>>.
+For a quick but less detailed introduction, see <<index.adoc#quick-intro>>.
 
 [[pulsar-client]]
 === Pulsar Client

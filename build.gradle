@@ -91,187 +91,188 @@ allprojects {
 }
 
 subprojects { subproject ->
-	apply plugin: 'java-library'
-	apply plugin: 'java'
-	apply from: "${rootProject.projectDir}/gradle/publish-artifactory.gradle"
-	apply plugin: 'eclipse'
-	apply plugin: 'idea'
-	apply plugin: 'jacoco'
-	apply plugin: 'checkstyle'
+	if (!['spring-pulsar-docs'].contains(subproject.name)) {
+		apply plugin: 'java-library'
+		apply plugin: 'java'
+		apply from: "${rootProject.projectDir}/gradle/publish-artifactory.gradle"
+		apply plugin: 'eclipse'
+		apply plugin: 'idea'
+		apply plugin: 'jacoco'
+		apply plugin: 'checkstyle'
 
-	java {
-		withJavadocJar()
-		withSourcesJar()
-		registerFeature('optional') {
-			usingSourceSet(sourceSets.main)
-		}
-		registerFeature('provided') {
-			usingSourceSet(sourceSets.main)
-		}
-	}
-
-	compileJava {
-		sourceCompatibility = 17
-		targetCompatibility = 17
-	}
-
-	compileTestJava {
-		sourceCompatibility = 17
-		options.encoding = 'UTF-8'
-	}
-
-	eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
-
-	jacoco {
-		toolVersion = '0.8.7'
-	}
-
-	// dependencies that are common across all java projects
-	dependencies {
-		implementation "com.google.code.findbugs:jsr305:$googleJsr305Version"
-		testImplementation 'org.junit.jupiter:junit-jupiter-api'
-		testImplementation 'org.junit.jupiter:junit-jupiter-params'
-		testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-		// To avoid compiler warnings about @API annotations in JUnit code
-		testCompileOnly 'org.apiguardian:apiguardian-api:1.0.0'
-
-		testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
-		testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
-
-		testImplementation("org.awaitility:awaitility:$awaitilityVersion") {
-			exclude group: 'org.hamcrest'
-		}
-		testImplementation "org.hamcrest:hamcrest-core:$hamcrestVersion"
-		optionalApi "org.assertj:assertj-core:$assertjVersion"
-
-		testImplementation "org.testcontainers:pulsar:1.17.2"
-
-		testImplementation "org.springframework:spring-test"
-
-	}
-
-	// enable all compiler warnings; individual projects may customize further
-	[compileJava, compileTestJava]*.options*.compilerArgs = ['-Xlint:all,-options']
-
-	test {
-		testLogging {
-			events "skipped", "failed"
-			showStandardStreams = project.hasProperty("showStandardStreams") ?: false
-			showExceptions = true
-			showStackTraces = true
-			exceptionFormat = 'full'
+		java {
+			withJavadocJar()
+			withSourcesJar()
+			registerFeature('optional') {
+				usingSourceSet(sourceSets.main)
+			}
+			registerFeature('provided') {
+				usingSourceSet(sourceSets.main)
+			}
 		}
 
-		maxHeapSize = '1536m'
-//		jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:8111'
+		compileJava {
+			sourceCompatibility = 17
+			targetCompatibility = 17
+		}
+
+		compileTestJava {
+			sourceCompatibility = 17
+			options.encoding = 'UTF-8'
+		}
+
+		eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
+
 		jacoco {
-			destinationFile = file("$buildDir/jacoco.exec")
+			toolVersion = '0.8.7'
 		}
-		useJUnitPlatform()
 
-		if (System.properties['sonar.host.url']) {
-			finalizedBy jacocoTestReport
+		// dependencies that are common across all java projects
+		dependencies {
+			implementation "com.google.code.findbugs:jsr305:$googleJsr305Version"
+			testImplementation 'org.junit.jupiter:junit-jupiter-api'
+			testImplementation 'org.junit.jupiter:junit-jupiter-params'
+			testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+			testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+			// To avoid compiler warnings about @API annotations in JUnit code
+			testCompileOnly 'org.apiguardian:apiguardian-api:1.0.0'
+
+			testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
+			testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
+
+			testImplementation("org.awaitility:awaitility:$awaitilityVersion") {
+				exclude group: 'org.hamcrest'
+			}
+			testImplementation "org.hamcrest:hamcrest-core:$hamcrestVersion"
+			optionalApi "org.assertj:assertj-core:$assertjVersion"
+
+			testImplementation "org.testcontainers:pulsar:1.17.2"
+
+			testImplementation "org.springframework:spring-test"
+
 		}
-	}
 
-	checkstyle {
-		configDirectory.set(rootProject.file("src/checkstyle"))
-		toolVersion = '9.0'
-	}
+		// enable all compiler warnings; individual projects may customize further
+		[compileJava, compileTestJava]*.options*.compilerArgs = ['-Xlint:all,-options']
 
-	jacocoTestReport {
-		reports {
-			xml.enabled true
-			csv.enabled false
-			html.enabled false
-			xml.destination file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
-		}
-	}
+		test {
+			testLogging {
+				events "skipped", "failed"
+				showStandardStreams = project.hasProperty("showStandardStreams") ?: false
+				showExceptions = true
+				showStackTraces = true
+				exceptionFormat = 'full'
+			}
 
-	publishing {
-		publications {
-			mavenJava(MavenPublication) {
-				suppressAllPomMetadataWarnings()
-				from components.java
-				pom.withXml {
-					def pomDeps = asNode().dependencies.first()
-					subproject.configurations.providedImplementation.allDependencies.each { dep ->
-						pomDeps.remove(pomDeps.'*'.find { it.artifactId.text() == dep.name })
-						pomDeps.appendNode('dependency').with {
-							it.appendNode('groupId', dep.group)
-							it.appendNode('artifactId', dep.name)
-							it.appendNode('version', dep.version)
-							it.appendNode('scope', 'provided')
-						}
-					}
-				}
+			maxHeapSize = '1536m'
+//		jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:8111'
+			jacoco {
+				destinationFile = file("$buildDir/jacoco.exec")
+			}
+			useJUnitPlatform()
+
+			if (System.properties['sonar.host.url']) {
+				finalizedBy jacocoTestReport
 			}
 		}
-	}
 
-	task updateCopyrights {
-		onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
-		if (gitPresent) {
-			inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+		checkstyle {
+			configDirectory.set(rootProject.file("src/checkstyle"))
+			toolVersion = '9.0'
 		}
-		outputs.dir('build')
 
-		doLast {
-			def now = Calendar.instance.get(Calendar.YEAR) as String
-			inputs.files.each { file ->
-				def line
-				file.withReader { reader ->
-					while (line = reader.readLine()) {
-						def matcher = line =~ /Copyright (20\d\d)-?(20\d\d)?/
-						if (matcher.count) {
-							def beginningYear = matcher[0][1]
-							if (now != beginningYear && now != matcher[0][2]) {
-								def years = "$beginningYear-$now"
-								def sourceCode = file.text
-								sourceCode = sourceCode.replaceFirst(/20\d\d(-20\d\d)?/, years)
-								file.write(sourceCode)
-								println "Copyright updated for file: $file"
+		jacocoTestReport {
+			reports {
+				xml.enabled true
+				csv.enabled false
+				html.enabled false
+				xml.destination file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
+			}
+		}
+
+		publishing {
+			publications {
+				mavenJava(MavenPublication) {
+					suppressAllPomMetadataWarnings()
+					from components.java
+					pom.withXml {
+						def pomDeps = asNode().dependencies.first()
+						subproject.configurations.providedImplementation.allDependencies.each { dep ->
+							pomDeps.remove(pomDeps.'*'.find { it.artifactId.text() == dep.name })
+							pomDeps.appendNode('dependency').with {
+								it.appendNode('groupId', dep.group)
+								it.appendNode('artifactId', dep.name)
+								it.appendNode('version', dep.version)
+								it.appendNode('scope', 'provided')
 							}
-							break
 						}
 					}
 				}
 			}
 		}
-	}
 
-	jar {
-		manifest {
-			attributes(
-					'Implementation-Version': archiveVersion,
-					'Created-By': "JDK ${System.properties['java.version']} (${System.properties['java.specification.vendor']})",
-					'Implementation-Title': subproject.name,
-					'Implementation-Vendor-Id': subproject.group,
-					'Implementation-Vendor': 'Pivotal Software, Inc.',
-					'Implementation-URL': linkHomepage,
-					'Automatic-Module-Name': subproject.name.replace('-', '.')  // for Jigsaw
-			)
+		task updateCopyrights {
+			onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
+			if (gitPresent) {
+				inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+			}
+			outputs.dir('build')
+
+			doLast {
+				def now = Calendar.instance.get(Calendar.YEAR) as String
+				inputs.files.each { file ->
+					def line
+					file.withReader { reader ->
+						while (line = reader.readLine()) {
+							def matcher = line =~ /Copyright (20\d\d)-?(20\d\d)?/
+							if (matcher.count) {
+								def beginningYear = matcher[0][1]
+								if (now != beginningYear && now != matcher[0][2]) {
+									def years = "$beginningYear-$now"
+									def sourceCode = file.text
+									sourceCode = sourceCode.replaceFirst(/20\d\d(-20\d\d)?/, years)
+									file.write(sourceCode)
+									println "Copyright updated for file: $file"
+								}
+								break
+							}
+						}
+					}
+				}
+			}
 		}
 
-		from("${rootProject.projectDir}/src/dist") {
-			include 'license.txt'
-			include 'notice.txt'
-			into 'META-INF'
-			expand(copyright: new Date().format('yyyy'), version: project.version)
+		jar {
+			manifest {
+				attributes(
+						'Implementation-Version': archiveVersion,
+						'Created-By': "JDK ${System.properties['java.version']} (${System.properties['java.specification.vendor']})",
+						'Implementation-Title': subproject.name,
+						'Implementation-Vendor-Id': subproject.group,
+						'Implementation-Vendor': 'Pivotal Software, Inc.',
+						'Implementation-URL': linkHomepage,
+						'Automatic-Module-Name': subproject.name.replace('-', '.')  // for Jigsaw
+				)
+			}
+
+			from("${rootProject.projectDir}/src/dist") {
+				include 'license.txt'
+				include 'notice.txt'
+				into 'META-INF'
+				expand(copyright: new Date().format('yyyy'), version: project.version)
+			}
+			from("${rootProject.projectDir}") {
+				include 'LICENSE.txt'
+				into 'META-INF'
+			}
 		}
-		from("${rootProject.projectDir}") {
-			include 'LICENSE.txt'
-			into 'META-INF'
+
+		tasks.withType(Javadoc) {
+			options.addBooleanOption('Xdoclint:syntax', true) // only check syntax with doclint
+			options.addBooleanOption('Werror', true) // fail build on Javadoc warnings
 		}
 	}
-
-	tasks.withType(Javadoc) {
-		options.addBooleanOption('Xdoclint:syntax', true) // only check syntax with doclint
-		options.addBooleanOption('Werror', true) // fail build on Javadoc warnings
-	}
-
 }
 
 project ('spring-pulsar') {
@@ -363,6 +364,9 @@ if (project.hasProperty('artifactoryUsername')) {
 			}
 			defaults {
 				publications('mavenJava')
+				properties {
+					mavenJava '*:*:*:docs@zip', 'zip.name': 'spring-pulsar', 'zip.displayname': 'Spring Pulsar', 'zip.type': 'docs', 'zip.deployed': false
+				}
 			}
 		}
 	}

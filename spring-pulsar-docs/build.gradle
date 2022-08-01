@@ -1,61 +1,22 @@
-import org.springframework.pulsar.build.configprops.DocumentConfigurationProperties
-
 plugins {
-	id 'org.asciidoctor.jvm.pdf' version '3.3.2'
-	id 'org.asciidoctor.jvm.gems' version '3.3.2'
-	id 'org.asciidoctor.jvm.convert' version '3.3.2'
+	id 'java'
+	id 'java-library'
+	id 'org.springframework.pulsar.conventions'
+	id 'org.asciidoctor.jvm.convert'
 }
 
 apply from: "${rootProject.projectDir}/gradle/publish-artifactory.gradle"
 
 description = 'Spring Pulsar Docs'
 
-ext {
-	blockSwitchVersion = '0.5.0'
-	docResourcesVersion = '0.2.5'
-}
-
 configurations {
-	asciidoctorExt
 	configurationProperties
-	docs
 }
 
 dependencies {
 	api "org.springframework.boot:spring-boot-starter:$springBootVersion"
 	api project (':spring-pulsar')
-	asciidoctorExt "io.spring.asciidoctor:spring-asciidoctor-extensions-block-switch:$blockSwitchVersion"
 	configurationProperties(project(path: ":spring-pulsar-boot-autoconfigure", configuration: "configurationPropertiesMetadata"))
-	docs "io.spring.docresources:spring-doc-resources:${docResourcesVersion}@zip"
-}
-
-repositories {
-	maven {
-		url "https://repo.spring.io/release"
-		mavenContent {
-			includeGroup "io.spring.asciidoctor"
-		}
-	}
-}
-
-jar {
-	enabled = false
-}
-
-sourcesJar {
-	enabled = false
-}
-
-javadocJar {
-	enabled = false
-}
-
-publishMavenJavaPublicationToMavenLocal {
-	enabled = false
-}
-
-project.afterEvaluate {
-	project.tasks.artifactoryPublish.enabled(false)
 }
 
 task aggregatedJavadoc(type: Javadoc) {
@@ -91,162 +52,101 @@ task aggregatedJavadoc(type: Javadoc) {
 	}
 }
 
-task documentConfigurationProperties(type: DocumentConfigurationProperties) {
+task documentConfigurationProperties(type: org.springframework.pulsar.build.docs.configprops.DocumentConfigurationProperties) {
 	configurationPropertyMetadata = configurations.configurationProperties
 	outputDir = file("${buildDir}/docs/generated/")
 }
 
-task prepareAsciidocBuild(type: Sync, dependsOn: [configurations.docs, documentConfigurationProperties]) {
-	from {
-		configurations.docs.collect { zipTree(it) }
-	}
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-	from 'src/main/asciidoc/'
-	into "$buildDir/asciidoc"
-
-	from "$buildDir/docs/generated"
-	into "$buildDir/asciidoc"
-}
-
-asciidoctorPdf {
-	dependsOn prepareAsciidocBuild
-
-	baseDirFollowsSourceFile()
-	configurations 'asciidoctorExt'
-
+tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 	asciidoctorj {
-		sourceDir "$buildDir/asciidoc"
-		inputs.dir(sourceDir)
-		sources {
-			include 'index.adoc'
-		}
-		options doctype: 'book'
-		attributes 'icons': 'font',
-				'sectanchors': '',
-				'sectnums': '',
-				'toc': '',
-				'source-highlighter' : 'coderay',
-				revnumber: project.version,
-				'project-version': project.version
+		fatalWarnings = ['^((?!successfully validated).)*$']
 	}
-}
-
-asciidoctorj {
-	version = '2.4.1'
-	// fatalWarnings ".*"
-	options doctype: 'book', eruby: 'erubis'
-	attributes([
-			icons: 'font',
-			idprefix: '',
-			idseparator: '-',
-			docinfo: 'shared',
-			revnumber: project.version,
-			sectanchors: '',
-			sectnums: '',
-			'source-highlighter': 'highlight.js',
-			highlightjsdir: 'js/highlight',
-			'highlightjs-theme': 'googlecode',
-			stylesdir: 'css/',
-			stylesheet: 'stylesheet.css',
-			'spring-version': project.version,
-			'project-version': project.version
-	])
 }
 
 asciidoctor {
-	dependsOn asciidoctorPdf
-	baseDirFollowsSourceFile()
-	configurations 'asciidoctorExt'
-	sourceDir = file("$buildDir/asciidoc")
 	sources {
-		include '*.adoc'
-	}
-	resources {
-		from(sourceDir) {
-			include 'images/*', 'css/**', 'js/**'
-		}
+		include "*.singleadoc"
 	}
 }
 
-task reference(dependsOn: asciidoctor) {
-	group = 'Documentation'
-	description = 'Generate the reference documentation'
+task asciidoctorPdf(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+	sources {
+		include "*.singleadoc"
+	}
 }
 
-task docsZip(type: Zip, dependsOn: reference) {
+task asciidoctorMultipage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+	sources {
+		include "*.adoc"
+	}
+}
+
+syncDocumentationSourceForAsciidoctor {
+	dependsOn documentConfigurationProperties
+	from("${buildDir}/docs/generated") {
+		into "asciidoc"
+	}
+	from("src/main/java") {
+		into "main/java"
+	}
+}
+
+syncDocumentationSourceForAsciidoctorMultipage {
+	dependsOn documentConfigurationProperties
+	from("${buildDir}/docs/generated") {
+		into "asciidoc"
+	}
+	from("src/main/java") {
+		into "main/java"
+	}
+}
+
+syncDocumentationSourceForAsciidoctorPdf {
+	dependsOn documentConfigurationProperties
+	from("${buildDir}/docs/generated") {
+		into "asciidoc"
+	}
+	from("src/main/java") {
+		into "main/java"
+	}
+}
+
+task docsZip(type: Zip) {
+	dependsOn asciidoctor,
+			asciidoctorMultipage,
+			asciidoctorPdf
 	group = 'Distribution'
 	archiveClassifier = 'docs'
-	description = "Builds -${archiveClassifier} archive containing api and reference " +
-			"for deployment at static.spring.io/spring-pulsar/docs."
-	from("$project.rootDir/src/dist") {
-		include 'changelog.txt'
-	}
+	description = "Builds docs archive containing api and reference for deployment at static.spring.io/spring-pulsar/docs."
+	duplicatesStrategy "fail"
 	from(asciidoctor.outputDir) {
-		into "reference/html"
+		into "reference/htmlsingle"
 	}
 	from(asciidoctorPdf.outputDir) {
 		into "reference/pdf"
 		include "index.pdf"
 		rename { "spring-pulsar-reference.pdf" }
 	}
+	from(asciidoctorMultipage.outputDir) {
+		into "reference/html"
+	}
 	from(aggregatedJavadoc) {
 		into "api"
 	}
 }
 
-task distZip(type: Zip, dependsOn: docsZip) {
-	group = 'Distribution'
-	archiveClassifier = 'dist'
-	description = "Builds -${archiveClassifier} archive, containing all jars and docs, " +
-			"suitable for community download page."
-
-	ext.baseDir = "${project.name}-${project.version}"
-	from("$project.rootDir/src/dist") {
-		include 'readme.txt'
-		include 'notice.txt'
-		into "${baseDir}"
-	}
-	from("$project.rootDir") {
-		include 'LICENSE.txt'
-		into "${baseDir}"
-	}
-	from(zipTree(docsZip.archiveFile)) {
-		into "${baseDir}/docs"
-	}
-	subprojects.each { subproject ->
-		into ("${baseDir}/libs") {
-			from subproject.jar
-			from subproject.sourcesJar
-			from subproject.javadocJar
-		}
-	}
-}
-
 artifacts {
-	archives distZip
 	archives docsZip
-}
-
-task dist(dependsOn: assemble) {
-	group = 'Distribution'
-	description = 'Builds -dist, -docs distribution archives.'
 }
 
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			artifact docsZip
-			artifact distZip
 		}
 	}
 }
 
 artifactoryPublish {
 	publications(publishing.publications.mavenJava)
-	properties {
-		mavenJava '*:*:*:*@zip', 'zip.name': 'spring-pulsar', 'zip.displayname': 'Spring Pulsar', 'zip.deployed': false
-		mavenJava '*:*:*:docs@zip', 'zip.type': 'docs'
-		mavenJava '*:*:*:dist@zip', 'zip.type': 'dist'
-	}
 }
