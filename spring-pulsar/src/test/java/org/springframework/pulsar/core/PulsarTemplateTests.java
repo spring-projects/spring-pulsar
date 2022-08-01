@@ -55,12 +55,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 class PulsarTemplateTests extends AbstractContainerBaseTests {
 
 	private static final String SAMPLE_MESSAGE_KEY = "sample-key";
-	private static final TypedMessageBuilderCustomizer sampleMessageKeyCustomizer =
+	private static final TypedMessageBuilderCustomizer<String> sampleMessageKeyCustomizer =
 			messageBuilder -> messageBuilder.key(SAMPLE_MESSAGE_KEY);
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sendMessageTestProvider")
-	void sendMessageTest(String topic, Map<String, Object> producerConfig, SendHandler<Object> handler, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter router) throws Exception {
+	void sendMessageTest(String topic, Map<String, Object> producerConfig, SendHandler<Object> handler, TypedMessageBuilderCustomizer<String> typedMessageBuilderCustomizer, MessageRouter router) throws Exception {
 		String subscription = topic + "-sub";
 		String msgPayload = topic + "-msg";
 		if (router != null) {
@@ -172,6 +172,6 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 
 	@FunctionalInterface
 	interface SendHandler<V>  {
-		V doSend(PulsarTemplate<String> template, String topic, String msg, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter router) throws PulsarClientException;
+		V doSend(PulsarTemplate<String> template, String topic, String msg, TypedMessageBuilderCustomizer<String> typedMessageBuilderCustomizer, MessageRouter router) throws PulsarClientException;
 	}
 }

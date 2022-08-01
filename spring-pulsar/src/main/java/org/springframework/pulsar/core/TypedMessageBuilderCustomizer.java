@@ -21,14 +21,16 @@ import org.apache.pulsar.client.api.TypedMessageBuilder;
 /**
  * The interface to customize a {@link TypedMessageBuilder}.
  *
+ * @param <T> The message payload type
+ *
  * @author Alexander Preuß
  */
 @FunctionalInterface
-public interface TypedMessageBuilderCustomizer {
+public interface TypedMessageBuilderCustomizer<T> {
 
 	/**
 	 * Customizes a {@link TypedMessageBuilder}.
 	 * @param messageBuilder the messageBuilder to customize
 	 */
-	void customize(TypedMessageBuilder<?> messageBuilder);
+	void customize(TypedMessageBuilder<T> messageBuilder);
 }

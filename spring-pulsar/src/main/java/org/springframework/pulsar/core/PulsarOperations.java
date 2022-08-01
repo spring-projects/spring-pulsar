@@ -60,7 +60,7 @@ public interface PulsarOperations<T> {
 	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default MessageId send(T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer) throws PulsarClientException {
+	default MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
 		return send(message, typedMessageBuilderCustomizer, null);
 	}
 
@@ -95,7 +95,7 @@ public interface PulsarOperations<T> {
 	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default MessageId send(T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	default MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
 		return send(null, message, typedMessageBuilderCustomizer, messageRouter);
 	}
 
@@ -107,7 +107,7 @@ public interface PulsarOperations<T> {
 	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default MessageId send(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer) throws PulsarClientException {
+	default MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
 		return send(topic, message, typedMessageBuilderCustomizer, null);
 	}
 
@@ -120,7 +120,7 @@ public interface PulsarOperations<T> {
 	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
+	MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a non-blocking manner.
@@ -161,7 +161,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer) throws PulsarClientException {
+	default CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
 		return sendAsync(null, message, typedMessageBuilderCustomizer);
 	}
 
@@ -173,7 +173,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer) throws PulsarClientException {
+	default CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
 		return sendAsync(topic, message, typedMessageBuilderCustomizer, null);
 	}
 
@@ -185,7 +185,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	default CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
 		return sendAsync(null, message, typedMessageBuilderCustomizer, messageRouter);
 	}
 
@@ -210,5 +210,5 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
+	CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
 }

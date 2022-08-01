@@ -52,7 +52,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public MessageId send(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	public MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
 		try {
 			return this.sendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter).get();
 		}
@@ -62,7 +62,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
