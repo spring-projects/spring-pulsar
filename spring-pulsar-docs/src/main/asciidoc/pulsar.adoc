@@ -38,7 +38,7 @@ spring.pulsar.client.maxBackoffIntervalNanos;
 [[pulsar-producer]]
 === Pulsar Producer
 
-On the Pulsar producer side, Sprig Boot auto-configuration will provide a `PulsarTemplate` which is backed by a `PulsarProducerFactory`.
+On the Pulsar producer side, Spring Boot auto-configuration will provide a `PulsarTemplate` which is backed by a `PulsarProducerFactory`.
 We will see more details of these components later in this document, but in this section, let us look at the configuration properties available on the producer.
 
 The same defaults expected by the Pulsar producer are honored when no configuration provided for these properties.
@@ -73,15 +73,31 @@ MessageId send(String topic, T message) throws PulsarClientException;
 
 MessageId send(T message, MessageRouter messageRouter) throws PulsarClientException;
 
-send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
+MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
+
+MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
+
+MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
+
+MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
+
+MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
 
 CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException;
 
 CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException;
 
-CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter);
+CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter) throws PulsarClientException;
 
-CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter);
+CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
+
+CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
+
+CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
+
+CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
+
+CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
 
 ----
 ====
@@ -95,6 +111,16 @@ They return a `CompletableFuture` using which you can asynchronously receive the
 Both `send` and `sendAsync` methods have a variant that allows to publish simply with the message.
 When you do that, the application must provide the topic name using the property `spring.pulsar.producer.topicName`.
 There is another variant for both flavors that takes the topic name as an argument.
+
+The methods using a `TypedMessageBuilderCustomizer` allow modifying the basic `TypedMessageBuilder`.
+This can be used to send a keyed message for example:
+
+====
+[source, java]
+----
+template.send(msg, (messageBuilder -> messageBuilder.key(myMessageKey)));
+----
+====
 
 When using partitioned topics, then you can use custom partitioning routing when publishing records.
 For this purpose, you can provide an implementation of a `MessageRouter` and pass it along with both `send` and `sendAsync` methods.
