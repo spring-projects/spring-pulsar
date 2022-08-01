@@ -10,6 +10,9 @@
 .checkstyle
 bin
 build
+!/**/src/**/bin
+!/**/src/**/build
+build.log
 out
 target
 .DS_Store
