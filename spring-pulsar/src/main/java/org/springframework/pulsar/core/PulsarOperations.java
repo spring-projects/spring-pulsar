@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
  * @param <T> the message payload type
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public interface PulsarOperations<T> {
 
@@ -38,7 +39,7 @@ public interface PulsarOperations<T> {
 	 * @throws PulsarClientException if an error occurs
 	 */
 	default MessageId send(T message) throws PulsarClientException {
-		return send(null, message, null);
+		return send(null, message);
 	}
 
 	/**
@@ -49,7 +50,18 @@ public interface PulsarOperations<T> {
 	 * @throws PulsarClientException if an error occurs
 	 */
 	default MessageId send(String topic, T message) throws PulsarClientException {
-		return send(topic, message, null);
+		return send(topic, message, (MessageRouter) null);
+	}
+
+	/**
+	 * Sends a message to the default topic in a blocking manner.
+	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
+	 * @return the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
+		return send(message, typedMessageBuilderCustomizer, null);
 	}
 
 	/**
@@ -71,31 +83,68 @@ public interface PulsarOperations<T> {
 	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
+	default MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+		return send(topic, message, null, messageRouter);
+	}
 
 	/**
 	 * Sends a message to the default topic in a blocking manner.
 	 * @param message the message to send
-	 * @return a future that holds the id of the sent message
+	 * @param typedMessageBuilderCustomizer the TypeMessageBuilder customizer
+	 * @param messageRouter the optional message router to use
+	 * @return the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		return sendAsync(null, message, null);
+	default MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+		return send(null, message, typedMessageBuilderCustomizer, messageRouter);
 	}
 
 	/**
 	 * Sends a message to the specified topic in a blocking manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the default topic
 	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the TypeMessageBuilder customizer
+	 * @return the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
+		return send(topic, message, typedMessageBuilderCustomizer, null);
+	}
+
+	/**
+	 * Sends a message to the specified topic in a blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the default topic
+	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the optional TypedMessageBuilder customizer
+	 * @param messageRouter the optional message router to use
+	 * @return the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
+
+	/**
+	 * Sends a message to the default topic in a non-blocking manner.
+	 * @param message the message to send
+	 * @return a future that holds the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
+		return sendAsync(null, message);
+	}
+
+	/**
+	 * Sends a message to the specified topic in a non-blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the default topic
+	 * @param message the message to send
 	 * @return a future that holds the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
 	default CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException {
-		return sendAsync(topic, message, null);
+		return sendAsync(topic, message, (MessageRouter) null);
 	}
 
 	/**
-	 * Sends a message to the default topic in a blocking manner.
+	 * Sends a message to the default topic in a non-blocking manner.
 	 * @param message the message to send
 	 * @param messageRouter the optional message router to use
 	 * @return a future that holds the id of the sent message
@@ -106,6 +155,41 @@ public interface PulsarOperations<T> {
 	}
 
 	/**
+	 * Sends a message to the default topic in a non-blocking manner.
+	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
+	 * @return a future that holds the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
+		return sendAsync(null, message, typedMessageBuilderCustomizer);
+	}
+
+	/**
+	 * Sends a message to the specified topic in a non-blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the default topic
+	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
+	 * @return a future that holds the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
+		return sendAsync(topic, message, typedMessageBuilderCustomizer, null);
+	}
+
+	/**
+	 * Sends a message to the default in a non-blocking manner.
+	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
+	 * @param messageRouter the optional message router to use
+	 * @return a future that holds the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	default CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+		return sendAsync(null, message, typedMessageBuilderCustomizer, messageRouter);
+	}
+
+	/**
 	 * Sends a message to the specified topic in a non-blocking manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the default topic
 	 * @param message the message to send
@@ -113,5 +197,18 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id of the sent message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
+	default CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+		return sendAsync(topic, message, null, messageRouter);
+	}
+
+	/**
+	 * Sends a message to the specified topic in a non-blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the default topic
+	 * @param message the message to send
+	 * @param typedMessageBuilderCustomizer the optional TypedMessageBuilder customizer
+	 * @param messageRouter the optional message router to use
+	 * @return a future that holds the id of the sent message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
 }
