@@ -27,14 +27,15 @@ import org.apache.pulsar.client.api.Schema;
  * Pulsar consumer factory interface.
  *
  * @param <T> payload type for the consumer.
- *
  * @author Soby Chacko
  */
 public interface PulsarConsumerFactory<T> {
 
 	Consumer<T> createConsumer(Schema<T> schema, Map<String, Object> propertiesToOverride) throws PulsarClientException;
 
-	Consumer<T> createConsumer(Schema<T> schema, BatchReceivePolicy batchReceivePolicy, Map<String, Object> propertiesToOverride) throws PulsarClientException;
+	Consumer<T> createConsumer(Schema<T> schema, BatchReceivePolicy batchReceivePolicy,
+			Map<String, Object> propertiesToOverride) throws PulsarClientException;
 
 	Map<String, Object> getConsumerConfig();
+
 }

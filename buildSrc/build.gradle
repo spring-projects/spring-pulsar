@@ -1,7 +1,7 @@
 plugins {
 	id "java-gradle-plugin"
-	id "io.spring.javaformat" version "${javaFormatVersion}"
-	id "checkstyle"
+	id "java"
+	id "groovy"
 }
 
 repositories {
@@ -12,43 +12,98 @@ repositories {
 	if (version.endsWith('SNAPSHOT')) {
 		maven { url 'https://repo.spring.io/snapshot' }
 	}
+//
+//	maven { url 'https://repo.spring.io/plugins-release/' }
+//	maven { url 'https://plugins.gradle.org/m2/' }
 }
 
-sourceCompatibility = 17
-targetCompatibility = 17
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+sourceSets {
+	main {
+		java { srcDirs = [] }
+		groovy { srcDirs += ['src/main/java'] }
+	}
+}
+
+configurations {
+	implementation {
+		exclude module: 'groovy-all'
+	}
+}
 
 dependencies {
-	checkstyle "io.spring.javaformat:spring-javaformat-checkstyle:${javaFormatVersion}"
-	implementation("org.asciidoctor:asciidoctor-gradle-jvm:3.3.2")
-	implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-	implementation("org.springframework:spring-core")
-	implementation("org.springframework:spring-web")
-	implementation("com.fasterxml.jackson.core:jackson-databind")
-	implementation("org.gradle:test-retry-gradle-plugin:${testRetryVersion}")
+	implementation localGroovy()
+	implementation 'commons-codec:commons-codec'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'io.github.gradle-nexus:publish-plugin:1.1.0'
 	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:${javaFormatVersion}")
-	testImplementation("org.assertj:assertj-core")
-	testImplementation("org.apache.logging.log4j:log4j-core")
-	testImplementation("org.junit.jupiter:junit-jupiter")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	implementation 'io.spring.nohttp:nohttp-gradle:0.0.10'
+	implementation "org.apache.maven:maven-embedder:3.6.2"
+	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
+	implementation 'org.codehaus.groovy:groovy-all:2.5.17'
+	implementation 'org.jfrog.buildinfo:build-info-extractor-gradle:4.29.0'
+
+	implementation "org.gradle:test-retry-gradle-plugin:${testRetryVersion}"
+	implementation 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1'
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
+	implementation 'org.springframework:spring-core'
+	implementation 'org.springframework:spring-web'
+
+	testImplementation 'org.assertj:assertj-core'
+	testImplementation 'org.apache.logging.log4j:log4j-core'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-checkstyle {
-	toolVersion = "${checkstyleToolVersion}"
+tasks.named('test', Test).configure {
+	onlyIf { !project.hasProperty("buildSrc.skipTests") }
+	useJUnitPlatform()
+	jvmArgs(
+			'--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+			'--add-opens', 'java.base/java.util=ALL-UNNAMED'
+	)
 }
 
 gradlePlugin {
 	plugins {
-		configurationProperties {
-			id = 'org.springframework.pulsar.configuration-properties'
-			implementationClass = 'org.springframework.pulsar.build.docs.configprops.ConfigurationPropertiesPlugin'
+		configurationPropertiesPlugin {
+			id = "org.springframework.pulsar.configuration-properties"
+			implementationClass = 'org.springframework.pulsar.gradle.docs.configprops.ConfigurationPropertiesPlugin'
 		}
-		conventionsPlugin {
-			id = "org.springframework.pulsar.conventions"
-			implementationClass = "org.springframework.pulsar.build.ConventionsPlugin"
+		jacocoConventionsPlugin {
+			id = "org.springframework.pulsar.jacoco"
+			implementationClass = "org.springframework.pulsar.gradle.JacocoConventionsPlugin"
+		}
+		optionalDependenciesPlugin {
+			id = "org.springframework.pulsar.optional-dependencies"
+			implementationClass = "org.springframework.boot.gradle.optional.OptionalDependenciesPlugin"
+		}
+		rootProjectPlugin {
+			id = "org.springframework.pulsar.root-project"
+			implementationClass = "org.springframework.pulsar.gradle.RootProjectPlugin"
+		}
+		sonarQubeConventionsPlugin {
+			id = "org.springframework.pulsar.sonarqube"
+			implementationClass = "org.springframework.pulsar.gradle.SonarQubeConventionsPlugin"
+		}
+		springDocsModulePlugin {
+			id = "org.springframework.pulsar.spring-docs-module"
+			implementationClass = "org.springframework.pulsar.gradle.SpringDocsModulePlugin"
+		}
+		springModulePlugin {
+			id = "org.springframework.pulsar.spring-module"
+			implementationClass = "org.springframework.pulsar.gradle.SpringModulePlugin"
+		}
+		// groovy plugins
+		artifactoryPlugin {
+			id = "io.spring.convention.artfiactory"
+			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
+		}
+		repositoryConventionPlugin {
+			id = "io.spring.convention.repository"
+			implementationClass = "io.spring.gradle.convention.RepositoryConventionPlugin"
 		}
 	}
-}
-
-test {
-	useJUnitPlatform()
 }

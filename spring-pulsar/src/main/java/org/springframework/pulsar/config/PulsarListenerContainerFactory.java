@@ -22,7 +22,6 @@ import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
  * Factory for Pulsar message listener containers.
  *
  * @param <C> message listener container type.
- *
  * @author Soby Chacko
  */
 public interface PulsarListenerContainerFactory<C extends PulsarMessageListenerContainer> {

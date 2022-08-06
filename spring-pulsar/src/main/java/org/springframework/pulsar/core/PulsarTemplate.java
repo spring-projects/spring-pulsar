@@ -32,7 +32,6 @@ import org.springframework.core.log.LogAccessor;
  * A thread-safe template for executing high-level Pulsar operations.
  *
  * @param <T> the message payload type
- *
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
@@ -45,14 +44,16 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	/**
 	 * Constructs a template instance.
-	 * @param producerFactory the producer factory used to create the backing Pulsar producers.
+	 * @param producerFactory the producer factory used to create the backing Pulsar
+	 * producers.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory) {
 		this.producerFactory = producerFactory;
 	}
 
 	@Override
-	public MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	public MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
+			MessageRouter messageRouter) throws PulsarClientException {
 		try {
 			return this.sendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter).get();
 		}
@@ -62,7 +63,9 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(String topic, T message,
+			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter)
+			throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
@@ -70,22 +73,23 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 		if (typedMessageBuilderCustomizer != null) {
 			typedMessageBuilderCustomizer.customize(messageBuilder);
 		}
-		return messageBuilder.sendAsync()
-				.whenComplete((msgId, ex) -> {
-					if (ex == null) {
-						this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
-						// TODO success metrics
-					}
-					else {
-						this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
-						// TODO fail metrics
-					}
-					ProducerUtils.closeProducerAsync(producer, this.logger);
-				});
+		return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
+			if (ex == null) {
+				this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
+				// TODO success metrics
+			}
+			else {
+				this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
+				// TODO fail metrics
+			}
+			ProducerUtils.closeProducerAsync(producer, this.logger);
+		});
 	}
 
-	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
+	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter)
+			throws PulsarClientException {
 		Schema<T> schema = SchemaUtils.getSchema(message);
 		return this.producerFactory.createProducer(topic, schema, messageRouter);
 	}
+
 }

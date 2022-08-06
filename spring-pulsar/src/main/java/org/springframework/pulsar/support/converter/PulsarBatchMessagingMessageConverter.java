@@ -33,7 +33,6 @@ import org.springframework.messaging.support.MessageBuilder;
  * Batch records message converter.
  *
  * @param <T> message type.
- *
  * @author Soby Chacko
  */
 public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessageConverter<T> {
@@ -59,22 +58,22 @@ public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessa
 		return MessageBuilder.createMessage(payloads, new MessageHeaders(Collections.emptyMap()));
 	}
 
-	private Object obtainPayload(Type type, org.apache.pulsar.client.api.Message<T> record, List<Exception> conversionFailures) {
-		return this.recordConverter == null || !containerType(type)
-				? extractAndConvertValue(record, type)
+	private Object obtainPayload(Type type, org.apache.pulsar.client.api.Message<T> record,
+			List<Exception> conversionFailures) {
+		return this.recordConverter == null || !containerType(type) ? extractAndConvertValue(record, type)
 				: convert(record, type, conversionFailures);
 	}
 
 	private boolean containerType(Type type) {
-		return type instanceof ParameterizedType
-				&& ((ParameterizedType) type).getActualTypeArguments().length == 1;
+		return type instanceof ParameterizedType && ((ParameterizedType) type).getActualTypeArguments().length == 1;
 	}
 
 	protected Object extractAndConvertValue(org.apache.pulsar.client.api.Message<T> record, Type type) {
 		return record.getValue();
 	}
 
-	protected Object convert(org.apache.pulsar.client.api.Message<T> record, Type type, List<Exception> conversionFailures) {
+	protected Object convert(org.apache.pulsar.client.api.Message<T> record, Type type,
+			List<Exception> conversionFailures) {
 		try {
 			Object payload = this.recordConverter
 					.toMessage(record, null, ((ParameterizedType) type).getActualTypeArguments()[0]).getPayload();
@@ -91,4 +90,5 @@ public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessa
 	public T fromMessage(Messages<T> message, String defaultTopic) {
 		throw new UnsupportedOperationException();
 	}
+
 }

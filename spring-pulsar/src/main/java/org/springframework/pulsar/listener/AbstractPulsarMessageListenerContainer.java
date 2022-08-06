@@ -32,17 +32,17 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
  * Base implementation for the {@link PulsarMessageListenerContainer}.
  *
  * @param <T> message type.
- *
  * @author Soby Chacko
  */
-public abstract class AbstractPulsarMessageListenerContainer<T>
-		implements PulsarMessageListenerContainer, BeanNameAware, ApplicationEventPublisherAware,
-		ApplicationContextAware {
+public abstract class AbstractPulsarMessageListenerContainer<T> implements PulsarMessageListenerContainer,
+		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass())); // NOSONAR
 
 	private ApplicationEventPublisher applicationEventPublisher;
+
 	private String beanName;
+
 	private ApplicationContext applicationContext;
 
 	private final PulsarContainerProperties pulsarContainerProperties;
@@ -50,17 +50,18 @@ public abstract class AbstractPulsarMessageListenerContainer<T>
 	private final PulsarConsumerFactory<T> pulsarConsumerFactory;
 
 	private boolean autoStartup = true;
+
 	private int phase;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
-													PulsarContainerProperties pulsarContainerProperties) {
+			PulsarContainerProperties pulsarContainerProperties) {
 		this.pulsarContainerProperties = pulsarContainerProperties;
 		this.pulsarConsumerFactory = (PulsarConsumerFactory<T>) pulsarConsumerFactory;
 
 	}
 
-		@Override
+	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
@@ -121,7 +122,6 @@ public abstract class AbstractPulsarMessageListenerContainer<T>
 		this.autoStartup = autoStartup;
 	}
 
-
 	public void setPhase(int phase) {
 		this.phase = phase;
 	}
@@ -130,4 +130,5 @@ public abstract class AbstractPulsarMessageListenerContainer<T>
 	public int getPhase() {
 		return this.phase;
 	}
+
 }

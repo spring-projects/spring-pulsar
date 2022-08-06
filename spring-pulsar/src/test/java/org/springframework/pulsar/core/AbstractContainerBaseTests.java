@@ -37,5 +37,5 @@ abstract class AbstractContainerBaseTests {
 	protected static String getHttpServiceUrl() {
 		return PULSAR_CONTAINER.getHttpServiceUrl();
 	}
-}
 
+}

@@ -21,8 +21,7 @@ import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 
 /**
  * A wrapper for either an {@link InvocableHandlerMethod} or
- * {@link DelegatingInvocableHandler}. All methods delegate to the
- * underlying handler.
+ * {@link DelegatingInvocableHandler}. All methods delegate to the underlying handler.
  *
  * @author Soby Chacko
  */
@@ -50,7 +49,7 @@ public class HandlerAdapter {
 		this.delegatingHandler = delegatingHandler;
 	}
 
-	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { //NOSONAR
+	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { // NOSONAR
 		if (this.invokerHandlerMethod != null) {
 			return this.invokerHandlerMethod.invoke(message, providedArgs); // NOSONAR
 		}
@@ -87,5 +86,5 @@ public class HandlerAdapter {
 	public InvocableHandlerMethod getInvokerHandlerMethod() {
 		return this.invokerHandlerMethod;
 	}
-}
 
+}

@@ -27,8 +27,8 @@ import org.springframework.pulsar.support.MessageConverter;
 
 /**
  * Model for a Pulsar listener endpoint. Can be used against a
- * {@link org.springframework.pulsar.annotation.PulsarListenerConfigurer}
- * to register endpoints programmatically.
+ * {@link org.springframework.pulsar.annotation.PulsarListenerConfigurer} to register
+ * endpoints programmatically.
  *
  * @author Soby Chacko
  */
@@ -49,9 +49,10 @@ public interface PulsarListenerEndpoint {
 	Boolean getAutoStartup();
 
 	void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
-								@Nullable MessageConverter messageConverter);
+			@Nullable MessageConverter messageConverter);
 
 	boolean isBatchListener();
 
 	SchemaType getSchemaType();
+
 }

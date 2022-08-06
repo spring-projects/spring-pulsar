@@ -44,16 +44,16 @@ import org.springframework.util.Assert;
 
 /**
  * Creates the necessary {@link PulsarMessageListenerContainer} instances for the
- * registered {@linkplain PulsarListenerEndpoint endpoints}. Also manages the
- * lifecycle of the listener containers, in particular within the lifecycle
- * of the application context.
+ * registered {@linkplain PulsarListenerEndpoint endpoints}. Also manages the lifecycle of
+ * the listener containers, in particular within the lifecycle of the application context.
  *
- * <p>Contrary to {@link PulsarMessageListenerContainer}s created manually, listener
- * containers managed by registry are not beans in the application context and
- * are not candidates for autowiring. Use {@link #getListenerContainers()} if
- * you need to access this registry's listener containers for management purposes.
- * If you need to access to a specific message listener container, use
- * {@link #getListenerContainer(String)} with the id of the endpoint.
+ * <p>
+ * Contrary to {@link PulsarMessageListenerContainer}s created manually, listener
+ * containers managed by registry are not beans in the application context and are not
+ * candidates for autowiring. Use {@link #getListenerContainers()} if you need to access
+ * this registry's listener containers for management purposes. If you need to access to a
+ * specific message listener container, use {@link #getListenerContainer(String)} with the
+ * id of the endpoint.
  *
  * @author Soby Chacko
  */
@@ -67,7 +67,6 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 	private int phase = AbstractPulsarMessageListenerContainer.DEFAULT_PHASE;
 
 	private boolean contextRefreshed;
-
 
 	private volatile boolean running;
 
@@ -99,7 +98,8 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 	public Collection<PulsarMessageListenerContainer> getAllListenerContainers() {
 		List<PulsarMessageListenerContainer> containers = new ArrayList<>();
 		containers.addAll(getListenerContainers());
-		containers.addAll(this.applicationContext.getBeansOfType(PulsarMessageListenerContainer.class, true, false).values());
+		containers.addAll(
+				this.applicationContext.getBeansOfType(PulsarMessageListenerContainer.class, true, false).values());
 		return containers;
 	}
 
@@ -108,7 +108,7 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 	}
 
 	public void registerListenerContainer(PulsarListenerEndpoint endpoint, PulsarListenerContainerFactory<?> factory,
-										boolean startImmediately) {
+			boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");
 
@@ -127,7 +127,7 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 	}
 
 	protected PulsarMessageListenerContainer createListenerContainer(PulsarListenerEndpoint endpoint,
-																	PulsarListenerContainerFactory<?> factory) {
+			PulsarListenerContainerFactory<?> factory) {
 
 		if (endpoint instanceof MethodPulsarListenerEndpoint) {
 			MethodPulsarListenerEndpoint<?> mkle = (MethodPulsarListenerEndpoint<?>) endpoint;
@@ -151,8 +151,11 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 		}
 
 		int containerPhase = listenerContainer.getPhase();
-		if (listenerContainer.isAutoStartup() &&
-				containerPhase != AbstractPulsarMessageListenerContainer.DEFAULT_PHASE) {  // a custom phase value
+		if (listenerContainer.isAutoStartup()
+				&& containerPhase != AbstractPulsarMessageListenerContainer.DEFAULT_PHASE) { // a
+																								// custom
+																								// phase
+																								// value
 			if (this.phase != AbstractPulsarMessageListenerContainer.DEFAULT_PHASE && this.phase != containerPhase) {
 				throw new IllegalStateException("Encountered phase mismatch between container "
 						+ "factory definitions: " + this.phase + " vs " + containerPhase);
@@ -169,7 +172,6 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 			listenerContainer.destroy();
 		}
 	}
-
 
 	// Delegating implementation of SmartLifecycle
 
@@ -225,14 +227,12 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 		return this.running;
 	}
 
-
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		if (event.getApplicationContext().equals(this.applicationContext)) {
 			this.contextRefreshed = true;
 		}
 	}
-
 
 	private void startIfNecessary(PulsarMessageListenerContainer listenerContainer) {
 		if (this.contextRefreshed || listenerContainer.isAutoStartup()) {
@@ -259,6 +259,5 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 		}
 
 	}
-
 
 }

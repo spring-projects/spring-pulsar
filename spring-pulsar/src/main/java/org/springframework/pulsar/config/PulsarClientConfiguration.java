@@ -43,4 +43,5 @@ public class PulsarClientConfiguration {
 	public Map<String, Object> getConfigs() {
 		return this.configs;
 	}
+
 }

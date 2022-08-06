@@ -22,26 +22,25 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 
 /**
- * Optional interface to be implemented by Spring managed bean willing to
- * customize how Pulsar listener endpoints are configured. Typically used
- * to define the default {@link PulsarListenerContainerFactory} to use or
- * for registering Pulsar endpoints in a <em>programmatic</em> fashion as
- * opposed to the <em>declarative</em> approach of using the
- * {@link PulsarListener} annotation.
+ * Optional interface to be implemented by Spring managed bean willing to customize how
+ * Pulsar listener endpoints are configured. Typically used to define the default
+ * {@link PulsarListenerContainerFactory} to use or for registering Pulsar endpoints in a
+ * <em>programmatic</em> fashion as opposed to the <em>declarative</em> approach of using
+ * the {@link PulsarListener} annotation.
  *
  * @author Soby Chacko
  * @author Chris Bono
- *
  * @see PulsarListenerEndpointRegistrar
  */
 public interface PulsarListenerConfigurer {
 
 	/**
 	 * Callback allowing a {@link PulsarListenerEndpointRegistry} and specific
-	 * {@link PulsarListenerEndpoint} instances to be registered against the
-	 * given {@link PulsarListenerEndpointRegistrar}. The default
+	 * {@link PulsarListenerEndpoint} instances to be registered against the given
+	 * {@link PulsarListenerEndpointRegistrar}. The default
 	 * {@link PulsarListenerContainerFactory} can also be customized.
 	 * @param registrar the registrar to be configured
 	 */
 	void configurePulsarListeners(PulsarListenerEndpointRegistrar registrar);
+
 }

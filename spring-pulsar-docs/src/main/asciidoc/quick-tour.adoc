@@ -27,7 +27,7 @@ Use the following command to do a full build of the project.
 The build will produce the following artifacts.
 
 * spring-pulsar
-* spring-pulsar-boot-autoconfigure
+* spring-pulsar-spring-boot-autoconfigure
 
 ### Maven Coordinates
 
@@ -102,4 +102,3 @@ Behind the scenes, it creates a message listener container which creates and man
 As with a regular Pulsar consumer, the default subscription type when using `PulsarListener` is the `Exclusive` mode.
 As records are published in to the `hello-pulsar` topic, the `Pulsarlistener` consumes them and prints them on the console.
 Here also, the framework infers the schema type used from the data type that the `PulsarListner` method uses as the payload - `String` in this case.
-

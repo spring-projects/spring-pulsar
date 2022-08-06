@@ -1,0 +1,50 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+}
+
+description = 'Spring Pulsar Support'
+
+dependencies {
+	api 'org.springframework:spring-context'
+	api 'org.springframework:spring-messaging'
+	api 'org.springframework:spring-tx'
+	api ('org.springframework.retry:spring-retry') {
+		exclude group: 'org.springframework'
+	}
+	api 'org.apache.pulsar:pulsar-client'
+	api 'org.apache.pulsar:pulsar-client-admin'
+	api 'org.apache.pulsar:pulsar-client-admin-api'
+	api 'com.github.ben-manes.caffeine:caffeine'
+
+	optional 'com.fasterxml.jackson.core:jackson-core'
+	optional 'com.fasterxml.jackson.core:jackson-databind'
+	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
+	optional 'com.jayway.jsonpath:json-path'
+	optional 'io.projectreactor:reactor-core'
+
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
+	testImplementation 'org.hibernate.validator:hibernate-validator'
+
+	// TODO remove unused dependencies
+
+	// Common to all ??
+	implementation 'com.google.code.findbugs:jsr305'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api'
+	testImplementation 'org.junit.jupiter:junit-jupiter-params'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// To avoid compiler warnings about @API annotations in JUnit code
+	testCompileOnly 'org.apiguardian:apiguardian-api'
+	testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
+	testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
+	testImplementation("org.awaitility:awaitility") {
+		exclude group: 'org.hamcrest'
+	}
+	testImplementation 'org.hamcrest:hamcrest-core'
+	testImplementation 'org.assertj:assertj-core'
+	testImplementation 'org.testcontainers:pulsar'
+	testImplementation 'org.springframework:spring-test'
+}

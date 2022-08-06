@@ -40,8 +40,8 @@ public class SpringPulsarBootApp {
 	}
 
 	/*
-	 * Basic publisher using PulsarTemplate<String> and a PulsarListener using
-	 * an exclusive subscription to consume.
+	 * Basic publisher using PulsarTemplate<String> and a PulsarListener using an
+	 * exclusive subscription to consume.
 	 */
 	@Bean
 	public ApplicationRunner runner1(PulsarTemplate<String> pulsarTemplate) {
@@ -61,8 +61,8 @@ public class SpringPulsarBootApp {
 	}
 
 	/*
-	 * Basic publisher using PulsarTemplate<Integer> and a PulsarListener using
-	 * an exclusive subscription to consume.
+	 * Basic publisher using PulsarTemplate<Integer> and a PulsarListener using an
+	 * exclusive subscription to consume.
 	 */
 	@Bean
 	public ApplicationRunner runner2(PulsarTemplate<Integer> pulsarTemplate) {
@@ -82,8 +82,8 @@ public class SpringPulsarBootApp {
 	}
 
 	/*
-	 * Demonstrating more complex types for publishing using JSON schema and the associated
-	 * PulsarListener using an exclusive subscription.
+	 * Demonstrating more complex types for publishing using JSON schema and the
+	 * associated PulsarListener using an exclusive subscription.
 	 */
 	@Bean
 	public ApplicationRunner runner3(PulsarTemplate<Foo> pulsarTemplate) {
@@ -97,7 +97,8 @@ public class SpringPulsarBootApp {
 		};
 	}
 
-	@PulsarListener(subscriptionName = "subscription-3", topics = "hello-pulsar-exclusive-3", schemaType = SchemaType.JSON)
+	@PulsarListener(subscriptionName = "subscription-3", topics = "hello-pulsar-exclusive-3",
+			schemaType = SchemaType.JSON)
 	public void listen3(Foo message) {
 		this.logger.info("Message received :" + message);
 	}
@@ -117,7 +118,8 @@ public class SpringPulsarBootApp {
 		};
 	}
 
-	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-exclusive-4", schemaType = SchemaType.JSON, batch = true)
+	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-exclusive-4",
+			schemaType = SchemaType.JSON, batch = true)
 	public void listen4(List<Foo> messages) {
 		this.logger.info("records received :" + messages.size());
 		for (Foo message : messages) {
@@ -128,10 +130,7 @@ public class SpringPulsarBootApp {
 	record Foo(String foo, String bar) {
 		@Override
 		public String toString() {
-			return "Foo{" +
-					"foo='" + this.foo + '\'' +
-					", bar='" + this.bar + '\'' +
-					'}';
+			return "Foo{" + "foo='" + this.foo + '\'' + ", bar='" + this.bar + '\'' + '}';
 		}
 	}
 

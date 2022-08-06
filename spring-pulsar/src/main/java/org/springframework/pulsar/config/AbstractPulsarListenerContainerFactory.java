@@ -37,14 +37,14 @@ import org.springframework.pulsar.support.MessageConverter;
  *
  * @param <C> the {@link AbstractPulsarMessageListenerContainer} implementation type.
  * @param <T> Message payload type.
- *
  * @author Soby Chacko
  */
 public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractPulsarMessageListenerContainer<T>, T>
 		implements PulsarListenerContainerFactory<C>, ApplicationEventPublisherAware, InitializingBean,
 		ApplicationContextAware {
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass())); // NOSONAR protected
+	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass())); // NOSONAR
+																							// protected
 
 	private final PulsarContainerProperties containerProperties = new PulsarContainerProperties();
 
@@ -67,7 +67,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		this.applicationContext = applicationContext;
 	}
 
-
 	public void setPulsarConsumerFactory(PulsarConsumerFactory<? super T> consumerFactory) {
 		this.consumerFactory = consumerFactory;
 	}
@@ -76,11 +75,9 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		return this.consumerFactory;
 	}
 
-
 	public void setAutoStartup(Boolean autoStartup) {
 		this.autoStartup = autoStartup;
 	}
-
 
 	public void setPhase(int phase) {
 		this.phase = phase;
@@ -94,11 +91,9 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		this.messageConverter = messageConverter;
 	}
 
-
 	public Boolean isBatchListener() {
 		return this.batchListener;
 	}
-
 
 	public void setBatchListener(Boolean batchListener) {
 		this.batchListener = batchListener;
@@ -108,7 +103,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
-
 
 	public PulsarContainerProperties getContainerProperties() {
 		return this.containerProperties;
@@ -123,15 +117,14 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	@Override
 	public C createListenerContainer(PulsarListenerEndpoint endpoint) {
 		C instance = createContainerInstance(endpoint);
-		JavaUtils.INSTANCE
-				.acceptIfNotNull(endpoint.getSubscriptionName(), instance::setBeanName);
+		JavaUtils.INSTANCE.acceptIfNotNull(endpoint.getSubscriptionName(), instance::setBeanName);
 		if (endpoint instanceof AbstractPulsarListenerEndpoint) {
 			configureEndpoint((AbstractPulsarListenerEndpoint<C>) endpoint);
 		}
 
 		endpoint.setupListenerContainer(instance, this.messageConverter);
 		initializeContainer(instance, endpoint);
-		//customizeContainer(instance);
+		// customizeContainer(instance);
 		return instance;
 	}
 
@@ -140,19 +133,18 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	private void configureEndpoint(AbstractPulsarListenerEndpoint<C> aplEndpoint) {
 
 		if (aplEndpoint.getBatchListener() == null) {
-			JavaUtils.INSTANCE
-					.acceptIfNotNull(this.batchListener, aplEndpoint::setBatchListener);
+			JavaUtils.INSTANCE.acceptIfNotNull(this.batchListener, aplEndpoint::setBatchListener);
 		}
 	}
 
 	protected void initializeContainer(C instance, PulsarListenerEndpoint endpoint) {
 		PulsarContainerProperties properties = instance.getPulsarContainerProperties();
-//		BeanUtils.copyProperties(this.containerProperties, properties, "topics", "messageListener",
-//				"batchListener", "subscriptionName", "subscriptionType", "schema");
+		// BeanUtils.copyProperties(this.containerProperties, properties, "topics",
+		// "messageListener",
+		// "batchListener", "subscriptionName", "subscriptionType", "schema");
 		if (properties.getSchema() == null) {
 			properties.setSchema(Schema.BYTES);
 		}
-
 
 		Boolean autoStart = endpoint.getAutoStartup();
 		if (autoStart != null) {
@@ -162,8 +154,7 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 			instance.setAutoStartup(this.autoStartup);
 		}
 
-		JavaUtils.INSTANCE
-				.acceptIfNotNull(this.phase, instance::setPhase)
+		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
 				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
 				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher);
 	}

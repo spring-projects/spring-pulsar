@@ -27,12 +27,11 @@ import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
 
 /**
- * A {@link MessageListener MessageListener}
- * adapter that invokes a configurable {@link HandlerAdapter}; used when the factory is
- * configured for the listener to receive individual messages.
+ * A {@link MessageListener MessageListener} adapter that invokes a configurable
+ * {@link HandlerAdapter}; used when the factory is configured for the listener to receive
+ * individual messages.
  *
  * @param <V> payload type.
- *
  * @author Soby Chacko
  */
 @SuppressWarnings("serial")
@@ -50,7 +49,7 @@ public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessag
 			message = toMessagingMessage(record, consumer);
 		}
 		else {
-			//message = NULL_MESSAGE;
+			// message = NULL_MESSAGE;
 		}
 		if (logger.isDebugEnabled()) {
 			this.logger.debug("Processing [" + message + "]");
@@ -58,7 +57,7 @@ public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessag
 		try {
 			Object result = invokeHandler(record, message, consumer, acknowledgement);
 			if (result != null) {
-				//handleResult(result, record, message);
+				// handleResult(result, record, message);
 			}
 		}
 		catch (Exception e) { // NOSONAR ex flow control

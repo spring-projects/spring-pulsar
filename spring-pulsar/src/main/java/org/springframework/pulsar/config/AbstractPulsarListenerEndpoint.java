@@ -46,10 +46,10 @@ import org.springframework.util.Assert;
  * Base implementation for {@link PulsarListenerEndpoint}.
  *
  * @param <K> Message payload type.
- *
  * @author Soby Chacko
  */
-public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
+public abstract class AbstractPulsarListenerEndpoint<K>
+		implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
@@ -72,7 +72,9 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 	private BeanResolver beanResolver;
 
 	private Boolean autoStartup;
+
 	private Properties consumerProperties;
+
 	private Boolean batchListener;
 
 	@Override
@@ -156,25 +158,24 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 
 	@Override
 	public void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
-									@Nullable MessageConverter messageConverter) {
+			@Nullable MessageConverter messageConverter) {
 
 		setupMessageListener(listenerContainer, messageConverter);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void setupMessageListener(PulsarMessageListenerContainer container,
-									@Nullable MessageConverter messageConverter) {
+			@Nullable MessageConverter messageConverter) {
 
 		PulsarMessagingMessageListenerAdapter<K> adapter = createMessageListener(container, messageConverter);
 		Object messageListener = adapter;
 		boolean isBatchListener = isBatchListener();
-		Assert.state(messageListener != null,
-				() -> "Endpoint [" + this + "] must provide a non null message listener");
+		Assert.state(messageListener != null, () -> "Endpoint [" + this + "] must provide a non null message listener");
 		container.setupMessageListener(messageListener);
 	}
 
-	protected abstract PulsarMessagingMessageListenerAdapter<K> createMessageListener(PulsarMessageListenerContainer container,
-																					@Nullable MessageConverter messageConverter);
+	protected abstract PulsarMessagingMessageListenerAdapter<K> createMessageListener(
+			PulsarMessageListenerContainer container, @Nullable MessageConverter messageConverter);
 
 	public void setConsumerProperties(Properties consumerProperties) {
 		this.consumerProperties = consumerProperties;
@@ -185,7 +186,6 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 		return this.batchListener;
 	}
 
-
 	public void setBatchListener(boolean batchListener) {
 		this.batchListener = batchListener;
 	}
@@ -193,7 +193,6 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 	public boolean isBatchListener() {
 		return this.batchListener == null ? false : this.batchListener;
 	}
-
 
 	public SubscriptionType getSubscriptionType() {
 		return this.subscriptionType;
@@ -210,4 +209,5 @@ public abstract class AbstractPulsarListenerEndpoint<K> implements PulsarListene
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
 	}
+
 }

@@ -44,12 +44,10 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.util.Assert;
 
 /**
- * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter
- * providing the necessary infrastructure to extract the payload from a
- * Pulsar message.
+ * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter providing the
+ * necessary infrastructure to extract the payload from a Pulsar message.
  *
  * @param <V> payload type.
- *
  * @author Soby Chacko
  */
 public abstract class PulsarMessagingMessageListenerAdapter<V> {
@@ -141,22 +139,21 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 	}
 
 	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
-										Consumer<V> consumer, Acknowledgement acknowledgement) {
+			Consumer<V> consumer, Acknowledgement acknowledgement) {
 
 		try {
 			return this.handlerMethod.invoke(message, data, consumer, acknowledgement);
-//			if (data instanceof List && !this.isConsumerRecordList) {
-//				return this.handlerMethod.invoke(message, consumer);
-//			}
-//			else {
-//					return this.handlerMethod.invoke(message, data, consumer);
-//			}
+			// if (data instanceof List && !this.isConsumerRecordList) {
+			// return this.handlerMethod.invoke(message, consumer);
+			// }
+			// else {
+			// return this.handlerMethod.invoke(message, data, consumer);
+			// }
 		}
 		catch (Exception ex) {
 			throw new MessageConversionException("Cannot handle message", ex);
 		}
 	}
-
 
 	protected Type determineInferredType(Method method) { // NOSONAR complexity
 		if (method == null) {
@@ -170,9 +167,9 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		for (int i = 0; i < method.getParameterCount(); i++) {
 			MethodParameter methodParameter = new MethodParameter(method, i);
 			/*
-			 * We're looking for a single non-annotated parameter, or one annotated with @Payload.
-			 * We ignore parameters with type Message, Consumer, Ack, ConsumerRecord because they
-			 * are not involved with conversion.
+			 * We're looking for a single non-annotated parameter, or one annotated
+			 * with @Payload. We ignore parameters with type Message, Consumer, Ack,
+			 * ConsumerRecord because they are not involved with conversion.
 			 */
 			Type parameterType = methodParameter.getGenericParameterType();
 			boolean isNotConvertible = parameterIsType(parameterType, Message.class);
@@ -182,7 +179,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 			}
 			if (!isNotConvertible && !isMessageWithNoTypeInfo(parameterType)
 					&& (methodParameter.getParameterAnnotations().length == 0
-					|| methodParameter.hasParameterAnnotation(Payload.class))) {
+							|| methodParameter.hasParameterAnnotation(Payload.class))) {
 				if (genericParameterType == null) {
 					genericParameterType = extractGenericParameterTypFromMethodParameter(methodParameter);
 				}
@@ -231,8 +228,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 				Type paramType = parameterizedType.getActualTypeArguments()[0];
 				this.isConsumerRecordList = paramType.equals(Messages.class);
-				boolean messageHasGeneric = paramType instanceof ParameterizedType
-						&& ((ParameterizedType) paramType).getRawType().equals(org.springframework.messaging.Message.class);
+				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
+						.getRawType().equals(org.springframework.messaging.Message.class);
 				this.isMessageList = paramType.equals(org.springframework.messaging.Message.class) || messageHasGeneric;
 				if (messageHasGeneric) {
 					genericParameterType = ((ParameterizedType) paramType).getActualTypeArguments()[0];
@@ -261,8 +258,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 				if (collectionType.equals(org.springframework.messaging.Message.class)) {
 					return true;
 				}
-				return collectionType instanceof ParameterizedType
-						&& ((ParameterizedType) collectionType).getRawType().equals(org.springframework.messaging.Message.class);
+				return collectionType instanceof ParameterizedType && ((ParameterizedType) collectionType).getRawType()
+						.equals(org.springframework.messaging.Message.class);
 			}
 		}
 		return false;
@@ -284,13 +281,17 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		if (parameterType instanceof ParameterizedType) {
 			ParameterizedType parameterizedType = (ParameterizedType) parameterType;
 			Type rawType = parameterizedType.getRawType();
-			if  (rawType.equals(org.springframework.messaging.Message.class)) {
+			if (rawType.equals(org.springframework.messaging.Message.class)) {
 				return parameterizedType.getActualTypeArguments()[0] instanceof WildcardType;
 			}
 		}
-		return parameterType.equals(org.springframework.messaging.Message.class); // could be Message without a generic type
+		return parameterType.equals(org.springframework.messaging.Message.class); // could
+																					// be
+																					// Message
+																					// without
+																					// a
+																					// generic
+																					// type
 	}
-
-
 
 }

@@ -36,4 +36,5 @@ public interface PulsarListenerContainerRegistry {
 	Collection<PulsarMessageListenerContainer> getListenerContainers();
 
 	Collection<PulsarMessageListenerContainer> getAllListenerContainers();
+
 }

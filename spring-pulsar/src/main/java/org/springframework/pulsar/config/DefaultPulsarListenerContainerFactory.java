@@ -30,11 +30,11 @@ import org.springframework.util.StringUtils;
  *
  * @param <C> container implementation type.
  * @param <T> message type in the listener.
- *
  * @author Soby Chacko
  * @author Chris Bono
  */
-public class DefaultPulsarListenerContainerFactory<C, T> extends AbstractPulsarListenerContainerFactory<DefaultPulsarMessageListenerContainer<T>, T> {
+public class DefaultPulsarListenerContainerFactory<C, T>
+		extends AbstractPulsarListenerContainerFactory<DefaultPulsarMessageListenerContainer<T>, T> {
 
 	@Override
 	protected DefaultPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
@@ -67,7 +67,7 @@ public class DefaultPulsarListenerContainerFactory<C, T> extends AbstractPulsarL
 
 	@Override
 	protected void initializeContainer(DefaultPulsarMessageListenerContainer<T> instance,
-									PulsarListenerEndpoint endpoint) {
+			PulsarListenerEndpoint endpoint) {
 
 		super.initializeContainer(instance, endpoint);
 	}
@@ -84,7 +84,8 @@ public class DefaultPulsarListenerContainerFactory<C, T> extends AbstractPulsarL
 		};
 		DefaultPulsarMessageListenerContainer<T> container = createContainerInstance(endpoint);
 		initializeContainer(container, endpoint);
-		//customizeContainer(container);
+		// customizeContainer(container);
 		return container;
 	}
+
 }

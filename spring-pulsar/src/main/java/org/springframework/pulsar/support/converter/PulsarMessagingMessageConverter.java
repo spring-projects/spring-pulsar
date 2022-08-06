@@ -30,11 +30,10 @@ import org.springframework.messaging.support.MessageBuilder;
 
 /**
  *
- * A Messaging {@link org.springframework.pulsar.support.MessageConverter} implementation for a message listener that
- * receives individual messages.
+ * A Messaging {@link org.springframework.pulsar.support.MessageConverter} implementation
+ * for a message listener that receives individual messages.
  *
  * @param <V> message type
- *
  * @author Soby Chacko
  */
 public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageConverter<V> {
@@ -44,7 +43,8 @@ public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageCo
 	@Override
 	public Message<?> toMessage(org.apache.pulsar.client.api.Message<V> record, Consumer<V> consumer, Type type) {
 
-		Message<?> message = MessageBuilder.createMessage(extractAndConvertValue(record, type), new MessageHeaders(Collections.emptyMap()));
+		Message<?> message = MessageBuilder.createMessage(extractAndConvertValue(record, type),
+				new MessageHeaders(Collections.emptyMap()));
 		if (this.messagingConverter != null) {
 			Class<?> clazz = type instanceof Class ? (Class<?>) type : type instanceof ParameterizedType
 					? (Class<?>) ((ParameterizedType) type).getRawType() : Object.class;
@@ -66,10 +66,8 @@ public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageCo
 				message = converted;
 			}
 		}
-		return null; //TODO
+		return null; // TODO
 	}
-
-
 
 	protected org.springframework.messaging.converter.MessageConverter getMessagingConverter() {
 		return this.messagingConverter;
@@ -82,4 +80,5 @@ public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageCo
 	protected Object extractAndConvertValue(org.apache.pulsar.client.api.Message<V> record, Type type) {
 		return record.getValue();
 	}
+
 }

@@ -44,24 +44,25 @@ class DefaultConsumerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-012");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-012");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(1);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setMessageListener(
-				(PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-012");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		final CompletableFuture<MessageId> future = pulsarTemplate.sendAsync("hello john doe");
 		latch.await(10, TimeUnit.SECONDS);
 		pulsarClient.close();
 	}
+
 }

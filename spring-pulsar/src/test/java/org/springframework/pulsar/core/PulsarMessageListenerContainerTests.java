@@ -51,7 +51,6 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 import org.springframework.util.Assert;
 
-
 /**
  * @author Soby Chacko
  */
@@ -64,15 +63,13 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-011");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-011");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setMessageListener(
-				(PulsarRecordMessageListener<?>) (consumer, msg) -> {
-				});
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+		});
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.RECORD);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
@@ -89,7 +86,8 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-011");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -106,15 +104,14 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-012");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-012");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
-		pulsarContainerProperties.setMessageListener(
-				(PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -123,7 +120,8 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-012");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -142,21 +140,18 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-013");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-013");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
-		pulsarContainerProperties.setMessageListener(
-				(PulsarRecordMessageListener<?>) (consumer, msg) -> {
-					latch.countDown();
-					if (latch.getCount() % 2 == 0) {
-						throw new RuntimeException("fail");
-					}
-				}
-		);
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			latch.countDown();
+			if (latch.getCount() % 2 == 0) {
+				throw new RuntimeException("fail");
+			}
+		});
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -165,14 +160,16 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-013");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		Thread.sleep(1_000);
-		// Half of the message get acknowledged, and the other half gets negatively acknowledged.
+		// Half of the message get acknowledged, and the other half gets negatively
+		// acknowledged.
 		verify(containerConsumer, times(5)).acknowledge(any(Message.class));
 		verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class));
 		container.stop();
@@ -187,10 +184,9 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-014");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-014");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		final List<Acknowledgement> acksObjects = new ArrayList<>();
@@ -217,13 +213,15 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-014");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
-		//We are asserting that we got 10 valid ack objects through the receive method invocation.
+		// We are asserting that we got 10 valid ack objects through the receive method
+		// invocation.
 		assertThat(acksObjects.size()).isEqualTo(10);
 		verify(containerConsumer, times(10)).acknowledge(any(Message.class));
 
@@ -239,10 +237,9 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-015");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-015");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -256,8 +253,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 			return null;
 		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
 
-		pulsarContainerProperties.setMessageListener(
-				pulsarBatchMessageListener);
+		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -266,7 +262,8 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-015");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -286,10 +283,9 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		strings.add("foobar-016");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "foobar-sb-016");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -303,8 +299,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 			throw new RuntimeException();
 		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
 
-		pulsarContainerProperties.setMessageListener(
-				pulsarBatchMessageListener);
+		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -313,7 +308,8 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "foobar-016");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -329,16 +325,15 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 	private Consumer<?> spyOnConsumer(DefaultPulsarMessageListenerContainer<String> container) {
 		Consumer<?> consumer = getPropertyValue(container, "listenerConsumer.consumer", Consumer.class);
 		consumer = spy(consumer);
-		new DirectFieldAccessor(getPropertyValue(container, "listenerConsumer"))
-				.setPropertyValue("consumer", consumer);
+		new DirectFieldAccessor(getPropertyValue(container, "listenerConsumer")).setPropertyValue("consumer", consumer);
 		return consumer;
 	}
 
 	/**
-	 * Uses nested {@link DirectFieldAccessor}s to obtain a property using dotted notation to traverse fields; e.g.
-	 * "foo.bar.baz" will obtain a reference to the baz field of the bar field of foo. Adopted from Spring Integration.
-	 *
-	 * @param root         The object.
+	 * Uses nested {@link DirectFieldAccessor}s to obtain a property using dotted notation
+	 * to traverse fields; e.g. "foo.bar.baz" will obtain a reference to the baz field of
+	 * the bar field of foo. Adopted from Spring Integration.
+	 * @param root The object.
 	 * @param propertyPath The path.
 	 * @return The field.
 	 */
@@ -369,4 +364,5 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		}
 		return (T) value;
 	}
+
 }

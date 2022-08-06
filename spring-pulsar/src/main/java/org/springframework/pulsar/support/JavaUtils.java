@@ -43,11 +43,10 @@ public final class JavaUtils {
 
 	/**
 	 * Invoke {@link Consumer#accept(Object)} with the value if the condition is true.
-	 *
 	 * @param condition the condition.
-	 * @param value     the value.
-	 * @param consumer  the consumer.
-	 * @param <T>       the value type.
+	 * @param value the value.
+	 * @param consumer the consumer.
+	 * @param <T> the value type.
 	 * @return this.
 	 */
 	public <T> JavaUtils acceptIfCondition(boolean condition, T value, Consumer<T> consumer) {
@@ -59,10 +58,9 @@ public final class JavaUtils {
 
 	/**
 	 * Invoke {@link Consumer#accept(Object)} with the value if it is not null.
-	 *
-	 * @param value    the value.
+	 * @param value the value.
 	 * @param consumer the consumer.
-	 * @param <T>      the value type.
+	 * @param <T> the value type.
 	 * @return this.
 	 */
 	public <T> JavaUtils acceptIfNotNull(@Nullable T value, Consumer<T> consumer) {
@@ -74,8 +72,7 @@ public final class JavaUtils {
 
 	/**
 	 * Invoke {@link Consumer#accept(Object)} with the value if it is not null or empty.
-	 *
-	 * @param value    the value.
+	 * @param value the value.
 	 * @param consumer the consumer.
 	 * @return this.
 	 */
@@ -89,10 +86,9 @@ public final class JavaUtils {
 	/**
 	 * Invoke {@link Consumer#accept(Object)} with the cast value if the object is an
 	 * instance of the provided class.
-	 *
-	 * @param <T>      the type of the class to check and cast.
-	 * @param type     the type.
-	 * @param value    the value to be checked and cast.
+	 * @param <T> the type of the class to check and cast.
+	 * @param type the type.
+	 * @param value the value to be checked and cast.
 	 * @param consumer the consumer.
 	 * @return this.
 	 * @since 2.9
@@ -107,10 +103,9 @@ public final class JavaUtils {
 
 	/**
 	 * Invoke {@link Consumer#accept(Object)} with the value if it is not null or empty.
-	 *
-	 * @param value    the value.
+	 * @param value the value.
 	 * @param consumer the consumer.
-	 * @param <T>      the value type.
+	 * @param <T> the value type.
 	 * @return this.
 	 */
 	public <T> JavaUtils acceptIfNotEmpty(List<T> value, Consumer<List<T>> consumer) {
@@ -122,10 +117,9 @@ public final class JavaUtils {
 
 	/**
 	 * Invoke {@link Consumer#accept(Object)} with the value if it is not null or empty.
-	 *
-	 * @param value    the value.
+	 * @param value the value.
 	 * @param consumer the consumer.
-	 * @param <T>      the value type.
+	 * @param <T> the value type.
 	 * @return this.
 	 */
 	public <T> JavaUtils acceptIfNotEmpty(T[] value, Consumer<T[]> consumer) {
@@ -138,13 +132,12 @@ public final class JavaUtils {
 	/**
 	 * Invoke {@link BiConsumer#accept(Object, Object)} with the arguments if the
 	 * condition is true.
-	 *
 	 * @param condition the condition.
-	 * @param t1        the first consumer argument
-	 * @param t2        the second consumer argument
-	 * @param consumer  the consumer.
-	 * @param <T1>      the first argument type.
-	 * @param <T2>      the second argument type.
+	 * @param t1 the first consumer argument
+	 * @param t2 the second consumer argument
+	 * @param consumer the consumer.
+	 * @param <T1> the first argument type.
+	 * @param <T2> the second argument type.
 	 * @return this.
 	 */
 	public <T1, T2> JavaUtils acceptIfCondition(boolean condition, T1 t1, T2 t2, BiConsumer<T1, T2> consumer) {
@@ -157,12 +150,11 @@ public final class JavaUtils {
 	/**
 	 * Invoke {@link BiConsumer#accept(Object, Object)} with the arguments if the t2
 	 * argument is not null.
-	 *
-	 * @param t1       the first argument
-	 * @param t2       the second consumer argument
+	 * @param t1 the first argument
+	 * @param t2 the second consumer argument
 	 * @param consumer the consumer.
-	 * @param <T1>     the first argument type.
-	 * @param <T2>     the second argument type.
+	 * @param <T1> the first argument type.
+	 * @param <T2> the second argument type.
 	 * @return this.
 	 */
 	public <T1, T2> JavaUtils acceptIfNotNull(T1 t1, T2 t2, BiConsumer<T1, T2> consumer) {
@@ -175,10 +167,9 @@ public final class JavaUtils {
 	/**
 	 * Invoke {@link BiConsumer#accept(Object, Object)} with the arguments if the value
 	 * argument is not null or empty.
-	 *
-	 * @param t1       the first consumer argument.
-	 * @param value    the second consumer argument
-	 * @param <T>      the first argument type.
+	 * @param t1 the first consumer argument.
+	 * @param value the second consumer argument
+	 * @param <T> the first argument type.
 	 * @param consumer the consumer.
 	 * @return this.
 	 */
@@ -188,5 +179,5 @@ public final class JavaUtils {
 		}
 		return this;
 	}
-}
 
+}
