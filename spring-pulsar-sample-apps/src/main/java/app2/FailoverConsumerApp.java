@@ -53,22 +53,26 @@ public class FailoverConsumerApp {
 		};
 	}
 
-	@PulsarListener(subscriptionName = "failover-subscription-demo",  topics = "failover-demo-topic", subscriptionType = "failover")
+	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
+			subscriptionType = "failover")
 	public void listen1(String foo) {
 		this.logger.info("failover-listen1 : " + foo);
 	}
 
-	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic", subscriptionType = "failover")
+	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
+			subscriptionType = "failover")
 	public void listen2(String foo) {
 		this.logger.info("failover-listen2 : " + foo);
 	}
 
-	@PulsarListener(subscriptionName = "failover-subscription-demo",  topics = "failover-demo-topic", subscriptionType = "failover")
+	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
+			subscriptionType = "failover")
 	public void listen(String foo) {
 		this.logger.info("failover-listen3 : " + foo);
 	}
 
 	static class FooRouter implements MessageRouter {
+
 		@Serial
 		private static final long serialVersionUID = -1L;
 
@@ -76,9 +80,11 @@ public class FailoverConsumerApp {
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 0;
 		}
+
 	}
 
 	static class BarRouter implements MessageRouter {
+
 		@Serial
 		private static final long serialVersionUID = -1L;
 
@@ -86,9 +92,11 @@ public class FailoverConsumerApp {
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 1;
 		}
+
 	}
 
 	static class BuzzRouter implements MessageRouter {
+
 		@Serial
 		private static final long serialVersionUID = -1L;
 
@@ -96,5 +104,7 @@ public class FailoverConsumerApp {
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 2;
 		}
+
 	}
+
 }

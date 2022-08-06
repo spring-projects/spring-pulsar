@@ -89,27 +89,26 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.Validator;
 
 /**
- * Bean post-processor that registers methods annotated with {@link PulsarListener}
- * to be invoked by a Pulsar message listener container created under the covers
- * by a {@link PulsarListenerContainerFactory}
- * according to the parameters of the annotation.
+ * Bean post-processor that registers methods annotated with {@link PulsarListener} to be
+ * invoked by a Pulsar message listener container created under the covers by a
+ * {@link PulsarListenerContainerFactory} according to the parameters of the annotation.
  *
- * <p>Annotated methods can use flexible arguments as defined by {@link PulsarListener}.
+ * <p>
+ * Annotated methods can use flexible arguments as defined by {@link PulsarListener}.
  *
- * <p>This post-processor is automatically registered by the {@link EnablePulsar}
- * annotation.
+ * <p>
+ * This post-processor is automatically registered by the {@link EnablePulsar} annotation.
  *
- * <p>Auto-detect any {@link PulsarListenerConfigurer} instances in the container,
- * allowing for customization of the registry to be used, the default container
- * factory or for fine-grained control over endpoints registration. See
- * {@link EnablePulsar} Javadoc for complete usage details.
+ * <p>
+ * Auto-detect any {@link PulsarListenerConfigurer} instances in the container, allowing
+ * for customization of the registry to be used, the default container factory or for
+ * fine-grained control over endpoints registration. See {@link EnablePulsar} Javadoc for
+ * complete usage details.
  *
  * @param <K> the key type.
  * @param <V> the value type.
- *
  * @author Soby Chacko
  * @author Chris Bono
- *
  * @see PulsarListener
  * @see EnablePulsar
  * @see PulsarListenerConfigurer
@@ -118,12 +117,14 @@ import org.springframework.validation.Validator;
  * @see PulsarListenerEndpoint
  * @see MethodPulsarListenerEndpoint
  */
-public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
+public class PulsarListenerAnnotationBeanPostProcessor<K, V>
+		implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
 	/**
-	 * The bean name of the default {@link org.springframework.pulsar.config.PulsarListenerContainerFactory}.
+	 * The bean name of the default
+	 * {@link org.springframework.pulsar.config.PulsarListenerContainerFactory}.
 	 */
 	public static final String DEFAULT_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "pulsarListenerContainerFactory";
 
@@ -157,11 +158,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 	private final ListenerScope listenerScope = new ListenerScope();
 
-
 	private AnnotationEnhancer enhancer;
 
 	private final AtomicInteger counter = new AtomicInteger();
-
 
 	@Override
 	public int getOrder() {
@@ -189,9 +188,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	private void buildEnhancer() {
 		if (this.applicationContext != null) {
 			List<AnnotationEnhancer> enhancers = this.applicationContext
-					.getBeanProvider(AnnotationEnhancer.class, false)
-					.orderedStream()
-					.toList();
+					.getBeanProvider(AnnotationEnhancer.class, false).orderedStream().toList();
 			if (!enhancers.isEmpty()) {
 				this.enhancer = (attrs, element) -> {
 					for (AnnotationEnhancer enh : enhancers) {
@@ -225,7 +222,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
 
-		// Set the custom handler method factory once resolved by the configurer - otherwise register default formatters
+		// Set the custom handler method factory once resolved by the configurer -
+		// otherwise register default formatters
 		MessageHandlerMethodFactory handlerMethodFactory = this.registrar.getMessageHandlerMethodFactory();
 		if (handlerMethodFactory != null) {
 			this.messageHandlerMethodFactory.setHandlerMethodFactory(handlerMethodFactory);
@@ -283,8 +281,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		this.listenerScope.removeListener(beanRef);
 	}
 
-	protected void processListener(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener PulsarListener,
-								Object bean, String beanName, String[] topics) {
+	protected void processListener(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener PulsarListener, Object bean,
+			String beanName, String[] topics) {
 
 		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics);
 
@@ -297,7 +295,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 	@Nullable
 	private PulsarListenerContainerFactory<?> resolveContainerFactory(PulsarListener PulsarListener,
-																	Object factoryTarget, String beanName) {
+			Object factoryTarget, String beanName) {
 
 		String containerFactory = PulsarListener.containerFactory();
 		if (!StringUtils.hasText(containerFactory)) {
@@ -310,17 +308,15 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		if (resolved instanceof PulsarListenerContainerFactory) {
 			return (PulsarListenerContainerFactory<?>) resolved;
 		}
-		String containerFactoryBeanName = resolveExpressionAsString(containerFactory,
-				"containerFactory");
+		String containerFactoryBeanName = resolveExpressionAsString(containerFactory, "containerFactory");
 		if (StringUtils.hasText(containerFactoryBeanName)) {
 			assertBeanFactory();
 			try {
 				factory = this.beanFactory.getBean(containerFactoryBeanName, PulsarListenerContainerFactory.class);
 			}
 			catch (NoSuchBeanDefinitionException ex) {
-				throw new BeanInitializationException(
-						noBeanFoundMessage(factoryTarget, beanName, containerFactoryBeanName,
-								PulsarListenerContainerFactory.class), ex);
+				throw new BeanInitializationException(noBeanFoundMessage(factoryTarget, beanName,
+						containerFactoryBeanName, PulsarListenerContainerFactory.class), ex);
 			}
 		}
 		return factory;
@@ -331,15 +327,15 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	}
 
 	protected String noBeanFoundMessage(Object target, String listenerBeanName, String requestedBeanName,
-										Class<?> expectedClass) {
+			Class<?> expectedClass) {
 
-		return "Could not register Pulsar listener endpoint on ["
-				+ target + "] for bean " + listenerBeanName + ", no '" + expectedClass.getSimpleName() + "' with id '"
-				+ requestedBeanName + "' was found in the application context";
+		return "Could not register Pulsar listener endpoint on [" + target + "] for bean " + listenerBeanName + ", no '"
+				+ expectedClass.getSimpleName() + "' with id '" + requestedBeanName
+				+ "' was found in the application context";
 	}
 
 	private void processPulsarListenerAnnotation(MethodPulsarListenerEndpoint<?> endpoint,
-												PulsarListener pulsarListener, Object bean, String[] topics) {
+			PulsarListener pulsarListener, Object bean, String[] topics) {
 
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
@@ -397,8 +393,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 					}
 				}
 				else {
-					throw new IllegalStateException("'properties' must resolve to a String, a String[] or "
-							+ "Collection<String>");
+					throw new IllegalStateException(
+							"'properties' must resolve to a String, a String[] or " + "Collection<String>");
 				}
 			}
 			endpoint.setConsumerProperties(properties);
@@ -452,8 +448,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 			return (String) resolved;
 		}
 		else if (resolved != null) {
-			throw new IllegalStateException(THE_LEFT + attribute + "] must resolve to a String. "
-					+ RESOLVED_TO_LEFT + resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
+			throw new IllegalStateException(THE_LEFT + attribute + "] must resolve to a String. " + RESOLVED_TO_LEFT
+					+ resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
 		}
 		return null;
 	}
@@ -497,8 +493,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 			}
 		}
 		else {
-			throw new IllegalArgumentException(String.format(
-					"@PulsarListener can't resolve '%s' as a String", resolvedValue));
+			throw new IllegalArgumentException(
+					String.format("@PulsarListener can't resolve '%s' as a String", resolvedValue));
 		}
 	}
 
@@ -506,7 +502,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		Method method = methodArg;
 		if (AopUtils.isJdkDynamicProxy(bean)) {
 			try {
-				// Found a @PulsarListener method on the target class for this JDK proxy ->
+				// Found a @PulsarListener method on the target class for this JDK proxy
+				// ->
 				// is it also present on the proxy itself?
 				method = bean.getClass().getMethod(method.getName(), method.getParameterTypes());
 				Class<?>[] proxiedInterfaces = ((Advised) bean).getProxiedInterfaces();
@@ -525,12 +522,11 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 			}
 			catch (NoSuchMethodException ex) {
 				throw new IllegalStateException(String.format(
-						"@PulsarListener method '%s' found on bean target class '%s', " +
-								"but not found in any interface(s) for bean JDK proxy. Either " +
-								"pull the method up to an interface or switch to subclass (CGLIB) " +
-								"proxies by setting proxy-target-class/proxyTargetClass " +
-								"attribute to 'true'", method.getName(),
-						method.getDeclaringClass().getSimpleName()), ex);
+						"@PulsarListener method '%s' found on bean target class '%s', "
+								+ "but not found in any interface(s) for bean JDK proxy. Either "
+								+ "pull the method up to an interface or switch to subclass (CGLIB) "
+								+ "proxies by setting proxy-target-class/proxyTargetClass " + "attribute to 'true'",
+						method.getName(), method.getDeclaringClass().getSimpleName()), ex);
 			}
 		}
 		return method;
@@ -545,9 +541,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		}
 		PulsarListeners anns = AnnotationUtils.findAnnotation(clazz, PulsarListeners.class);
 		if (anns != null) {
-			listeners.addAll(Arrays.stream(anns.value())
-					.map(anno -> enhance(clazz, anno))
-					.collect(Collectors.toList()));
+			listeners
+					.addAll(Arrays.stream(anns.value()).map(anno -> enhance(clazz, anno)).collect(Collectors.toList()));
 		}
 		return listeners;
 	}
@@ -561,9 +556,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		}
 		PulsarListeners anns = AnnotationUtils.findAnnotation(method, PulsarListeners.class);
 		if (anns != null) {
-			listeners.addAll(Arrays.stream(anns.value())
-					.map(anno -> enhance(method, anno))
-					.collect(Collectors.toList()));
+			listeners.addAll(
+					Arrays.stream(anns.value()).map(anno -> enhance(method, anno)).collect(Collectors.toList()));
 		}
 		return listeners;
 	}
@@ -574,10 +568,10 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 		}
 		else {
 			return AnnotationUtils.synthesizeAnnotation(
-					this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarListener.class, null);
+					this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarListener.class,
+					null);
 		}
 	}
-
 
 	private void addFormatters(FormatterRegistry registry) {
 		this.beanFactory.getBeanProvider(Converter.class).forEach(registry::addConverter);
@@ -607,8 +601,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 	private class PulsarHandlerMethodFactoryAdapter implements MessageHandlerMethodFactory {
 
-		private final DefaultFormattingConversionService defaultFormattingConversionService =
-				new DefaultFormattingConversionService();
+		private final DefaultFormattingConversionService defaultFormattingConversionService = new DefaultFormattingConversionService();
 
 		private MessageHandlerMethodFactory handlerMethodFactory;
 
@@ -635,17 +628,19 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 				defaultFactory.setValidator(validator);
 			}
 			defaultFactory.setBeanFactory(PulsarListenerAnnotationBeanPostProcessor.this.beanFactory);
-			this.defaultFormattingConversionService.addConverter(
-					new BytesToStringConverter(PulsarListenerAnnotationBeanPostProcessor.this.charset));
+			this.defaultFormattingConversionService
+					.addConverter(new BytesToStringConverter(PulsarListenerAnnotationBeanPostProcessor.this.charset));
 			this.defaultFormattingConversionService.addConverter(new BytesToNumberConverter());
 			defaultFactory.setConversionService(this.defaultFormattingConversionService);
-			GenericMessageConverter messageConverter = new GenericMessageConverter(this.defaultFormattingConversionService);
+			GenericMessageConverter messageConverter = new GenericMessageConverter(
+					this.defaultFormattingConversionService);
 			defaultFactory.setMessageConverter(messageConverter);
 
-			List<HandlerMethodArgumentResolver> customArgumentsResolver =
-					new ArrayList<>(PulsarListenerAnnotationBeanPostProcessor.this.registrar.getCustomMethodArgumentResolvers());
+			List<HandlerMethodArgumentResolver> customArgumentsResolver = new ArrayList<>(
+					PulsarListenerAnnotationBeanPostProcessor.this.registrar.getCustomMethodArgumentResolvers());
 			// Has to be at the end - look at PayloadMethodArgumentResolver documentation
-			//customArgumentsResolver.add(new PulsarNullAwarePayloadArgumentResolver(messageConverter, validator));
+			// customArgumentsResolver.add(new
+			// PulsarNullAwarePayloadArgumentResolver(messageConverter, validator));
 			defaultFactory.setCustomArgumentResolvers(customArgumentsResolver);
 
 			defaultFactory.afterPropertiesSet();
@@ -656,7 +651,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 	}
 
 	private static class BytesToStringConverter implements Converter<byte[], String> {
-
 
 		private final Charset charset;
 
@@ -770,10 +764,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V> implements BeanPost
 
 	}
 
-
 	public interface AnnotationEnhancer extends BiFunction<Map<String, Object>, AnnotatedElement, Map<String, Object>> {
 
 	}
-
 
 }

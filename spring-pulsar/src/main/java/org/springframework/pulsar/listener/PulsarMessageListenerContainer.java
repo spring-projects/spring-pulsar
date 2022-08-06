@@ -20,8 +20,8 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.SmartLifecycle;
 
 /**
- * Internal abstraction used by the framework representing a message
- * listener container. Not meant to be implemented externally.
+ * Internal abstraction used by the framework representing a message listener container.
+ * Not meant to be implemented externally.
  *
  * @author Soby Chacko
  */

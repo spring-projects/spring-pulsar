@@ -58,7 +58,8 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 	}
 
 	@Override
-	public void setupListenerContainer(PulsarMessageListenerContainer listenerContainer, MessageConverter messageConverter) {
+	public void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
+			MessageConverter messageConverter) {
 
 	}
 
@@ -71,4 +72,5 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 	public SchemaType getSchemaType() {
 		return null;
 	}
+
 }

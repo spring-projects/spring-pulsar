@@ -51,21 +51,20 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.util.Assert;
 
 /**
- * A {@link PulsarListenerEndpoint} providing the method to invoke to process
- * an incoming message for this endpoint.
+ * A {@link PulsarListenerEndpoint} providing the method to invoke to process an incoming
+ * message for this endpoint.
  *
  * @param <V> Message payload type
- *
  * @author Soby Chacko
  */
 public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpoint<V> {
-
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
 	private Object bean;
 
 	private Method method;
+
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
 	private SmartMessageConverter messagingConverter;
@@ -80,7 +79,6 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	/**
 	 * Set the method to invoke to process a message managed by this endpoint.
-	 *
 	 * @param method the target method for the {@link #bean}.
 	 */
 	public void setMethod(Method method) {
@@ -97,29 +95,32 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	@Override
 	protected PulsarMessagingMessageListenerAdapter<V> createMessageListener(PulsarMessageListenerContainer container,
-																			@Nullable MessageConverter messageConverter) {
+			@Nullable MessageConverter messageConverter) {
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
 		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
 		final HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
-		//Since we have access to the handler method here, check if we can type infer the Schema used.
+		// Since we have access to the handler method here, check if we can type infer the
+		// Schema used.
 
-		//TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
+		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
 		final MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
 		MethodParameter methodParameter = null;
-		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters).filter(
-				methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)).findFirst();
-		final long count = Arrays.stream(methodParameters).filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-				&& !methodParameter1.getParameterType().equals(Acknowledgement.class)).count();
+		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
+				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+						|| !methodParameter1.getParameterType().equals(Acknowledgement.class))
+				.findFirst();
+		final long count = Arrays.stream(methodParameters)
+				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+						&& !methodParameter1.getParameterType().equals(Acknowledgement.class))
+				.count();
 		Assert.isTrue(count == 1, "More than 1 expected payload types found");
 		if (parameter.isPresent()) {
 			methodParameter = parameter.get();
 		}
-
 
 		final DefaultPulsarMessageListenerContainer<?> containerInstance = (DefaultPulsarMessageListenerContainer<?>) container;
 		final PulsarContainerProperties pulsarContainerProperties = containerInstance.getPulsarContainerProperties();
@@ -187,7 +188,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		return messageListener;
 	}
 
-	private Schema<?> getRequiredSchema(MethodParameter methodParameter, PulsarContainerProperties pulsarContainerProperties) {
+	private Schema<?> getRequiredSchema(MethodParameter methodParameter,
+			PulsarContainerProperties pulsarContainerProperties) {
 		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
 		final Class<?> rawClass = resolvableType.getRawClass();
 		if (rawClass != null && isContainerType(rawClass)) {
@@ -198,16 +200,17 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	}
 
 	private boolean isContainerType(Class<?> rawClass) {
-		return rawClass.isAssignableFrom(List.class) || rawClass.isAssignableFrom(Message.class) || rawClass.isAssignableFrom(Messages.class);
+		return rawClass.isAssignableFrom(List.class) || rawClass.isAssignableFrom(Message.class)
+				|| rawClass.isAssignableFrom(Messages.class);
 	}
 
 	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {
-		InvocableHandlerMethod invocableHandlerMethod =
-				this.messageHandlerMethodFactory.createInvocableHandlerMethod(getBean(), getMethod());
+		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
+				.createInvocableHandlerMethod(getBean(), getMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected PulsarMessagingMessageListenerAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
 

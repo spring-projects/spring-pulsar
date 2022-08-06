@@ -46,9 +46,7 @@ public class PulsarClientFactoryBean extends AbstractFactoryBean<PulsarClient> {
 
 	@Override
 	protected PulsarClient createInstance() throws Exception {
-		return PulsarClient.builder()
-				.loadConf(this.pulsarClientConfiguration.getConfigs())
-				.build();
+		return PulsarClient.builder().loadConf(this.pulsarClientConfiguration.getConfigs()).build();
 	}
 
 	@Override

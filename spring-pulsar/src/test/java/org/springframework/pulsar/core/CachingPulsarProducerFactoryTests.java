@@ -83,7 +83,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		Producer<String> producer3 = producerFactory.createProducer("topic1", new StringSchema());
 		assertThat(producer1).isSameAs(producer2).isSameAs(producer3);
 
-		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory, Collections.singletonList(cacheKey));
+		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
+				Collections.singletonList(cacheKey));
 		Producer<String> cachedProducerProxy = producerCache.asMap().get(cacheKey);
 		assertThat(cachedProducerProxy).isSameAs(producer1);
 	}
@@ -152,13 +153,11 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
 				Arrays.asList(cacheKey1, cacheKey2));
 		producerFactory.destroy();
-		Awaitility.await()
-				.timeout(Duration.ofSeconds(5L))
-				.untilAsserted(() -> {
-					assertThat(producerCache.asMap()).isEmpty();
-					assertThat(actualProducer1.isConnected()).isFalse();
-					assertThat(actualProducer2.isConnected()).isFalse();
-				});
+		Awaitility.await().timeout(Duration.ofSeconds(5L)).untilAsserted(() -> {
+			assertThat(producerCache.asMap()).isEmpty();
+			assertThat(actualProducer1.isConnected()).isFalse();
+			assertThat(actualProducer2.isConnected()).isFalse();
+		});
 	}
 
 	@Test
@@ -171,13 +170,10 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
 				Collections.singletonList(cacheKey));
-		Awaitility.await()
-				.pollDelay(Duration.ofSeconds(5L))
-				.timeout(Duration.ofSeconds(10L))
-				.untilAsserted(() -> {
-					assertThat(producerCache.asMap()).isEmpty();
-					assertThat(actualProducer.isConnected()).isFalse();
-				});
+		Awaitility.await().pollDelay(Duration.ofSeconds(5L)).timeout(Duration.ofSeconds(10L)).untilAsserted(() -> {
+			assertThat(producerCache.asMap()).isEmpty();
+			assertThat(actualProducer.isConnected()).isFalse();
+		});
 	}
 
 	@Test
@@ -185,14 +181,14 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		pulsarClient = spy(pulsarClient);
 		when(this.pulsarClient.newProducer(schema)).thenThrow(new RuntimeException("5150"));
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		assertThatThrownBy(() -> producerFactory.createProducer("topic1", schema))
-				.isInstanceOf(RuntimeException.class)
+		assertThatThrownBy(() -> producerFactory.createProducer("topic1", schema)).isInstanceOf(RuntimeException.class)
 				.hasMessage("5150");
 		getAssertedProducerCache(producerFactory, Collections.emptyList());
 	}
 
 	@Override
-	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema, MessageRouter router) {
+	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
+			MessageRouter router) {
 		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router);
 	}
 
@@ -204,10 +200,10 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Cache<ProducerCacheKey<String>, Producer<String>> getAssertedProducerCache(PulsarProducerFactory<String> producerFactory,
-			List<ProducerCacheKey<String>> expectedCacheKeys) {
-		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = (Cache<ProducerCacheKey<String>, Producer<String>>)
-				ReflectionTestUtils.getField(producerFactory, "producerCache");
+	private Cache<ProducerCacheKey<String>, Producer<String>> getAssertedProducerCache(
+			PulsarProducerFactory<String> producerFactory, List<ProducerCacheKey<String>> expectedCacheKeys) {
+		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = (Cache<ProducerCacheKey<String>, Producer<String>>) ReflectionTestUtils
+				.getField(producerFactory, "producerCache");
 		assertThat(producerCache).isNotNull();
 		if (ObjectUtils.isEmpty(expectedCacheKeys)) {
 			assertThat(producerCache.asMap()).isEmpty();
@@ -219,7 +215,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Override
-	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient, Map<String, Object> producerConfig) {
+	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
+			Map<String, Object> producerConfig) {
 		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient,
 				producerConfig, Duration.ofMinutes(5L), 10L, 2);
 		producerFactories.add(producerFactory);
@@ -232,15 +229,13 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		@Test
 		void nullSchemaIsNotAllowed() {
 			assertThatThrownBy(() -> new ProducerCacheKey<>(null, "topic1", null))
-					.isInstanceOf(IllegalArgumentException.class)
-					.hasMessage("'schema' must be non-null");
+					.isInstanceOf(IllegalArgumentException.class).hasMessage("'schema' must be non-null");
 		}
 
 		@Test
 		void nullTopicIsNotAllowed() {
 			assertThatThrownBy(() -> new ProducerCacheKey<>(schema, null, null))
-					.isInstanceOf(IllegalArgumentException.class)
-					.hasMessage("'topic' must be non-null");
+					.isInstanceOf(IllegalArgumentException.class).hasMessage("'topic' must be non-null");
 		}
 
 		@ParameterizedTest(name = "equals({0}) should be {2}")
@@ -255,32 +250,33 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		static Stream<Arguments> equalsAndHashCodeTestProvider() {
 			MessageRouter router1 = mock(MessageRouter.class);
 			ProducerCacheKey<String> key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", router1);
-			return Stream.of(
-					arguments(Named.of("differentClass", key1), "someStrangeObject", false),
+			return Stream.of(arguments(Named.of("differentClass", key1), "someStrangeObject", false),
 					arguments(Named.of("null", key1), null, false),
 					arguments(Named.of("sameInstance", key1), key1, true),
-					arguments(Named.of("sameSchemaSameTopicSameNullRouter",
+					arguments(
+							Named.of("sameSchemaSameTopicSameNullRouter",
 									new ProducerCacheKey<>(Schema.STRING, "topic1", null)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", null), true),
-					arguments(Named.of("sameSchemaSameTopicSameNonNullRouter",
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null), true),
+					arguments(
+							Named.of("sameSchemaSameTopicSameNonNullRouter",
 									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", router1), true),
-					arguments(Named.of("differentSchemaInstanceSameSchemaType",
+							new ProducerCacheKey<>(Schema.STRING, "topic1", router1), true),
+					arguments(
+							Named.of("differentSchemaInstanceSameSchemaType",
 									new ProducerCacheKey<>(new StringSchema(), "topic1", router1)),
-									new ProducerCacheKey<>(new StringSchema(), "topic1", router1), true),
-					arguments(Named.of("differentSchemaType",
+							new ProducerCacheKey<>(new StringSchema(), "topic1", router1), true),
+					arguments(Named.of("differentSchemaType", new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
+							new ProducerCacheKey<>(Schema.INT64, "topic1", router1), false),
+					arguments(Named.of("differentTopic", new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic2", router1), false),
+					arguments(
+							Named.of("differentNonNullRouter",
 									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-									new ProducerCacheKey<>(Schema.INT64, "topic1", router1), false),
-					arguments(Named.of("differentTopic",
-									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic2", router1), false),
-					arguments(Named.of("differentNonNullRouter",
-									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", mock(MessageRouter.class)), false),
-					arguments(Named.of("differentNullRouter",
-									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", null), false)
-			);
+							new ProducerCacheKey<>(Schema.STRING, "topic1", mock(MessageRouter.class)), false),
+					arguments(Named.of("differentNullRouter", new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null), false));
 		}
+
 	}
+
 }

@@ -27,13 +27,11 @@ public abstract class PulsarListenerBeanNames {
 	/**
 	 * The bean name of the internally managed Pulsar listener annotation processor.
 	 */
-	public static final String PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME =
-			"org.springframework.pulsar.config.internalPulsarListenerAnnotationProcessor";
+	public static final String PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME = "org.springframework.pulsar.config.internalPulsarListenerAnnotationProcessor";
 
 	/**
 	 * The bean name of the internally managed Pulsar listener endpoint registry.
 	 */
-	public static final String PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME =
-			"org.springframework.pulsar.config.internalPulsarListenerEndpointRegistry";
+	public static final String PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME = "org.springframework.pulsar.config.internalPulsarListenerEndpointRegistry";
 
 }

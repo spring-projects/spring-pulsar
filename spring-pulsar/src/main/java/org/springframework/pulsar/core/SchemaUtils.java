@@ -31,7 +31,7 @@ public final class SchemaUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T>  Schema<T> getSchema(T message) {
+	public static <T> Schema<T> getSchema(T message) {
 		final String clazzName = message.getClass().getName();
 		return switch (clazzName) {
 			case "java.lang.String" -> (Schema<T>) Schema.STRING;
@@ -52,4 +52,5 @@ public final class SchemaUtils {
 			default -> (Schema<T>) JSONSchema.of(message.getClass());
 		};
 	}
+
 }

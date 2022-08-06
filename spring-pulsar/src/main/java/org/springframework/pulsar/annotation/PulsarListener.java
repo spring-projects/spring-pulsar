@@ -33,10 +33,10 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
  * specified topics.
  *
  * The {@link #containerFactory()} identifies the
- * {@link org.springframework.pulsar.config.PulsarListenerContainerFactory} to use to build the Pulsar listener container.
- * If not set, a <em>default</em> container factory is assumed to be available with a bean name
- * of {@code pulsarListenerContainerFactory} unless an explicit default has been provided
- * through configuration.
+ * {@link org.springframework.pulsar.config.PulsarListenerContainerFactory} to use to
+ * build the Pulsar listener container. If not set, a <em>default</em> container factory
+ * is assumed to be available with a bean name of {@code pulsarListenerContainerFactory}
+ * unless an explicit default has been provided through configuration.
  *
  * <p>
  * Processing of {@code @PulsarListener} annotations is performed by registering a
@@ -55,8 +55,10 @@ public @interface PulsarListener {
 
 	/**
 	 * The unique identifier of the container for this listener.
-	 * <p>If none is specified an auto-generated id is used.
-	 * <p>SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * <p>
+	 * If none is specified an auto-generated id is used.
+	 * <p>
+	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
 	 * @return the {@code id} for the container managing for this endpoint.
 	 * @see PulsarListenerEndpointRegistry#getListenerContainer(String)
 	 */
@@ -77,8 +79,8 @@ public @interface PulsarListener {
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
-	 * The bean name of the {@link PulsarListenerContainerFactory}
-	 * to use to create the message listener container responsible to serve this endpoint.
+	 * The bean name of the {@link PulsarListenerContainerFactory} to use to create the
+	 * message listener container responsible to serve this endpoint.
 	 * <p>
 	 * If not specified, the default container factory is used, if any. If a SpEL
 	 * expression is provided ({@code #{...}}), the expression can either evaluate to a
@@ -89,14 +91,12 @@ public @interface PulsarListener {
 
 	/**
 	 * Topics to listen to.
-	 *
 	 * @return a comma separated list of topics to listen from.
 	 */
 	String[] topics() default {};
 
 	/**
 	 * Topic patten to listen to.
-	 *
 	 * @return topic pattern to listen to.
 	 */
 	String topicPattern() default "";
@@ -106,23 +106,22 @@ public @interface PulsarListener {
 	 * be a property placeholder or SpEL expression that evaluates to a {@link Boolean} or
 	 * a {@link String}, in which case the {@link Boolean#parseBoolean(String)} is used to
 	 * obtain the value.
-	 * <p>SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * <p>
+	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
 	 * @return true to auto start, false to not auto start.
 	 */
 	String autoStartup() default "";
 
 	/**
 	 * Activate batch consumption.
-	 *
 	 * @return whether this listener is in batch mode or not.
 	 */
 	boolean batch() default false;
 
 	/**
-	 * A pseudo bean name used in SpEL expressions within this annotation to reference
-	 * the current bean within which this listener is defined. This allows access to
-	 * properties and methods within the enclosing bean.
-	 * Default '__listener'.
+	 * A pseudo bean name used in SpEL expressions within this annotation to reference the
+	 * current bean within which this listener is defined. This allows access to
+	 * properties and methods within the enclosing bean. Default '__listener'.
 	 * <p>
 	 * @return the pseudo bean name.
 	 */
@@ -130,23 +129,27 @@ public @interface PulsarListener {
 
 	/**
 	 * Pulsar consumer properties; they will supersede any properties with the same name
-	 * defined in the consumer factory (if the consumer factory supports property overrides).
+	 * defined in the consumer factory (if the consumer factory supports property
+	 * overrides).
 	 * <p>
 	 * <b>Supported Syntax</b>
-	 * <p>The supported syntax for key-value pairs is the same as the
-	 * syntax defined for entries in a Java
-	 * {@linkplain java.util.Properties#load(java.io.Reader) properties file}:
+	 * <p>
+	 * The supported syntax for key-value pairs is the same as the syntax defined for
+	 * entries in a Java {@linkplain java.util.Properties#load(java.io.Reader) properties
+	 * file}:
 	 * <ul>
 	 * <li>{@code key=value}</li>
 	 * <li>{@code key:value}</li>
 	 * <li>{@code key value}</li>
 	 * </ul>
 	 * {@code group.id} and {@code client.id} are ignored.
-	 * <p>SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
-	 * SpEL expressions must resolve to a {@link String}, a @{link String[]} or a
+	 * <p>
+	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported. SpEL
+	 * expressions must resolve to a {@link String}, a @{link String[]} or a
 	 * {@code Collection<String>} where each member of the array or collection is a
 	 * property name + value with the above formats.
 	 * @return the properties.
 	 */
 	String[] properties() default {};
+
 }

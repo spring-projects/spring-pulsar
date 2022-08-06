@@ -48,7 +48,9 @@ class DefaultPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Override
-	protected PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient, Map<String, Object> producerConfig) {
+	protected PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
+			Map<String, Object> producerConfig) {
 		return new DefaultPulsarProducerFactory<>(pulsarClient, producerConfig);
 	}
+
 }

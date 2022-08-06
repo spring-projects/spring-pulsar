@@ -65,7 +65,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
 
-	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory, PulsarContainerProperties pulsarContainerProperties) {
+	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
+			PulsarContainerProperties pulsarContainerProperties) {
 		super(pulsarConsumerFactory, pulsarContainerProperties);
 		this.thisOrParentContainer = this;
 	}
@@ -86,8 +87,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		MessageListener<T> messageListener = (MessageListener<T>) messageListenerObject;
 
 		if (consumerExecutor == null) {
-			consumerExecutor = new SimpleAsyncTaskExecutor(
-					(getBeanName() == null ? "" : getBeanName()) + "-C-");
+			consumerExecutor = new SimpleAsyncTaskExecutor((getBeanName() == null ? "" : getBeanName()) + "-C-");
 			containerProperties.setConsumerTaskExecutor(consumerExecutor);
 		}
 
@@ -97,7 +97,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
 
 		try {
-			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(), TimeUnit.MILLISECONDS)) {
+			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(),
+					TimeUnit.MILLISECONDS)) {
 				this.logger.error("Consumer thread failed to start - does the configured task executor "
 						+ "have enough threads to support all containers and concurrency?");
 				publishConsumerFailedToStart();
@@ -172,7 +173,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private volatile Thread consumerThread;
 
-		@SuppressWarnings({"unchecked", "rawtypes"})
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Listener(MessageListener<?> messageListener) {
 			if (messageListener instanceof PulsarBatchMessageListener) {
 				this.batchMessageListener = (PulsarBatchMessageListener<T>) messageListener;
@@ -193,11 +194,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
 						.maxNumMessages(pulsarContainerProperties.getMaxNumMessages())
 						.maxNumBytes(pulsarContainerProperties.getMaxNumBytes())
-						.timeout(pulsarContainerProperties.getBatchTimeout(), TimeUnit.MILLISECONDS)
-						.build();
+						.timeout(pulsarContainerProperties.getBatchTimeout(), TimeUnit.MILLISECONDS).build();
 				this.consumer = getPulsarConsumerFactory().createConsumer(
-						(Schema) pulsarContainerProperties.getSchema(),
-						batchReceivePolicy, propertiesToOverride);
+						(Schema) pulsarContainerProperties.getSchema(), batchReceivePolicy, propertiesToOverride);
 			}
 			catch (PulsarClientException e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
@@ -216,8 +215,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				propertiesToOverride.put("topicNames", strings);
 			}
 			if (StringUtils.hasText(pulsarContainerProperties.getSubscriptionName())) {
-				propertiesToOverride.put("subscriptionName",
-						pulsarContainerProperties.getSubscriptionName());
+				propertiesToOverride.put("subscriptionName", pulsarContainerProperties.getSubscriptionName());
 			}
 			return propertiesToOverride;
 		}
@@ -249,8 +247,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						if (messages.size() > 0) {
 							if (this.batchMessageListener instanceof PulsarBatchAcknowledgingMessageListener) {
 								this.batchMessageListener.received(this.consumer, messages,
-										this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.MANUAL ?
-												new ConsumerBatchAcknowledgment(this.consumer) : null);
+										this.containerProperties
+												.getAckMode() == PulsarContainerProperties.AckMode.MANUAL
+														? new ConsumerBatchAcknowledgment(this.consumer) : null);
 							}
 							else {
 								this.batchMessageListener.received(this.consumer, messages);
@@ -266,7 +265,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						}
 					}
 					catch (Exception e) {
-						// the whole batch is negatively acknowledged in the event of an exception from the handler method.
+						// the whole batch is negatively acknowledged in the event of an
+						// exception from the handler method.
 						this.consumer.negativeAcknowledge(messages);
 					}
 				}
@@ -275,8 +275,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						try {
 							if (this.listener instanceof PulsarAcknowledgingMessageListener) {
 								this.listener.received(this.consumer, message,
-										this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.MANUAL ?
-												new ConsumerAcknowledgment(this.consumer, message) : null);
+										this.containerProperties
+												.getAckMode() == PulsarContainerProperties.AckMode.MANUAL
+														? new ConsumerAcknowledgment(this.consumer, message) : null);
 							}
 							else if (this.listener != null) {
 								this.listener.received(this.consumer, message);
@@ -334,6 +335,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.consumer.negativeAcknowledge(message);
 			}
 		}
+
 	}
 
 	private static final class ConsumerAcknowledgment implements Acknowledgement {
@@ -376,6 +378,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		public void nack(MessageId messageId) {
 			throw new UnsupportedOperationException();
 		}
+
 	}
 
 	private static final class ConsumerBatchAcknowledgment implements Acknowledgement {
@@ -427,5 +430,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		public void nack(MessageId messageId) {
 			this.consumer.negativeAcknowledge(messageId);
 		}
+
 	}
+
 }

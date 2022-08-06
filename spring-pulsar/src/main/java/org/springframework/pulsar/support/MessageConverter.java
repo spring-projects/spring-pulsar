@@ -22,4 +22,5 @@ package org.springframework.pulsar.support;
  * @author Soby Chacko
  */
 public interface MessageConverter {
+
 }

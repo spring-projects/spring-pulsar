@@ -22,16 +22,16 @@ Most of the ideas in this project are borrowed from the Spring for Apache Kafka 
 ./gradlew clean build
 ```
 
-The build will produce two artifacts -- `spring-pulsar` and `spring-pulsar-boot-autoconfigure`
+The build will produce two artifacts -- `spring-pulsar` and `spring-pulsar-spring-boot-autoconfigure`
 
 ### Spring Boot Auto Configuration
 
-We recommend using the library `spring-pulsar` in association with Spring Boot and therefore should also use `spring-pulsar-boot-autoconfigure`.
-If you simply use the module `spring-pulsar-boot-autoconfigure`, then that will transitively include `spring-pulsar`.
+We recommend using the library `spring-pulsar` in association with Spring Boot and therefore should also use `spring-pulsar-spring-boot-autoconfigure`.
+If you simply use the module `spring-pulsar-spring-boot-autoconfigure`, then that will transitively include `spring-pulsar`.
 
 #### Pulsar Client
 
-When using `spring-pulsar-boot-autoconfigure`, you get the `PulsarClient` auto-configured.
+When using `spring-pulsar-spring-boot-autoconfigure`, you get the `PulsarClient` auto-configured.
 This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object `PulsarClientConfiguration`.
 By default, the application tries to connect a local Pulsar instance available at `pulsar://localhost:6650`.
 
@@ -403,8 +403,3 @@ On the producer side also, for the Java primitive types, the framework can infer
 #### PulsarTemplate API details
 
 ### More support to come -- stay tuned...
-
-
-
-
-

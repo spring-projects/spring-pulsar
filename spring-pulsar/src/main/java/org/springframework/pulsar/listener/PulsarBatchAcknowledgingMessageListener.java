@@ -26,4 +26,5 @@ public interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchM
 	}
 
 	void received(Consumer<T> consumer, Messages<T> msg, Acknowledgement acknowledgement);
+
 }

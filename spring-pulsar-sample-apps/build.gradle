@@ -1,0 +1,14 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+}
+
+description = 'Spring Pulsar Sample Applications'
+
+dependencies {
+	api project(':spring-pulsar-spring-boot-autoconfigure')
+	implementation 'com.google.code.findbugs:jsr305'
+}
+
+project.afterEvaluate {
+	project.tasks.artifactoryPublish.enabled(false)
+}

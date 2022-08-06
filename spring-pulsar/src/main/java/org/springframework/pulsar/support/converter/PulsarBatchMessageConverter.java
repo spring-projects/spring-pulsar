@@ -28,7 +28,6 @@ import org.springframework.pulsar.support.MessageConverter;
  * Pulsar batch message converter strategy.
  *
  * @param <T> message type.
- *
  * @author Soby Chacko
  */
 public interface PulsarBatchMessageConverter<T> extends MessageConverter {
@@ -40,4 +39,5 @@ public interface PulsarBatchMessageConverter<T> extends MessageConverter {
 	default PulsarRecordMessageConverter<T> getRecordMessageConverter() {
 		return null;
 	}
+
 }

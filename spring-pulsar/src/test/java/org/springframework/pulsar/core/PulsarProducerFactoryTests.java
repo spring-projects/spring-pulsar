@@ -35,7 +35,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Common tests for {@link DefaultPulsarProducerFactory} and {@link CachingPulsarProducerFactory}.
+ * Common tests for {@link DefaultPulsarProducerFactory} and
+ * {@link CachingPulsarProducerFactory}.
  *
  * @author Chris Bono
  */
@@ -47,9 +48,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 
 	@BeforeEach
 	void createPulsarClient() throws PulsarClientException {
-		pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
+		pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 	}
 
 	@AfterEach
@@ -78,7 +77,8 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 
 	@Test
 	void createProducerWithDefaultTopic() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.singletonMap("topicName", "topic0"));
+		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
+				Collections.singletonMap("topicName", "topic0"));
 		try (Producer<String> producer = producerFactory.createProducer(null, schema)) {
 			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null);
 		}
@@ -86,7 +86,8 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 
 	@Test
 	void createProducerWithDefaultTopicAndMessageRouter() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.singletonMap("topicName", "topic0"));
+		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
+				Collections.singletonMap("topicName", "topic0"));
 		MessageRouter router = mock(MessageRouter.class);
 		try (Producer<String> producer = producerFactory.createProducer(null, schema, router)) {
 			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, router);
@@ -101,22 +102,22 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 				.hasMessage("Topic must be specified when no default topic is configured");
 	}
 
-	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema, MessageRouter router) {
+	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
+			MessageRouter router) {
 		assertThat(producer.getTopic()).isEqualTo(topic);
 		assertThat(producer).hasFieldOrPropertyWithValue("schema", schema);
-		assertThat(producer)
-				.extracting("conf").asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
-				.extracting(ProducerConfigurationData::getCustomMessageRouter)
-				.isSameAs(router);
+		assertThat(producer).extracting("conf")
+				.asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
+				.extracting(ProducerConfigurationData::getCustomMessageRouter).isSameAs(router);
 	}
 
 	/**
 	 * Subclasses override to provide concrete {@link PulsarProducerFactory} instance.
-	 *
 	 * @param pulsarClient the Pulsar client
 	 * @param producerConfig the Pulsar producers config
 	 * @return a Pulsar producer factory instance to use for the tests
 	 */
-	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient, Map<String, Object> producerConfig);
+	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
+			Map<String, Object> producerConfig);
 
 }

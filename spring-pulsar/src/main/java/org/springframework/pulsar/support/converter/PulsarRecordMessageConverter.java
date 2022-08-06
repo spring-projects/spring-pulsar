@@ -28,15 +28,12 @@ import org.springframework.pulsar.support.MessageConverter;
  * Pulsar specific record converter strategy.
  *
  * @param <T> message type
- *
  * @author Soby Chacko
  */
 public interface PulsarRecordMessageConverter<T> extends MessageConverter {
 
-
 	@NonNull
-	Message<?> toMessage(org.apache.pulsar.client.api.Message<T> record, Consumer<T> consumer,
-						Type payloadType);
+	Message<?> toMessage(org.apache.pulsar.client.api.Message<T> record, Consumer<T> consumer, Type payloadType);
 
 	T fromMessage(Message<?> message, String defaultTopic);
 

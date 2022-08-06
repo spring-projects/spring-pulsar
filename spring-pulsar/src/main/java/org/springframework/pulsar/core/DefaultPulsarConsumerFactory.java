@@ -34,7 +34,6 @@ import org.springframework.util.CollectionUtils;
  * Default implementation for {@link PulsarConsumerFactory}.
  *
  * @param <T> underlying payload type for the consumer.
- *
  * @author Soby Chacko
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
@@ -53,7 +52,8 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	}
 
 	@Override
-	public Consumer<T> createConsumer(Schema<T> schema, Map<String, Object> propertiesToOverride) throws PulsarClientException {
+	public Consumer<T> createConsumer(Schema<T> schema, Map<String, Object> propertiesToOverride)
+			throws PulsarClientException {
 
 		final ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 
@@ -69,7 +69,8 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	}
 
 	@Override
-	public Consumer<T> createConsumer(Schema<T> schema, BatchReceivePolicy batchReceivePolicy, Map<String, Object> propertiesToOverride) throws PulsarClientException {
+	public Consumer<T> createConsumer(Schema<T> schema, BatchReceivePolicy batchReceivePolicy,
+			Map<String, Object> propertiesToOverride) throws PulsarClientException {
 
 		final ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 		final Map<String, Object> properties = new HashMap<>(this.consumerConfig);

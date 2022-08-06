@@ -46,18 +46,17 @@ import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.github.benmanes.caffeine.cache.Scheduler;
 
 /**
- * A {@link PulsarProducerFactory} that extends the {@link DefaultPulsarProducerFactory default implementation}
- * by caching the created producers.
+ * A {@link PulsarProducerFactory} that extends the {@link DefaultPulsarProducerFactory
+ * default implementation} by caching the created producers.
  * <p>
- * The created producer is wrapped in a proxy so that calls to {@link Producer#close()} do not actually close it.
- * The actual close occurs when the producer is evicted from the cache or when {@link DisposableBean#destroy()} is
- * invoked.
+ * The created producer is wrapped in a proxy so that calls to {@link Producer#close()} do
+ * not actually close it. The actual close occurs when the producer is evicted from the
+ * cache or when {@link DisposableBean#destroy()} is invoked.
  * <p>
- * The proxied producer is cached in an LRU fashion and evicted when it has not been used within a configured time
- * period.
+ * The proxied producer is cached in an LRU fashion and evicted when it has not been used
+ * within a configured time period.
  *
  * @param <T> producer type.
- *
  * @author Chris Bono
  */
 public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T> implements DisposableBean {
@@ -67,8 +66,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	private final Cache<ProducerCacheKey<T>, Producer<T>> producerCache;
 
 	/**
-	 * Construct a caching producer factory with the specified values for the cache configuration.
-	 *
+	 * Construct a caching producer factory with the specified values for the cache
+	 * configuration.
 	 * @param pulsarClient the client used to create the producers
 	 * @param producerConfig the configuration to use when creating a producer
 	 * @param cacheExpireAfterAccess time period to expire unused entries in the cache
@@ -78,16 +77,15 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	public CachingPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> producerConfig,
 			Duration cacheExpireAfterAccess, Long cacheMaximumSize, Integer cacheInitialCapacity) {
 		super(pulsarClient, producerConfig);
-		this.producerCache = Caffeine.newBuilder()
-				.expireAfterAccess(cacheExpireAfterAccess)
-				.maximumSize(cacheMaximumSize)
-				.initialCapacity(cacheInitialCapacity)
-				.scheduler(Scheduler.systemScheduler())
-				.evictionListener((RemovalListener<ProducerCacheKey<T>, Producer<T>>) (producerCacheKey, producer, cause) -> {
-					this.logger.debug(() -> String.format("Producer %s evicted from cache due to %s",
-							ProducerUtils.formatProducer(producer), cause));
-					closeProducer(producer);
-				}).build();
+		this.producerCache = Caffeine.newBuilder().expireAfterAccess(cacheExpireAfterAccess)
+				.maximumSize(cacheMaximumSize).initialCapacity(cacheInitialCapacity)
+				.scheduler(Scheduler.systemScheduler()).evictionListener(
+						(RemovalListener<ProducerCacheKey<T>, Producer<T>>) (producerCacheKey, producer, cause) -> {
+							this.logger.debug(() -> String.format("Producer %s evicted from cache due to %s",
+									ProducerUtils.formatProducer(producer), cause));
+							closeProducer(producer);
+						})
+				.build();
 	}
 
 	@Override
@@ -105,10 +103,12 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
+			throws PulsarClientException {
 		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter);
-		return wrapProducerWithCloseCallback(producer, (p) -> this.logger.trace(() ->
-					String.format("Client closed producer %s but will skip actual closing", ProducerUtils.formatProducer(producer))));
+		return wrapProducerWithCloseCallback(producer,
+				(p) -> this.logger.trace(() -> String.format("Client closed producer %s but will skip actual closing",
+						ProducerUtils.formatProducer(producer))));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -159,13 +159,15 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	static class ProducerCacheKey<T> {
 
 		private final Schema<T> schema;
+
 		private final SchemaHash schemaHash;
+
 		private final String topic;
+
 		private final MessageRouter router;
 
 		/**
 		 * Constructs an instance.
-		 *
 		 * @param schema the schema the producer is configured to use
 		 * @param topic the topic the producer is configured to send to
 		 * @param router the custom message router the producer is configured to use
@@ -188,14 +190,15 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 				return false;
 			}
 			ProducerCacheKey<?> that = (ProducerCacheKey<?>) o;
-			return this.topic.equals(that.topic) &&
-					this.schemaHash.equals(that.schemaHash) &&
-						Objects.equals(this.router, that.router);
+			return this.topic.equals(that.topic) && this.schemaHash.equals(that.schemaHash)
+					&& Objects.equals(this.router, that.router);
 		}
 
 		@Override
 		public int hashCode() {
 			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router);
 		}
+
 	}
+
 }

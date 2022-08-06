@@ -46,9 +46,7 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 
 	@Test
 	void testFailOverConsumersOnPartitionedTopic() throws Exception {
-		PulsarAdmin admin = PulsarAdmin.builder()
-				.serviceHttpUrl(getHttpServiceUrl())
-				.build();
+		PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build();
 
 		String topicName = "persistent://public/default/my-part-topic-1";
 		int numPartitions = 3;
@@ -59,13 +57,13 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		topics.add("my-part-topic-1");
 		config.put("topicNames", topics);
 		config.put("subscriptionName", "my-part-subscription-1");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(getPulsarBrokerUrl())
-				.build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(3);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
@@ -80,7 +78,8 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "my-part-topic-1");
 		prodConfig.put("messageRoutingMode", MessageRoutingMode.CustomPartition);
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 		pulsarTemplate.sendAsync("hello john doe", new FooRouter());
@@ -89,7 +88,6 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		final boolean await = latch.await(10, TimeUnit.SECONDS);
 		assertThat(await).isTrue();
 	}
-
 
 	static class FooRouter implements MessageRouter {
 
@@ -100,6 +98,7 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 0;
 		}
+
 	}
 
 	static class BarRouter implements MessageRouter {
@@ -111,6 +110,7 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 1;
 		}
+
 	}
 
 	static class BuzzRouter implements MessageRouter {
@@ -122,5 +122,7 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 2;
 		}
+
 	}
+
 }

@@ -41,9 +41,9 @@ final class ProducerUtils {
 		if (StringUtils.hasText(userSpecifiedTopic)) {
 			return userSpecifiedTopic;
 		}
-		return Optional.ofNullable(producerFactory.getProducerConfig().get("topicName"))
-				.map(Object::toString)
-				.orElseThrow(() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
+		return Optional.ofNullable(producerFactory.getProducerConfig().get("topicName")).map(Object::toString)
+				.orElseThrow(() -> new IllegalArgumentException(
+						"Topic must be specified when no default topic is configured"));
 	}
 
 	static <T> void closeProducerAsync(Producer<T> producer, LogAccessor logger) {
@@ -52,4 +52,5 @@ final class ProducerUtils {
 			return null;
 		});
 	}
+
 }

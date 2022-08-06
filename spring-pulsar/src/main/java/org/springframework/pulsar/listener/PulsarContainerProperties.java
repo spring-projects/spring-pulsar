@@ -41,6 +41,7 @@ public class PulsarContainerProperties {
 	 * Enumeration for ack mode.
 	 */
 	public enum AckMode {
+
 		/**
 		 * Batch ack mode.
 		 */
@@ -53,6 +54,7 @@ public class PulsarContainerProperties {
 		 * Manual ack mode.
 		 */
 		MANUAL;
+
 	}
 
 	private String[] topics;
@@ -160,8 +162,8 @@ public class PulsarContainerProperties {
 	}
 
 	/**
-	 * Set the timeout to wait for a consumer thread to start before logging
-	 * an error. Default 30 seconds.
+	 * Set the timeout to wait for a consumer thread to start before logging an error.
+	 * Default 30 seconds.
 	 * @param consumerStartTimeout the consumer start timeout.
 	 */
 	public void setConsumerStartTimeout(Duration consumerStartTimeout) {
@@ -208,4 +210,5 @@ public class PulsarContainerProperties {
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
 	}
+
 }

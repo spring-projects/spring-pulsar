@@ -34,4 +34,5 @@ public interface PulsarBatchMessageListener<T> extends PulsarRecordMessageListen
 	}
 
 	void received(Consumer<T> consumer, Messages<T> msg);
+
 }

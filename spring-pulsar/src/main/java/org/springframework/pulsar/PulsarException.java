@@ -33,4 +33,5 @@ public class PulsarException extends NestedRuntimeException {
 	public PulsarException(String msg, Throwable cause) {
 		super(msg, cause);
 	}
+
 }

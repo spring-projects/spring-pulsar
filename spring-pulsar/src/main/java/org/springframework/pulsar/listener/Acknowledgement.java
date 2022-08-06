@@ -31,4 +31,5 @@ public interface Acknowledgement {
 	void nack();
 
 	void nack(MessageId messageId);
+
 }

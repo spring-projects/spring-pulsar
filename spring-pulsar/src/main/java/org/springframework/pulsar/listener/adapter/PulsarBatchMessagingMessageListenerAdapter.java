@@ -34,12 +34,11 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.util.Assert;
 
 /**
- * A {@link org.apache.pulsar.client.api.MessageListener MessageListener}
- * adapter that invokes a configurable {@link HandlerAdapter}; used when the factory is
- * configured for the listener to receive batches of messages.
+ * A {@link org.apache.pulsar.client.api.MessageListener MessageListener} adapter that
+ * invokes a configurable {@link HandlerAdapter}; used when the factory is configured for
+ * the listener to receive batches of messages.
  *
  * @param <V> payload type.
- *
  * @author Soby Chacko
  */
 @SuppressWarnings("serial")
@@ -87,15 +86,15 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		invoke(msg, consumer, message, acknowledgement);
 	}
 
-	protected void invoke(Object records, Consumer<V> consumer,
-						final Message<?> messageArg, Acknowledgement acknowledgement) {
+	protected void invoke(Object records, Consumer<V> consumer, final Message<?> messageArg,
+			Acknowledgement acknowledgement) {
 
 		Message<?> message = messageArg;
 		try {
 			Object result = invokeHandler(records, message, consumer, acknowledgement);
-//			if (result != null) {
-//				handleResult(result, records, message);
-//			}
+			// if (result != null) {
+			// handleResult(result, records, message);
+			// }
 		}
 		catch (Exception e) {
 			throw e;

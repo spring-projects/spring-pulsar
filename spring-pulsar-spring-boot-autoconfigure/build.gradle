@@ -1,0 +1,28 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+	id 'org.springframework.pulsar.configuration-properties'
+}
+
+description = 'Spring Pulsar Spring Boot Auto-configuration'
+
+dependencies {
+	annotationProcessor 'org.springframework.boot:spring-boot-autoconfigure-processor'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	api project (':spring-pulsar')
+	api 'org.springframework.boot:spring-boot'
+	api 'org.springframework.boot:spring-boot-autoconfigure'
+	api 'org.springframework.boot:spring-boot-starter'
+	api 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'com.google.code.findbugs:jsr305'
+
+	// TODO remove unused dependencies
+
+	// TODO do I really need this??? To avoid compiler warnings about @API annotations in JUnit code
+	testCompileOnly 'org.apiguardian:apiguardian-api'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.testcontainers:pulsar'
+	// TODO why do I care about these?
+	testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
+	testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
+}

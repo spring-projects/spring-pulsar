@@ -34,7 +34,6 @@ import org.springframework.util.CollectionUtils;
  * Default implementation of {@link PulsarProducerFactory}.
  *
  * @param <T> producer type.
- *
  * @author Soby Chacko
  * @author Chris Bono
  */
@@ -59,11 +58,13 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	@Override
-	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
+			throws PulsarClientException {
 		return doCreateProducer(topic, schema, messageRouter);
 	}
 
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException {
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
+			throws PulsarClientException {
 		final String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
 		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
@@ -81,4 +82,5 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	public Map<String, Object> getProducerConfig() {
 		return this.producerConfig;
 	}
+
 }

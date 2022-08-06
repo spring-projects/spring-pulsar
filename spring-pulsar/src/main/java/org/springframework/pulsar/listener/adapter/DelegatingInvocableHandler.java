@@ -59,8 +59,7 @@ public class DelegatingInvocableHandler {
 
 	private final ConcurrentMap<Class<?>, InvocableHandlerMethod> cachedHandlers = new ConcurrentHashMap<>();
 
-	private final ConcurrentMap<InvocableHandlerMethod, MethodParameter> payloadMethodParameters =
-			new ConcurrentHashMap<>();
+	private final ConcurrentMap<InvocableHandlerMethod, MethodParameter> payloadMethodParameters = new ConcurrentHashMap<>();
 
 	private final InvocableHandlerMethod defaultHandler;
 
@@ -79,10 +78,10 @@ public class DelegatingInvocableHandler {
 	private final PayloadValidator validator;
 
 	public DelegatingInvocableHandler(List<InvocableHandlerMethod> handlers,
-									@Nullable InvocableHandlerMethod defaultHandler, Object bean,
-									@Nullable BeanExpressionResolver beanExpressionResolver,
-									@Nullable BeanExpressionContext beanExpressionContext,
-									@Nullable BeanFactory beanFactory, @Nullable Validator validator) {
+			@Nullable InvocableHandlerMethod defaultHandler, Object bean,
+			@Nullable BeanExpressionResolver beanExpressionResolver,
+			@Nullable BeanExpressionContext beanExpressionContext, @Nullable BeanFactory beanFactory,
+			@Nullable Validator validator) {
 		this.handlers = new ArrayList<>();
 		for (InvocableHandlerMethod handler : handlers) {
 			this.handlers.add(wrapIfNecessary(handler));
@@ -92,8 +91,7 @@ public class DelegatingInvocableHandler {
 		this.resolver = beanExpressionResolver;
 		this.beanExpressionContext = beanExpressionContext;
 		this.beanFactory = beanFactory instanceof ConfigurableListableBeanFactory
-				? (ConfigurableListableBeanFactory) beanFactory
-				: null;
+				? (ConfigurableListableBeanFactory) beanFactory : null;
 		this.validator = validator == null ? null : new PayloadValidator(validator);
 	}
 
@@ -104,9 +102,10 @@ public class DelegatingInvocableHandler {
 		}
 		Parameter[] parameters = handler.getMethod().getParameters();
 		for (Parameter parameter : parameters) {
-//			if (parameter.getType().equals(ConsumerRecordMetadata.class)) {
-//				return new DelegatingInvocableHandler.MetadataAwareInvocableHandlerMethod(handler);
-//			}
+			// if (parameter.getType().equals(ConsumerRecordMetadata.class)) {
+			// return new
+			// DelegatingInvocableHandler.MetadataAwareInvocableHandlerMethod(handler);
+			// }
 		}
 		return handler;
 	}
@@ -124,10 +123,10 @@ public class DelegatingInvocableHandler {
 	 * @param message the message.
 	 * @param providedArgs additional arguments.
 	 * @return the result of the invocation.
-	 * @throws Exception raised if no suitable argument resolver can be found,
-	 * or the method raised an exception.
+	 * @throws Exception raised if no suitable argument resolver can be found, or the
+	 * method raised an exception.
 	 */
-	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { //NOSONAR
+	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { // NOSONAR
 		Class<? extends Object> payloadClass = message.getPayload().getClass();
 		InvocableHandlerMethod handler = getHandlerForPayload(payloadClass);
 		if (this.validator != null && this.defaultHandler != null) {
@@ -138,10 +137,10 @@ public class DelegatingInvocableHandler {
 		}
 		Object result = null;
 		if (handler instanceof MetadataAwareInvocableHandlerMethod) {
-//			Object[] args = new Object[providedArgs.length + 1];
-//			args[0] = AdapterUtils.buildConsumerRecordMetadataFromArray(providedArgs);
-//			System.arraycopy(providedArgs, 0, args, 1, providedArgs.length);
-//			result = handler.invoke(message, args);
+			// Object[] args = new Object[providedArgs.length + 1];
+			// args[0] = AdapterUtils.buildConsumerRecordMetadataFromArray(providedArgs);
+			// System.arraycopy(providedArgs, 0, args, 1, providedArgs.length);
+			// result = handler.invoke(message, args);
 		}
 		else {
 			result = handler.invoke(message, providedArgs);
@@ -162,8 +161,8 @@ public class DelegatingInvocableHandler {
 			if (handler == null) {
 				throw new PulsarException("No method found for " + payloadClass);
 			}
-			this.cachedHandlers.putIfAbsent(payloadClass, handler); //NOSONAR
-			//setupReplyTo(handler);
+			this.cachedHandlers.putIfAbsent(payloadClass, handler); // NOSONAR
+			// setupReplyTo(handler);
 		}
 		return handler;
 	}
@@ -176,8 +175,8 @@ public class DelegatingInvocableHandler {
 				if (result != null) {
 					boolean resultIsDefault = result.equals(this.defaultHandler);
 					if (!handler.equals(this.defaultHandler) && !resultIsDefault) {
-						throw new PulsarException("Ambiguous methods for payload type: " + payloadClass + ": " +
-								result.getMethod().getName() + " and " + handler.getMethod().getName());
+						throw new PulsarException("Ambiguous methods for payload type: " + payloadClass + ": "
+								+ result.getMethod().getName() + " and " + handler.getMethod().getName());
 					}
 					if (!resultIsDefault) {
 						continue; // otherwise replace the result with the actual match
@@ -213,7 +212,7 @@ public class DelegatingInvocableHandler {
 	}
 
 	private MethodParameter findCandidate(Class<? extends Object> payloadClass, Method method,
-										Annotation[][] parameterAnnotations) {
+			Annotation[][] parameterAnnotations) {
 		MethodParameter foundCandidate = null;
 		for (int i = 0; i < parameterAnnotations.length; i++) {
 			MethodParameter methodParameter = new MethodParameter(method, i);
@@ -236,7 +235,7 @@ public class DelegatingInvocableHandler {
 	 */
 	public String getMethodNameFor(Object payload) {
 		InvocableHandlerMethod handlerForPayload = getHandlerForPayload(payload.getClass());
-		return handlerForPayload == null ? "no match" : handlerForPayload.getMethod().toGenericString(); //NOSONAR
+		return handlerForPayload == null ? "no match" : handlerForPayload.getMethod().toGenericString(); // NOSONAR
 	}
 
 	public boolean hasDefaultHandler() {
@@ -263,8 +262,7 @@ public class DelegatingInvocableHandler {
 
 				@Override
 				@Nullable
-				public Message<?> toMessage(Object payload, @Nullable
-						MessageHeaders headers) {
+				public Message<?> toMessage(Object payload, @Nullable MessageHeaders headers) {
 					return null;
 				}
 
@@ -278,8 +276,12 @@ public class DelegatingInvocableHandler {
 		}
 
 		@Override
-		public void validate(Message<?> message, MethodParameter parameter, Object target) { // NOSONAR - public
+		public void validate(Message<?> message, MethodParameter parameter, Object target) { // NOSONAR
+																								// -
+																								// public
 			super.validate(message, parameter, target);
 		}
+
 	}
+
 }

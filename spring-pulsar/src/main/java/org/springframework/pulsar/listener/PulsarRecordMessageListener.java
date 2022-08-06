@@ -24,7 +24,6 @@ import org.apache.pulsar.client.api.MessageListener;
  * Base record MessageListener that takes into account acknowledgments.
  *
  * @param <T> message payload type
- *
  * @author Soby Chacko
  */
 public interface PulsarRecordMessageListener<T> extends MessageListener<T> {
@@ -32,4 +31,5 @@ public interface PulsarRecordMessageListener<T> extends MessageListener<T> {
 	default void received(Consumer<T> consumer, Message<T> msg, Acknowledgement acknowledgement) {
 		throw new UnsupportedOperationException("Not supported");
 	}
+
 }
