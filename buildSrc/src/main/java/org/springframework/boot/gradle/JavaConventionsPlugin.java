@@ -249,9 +249,9 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		configurations
 				.matching((c) -> c.getName().endsWith("Classpath") || c.getName().toLowerCase().endsWith("annotationprocessor"))
 				.all((c) -> c.extendsFrom(dependencyManagement));
-		Dependency springBootParent = project.getDependencies().enforcedPlatform(project.getDependencies()
+		Dependency pulsarDependencies = project.getDependencies().enforcedPlatform(project.getDependencies()
 				.project(Collections.singletonMap("path", ":spring-pulsar-dependencies")));
-		dependencyManagement.getDependencies().add(springBootParent);
+		dependencyManagement.getDependencies().add(pulsarDependencies);
 		project.getPlugins().withType(OptionalDependenciesPlugin.class, (optionalDependencies) -> configurations
 				.getByName(OptionalDependenciesPlugin.OPTIONAL_CONFIGURATION_NAME).extendsFrom(dependencyManagement));
 	}

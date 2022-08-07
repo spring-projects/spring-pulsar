@@ -1,0 +1,9 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+}
+
+description = 'Spring Pulsar Spring Boot Starter'
+
+dependencies {
+	api project (':spring-pulsar-spring-boot-autoconfigure')
+}

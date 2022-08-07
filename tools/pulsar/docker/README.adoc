@@ -7,7 +7,7 @@ Runs a local standalone Pulsar cluster in Docker.
 * The admin is available at  `http://localhost:8080`
 * Two Docker volumes (`pulsardata`, `pulsarconf`) are created to store the data, metadata, and configuration in order to not start "fresh" every time the container is restarted.
 
-
+[#_start_pulsar]
 ==== Start
 To start the cluster run the following script from project root dir:
 [source,shell]

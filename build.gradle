@@ -47,7 +47,9 @@ check {
 subprojects { subproject ->
 	task updateCopyrights {
 		onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
-		inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+		if (gitPresent) {
+			inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+		}
 		outputs.dir('build')
 		doLast {
 			def now = Calendar.instance.get(Calendar.YEAR) as String
