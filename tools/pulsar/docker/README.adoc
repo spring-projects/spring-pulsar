@@ -1,0 +1,32 @@
+== Docker scripts for Pulsar
+
+=== Pulsar Standalone
+Runs a local standalone Pulsar cluster in Docker.
+
+* The broker is available at  `pulsar://localhost:6650`.
+* The admin is available at  `http://localhost:8080`
+* Two Docker volumes (`pulsardata`, `pulsarconf`) are created to store the data, metadata, and configuration in order to not start "fresh" every time the container is restarted.
+
+
+==== Start
+To start the cluster run the following script from project root dir:
+[source,shell]
+----
+./tools/pulsar/docker/standalone/pulsar-start.sh
+----
+
+==== Stop
+To stop the cluster run the following script from project root dir:
+[source,shell]
+----
+./tools/pulsar/docker/standalone/pulsar-stop.sh
+----
+
+==== Destroy
+To completely remove the cluster and volumes run the following script from project root dir:
+[source,shell]
+----
+./tools/pulsar/docker/standalone/pulsar-destroy.sh
+----
+
+More information can be found in the official https://pulsar.apache.org/docs/next/getting-started-docker[Pulsar docs].
