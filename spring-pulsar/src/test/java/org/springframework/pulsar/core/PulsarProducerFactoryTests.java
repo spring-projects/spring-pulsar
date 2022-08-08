@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.MessageRouter;
@@ -28,6 +29,8 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.apache.pulsar.client.impl.ProducerInterceptors;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
@@ -39,6 +42,7 @@ import org.junit.jupiter.api.Test;
  * {@link CachingPulsarProducerFactory}.
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 
@@ -62,7 +66,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 	void createProducerWithSpecificTopic() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 		try (Producer<String> producer = producerFactory.createProducer("topic1", schema)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic1", schema, null);
+			assertProducerHasTopicSchemaAndRouter(producer, "topic1", schema, null, null);
 		}
 	}
 
@@ -71,7 +75,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 		MessageRouter router = mock(MessageRouter.class);
 		try (Producer<String> producer = producerFactory.createProducer("topic1", schema, router)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic1", schema, router);
+			assertProducerHasTopicSchemaAndRouter(producer, "topic1", schema, router, null);
 		}
 	}
 
@@ -80,7 +84,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
 				Collections.singletonMap("topicName", "topic0"));
 		try (Producer<String> producer = producerFactory.createProducer(null, schema)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null);
+			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null, null);
 		}
 	}
 
@@ -90,7 +94,17 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 				Collections.singletonMap("topicName", "topic0"));
 		MessageRouter router = mock(MessageRouter.class);
 		try (Producer<String> producer = producerFactory.createProducer(null, schema, router)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, router);
+			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, router, null);
+		}
+	}
+
+	@Test
+	void createProducerWithDefaultTopicAndInterceptor() throws PulsarClientException {
+		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
+				Collections.singletonMap("topicName", "topic0"));
+		List<ProducerInterceptor> interceptors = Collections.singletonList(mock(ProducerInterceptor.class));
+		try (Producer<String> producer = producerFactory.createProducer(null, schema, null, interceptors)) {
+			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null, interceptors);
 		}
 	}
 
@@ -103,12 +117,21 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 	}
 
 	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
-			MessageRouter router) {
+			MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
 		assertThat(producer.getTopic()).isEqualTo(topic);
 		assertThat(producer).hasFieldOrPropertyWithValue("schema", schema);
 		assertThat(producer).extracting("conf")
 				.asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
 				.extracting(ProducerConfigurationData::getCustomMessageRouter).isSameAs(router);
+		if (producerInterceptors == null) {
+			assertThat(producer).extracting("interceptors").isNull();
+		}
+		else {
+			assertThat(producer).extracting("interceptors")
+					.asInstanceOf(InstanceOfAssertFactories.type(ProducerInterceptors.class)).extracting("interceptors")
+					.asInstanceOf(InstanceOfAssertFactories.type(List.class)).isEqualTo(producerInterceptors);
+		}
+
 	}
 
 	/**

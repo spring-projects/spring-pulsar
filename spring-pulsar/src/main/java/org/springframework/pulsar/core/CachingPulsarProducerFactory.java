@@ -17,6 +17,7 @@
 package org.springframework.pulsar.core;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,7 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.common.protocol.schema.SchemaHash;
 
 import org.springframework.aop.framework.AopProxyUtils;
@@ -58,6 +60,7 @@ import com.github.benmanes.caffeine.cache.Scheduler;
  *
  * @param <T> producer type.
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T> implements DisposableBean {
 
@@ -89,12 +92,14 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) {
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
-		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter);
+		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter,
+				producerInterceptors);
 		return this.producerCache.get(producerCacheKey, (st) -> {
 			try {
-				return this.doCreateProducer(st.topic, st.schema, st.router);
+				return this.doCreateProducer(st.topic, st.schema, st.router, producerInterceptors);
 			}
 			catch (PulsarClientException ex) {
 				throw new RuntimeException(ex);
@@ -103,9 +108,9 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
-			throws PulsarClientException {
-		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter);
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
+		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors);
 		return wrapProducerWithCloseCallback(producer,
 				(p) -> this.logger.trace(() -> String.format("Client closed producer %s but will skip actual closing",
 						ProducerUtils.formatProducer(producer))));
@@ -166,19 +171,25 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 		private final MessageRouter router;
 
+		private final List<ProducerInterceptor> interceptors;
+
 		/**
 		 * Constructs an instance.
 		 * @param schema the schema the producer is configured to use
 		 * @param topic the topic the producer is configured to send to
 		 * @param router the custom message router the producer is configured to use
+		 * @param interceptors the list of producer interceptors the producer is
+		 * configured to use
 		 */
-		ProducerCacheKey(Schema<T> schema, String topic, @Nullable MessageRouter router) {
+		ProducerCacheKey(Schema<T> schema, String topic, @Nullable MessageRouter router,
+				@Nullable List<ProducerInterceptor> interceptors) {
 			Assert.notNull(schema, () -> "'schema' must be non-null");
 			Assert.notNull(topic, () -> "'topic' must be non-null");
 			this.schema = schema;
 			this.schemaHash = SchemaHash.of(this.schema);
 			this.topic = topic;
 			this.router = router;
+			this.interceptors = interceptors;
 		}
 
 		@Override
@@ -191,12 +202,13 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			}
 			ProducerCacheKey<?> that = (ProducerCacheKey<?>) o;
 			return this.topic.equals(that.topic) && this.schemaHash.equals(that.schemaHash)
-					&& Objects.equals(this.router, that.router);
+					&& Objects.equals(this.router, that.router) && Objects.equals(this.interceptors, that.interceptors);
 		}
 
 		@Override
 		public int hashCode() {
-			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router);
+			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router)
+					+ Objects.hashCode(this.interceptors);
 		}
 
 	}

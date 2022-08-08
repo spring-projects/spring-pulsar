@@ -36,6 +36,7 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.client.impl.schema.StringSchema;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
@@ -58,6 +59,7 @@ import com.github.benmanes.caffeine.cache.Cache;
  * Tests for {@link CachingPulsarProducerFactory}.
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
@@ -76,7 +78,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	@Test
 	void createProducerMultipleCalls() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		ProducerCacheKey<String> cacheKey = new ProducerCacheKey<>(schema, "topic1", null);
+		ProducerCacheKey<String> cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
 
 		Producer<String> producer1 = producerFactory.createProducer("topic1", schema);
 		Producer<String> producer2 = producerFactory.createProducer("topic1", new StringSchema());
@@ -111,32 +113,59 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		Schema<String> schema2 = new StringSchema();
 		MessageRouter router1 = mock(MessageRouter.class);
 		MessageRouter router2 = mock(MessageRouter.class);
+		List<ProducerInterceptor> interceptors1 = List.of(mock(ProducerInterceptor.class));
+		List<ProducerInterceptor> interceptors2 = List.of(mock(ProducerInterceptor.class));
 
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 
-		// ask for the same 9 unique combos 3x - should end up w/ only 9 entries in cache
+		// ask for the same 21 unique combos 3x - should end up w/ only 21 entries in
+		// cache
 		for (int i = 0; i < 3; i++) {
 			producerFactory.createProducer(topic1, schema1);
 			producerFactory.createProducer(topic1, schema1, router1);
 			producerFactory.createProducer(topic1, schema1, router2);
+			producerFactory.createProducer(topic1, schema1, router1, interceptors1);
+			producerFactory.createProducer(topic1, schema1, router1, interceptors2);
+			producerFactory.createProducer(topic1, schema1, router2, interceptors1);
+			producerFactory.createProducer(topic1, schema1, router2, interceptors2);
 			producerFactory.createProducer(topic1, schema2);
 			producerFactory.createProducer(topic1, schema2, router1);
 			producerFactory.createProducer(topic1, schema2, router2);
+			producerFactory.createProducer(topic1, schema2, router1, interceptors1);
+			producerFactory.createProducer(topic1, schema2, router1, interceptors2);
+			producerFactory.createProducer(topic1, schema2, router2, interceptors1);
+			producerFactory.createProducer(topic1, schema2, router2, interceptors2);
 			producerFactory.createProducer(topic2, schema1);
 			producerFactory.createProducer(topic2, schema1, router1);
 			producerFactory.createProducer(topic2, schema1, router2);
+			producerFactory.createProducer(topic2, schema1, router1, interceptors1);
+			producerFactory.createProducer(topic2, schema1, router1, interceptors2);
+			producerFactory.createProducer(topic2, schema1, router2, interceptors1);
+			producerFactory.createProducer(topic2, schema1, router2, interceptors2);
 		}
 
 		List<ProducerCacheKey<String>> expectedCacheKeys = new ArrayList<>();
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, null));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router1));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router2));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, null));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router1));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router2));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, null));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router1));
-		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router2));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, null, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router1, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router1, interceptors1));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router1, interceptors2));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router2, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router2, interceptors1));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic1, router2, interceptors2));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, null, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router1, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router1, interceptors1));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router1, interceptors2));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router2, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router2, interceptors1));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema2, topic1, router2, interceptors2));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, null, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router1, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router1, interceptors1));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router1, interceptors2));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router2, null));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router2, interceptors1));
+		expectedCacheKeys.add(new ProducerCacheKey<>(schema1, topic2, router2, interceptors2));
 
 		getAssertedProducerCache(producerFactory, expectedCacheKeys);
 	}
@@ -144,8 +173,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	@Test
 	void factoryDestroyCleansUpCacheAndClosesProducers() throws PulsarClientException {
 		CachingPulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		ProducerCacheKey<String> cacheKey1 = new ProducerCacheKey<>(schema, "topic1", null);
-		ProducerCacheKey<String> cacheKey2 = new ProducerCacheKey<>(schema, "topic2", null);
+		ProducerCacheKey<String> cacheKey1 = new ProducerCacheKey<>(schema, "topic1", null, null);
+		ProducerCacheKey<String> cacheKey2 = new ProducerCacheKey<>(schema, "topic2", null, null);
 
 		Producer<String> actualProducer1 = actualProducerFrom(producerFactory.createProducer("topic1", schema));
 		Producer<String> actualProducer2 = actualProducerFrom(producerFactory.createProducer("topic2", schema));
@@ -164,7 +193,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	void producerEvictedFromCache() throws PulsarClientException {
 		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient,
 				Collections.emptyMap(), Duration.ofSeconds(3L), 10L, 2);
-		ProducerCacheKey<String> cacheKey = new ProducerCacheKey<>(schema, "topic1", null);
+		ProducerCacheKey<String> cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
 
 		Producer<String> actualProducer = actualProducerFrom(producerFactory.createProducer("topic1", schema));
 
@@ -188,8 +217,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Override
 	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
-			MessageRouter router) {
-		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router);
+			MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
+		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router,
+				producerInterceptors);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -218,7 +248,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			Map<String, Object> producerConfig) {
 		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient,
-				producerConfig, Duration.ofMinutes(5L), 10L, 2);
+				producerConfig, Duration.ofMinutes(5L), 30L, 2);
 		producerFactories.add(producerFactory);
 		return producerFactory;
 	}
@@ -228,13 +258,13 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 		@Test
 		void nullSchemaIsNotAllowed() {
-			assertThatThrownBy(() -> new ProducerCacheKey<>(null, "topic1", null))
+			assertThatThrownBy(() -> new ProducerCacheKey<>(null, "topic1", null, null))
 					.isInstanceOf(IllegalArgumentException.class).hasMessage("'schema' must be non-null");
 		}
 
 		@Test
 		void nullTopicIsNotAllowed() {
-			assertThatThrownBy(() -> new ProducerCacheKey<>(schema, null, null))
+			assertThatThrownBy(() -> new ProducerCacheKey<>(schema, null, null, null))
 					.isInstanceOf(IllegalArgumentException.class).hasMessage("'topic' must be non-null");
 		}
 
@@ -249,32 +279,49 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 		static Stream<Arguments> equalsAndHashCodeTestProvider() {
 			MessageRouter router1 = mock(MessageRouter.class);
-			ProducerCacheKey<String> key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", router1);
+			List<ProducerInterceptor> interceptors1 = Collections.singletonList(mock(ProducerInterceptor.class));
+			ProducerCacheKey<String> key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", router1, interceptors1);
 			return Stream.of(arguments(Named.of("differentClass", key1), "someStrangeObject", false),
 					arguments(Named.of("null", key1), null, false),
 					arguments(Named.of("sameInstance", key1), key1, true),
 					arguments(
-							Named.of("sameSchemaSameTopicSameNullRouter",
-									new ProducerCacheKey<>(Schema.STRING, "topic1", null)),
-							new ProducerCacheKey<>(Schema.STRING, "topic1", null), true),
+							Named.of("sameSchemaSameTopicSameNullRouterSameNullInterceptors",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", null, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), true),
 					arguments(
-							Named.of("sameSchemaSameTopicSameNonNullRouter",
-									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-							new ProducerCacheKey<>(Schema.STRING, "topic1", router1), true),
+							Named.of("sameSchemaSameTopicSameNonNullRouterSameNullInterceptors",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", router1, null), true),
 					arguments(
 							Named.of("differentSchemaInstanceSameSchemaType",
-									new ProducerCacheKey<>(new StringSchema(), "topic1", router1)),
-							new ProducerCacheKey<>(new StringSchema(), "topic1", router1), true),
-					arguments(Named.of("differentSchemaType", new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-							new ProducerCacheKey<>(Schema.INT64, "topic1", router1), false),
-					arguments(Named.of("differentTopic", new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-							new ProducerCacheKey<>(Schema.STRING, "topic2", router1), false),
+									new ProducerCacheKey<>(new StringSchema(), "topic1", router1, null)),
+							new ProducerCacheKey<>(new StringSchema(), "topic1", router1, null), true),
+					arguments(
+							Named.of("differentSchemaType",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, interceptors1)),
+							new ProducerCacheKey<>(Schema.INT64, "topic1", router1, interceptors1), false),
+					arguments(
+							Named.of("differentTopic",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, interceptors1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic2", router1, interceptors1), false),
 					arguments(
 							Named.of("differentNonNullRouter",
-									new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-							new ProducerCacheKey<>(Schema.STRING, "topic1", mock(MessageRouter.class)), false),
-					arguments(Named.of("differentNullRouter", new ProducerCacheKey<>(Schema.STRING, "topic1", router1)),
-							new ProducerCacheKey<>(Schema.STRING, "topic1", null), false));
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", mock(MessageRouter.class), null), false),
+					arguments(
+							Named.of("differentNullRouter",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false),
+					arguments(
+							Named.of("differentNonNullInterceptors",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, interceptors1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", router1,
+									Collections.singletonList(mock(ProducerInterceptor.class))),
+							false),
+					arguments(
+							Named.of("differentNullInterceptor",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", router1, interceptors1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false));
 		}
 
 	}

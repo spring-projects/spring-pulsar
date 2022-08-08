@@ -21,6 +21,8 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +49,7 @@ import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer
  * Autoconfiguration tests for {@link PulsarAutoConfiguration}.
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 @SuppressWarnings("unchecked")
 class PulsarAutoConfigurationTests {
@@ -152,6 +155,16 @@ class PulsarAutoConfigurationTests {
 				.run((context) -> assertThat(context).hasNotFailed()
 						.getBean(PulsarListenerAnnotationBeanPostProcessor.class)
 						.isSameAs(listenerAnnotationBeanPostProcessor));
+	}
+
+	@Test
+	void customProducerInterceptorIsUsedInPulsarTemplate() {
+		ProducerInterceptor interceptor = mock(ProducerInterceptor.class);
+		this.contextRunner.withBean("customProducerInterceptor", ProducerInterceptor.class, () -> interceptor)
+				.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
+						.extracting("interceptors")
+						.asInstanceOf(InstanceOfAssertFactories.list(ProducerInterceptor.class))
+						.contains(interceptor)));
 	}
 
 	@Nested

@@ -20,11 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +42,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TopicMetadata;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,7 +104,21 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 		}
 	}
 
-	static Stream<Arguments> sendMessageTestProvider() {
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("interceptorInvocationTestProvider")
+	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws Exception {
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build()) {
+			PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client,
+					Collections.singletonMap("topicName", topic));
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
+			pulsarTemplate.send("test-interceptor");
+			for (ProducerInterceptor interceptor : interceptors) {
+				verify(interceptor, atLeastOnce()).eligible(any(Message.class));
+			}
+		}
+	}
+
+	private static Stream<Arguments> sendMessageTestProvider() {
 		return Stream.of(
 
 				arguments(Named.of("sendMessageToDefaultTopic", "smt-topic-1"),
@@ -173,6 +191,14 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 				arguments(Named.of("sendAsyncMessageToSpecificTopicWithCustomizerAndRouter", "smt-topic-16"),
 						Collections.emptyMap(), (SendHandler<CompletableFuture<MessageId>>) PulsarTemplate::sendAsync,
 						sampleMessageKeyCustomizer, mockRouter()));
+	}
+
+	private static Stream<Arguments> interceptorInvocationTestProvider() {
+		return Stream.of(
+				arguments(Named.of("testSingleInterceptor", "iit-topic-1"),
+						Collections.singletonList(mock(ProducerInterceptor.class))),
+				arguments(Named.of("testMultipleInterceptors", "iit-topic-2"),
+						List.of(mock(ProducerInterceptor.class), mock(ProducerInterceptor.class))));
 	}
 
 	private static MessageRouter mockRouter() {
