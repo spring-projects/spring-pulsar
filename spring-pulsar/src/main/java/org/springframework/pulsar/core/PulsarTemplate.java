@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +27,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
 
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.springframework.core.log.LogAccessor;
 
 /**
@@ -42,13 +44,25 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	private final PulsarProducerFactory<T> producerFactory;
 
+	private final List<ProducerInterceptor> interceptors;
+
 	/**
 	 * Constructs a template instance.
 	 * @param producerFactory the producer factory used to create the backing Pulsar
 	 * producers.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory) {
+		this(producerFactory, null);
+	}
+
+	/**
+	 * Constructs a template instance.
+	 * @param producerFactory the producer factory used to create the backing Pulsar producers.
+	 * @param interceptors the {@link ProducerInterceptor}s to add to the producer.
+	 */
+	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
 		this.producerFactory = producerFactory;
+		this.interceptors = interceptors;
 	}
 
 	@Override
@@ -89,7 +103,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter)
 			throws PulsarClientException {
 		Schema<T> schema = SchemaUtils.getSchema(message);
-		return this.producerFactory.createProducer(topic, schema, messageRouter);
+		return this.producerFactory.createProducer(topic, schema, messageRouter, interceptors);
 	}
 
 }

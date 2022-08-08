@@ -17,6 +17,7 @@
 package org.springframework.pulsar.core;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,7 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.common.protocol.schema.SchemaHash;
 
 import org.springframework.aop.framework.AopProxyUtils;
@@ -58,6 +60,7 @@ import com.github.benmanes.caffeine.cache.Scheduler;
  *
  * @param <T> producer type.
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T> implements DisposableBean {
 
@@ -89,12 +92,12 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) {
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter);
 		return this.producerCache.get(producerCacheKey, (st) -> {
 			try {
-				return this.doCreateProducer(st.topic, st.schema, st.router);
+				return this.doCreateProducer(st.topic, st.schema, st.router, producerInterceptors);
 			}
 			catch (PulsarClientException ex) {
 				throw new RuntimeException(ex);
@@ -103,9 +106,9 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors)
 			throws PulsarClientException {
-		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter);
+		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors);
 		return wrapProducerWithCloseCallback(producer,
 				(p) -> this.logger.trace(() -> String.format("Client closed producer %s but will skip actual closing",
 						ProducerUtils.formatProducer(producer))));

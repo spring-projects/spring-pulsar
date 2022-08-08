@@ -36,6 +36,7 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.client.impl.schema.StringSchema;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
@@ -58,6 +59,7 @@ import com.github.benmanes.caffeine.cache.Cache;
  * Tests for {@link CachingPulsarProducerFactory}.
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
@@ -188,8 +190,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Override
 	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
-			MessageRouter router) {
-		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router);
+														 MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
+		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router, producerInterceptors);
 	}
 
 	@SuppressWarnings("unchecked")

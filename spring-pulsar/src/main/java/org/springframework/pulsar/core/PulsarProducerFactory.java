@@ -16,12 +16,14 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 /**
  * The strategy to create a {@link Producer} instance(s).
@@ -29,6 +31,7 @@ import org.apache.pulsar.client.api.Schema;
  * @param <T> producer payload type
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public interface PulsarProducerFactory<T> {
 
@@ -53,6 +56,18 @@ public interface PulsarProducerFactory<T> {
 	 */
 	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
 			throws PulsarClientException;
+
+	/**
+	 * Create a producer.
+	 * @param topic the topic the producer will send messages to or {@code null} to use
+	 * the default topic
+	 * @param schema the schema of the messages to be sent
+	 * @param messageRouter the optional message router to use
+	 * @param producerInterceptors the optional producer interceptors to use
+	 * @return the producer
+	 * @throws PulsarClientException if any error occurs
+	 */
+	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors) throws PulsarClientException;
 
 	/**
 	 * Return a map of configuration options to use when creating producers.

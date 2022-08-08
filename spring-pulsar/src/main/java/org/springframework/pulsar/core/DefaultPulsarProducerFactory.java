@@ -17,6 +17,7 @@
 package org.springframework.pulsar.core;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.LogFactory;
@@ -27,6 +28,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.util.CollectionUtils;
 
@@ -36,6 +38,7 @@ import org.springframework.util.CollectionUtils;
  * @param <T> producer type.
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T> {
 
@@ -60,10 +63,16 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
 			throws PulsarClientException {
-		return doCreateProducer(topic, schema, messageRouter);
+		return createProducer(topic, schema, messageRouter, null);
 	}
 
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
+	@Override
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+									  List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
+		return doCreateProducer(topic, schema, messageRouter, producerInterceptors);
+	}
+
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors)
 			throws PulsarClientException {
 		final String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
@@ -74,6 +83,9 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		producerBuilder.topic(resolvedTopic);
 		if (messageRouter != null) {
 			producerBuilder.messageRouter(messageRouter);
+		}
+		if (producerInterceptors != null && !producerInterceptors.isEmpty()) {
+			producerBuilder.intercept(producerInterceptors.toArray(new ProducerInterceptor[0]));
 		}
 		return producerBuilder.create();
 	}
