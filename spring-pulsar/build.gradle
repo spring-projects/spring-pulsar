@@ -5,17 +5,17 @@ plugins {
 description = 'Spring Pulsar Support'
 
 dependencies {
+	api 'com.github.ben-manes.caffeine:caffeine'
+	api 'org.apache.pulsar:pulsar-client'
+	api 'org.apache.pulsar:pulsar-client-admin'
+	api 'org.apache.pulsar:pulsar-client-admin-api'
 	api 'org.springframework:spring-context'
 	api 'org.springframework:spring-messaging'
 	api 'org.springframework:spring-tx'
 	api ('org.springframework.retry:spring-retry') {
 		exclude group: 'org.springframework'
 	}
-	api 'org.apache.pulsar:pulsar-client'
-	api 'org.apache.pulsar:pulsar-client-admin'
-	api 'org.apache.pulsar:pulsar-client-admin-api'
-	api 'com.github.ben-manes.caffeine:caffeine'
-
+	implementation 'com.google.code.findbugs:jsr305'
 	optional 'com.fasterxml.jackson.core:jackson-core'
 	optional 'com.fasterxml.jackson.core:jackson-databind'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
@@ -23,28 +23,14 @@ dependencies {
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
 	optional 'com.jayway.jsonpath:json-path'
 	optional 'io.projectreactor:reactor-core'
-
-	testImplementation 'io.projectreactor:reactor-test'
-	testImplementation 'org.mockito:mockito-junit-jupiter'
-	testImplementation 'org.hibernate.validator:hibernate-validator'
-
-	// TODO remove unused dependencies
-
-	// Common to all ??
-	implementation 'com.google.code.findbugs:jsr305'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api'
-	testImplementation 'org.junit.jupiter:junit-jupiter-params'
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	// To avoid compiler warnings about @API annotations in JUnit code
-	testCompileOnly 'org.apiguardian:apiguardian-api'
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
-	testImplementation("org.awaitility:awaitility") {
-		exclude group: 'org.hamcrest'
-	}
-	testImplementation 'org.hamcrest:hamcrest-core'
 	testImplementation 'org.assertj:assertj-core'
-	testImplementation 'org.testcontainers:pulsar'
+	testImplementation 'org.awaitility:awaitility'
+	testImplementation 'org.hamcrest:hamcrest'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
+	testImplementation 'org.testcontainers:pulsar'
 }

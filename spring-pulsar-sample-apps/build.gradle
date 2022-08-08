@@ -1,12 +1,22 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
+	id 'org.springframework.boot' version '2.7.2'
 }
 
 description = 'Spring Pulsar Sample Applications'
 
 dependencies {
-	api project(':spring-pulsar-spring-boot-autoconfigure')
+	api project(':spring-pulsar-spring-boot-starter')
 	implementation 'com.google.code.findbugs:jsr305'
+}
+
+ext {
+	sampleMainClass = project.hasProperty("sampleMainClass") ?
+			project.getProperty("sampleMainClass") : "app1.SpringPulsarBootApp"
+}
+
+springBoot {
+	mainClass = sampleMainClass
 }
 
 project.afterEvaluate {

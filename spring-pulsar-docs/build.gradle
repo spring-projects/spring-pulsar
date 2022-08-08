@@ -10,8 +10,8 @@ configurations {
 }
 
 dependencies {
-	api 'org.springframework.boot:spring-boot-starter'
 	api project (':spring-pulsar')
+	api 'org.springframework.boot:spring-boot-starter'
 	configurationProperties(project(path: ":spring-pulsar-spring-boot-autoconfigure", configuration: "configurationPropertiesMetadata"))
 }
 

@@ -16,13 +16,8 @@ dependencies {
 	api 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'com.google.code.findbugs:jsr305'
 
-	// TODO remove unused dependencies
-
-	// TODO do I really need this??? To avoid compiler warnings about @API annotations in JUnit code
-	testCompileOnly 'org.apiguardian:apiguardian-api'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.testcontainers:pulsar'
-	// TODO why do I care about these?
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.testcontainers:pulsar'
 }
