@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
@@ -256,7 +258,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 							}
 							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
 								try {
-									this.consumer.acknowledge(messages);
+									if (isSharedSubsriptionType()) {
+										this.consumer.acknowledge(messages);
+									}
+									else {
+										final Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(),
+												true);
+										Message<T> last = stream.reduce((a, b) -> b).orElse(null);
+										this.consumer.acknowledgeCumulative(last);
+									}
 								}
 								catch (PulsarClientException pce) {
 									this.consumer.negativeAcknowledge(messages);
@@ -303,11 +313,23 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
+		private boolean isSharedSubsriptionType() {
+			return this.containerProperties.getSubscriptionType() == SubscriptionType.Shared
+					|| this.containerProperties.getSubscriptionType() == SubscriptionType.Key_Shared;
+		}
+
 		private void handleAcks(Messages<T> messages) {
 			if (this.nackableMessages.isEmpty()) {
 				try {
 					if (messages.size() > 0) {
-						this.consumer.acknowledge(messages);
+						if (isSharedSubsriptionType()) {
+							this.consumer.acknowledge(messages);
+						}
+						else {
+							final Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
+							Message<T> last = stream.reduce((a, b) -> b).orElse(null);
+							this.consumer.acknowledgeCumulative(last);
+						}
 					}
 				}
 				catch (PulsarClientException pce) {
