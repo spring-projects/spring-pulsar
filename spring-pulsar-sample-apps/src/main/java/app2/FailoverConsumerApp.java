@@ -34,14 +34,14 @@ import org.springframework.pulsar.core.PulsarTemplate;
 @SpringBootApplication
 public class FailoverConsumerApp {
 
-	Logger logger = LoggerFactory.getLogger(FailoverConsumerApp.class);
+	private final Logger logger = LoggerFactory.getLogger(FailoverConsumerApp.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(FailoverConsumerApp.class, "--spring.pulsar.producer.messageRoutingMode=CustomPartition");
 	}
 
 	@Bean
-	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
+	ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
 		String topic = "failover-demo-topic";
 		return args -> {
 			for (int i = 0; i < 10; i++) {
@@ -55,19 +55,19 @@ public class FailoverConsumerApp {
 
 	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
 			subscriptionType = "failover")
-	public void listen1(String foo) {
+	void listen1(String foo) {
 		this.logger.info("failover-listen1 : " + foo);
 	}
 
 	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
 			subscriptionType = "failover")
-	public void listen2(String foo) {
+	void listen2(String foo) {
 		this.logger.info("failover-listen2 : " + foo);
 	}
 
 	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
 			subscriptionType = "failover")
-	public void listen(String foo) {
+	void listen(String foo) {
 		this.logger.info("failover-listen3 : " + foo);
 	}
 

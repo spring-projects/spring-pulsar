@@ -3,86 +3,68 @@
 
 In this section, we will take a quick tour of Spring for Apache Pulsar.
 
-#### Minimum Supported Versions
+==== Minimum Supported Versions
 
-The following are the minimum supported versions of the underlying libraries required by Spring for Apache Pulsar
+The minimum supported versions for the underlying libraries required by the framework are as follows:
+|===
+| Library | Version
 
-**JDK** - JDK 17
+| Java
+| 17
 
-**Apache Pulsar** - 2.10.0
+| Apache Pulsar
+| 2.10.0
 
-**Spring Boot** - 3.0.0
+| Spring Boot
+| 3.0.0
 
-**Spring Framework** - 6.0.0
+| Spring Framework
+| 6.0.0
 
-### Building the Project
+| Gradle
+| 7.x (7.5 or later)
+|===
 
-Spring for Apache Pulsar uses gradle as it's build tool.
-Use the following command to do a full build of the project.
+=== Building the Project
 
-```
+Spring for Apache Pulsar uses Gradle as it's build tool. Run the following command to do a full build of the project.
+[indent=0]
+----
 ./gradlew clean build
-```
+----
+You can build without running tests by using the following command:
+[indent=0]
+----
+./gradlew clean build -x test
+----
 
-The build will produce the following artifacts.
-
-* spring-pulsar
-* spring-pulsar-spring-boot-autoconfigure
-
-### Maven Coordinates
-
-Here are the maven coordinates of the modules, if you want to directly include them in an application.
-
-Here are the maven coordinates of the artifacts needed for using this library.
-
-```
-<dependency>
-    <groupId>org.springframework.pulsar</groupId>
-    <artifactId>spring-pulsar</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-</dependency>
-
-<dependency>
-    <groupId>org.springframework.pulsar</groupId>
-    <artifactId>spring-pulsar-boot-autoconfiguration</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-</dependency>
-```
-
-If you include the `spring-pulsar-boot-autoconfiguration` module, then that brings the `spring-pulsar` module transitively.
-
-We recommend the usage of a Spring-Boot-First-Approach for Spring for Apache Pulsar based application as that simplifies things tremendously.
-Therefore, most often, simply including the `spring-pulsar-boot-autoconfiguration` module is all you need in the application's dependencies.
-
-### Quick Sample
+=== Quick Sample
 
 In the following sample Spring Boot application, we show how to write a publisher and consumer using Spring for Apache Pulsar.
 This is a complete application and does not require any additional configuration as long as you have Pulsar cluster running on the default location - `localhost:6650`.
 
-```
+NOTE: We recommend the usage of a Spring-Boot-First-Approach for Spring for Apache Pulsar based application as that simplifies things tremendously. To encourage this, a `spring-pulsar-spring-boot-starter` module is published that can easily be consumed by an application as a dependency.
+
+[source,java,indent=0,pending-extract=true,subs="verbatim"]
+----
 @SpringBootApplication
 public class PulsarBootHelloWorld {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PulsarBootHelloWorld.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PulsarBootHelloWorld.class, args);
+    }
 
-	@Bean
-	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		return args -> {
-			for (int i = 0; i < 10; i ++) {
-				pulsarTemplate.send("hello-pulsar", This is message " + (i + 1));
-			}
+    @Bean
+    ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
+        return (args) -> pulsarTemplate.send("hello-pulsar", "Hello Pulsar World!");
+    }
 
-		};
-	}
-
-	@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
-	public void listen(String message) {
-		System.out.println("Message Received: " + message);
-	}
+    @PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+    void listen(String message) {
+        System.out.println("Message Received: " + message);
+    }
 }
-```
+----
 
 Let us go through the higher-level details of this application quickly.
 Later on in this documentation, we will see these components in much more detail.

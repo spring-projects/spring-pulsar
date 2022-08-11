@@ -33,7 +33,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 @SpringBootApplication
 public class SpringPulsarBootApp {
 
-	Logger logger = LoggerFactory.getLogger(SpringPulsarBootApp.class);
+	private final Logger logger = LoggerFactory.getLogger(SpringPulsarBootApp.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringPulsarBootApp.class, args);
@@ -44,7 +44,7 @@ public class SpringPulsarBootApp {
 	 * exclusive subscription to consume.
 	 */
 	@Bean
-	public ApplicationRunner runner1(PulsarTemplate<String> pulsarTemplate) {
+	ApplicationRunner runner1(PulsarTemplate<String> pulsarTemplate) {
 
 		String topic1 = "hello-pulsar-exclusive-1";
 
@@ -56,7 +56,7 @@ public class SpringPulsarBootApp {
 	}
 
 	@PulsarListener(subscriptionName = "subscription-1", topics = "hello-pulsar-exclusive-1")
-	public void listen1(String message) {
+	void listen1(String message) {
 		this.logger.info(message);
 	}
 
@@ -65,7 +65,7 @@ public class SpringPulsarBootApp {
 	 * exclusive subscription to consume.
 	 */
 	@Bean
-	public ApplicationRunner runner2(PulsarTemplate<Integer> pulsarTemplate) {
+	ApplicationRunner runner2(PulsarTemplate<Integer> pulsarTemplate) {
 
 		String topic1 = "hello-pulsar-exclusive-2";
 
@@ -77,7 +77,7 @@ public class SpringPulsarBootApp {
 	}
 
 	@PulsarListener(subscriptionName = "subscription-2", topics = "hello-pulsar-exclusive-2")
-	public void listen2(Integer message) {
+	void listen2(Integer message) {
 		this.logger.info("Message received :" + message);
 	}
 
@@ -86,7 +86,7 @@ public class SpringPulsarBootApp {
 	 * associated PulsarListener using an exclusive subscription.
 	 */
 	@Bean
-	public ApplicationRunner runner3(PulsarTemplate<Foo> pulsarTemplate) {
+	ApplicationRunner runner3(PulsarTemplate<Foo> pulsarTemplate) {
 
 		String topic = "hello-pulsar-exclusive-3";
 		return args -> {
@@ -99,7 +99,7 @@ public class SpringPulsarBootApp {
 
 	@PulsarListener(subscriptionName = "subscription-3", topics = "hello-pulsar-exclusive-3",
 			schemaType = SchemaType.JSON)
-	public void listen3(Foo message) {
+	void listen3(Foo message) {
 		this.logger.info("Message received :" + message);
 	}
 
@@ -107,7 +107,7 @@ public class SpringPulsarBootApp {
 	 * Publish and then use PulsarListener in batch listening mode.
 	 */
 	@Bean
-	public ApplicationRunner runner4(PulsarTemplate<Foo> pulsarTemplate) {
+	ApplicationRunner runner4(PulsarTemplate<Foo> pulsarTemplate) {
 
 		String topic = "hello-pulsar-exclusive-4";
 		return args -> {
@@ -120,7 +120,7 @@ public class SpringPulsarBootApp {
 
 	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-exclusive-4",
 			schemaType = SchemaType.JSON, batch = true)
-	public void listen4(List<Foo> messages) {
+	void listen4(List<Foo> messages) {
 		this.logger.info("records received :" + messages.size());
 		for (Foo message : messages) {
 			this.logger.info("record : " + message);

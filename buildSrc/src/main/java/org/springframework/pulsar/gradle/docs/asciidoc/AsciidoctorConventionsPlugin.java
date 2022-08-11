@@ -133,6 +133,7 @@ public class AsciidoctorConventionsPlugin implements Plugin<Project> {
 		attributes.put("attribute-missing", "warn");
 		attributes.put("github-tag", determineGitHubTag(project));
 		attributes.put("revnumber", null);
+		attributes.put("allow-uri-read", ""); // allow remote includes
 		asciidoctorTask.attributes(attributes);
 	}
 

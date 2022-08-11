@@ -63,12 +63,12 @@ public class DocumentConfigurationProperties extends DefaultTask {
 	@TaskAction
 	void documentConfigurationProperties() throws IOException {
 		Snippets snippets = new Snippets(this.configurationPropertyMetadata);
-		snippets.add("application-properties.pulsar", "Pulsar Properties", this::pulsarPrefixes);
+		snippets.add("application-properties.pulsar-client", "Pulsar Client Properties", (c) -> c.accept("spring.pulsar.client"));
+		snippets.add("application-properties.pulsar-producer", "Pulsar Producer Properties", (c) -> c.accept("spring.pulsar.producer"));
+		snippets.add("application-properties.pulsar-consumer", "Pulsar Consumer Properties", (c) -> {
+			c.accept("spring.pulsar.consumer");
+			c.accept("spring.pulsar.listener");
+		});
 		snippets.writeTo(this.outputDir.toPath());
 	}
-
-	private void pulsarPrefixes(Snippet.Config config) {
-		config.accept("spring.pulsar");
-	}
-
 }
