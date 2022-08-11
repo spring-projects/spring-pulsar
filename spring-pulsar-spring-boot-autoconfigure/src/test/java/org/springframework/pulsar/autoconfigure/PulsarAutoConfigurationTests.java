@@ -17,10 +17,15 @@
 package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 import static org.mockito.Mockito.mock;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -152,6 +157,17 @@ class PulsarAutoConfigurationTests {
 				.run((context) -> assertThat(context).hasNotFailed()
 						.getBean(PulsarListenerAnnotationBeanPostProcessor.class)
 						.isSameAs(listenerAnnotationBeanPostProcessor));
+	}
+
+	@Test
+	void customProducerInterceptorIsUsedInPulsarTemplate() {
+		ProducerInterceptor interceptor = mock(ProducerInterceptor.class);
+		this.contextRunner
+				.withBean("customProducerInterceptor", ProducerInterceptor.class, () -> interceptor)
+				.run((context -> assertThat(context).hasNotFailed()
+						.getBean(PulsarTemplate.class)
+						.extracting("interceptors").asInstanceOf(InstanceOfAssertFactories.list(ProducerInterceptor.class))
+						.contains(interceptor)));
 	}
 
 	@Nested

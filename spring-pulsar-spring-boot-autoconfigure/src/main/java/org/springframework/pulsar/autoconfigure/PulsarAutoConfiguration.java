@@ -18,6 +18,8 @@ package org.springframework.pulsar.autoconfigure;
 
 import org.apache.pulsar.client.api.PulsarClient;
 
+import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -84,8 +86,8 @@ public class PulsarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean(PulsarTemplate.class)
-	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory) {
-		return new PulsarTemplate<>(pulsarProducerFactory);
+	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory, ObjectProvider<ProducerInterceptor> interceptors) {
+		return new PulsarTemplate<>(pulsarProducerFactory, interceptors.orderedStream().toList());
 	}
 
 	@Bean
