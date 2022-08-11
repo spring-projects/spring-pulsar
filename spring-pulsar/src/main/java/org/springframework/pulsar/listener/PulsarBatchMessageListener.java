@@ -23,6 +23,13 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 
+/**
+ *
+ * Batch message listener.
+ *
+ * @param <T> payload type.
+ * @author Soby Chacko
+ */
 public interface PulsarBatchMessageListener<T> extends PulsarRecordMessageListener<T> {
 
 	default void received(Consumer<T> consumer, Message<T> msg) {

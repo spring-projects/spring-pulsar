@@ -256,7 +256,7 @@ MANUAL;
 When consuming single records using `PulsarRecordMessageListener` and the default ack mode of `BATCH` is used, the framework waits for all the record received from the `batchReceive` call to process successfully and then call the `acknowledge` method on the Pulsar Consumer.
 If any particular record throws an exception when invoking the handler method, Spring for Apache Pulsar tracks those records and separately call `negativeAcknowledge` on those records after the entire batch is processed.
 
-If the application wants the acknowledgment of negative acknoweldgement to occur per record, then the `RECORD` ack mode can be enabled.
+If the application wants the acknowledgment or negative acknowledgment to occur per record, then the `RECORD` ack mode can be enabled.
 In that case, after handling each record the message is acknowledged if no error or negatively acknowledged if there was an error.
 
 ==== Message Ack in Batch Consumption
