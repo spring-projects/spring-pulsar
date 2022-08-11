@@ -5,7 +5,7 @@
 :numbered:
 :icons: font
 :hide-uri-scheme:
-Soby Chacko
+Soby Chacko; Chris Bono
 
 //ifdef::backend-html5[]
 //*{project-version}*
