@@ -67,7 +67,8 @@ public interface PulsarProducerFactory<T> {
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors) throws PulsarClientException;
+	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException;
 
 	/**
 	 * Return a map of configuration options to use when creating producers.

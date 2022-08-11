@@ -57,7 +57,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	/**
 	 * Constructs a template instance.
-	 * @param producerFactory the producer factory used to create the backing Pulsar producers.
+	 * @param producerFactory the producer factory used to create the backing Pulsar
+	 * producers.
 	 * @param interceptors the {@link ProducerInterceptor}s to add to the producer.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {

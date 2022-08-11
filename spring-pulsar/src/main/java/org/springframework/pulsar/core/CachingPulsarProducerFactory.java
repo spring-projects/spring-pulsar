@@ -92,7 +92,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors) {
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter);
 		return this.producerCache.get(producerCacheKey, (st) -> {
@@ -106,8 +107,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors)
-			throws PulsarClientException {
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
 		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors);
 		return wrapProducerWithCloseCallback(producer,
 				(p) -> this.logger.trace(() -> String.format("Client closed producer %s but will skip actual closing",

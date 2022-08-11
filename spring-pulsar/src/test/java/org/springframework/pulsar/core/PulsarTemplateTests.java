@@ -198,8 +198,7 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 				arguments(Named.of("testSingleInterceptor", "iit-topic-1"),
 						Collections.singletonList(mock(ProducerInterceptor.class))),
 				arguments(Named.of("testMultipleInterceptors", "iit-topic-2"),
-						List.of(mock(ProducerInterceptor.class), mock(ProducerInterceptor.class)))
-		);
+						List.of(mock(ProducerInterceptor.class), mock(ProducerInterceptor.class))));
 	}
 
 	private static MessageRouter mockRouter() {

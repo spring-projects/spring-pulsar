@@ -68,12 +68,12 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-									  List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
+			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
 		return doCreateProducer(topic, schema, messageRouter, producerInterceptors);
 	}
 
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors)
-			throws PulsarClientException {
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
 		final String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
 		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);

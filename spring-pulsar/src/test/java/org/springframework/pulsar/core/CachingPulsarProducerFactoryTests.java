@@ -190,8 +190,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Override
 	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
-														 MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
-		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router, producerInterceptors);
+			MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
+		super.assertProducerHasTopicSchemaAndRouter(actualProducerFrom(producer), topic, schema, router,
+				producerInterceptors);
 	}
 
 	@SuppressWarnings("unchecked")

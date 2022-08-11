@@ -120,7 +120,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 	}
 
 	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
-														 MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
+			MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
 		assertThat(producer.getTopic()).isEqualTo(topic);
 		assertThat(producer).hasFieldOrPropertyWithValue("schema", schema);
 		assertThat(producer).extracting("conf")
@@ -128,12 +128,11 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 				.extracting(ProducerConfigurationData::getCustomMessageRouter).isSameAs(router);
 		if (producerInterceptors == null) {
 			assertThat(producer).extracting("interceptors").isNull();
-		} else {
+		}
+		else {
 			assertThat(producer).extracting("interceptors")
-				.asInstanceOf(InstanceOfAssertFactories.type(ProducerInterceptors.class))
-				.extracting("interceptors")
-				.asInstanceOf(InstanceOfAssertFactories.type(List.class))
-				.isEqualTo(producerInterceptors);
+					.asInstanceOf(InstanceOfAssertFactories.type(ProducerInterceptors.class)).extracting("interceptors")
+					.asInstanceOf(InstanceOfAssertFactories.type(List.class)).isEqualTo(producerInterceptors);
 		}
 
 	}
@@ -169,6 +168,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 		public void onSendAcknowledgement(Producer producer, Message message, MessageId msgId, Throwable exception) {
 
 		}
+
 	}
 
 }
