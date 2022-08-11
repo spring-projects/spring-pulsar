@@ -95,7 +95,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
 			List<ProducerInterceptor> producerInterceptors) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
-		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter);
+		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter,
+				producerInterceptors);
 		return this.producerCache.get(producerCacheKey, (st) -> {
 			try {
 				return this.doCreateProducer(st.topic, st.schema, st.router, producerInterceptors);
@@ -170,19 +171,25 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 		private final MessageRouter router;
 
+		private final List<ProducerInterceptor> interceptors;
+
 		/**
 		 * Constructs an instance.
 		 * @param schema the schema the producer is configured to use
 		 * @param topic the topic the producer is configured to send to
 		 * @param router the custom message router the producer is configured to use
+		 * @param interceptors the list of producer interceptors the producer is
+		 * configured to use
 		 */
-		ProducerCacheKey(Schema<T> schema, String topic, @Nullable MessageRouter router) {
+		ProducerCacheKey(Schema<T> schema, String topic, @Nullable MessageRouter router,
+				@Nullable List<ProducerInterceptor> interceptors) {
 			Assert.notNull(schema, () -> "'schema' must be non-null");
 			Assert.notNull(topic, () -> "'topic' must be non-null");
 			this.schema = schema;
 			this.schemaHash = SchemaHash.of(this.schema);
 			this.topic = topic;
 			this.router = router;
+			this.interceptors = interceptors;
 		}
 
 		@Override
@@ -195,12 +202,13 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			}
 			ProducerCacheKey<?> that = (ProducerCacheKey<?>) o;
 			return this.topic.equals(that.topic) && this.schemaHash.equals(that.schemaHash)
-					&& Objects.equals(this.router, that.router);
+					&& Objects.equals(this.router, that.router) && Objects.equals(this.interceptors, that.interceptors);
 		}
 
 		@Override
 		public int hashCode() {
-			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router);
+			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router)
+					+ Objects.hashCode(this.interceptors);
 		}
 
 	}

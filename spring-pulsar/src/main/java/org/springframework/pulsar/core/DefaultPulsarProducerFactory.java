@@ -57,7 +57,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException {
-		return createProducer(topic, schema, null);
+		return createProducer(topic, schema, null, null);
 	}
 
 	@Override
