@@ -26,8 +26,8 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
-
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+
 import org.springframework.core.log.LogAccessor;
 
 /**
@@ -104,7 +104,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter)
 			throws PulsarClientException {
 		Schema<T> schema = SchemaUtils.getSchema(message);
-		return this.producerFactory.createProducer(topic, schema, messageRouter, interceptors);
+		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors);
 	}
 
 }

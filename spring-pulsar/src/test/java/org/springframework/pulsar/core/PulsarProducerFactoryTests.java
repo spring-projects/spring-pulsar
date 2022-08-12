@@ -18,7 +18,6 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.in;
 import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
