@@ -17,6 +17,7 @@
 package org.springframework.pulsar.config;
 
 import java.util.Collection;
+import java.util.Properties;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -54,5 +55,7 @@ public interface PulsarListenerEndpoint {
 	boolean isBatchListener();
 
 	SchemaType getSchemaType();
+
+	Properties getConsumerProperties();
 
 }

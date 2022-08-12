@@ -21,10 +21,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -206,18 +208,39 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private Map<String, Object> extractPropertiesToOverride(PulsarContainerProperties pulsarContainerProperties) {
-			final SubscriptionType subscriptionType = pulsarContainerProperties.getSubscriptionType();
-			final Map<String, Object> propertiesToOverride = new HashMap<>();
-			if (subscriptionType != null) {
-				propertiesToOverride.put("subscriptionType", subscriptionType);
+
+			Properties propertyOverrides = this.containerProperties.getPulsarConsumerProperties();
+
+			final Map<String, Object> propOverridesAsMap = propertyOverrides.entrySet().stream().collect(Collectors
+					.toMap(e -> String.valueOf(e.getKey()), Map.Entry::getValue, (prev, next) -> next, HashMap::new));
+
+			final Map<String, Object> propertiesToOverride = new HashMap<>(propOverridesAsMap);
+			if (propertiesToOverride.containsKey("topicNames")) {
+				final String topicsFromMap = (String) propertiesToOverride.get("topicNames");
+				final String[] topicNames = topicsFromMap.split(",");
+				final Set<String> propertiesDefinedTopics = new HashSet<>(Arrays.stream(topicNames).toList());
+				if (!propertiesDefinedTopics.isEmpty()) {
+					propertiesToOverride.put("topicNames", propertiesDefinedTopics);
+				}
 			}
-			final String[] topics = pulsarContainerProperties.getTopics();
-			final Set<String> strings = new HashSet<>(Arrays.stream(topics).toList());
-			if (!strings.isEmpty()) {
-				propertiesToOverride.put("topicNames", strings);
+
+			if (!propertiesToOverride.containsKey("subscriptionType")) {
+				final SubscriptionType subscriptionType = pulsarContainerProperties.getSubscriptionType();
+				if (subscriptionType != null) {
+					propertiesToOverride.put("subscriptionType", subscriptionType);
+				}
 			}
-			if (StringUtils.hasText(pulsarContainerProperties.getSubscriptionName())) {
-				propertiesToOverride.put("subscriptionName", pulsarContainerProperties.getSubscriptionName());
+			if (!propertiesToOverride.containsKey("topicNames")) {
+				final String[] topics = pulsarContainerProperties.getTopics();
+				final Set<String> listenerDefinedTopics = new HashSet<>(Arrays.stream(topics).toList());
+				if (!listenerDefinedTopics.isEmpty()) {
+					propertiesToOverride.put("topicNames", listenerDefinedTopics);
+				}
+			}
+			if (!propertiesToOverride.containsKey("subscriptionName")) {
+				if (StringUtils.hasText(pulsarContainerProperties.getSubscriptionName())) {
+					propertiesToOverride.put("subscriptionName", pulsarContainerProperties.getSubscriptionName());
+				}
 			}
 			return propertiesToOverride;
 		}

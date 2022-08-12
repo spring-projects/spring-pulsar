@@ -19,7 +19,7 @@ package org.springframework.pulsar.core;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.utility.DockerImageName;
 
-abstract class AbstractContainerBaseTests {
+public abstract class AbstractContainerBaseTests {
 
 	static final DockerImageName PULSAR_IMAGE = DockerImageName.parse("apachepulsar/pulsar:2.10.1");
 

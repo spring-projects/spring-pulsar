@@ -23,8 +23,8 @@ import org.apache.pulsar.client.api.MessageId;
 /**
  * Contract for manual acknowledgment.
  *
- * When manual acknowledgment is used, applications can inject an Acknowledgment object
- * in the listener and then invoke manual acknowledgment.
+ * When manual acknowledgment is used, applications can inject an Acknowledgment object in
+ * the listener and then invoke manual acknowledgment.
  *
  * @author Soby Chacko
  */
@@ -37,14 +37,12 @@ public interface Acknowledgement {
 
 	/**
 	 * Manually acknowledges by the message id.
-	 *
 	 * @param messageId message id.
 	 */
 	void acknowledge(MessageId messageId);
 
 	/**
 	 * Manually acknowledges a list of messages based on their message id's.
-	 *
 	 * @param messageIds collection of message id's.
 	 */
 	void acknowledge(List<MessageId> messageIds);
@@ -56,8 +54,7 @@ public interface Acknowledgement {
 
 	/**
 	 * Negative acknowledges the current message based on the message id.
-	 *
-	 * @param messageId message id. 
+	 * @param messageId message id.
 	 */
 	void nack(MessageId messageId);
 

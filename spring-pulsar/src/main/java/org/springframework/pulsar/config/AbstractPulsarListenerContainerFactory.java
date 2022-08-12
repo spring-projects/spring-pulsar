@@ -156,7 +156,9 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
 				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
-				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher);
+				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher)
+				.acceptIfNotNull(endpoint.getConsumerProperties(),
+						instance.getContainerProperties()::setPulsarConsumerProperties);
 	}
 
 }
