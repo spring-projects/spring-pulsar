@@ -32,6 +32,7 @@ This first part of the reference documentation is a high-level quick-tour of Spr
 
 include::quick-tour.adoc[]
 
+[[reference]]
 == Reference
 
 This part of the reference documentation goes through the details of the various components in Spring for Apache Pulsar.

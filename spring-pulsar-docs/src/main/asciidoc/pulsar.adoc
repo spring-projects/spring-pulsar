@@ -1,5 +1,6 @@
 [[pulsar]]
 == Using Spring for Apache Pulsar
+
 :javadocs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/api
 :github: https://github.com/spring-projects-experimental/spring-pulsar
 
