@@ -10,9 +10,14 @@ For a quick but less detailed introduction, see <<index.adoc#quick-intro>>.
 === Pulsar Client
 
 When using the Pulsar Spring Boot Starter, you get the `PulsarClient` auto-configured.
-This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object `PulsarClientConfiguration`.
+This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object `PulsarClientConfiguration`. By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`. However, there are many application properties available to configure the client.
 
-NOTE: By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`. However, there are many <<application-properties#appendix.application-properties.pulsar-client,application properties>> available to configure the client. When no configuration is provided for a property it's default value will be used.
+.[.underline]#Click ##here## to view the available **Pulsar Client Properties**#.
+[%collapsible]
+====
+include::application-properties/pulsar-client.adoc[lines=3..-1]
+====
+
 
 [[pulsar-producer]]
 === Pulsar Producer
@@ -43,16 +48,23 @@ When using partitioned topics, then you can use custom partitioning routing when
 For this purpose, you can provide an implementation of a `MessageRouter` and pass it along with both `send` and `sendAsync` methods.
 Note that, when using a `MessageRouter`, you must set the `spring.pulsar.producer.messageRoutingMode` property to `custom`.
 
-NOTE: There are many <<application-properties#appendix.application-properties.pulsar-producer,application properties>> available to configure the producer.
-
+[[producer-application-properties]]
+.[.underline]#Click ##here## to view the available **Pulsar Producer Properties**#
+[%collapsible]
+====
+include::application-properties/pulsar-producer.adoc[lines=3..-1]
+====
 
 [[pulsar-producer-factory]]
 === Pulsar Producer Factory
-The `PulsarTemplate` relies on a `PulsarProducerFactory` for actually creating the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric <<application-properties#appendix.application-properties.pulsar-producer,application properties>>.
+The `PulsarTemplate` relies on a `PulsarProducerFactory` for actually creating the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric application properties <<producer-application-properties,listed above>>.
 
 [[producer-caching]]
 === Pulsar Producer Caching
-**TODO**
+Each underlying Pulsar producer consumes resources. In order to improve performance and avoid continual creation of producers, the producer factory caches the producers that it creates. They are cached in an LRU fashion and evicted when they have not been used within a configured time period. The link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/core/CachingPulsarProducerFactory.java#L159[cache key] is composed of just enough information to ensure that callers are returned the same producer on subsequent creation requests.
+
+Additionally, you can configure the cache settings by specifying any of the `spring.producer.cache` prefixed application properties <<producer-application-properties,listed above>>.
+
 
 [[pulsar-listener]]
 === Pulsar Listener
@@ -63,7 +75,11 @@ When using the Spring Boot support, it automatically enables this annotation and
 `PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` in order to create and manage the Pulsar consumer.
 This consumer factory is also auto-configured through Spring Boot.
 
-NOTE: There are many consumer-centric <<application-properties#appendix.application-properties.pulsar-consumer,application properties>> available to configure these components.
+.[.underline]#Click ##here## to view the available **Pulsar Consumer Properties**#
+[%collapsible]
+====
+include::application-properties/pulsar-consumer.adoc[lines=3..-1]
+====
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section.
 
@@ -180,7 +196,7 @@ Once data is received, it is handed over to the selected message listener implem
 
 The following message listener types are available when using Spring for Apache Pulsar.
 
-* link:{github}/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarRecordMessageListener.java#L29[PulsarRecordMessageListener]
+* link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarRecordMessageListener.java#L29[PulsarRecordMessageListener]
 
 * link:{github}/blob/ade2c74482d8ac1407ffe4840fa058475c07bcfc/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarAcknowledgingMessageListener.java#L28[PulsarAcknowledgingMessageListener]
 
