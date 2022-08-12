@@ -42,6 +42,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
  *
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 @AutoConfiguration
 @ConditionalOnClass(PulsarTemplate.class)

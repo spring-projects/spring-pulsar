@@ -49,6 +49,7 @@ import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer
  * Autoconfiguration tests for {@link PulsarAutoConfiguration}.
  *
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 @SuppressWarnings("unchecked")
 class PulsarAutoConfigurationTests {
