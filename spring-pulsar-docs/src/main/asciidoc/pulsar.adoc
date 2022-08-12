@@ -180,6 +180,22 @@ public void listen4(Messages<Foo> messages) {
 ----
 ====
 
+When using `PulsarListener`, you can provide Pulsar consumer properties directly on the annotation itself.
+This is convenient, if you do not want to use the Boot configuration properties mentioned above or have multiple `PulsarListener` methods.
+
+Here is an example of using Pulsar consumer properties directly on `PulsarListener`.
+
+====
+[source, java]
+----
+@PulsarListener(properties = { "subscriptionName=subscription-1", "topicNames=foo-1", "receiverQueueSize=5000" })
+void listen(String message) {
+}
+----
+====
+
+Note that the properties used are direct Pulsar consumer properties.
+
 [[pulsar-message-listener-container]]
 === Pulsar Message Listener Container
 
