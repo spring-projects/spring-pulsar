@@ -107,10 +107,12 @@ syncDocumentationSourceForAsciidoctorPdf {
 	}
 }
 
+task asciidocs {
+	dependsOn asciidoctor, asciidoctorMultipage, asciidoctorPdf
+}
+
 task docsZip(type: Zip) {
-	dependsOn asciidoctor,
-			asciidoctorMultipage,
-			asciidoctorPdf
+	dependsOn asciidocs
 	group = 'Distribution'
 	archiveClassifier = 'docs'
 	description = "Builds docs archive containing api and reference for deployment at static.spring.io/spring-pulsar/docs."
