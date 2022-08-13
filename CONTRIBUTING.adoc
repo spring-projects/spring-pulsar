@@ -1,5 +1,7 @@
 = Contributing to Spring Pulsar
 
+:github: https://github.com/spring-projects-experimental/spring-pulsar
+
 Spring Pulsar is released under the Apache 2.0 license. If you would like to contribute something, or want to hack on the code this document should help you get started.
 
 
@@ -56,5 +58,4 @@ added after the original pull request but before a merge.
 
 
 == Working with the Code
-**#TODO#**
-For information on editing, building, and testing the code, see the https://github.com/spring-projects/spring-pulsar/wiki/Working-with-the-Code[Working with the Code] page on the project wiki.
+For information on editing, building, and testing the code, see the link:${github}/wiki/Working-with-the-Code[Working with the Code] page on the project wiki.
