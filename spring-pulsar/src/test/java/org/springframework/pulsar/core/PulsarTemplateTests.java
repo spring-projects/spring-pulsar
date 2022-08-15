@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -45,6 +46,7 @@ import org.apache.pulsar.client.api.TopicMetadata;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -114,6 +116,25 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 			pulsarTemplate.send("test-interceptor");
 			for (ProducerInterceptor interceptor : interceptors) {
 				verify(interceptor, atLeastOnce()).eligible(any(Message.class));
+			}
+		}
+	}
+
+	@Test
+	void sendMessageWithSpecificSchemaTest() throws Exception {
+		String topic = "smt-specific-schema-topic";
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
+					.subscriptionName("test-specific-schema-subscription").subscribe()) {
+				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+						Collections.singletonMap("topicName", topic));
+				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
+				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+				pulsarTemplate.send(foo);
+
+				CompletableFuture<Message<Foo>> receiveMsgFuture = consumer.receiveAsync();
+				assertThat(receiveMsgFuture).isCompleted().isCompletedWithValueMatching(m -> m.getValue().equals(foo));
 			}
 		}
 	}
@@ -214,6 +235,9 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 				TypedMessageBuilderCustomizer<String> typedMessageBuilderCustomizer, MessageRouter router)
 				throws PulsarClientException;
 
+	}
+
+	record Foo(String foo, String bar) {
 	}
 
 }
