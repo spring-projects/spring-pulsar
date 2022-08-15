@@ -30,6 +30,9 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarBootstrapConfiguration;
 import org.springframework.pulsar.annotation.PulsarListenerAnnotationBeanPostProcessor;
@@ -167,6 +170,16 @@ class PulsarAutoConfigurationTests {
 						.contains(interceptor)));
 	}
 
+	@Test
+	void customProducerInterceptorsOrderedProperly() {
+		this.contextRunner.withUserConfiguration(InterceptorTestConfiguration.class)
+				.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
+						.extracting("interceptors")
+						.asInstanceOf(InstanceOfAssertFactories.list(ProducerInterceptor.class))
+						.containsExactly(InterceptorTestConfiguration.interceptorBar,
+								InterceptorTestConfiguration.interceptorFoo)));
+	}
+
 	@Nested
 	class ProducerFactoryAutoConfigurationTests {
 
@@ -203,6 +216,26 @@ class PulsarAutoConfigurationTests {
 				AssertableApplicationContext context) {
 			assertThat(context).hasNotFailed().hasSingleBean(PulsarProducerFactory.class)
 					.getBean(PulsarProducerFactory.class).isExactlyInstanceOf(producerFactoryType);
+		}
+
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class InterceptorTestConfiguration {
+
+		static ProducerInterceptor interceptorFoo = mock(ProducerInterceptor.class);
+		static ProducerInterceptor interceptorBar = mock(ProducerInterceptor.class);
+
+		@Bean
+		@Order(200)
+		ProducerInterceptor interceptorFoo() {
+			return interceptorFoo;
+		}
+
+		@Bean
+		@Order(100)
+		ProducerInterceptor interceptorBar() {
+			return interceptorBar;
 		}
 
 	}
