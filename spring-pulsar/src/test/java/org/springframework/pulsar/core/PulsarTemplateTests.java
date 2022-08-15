@@ -134,9 +134,7 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 				pulsarTemplate.send(foo);
 
 				CompletableFuture<Message<Foo>> receiveMsgFuture = consumer.receiveAsync();
-				Message<Foo> msg = receiveMsgFuture.get(3, TimeUnit.SECONDS);
-
-				assertThat(msg.getValue()).isEqualTo(foo);
+				assertThat(receiveMsgFuture).isCompleted().isCompletedWithValueMatching(m -> m.getValue().equals(foo));
 			}
 		}
 	}
@@ -240,10 +238,6 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 	}
 
 	record Foo(String foo, String bar) {
-		@Override
-		public String toString() {
-			return "Foo{" + "foo='" + this.foo + '\'' + ", bar='" + this.bar + '\'' + '}';
-		}
 	}
 
 }
