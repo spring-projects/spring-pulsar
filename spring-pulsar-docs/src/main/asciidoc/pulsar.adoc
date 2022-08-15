@@ -142,8 +142,6 @@ You can disable the autoconfigured producer factory by providing your own bean d
 Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException;
 
 Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException;
-
-Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter, List<ProducerInterceptor> producerInterceptors) throws PulsarClientException;
 ----
 ====
 
