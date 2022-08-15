@@ -45,6 +45,17 @@ template.send(msg, (messageBuilder -> messageBuilder.key(myMessageKey)));
 ----
 ====
 
+If you are using simple Java primitive types, then the framework auto-detects the schema for you, and you do not need to specify any schema types for publishing the data.
+However, if you are using any complex types such as `JSON`, `AVRO`, `PROTOBUF`, etc. then you need to set the proper schema type on the `PulsarTemplate` before invoking any send operations as shown below.
+
+====
+[source, java]
+----
+pulsarTemplate.setSchema(Schema.JSON(Foo.class));
+----
+====
+
+
 When using partitioned topics, then you can use custom partitioning routing when publishing records.
 For this purpose, you can provide an implementation of a `MessageRouter` and pass it along with both `send` and `sendAsync` methods.
 Note that, when using a `MessageRouter`, you must set the `spring.pulsar.producer.messageRoutingMode` property to `custom`.

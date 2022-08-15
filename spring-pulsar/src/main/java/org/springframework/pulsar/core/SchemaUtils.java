@@ -17,7 +17,6 @@
 package org.springframework.pulsar.core;
 
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.impl.schema.JSONSchema;
 
 /**
  * Utility class for Pulsar schema inference.
@@ -49,7 +48,7 @@ public final class SchemaUtils {
 			case "java.time.LocalDate" -> (Schema<T>) Schema.LOCAL_DATE;
 			case "java.time.LocalDateTime" -> (Schema<T>) Schema.LOCAL_DATE_TIME;
 			case "java.time.LocalTime" -> (Schema<T>) Schema.LOCAL_TIME;
-			default -> (Schema<T>) JSONSchema.of(message.getClass());
+			default -> (Schema<T>) Schema.BYTES;
 		};
 	}
 

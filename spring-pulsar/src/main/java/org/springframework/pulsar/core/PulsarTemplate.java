@@ -46,6 +46,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	private final List<ProducerInterceptor> interceptors;
 
+	private Schema<T> schema;
+
 	/**
 	 * Constructs a template instance.
 	 * @param producerFactory the producer factory used to create the backing Pulsar
@@ -103,8 +105,16 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter)
 			throws PulsarClientException {
-		Schema<T> schema = SchemaUtils.getSchema(message);
+		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors);
+	}
+
+	/**
+	 * Setter for schema.
+	 * @param schema provides the {@link Schema} used on this template
+	 */
+	public void setSchema(Schema<T> schema) {
+		this.schema = schema;
 	}
 
 }
