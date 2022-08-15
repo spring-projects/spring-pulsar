@@ -24,8 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -104,7 +102,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 	void createProducerWithDefaultTopicAndInterceptor() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
 				Collections.singletonMap("topicName", "topic0"));
-		List<ProducerInterceptor> interceptors = Collections.singletonList(new MockInterceptor());
+		List<ProducerInterceptor> interceptors = Collections.singletonList(mock(ProducerInterceptor.class));
 		try (Producer<String> producer = producerFactory.createProducer(null, schema, null, interceptors)) {
 			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null, interceptors);
 		}
@@ -144,30 +142,5 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 	 */
 	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			Map<String, Object> producerConfig);
-
-	@SuppressWarnings("rawtypes")
-	private static class MockInterceptor implements ProducerInterceptor {
-
-		@Override
-		public void close() {
-
-		}
-
-		@Override
-		public boolean eligible(Message message) {
-			return true;
-		}
-
-		@Override
-		public Message beforeSend(Producer producer, Message message) {
-			return null;
-		}
-
-		@Override
-		public void onSendAcknowledgement(Producer producer, Message message, MessageId msgId, Throwable exception) {
-
-		}
-
-	}
 
 }
