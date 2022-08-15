@@ -132,9 +132,8 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 				pulsarTemplate.send(foo);
-
-				CompletableFuture<Message<Foo>> receiveMsgFuture = consumer.receiveAsync();
-				assertThat(receiveMsgFuture).isCompleted().isCompletedWithValueMatching(m -> m.getValue().equals(foo));
+				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
+						.isEqualTo(foo);
 			}
 		}
 	}
