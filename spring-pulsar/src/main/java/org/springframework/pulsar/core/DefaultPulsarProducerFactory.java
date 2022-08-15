@@ -84,7 +84,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		if (messageRouter != null) {
 			producerBuilder.messageRouter(messageRouter);
 		}
-		if (producerInterceptors != null && !producerInterceptors.isEmpty()) {
+		if (!CollectionUtils.isEmpty(producerInterceptors)) {
 			producerBuilder.intercept(producerInterceptors.toArray(new ProducerInterceptor[0]));
 		}
 		return producerBuilder.create();
