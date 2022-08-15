@@ -1,108 +1,31 @@
 [[pulsar]]
-== Using Spring for Apache Pulsar
+=== Using Spring for Apache Pulsar
+
+:javadocs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/api
+:github: https://github.com/spring-projects-experimental/spring-pulsar
 
 This section offers detailed explanations of the various concerns that impact using Spring for Apache Pulsar.
 For a quick but less detailed introduction, see <<index.adoc#quick-intro>>.
 
 [[pulsar-client]]
-=== Pulsar Client
+==== Pulsar Client
 
-When using `spring-pulsar-spring-boot-autoconfigure`, you get the `PulsarClient` auto-configured.
-This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object `PulsarClientConfiguration`.
-By default, the application tries to connect a local Pulsar instance available at `pulsar://localhost:6650`.
+When using the Pulsar Spring Boot Starter, you get the `PulsarClient` auto-configured.
+This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object `PulsarClientConfiguration`. By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`. However, there are many application properties available to configure the client.
 
-The properties listed below are available to be set on the Pulsar client.
+.[.underline]#Click ##here## to view the available **Pulsar Client Properties**#.
+[%collapsible]
+====
+include::application-properties/pulsar-client.adoc[lines=3..-1]
+====
 
-The same defaults expected by the Pulsar client are honored when no configuration provided for these properties.
-
-```
-spring.pulsar.client.serviceUrl
-spring.pulsar.client.authPluginClassName
-spring.pulsar.client.authParams
-spring.pulsar.client.operationTimeoutMs
-spring.pulsar.client.statsIntervalSeconds
-spring.pulsar.client.numIoThreads
-spring.pulsar.client.useTcpNoDelayuseTls
-spring.pulsar.client.tlsAllowInsecureConnection
-spring.pulsar.client.tlsHostnameVerificationEnable
-spring.pulsar.client.concurrentLookupRequest
-spring.pulsar.client.maxLookupRequest
-spring.pulsar.client.maxNumberOfRejectedRequestPerConnection
-spring.pulsar.client.keepAliveIntervalSeconds
-spring.pulsar.client.connectionTimeoutMs
-spring.pulsar.client.requestTimeoutMs
-spring.pulsar.client.initialBackoffIntervalNanos
-spring.pulsar.client.maxBackoffIntervalNanos;
-```
 
 [[pulsar-producer]]
-=== Pulsar Producer
+==== Pulsar Producer
 
-On the Pulsar producer side, Spring Boot auto-configuration will provide a `PulsarTemplate` which is backed by a `PulsarProducerFactory`.
-We will see more details of these components later in this document, but in this section, let us look at the configuration properties available on the producer.
+On the Pulsar producer side, Spring Boot auto-configuration provides a `PulsarTemplate` for publishing records. The template implements an interface called `PulsarOperations` and provides {javadocs}/org/springframework/pulsar/core/PulsarOperations.html[several variants of 'send' methods] to publish records through its contract.
 
-The same defaults expected by the Pulsar producer are honored when no configuration provided for these properties.
-
-```
-spring.pulsar.producer.topicName
-spring.pulsar.producer.producerName
-spring.pulsar.producer.sendTimeoutMs
-spring.pulsar.producer.blockIfQueueFull
-spring.pulsar.producer.maxPendingMessages
-spring.pulsar.producer.maxPendingMessagesAcrossPartitions
-spring.pulsar.producer.messageRoutingMode
-spring.pulsar.producer.hashingScheme
-spring.pulsar.producer.cryptoFailureAction
-spring.pulsar.producer.batchingMaxPublishDelayMicros
-spring.pulsar.producer.batchingMaxMessages
-spring.pulsar.producer.batchingEnabled
-spring.pulsar.producer.chunkingEnabled
-spring.pulsar.producer.compressionType
-spring.pulsar.producer.initialSubscriptionName
-spring.pulsar.producer.accessMode
-```
-
-`PulsarTemplate` implements an interface called `PulsarOperations` and provides the following variants of the `send` method to publish records through its contract.
-
-====
-[source, java]
-----
-MessageId send(T message) throws PulsarClientException;
-
-MessageId send(String topic, T message) throws PulsarClientException;
-
-MessageId send(T message, MessageRouter messageRouter) throws PulsarClientException;
-
-MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
-
-MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
-
-MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
-
-MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
-
-MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException;
-
-CompletableFuture<MessageId> sendAsync(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter) throws PulsarClientException;
-
-----
-====
-
-There are two categories of send API methods exposed by `PulsarTemplate` - `send` and `sendAsync`.
+There are two categories of these send API methods - `send` and `sendAsync`.
 The `send` methods are blocking calls using the synchronous sending capabilities on the Pulsar producer.
 They return the `MessageId` of the message that was published once the message is persisted on the broker.
 The `sendAsync` method calls are asynchronous calls that are non-blocking.
@@ -124,69 +47,40 @@ template.send(msg, (messageBuilder -> messageBuilder.key(myMessageKey)));
 
 When using partitioned topics, then you can use custom partitioning routing when publishing records.
 For this purpose, you can provide an implementation of a `MessageRouter` and pass it along with both `send` and `sendAsync` methods.
-Note that, when using a `MessageRouter, you must set the `spring.pulsar.producer.messageRoutingMode` property to `custom`.
+Note that, when using a `MessageRouter`, you must set the `spring.pulsar.producer.messageRoutingMode` property to `custom`.
+
+[[producer-application-properties]]
+.[.underline]#Click ##here## to view the available **Pulsar Producer Properties**#
+[%collapsible]
+====
+include::application-properties/pulsar-producer.adoc[lines=3..-1]
+====
 
 [[pulsar-producer-factory]]
-=== Pulsar Producer Factory
-
-`PulsarTemplate` uses a `PulsarProducerFactory` for creating the underlying Pulsar producer.
-When using Spring Boot through `spring-pulsar-spring-boot-autoconfigure`, then it automatically autoconfigures a `PulsarProducerFactory`.
-Any producer properties mentioned above (using the prefix, `spring.pulsar.producer`) is passed along to the backing producer factory implementation along with a Pulsar client.
-You can disable the autoconfigured producer factory by providing your own bean definition for `DefaultPulsarProducerFactory` in the application.
-
-`PulsarProducerFactory` provides the following API methods to create a producer.
-
-====
-[source, java]
-----
-Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException;
-
-Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter) throws PulsarClientException;
-----
-====
+==== Pulsar Producer Factory
+The `PulsarTemplate` relies on a `PulsarProducerFactory` for actually creating the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric application properties <<producer-application-properties,listed above>>.
 
 [[producer-caching]]
-=== Pulsar Producer Caching
+==== Pulsar Producer Caching
+Each underlying Pulsar producer consumes resources. In order to improve performance and avoid continual creation of producers, the producer factory caches the producers that it creates. They are cached in an LRU fashion and evicted when they have not been used within a configured time period. The link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/core/CachingPulsarProducerFactory.java#L159[cache key] is composed of just enough information to ensure that callers are returned the same producer on subsequent creation requests.
 
-//TODO
+Additionally, you can configure the cache settings by specifying any of the `spring.producer.cache` prefixed application properties <<producer-application-properties,listed above>>.
+
 
 [[pulsar-listener]]
-=== Pulsar Listener
+==== Pulsar Listener
 
 When it comes to Pulsar consumer, we recommend the end user applications to make use of the `PulsarListener` annotation.
-In order to use `PulsarListener`, you need to use the `EnablePulsar` annotation.
+In order to use `PulsarListener`, you need to use the `@EnablePulsar` annotation.
 When using the Spring Boot support, it automatically enables this annotation and configures all the components necessary for `PulsarListener` such as the message listener infrastructure which is responsible for creating the Pulsar consumer.
 `PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` in order to create and manage the Pulsar consumer.
-This consumer factory is auto-configured through Spring Boot.
-Following are the consumer properties that you can configure through the Boot support.
+This consumer factory is also auto-configured through Spring Boot.
 
-The same defaults expected by the Pulsar consumer are honored when no configuration provided for these properties.
-
-```
-spring.pulsar.consumer.topicNames
-spring.pulsar.consumer.topicsPattern
-spring.pulsar.consumer.subscriptionName
-spring.pulsar.consumer.subscriptionType
-spring.pulsar.consumer.receiverQueueSize
-spring.pulsar.consumer.acknowledgementsGroupTimeMicros
-spring.pulsar.consumer.negativeAckRedeliveryDelayMicros
-spring.pulsar.consumer.maxTotalReceiverQueueSizeAcrossPartitions
-spring.pulsar.consumer.consumerName
-spring.pulsar.consumer.ackTimeoutMillis
-spring.pulsar.consumer.tickDurationMillis
-spring.pulsar.consumer.priorityLevel
-spring.pulsar.consumer.cryptoFailureAction
-spring.pulsar.consumer.properties
-spring.pulsar.consumer.readCompacted
-spring.pulsar.consumer.subscriptionInitialPosition
-spring.pulsar.consumer.patternAutoDiscoveryPeriod
-spring.pulsar.consumer.regexSubscriptionMode
-spring.pulsar.consumer.autoUpdatePartitions
-spring.pulsar.consumer.replicateSubscriptionState
-spring.pulsar.consumer.autoAckOldestChunkedMessageOnQueueFull
-spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
-spring.pulsar.consumer.maxPendingChunkedMessageexpireTimeOfIncompleteChunkedMessageMillis
-```
+.[.underline]#Click ##here## to view the available **Pulsar Consumer Properties**#
+[%collapsible]
+====
+include::application-properties/pulsar-consumer.adoc[lines=3..-1]
+====
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section.
 
@@ -214,10 +108,12 @@ public void listen(String message) {
 
 In this most basic form, you must provide the following two properties with their corresponding values.
 
-```
-spring.pulsar.consumer.topicNames=hello-pulsar
-spring.pulsar.consumer.subscriptionName=hello-pulsar-subscription
-```
+[source,yaml,indent=0,subs="verbatim"]
+----
+spring.pulsar.consumer:
+  topic-names: hello-pulsar
+  subscription-name: hello-pulsar-subscription
+----
 
 In the `PulsarListener` method above, we receive the data as `String`, but we don't specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
@@ -261,9 +157,7 @@ Here is an example of using `PulsarListener` to consume records in batches.
 @PulsarListener(subscriptionName = "hello-batch-subscription", topics = "hello-batch", schemaType = SchemaType.JSON, batch = true)
 public void listen4(List<Foo> messages) {
     System.out.println("records received :" + messages.size());
-    for (Foo message : messages) {
-        System.out.println("record : " + message);
-    }
+    messages.forEach((message) -> System.out.println("record : " + message));
 }
 ----
 ====
@@ -282,15 +176,29 @@ The following also should work in which we use the `Messages` holder type provid
 @PulsarListener(subscriptionName = "hello-batch-subscription", topics = "hello-batch", schemaType = SchemaType.JSON, batch = true)
 public void listen4(Messages<Foo> messages) {
     System.out.println("records received :" + messages.size());
-    for (Foo message : messages) {
-        System.out.println("record : " + message);
-    }
+    messages.forEach((message) -> System.out.println("record : " + message));
 }
 ----
 ====
 
+When using `PulsarListener`, you can provide Pulsar consumer properties directly on the annotation itself.
+This is convenient, if you do not want to use the Boot configuration properties mentioned above or have multiple `PulsarListener` methods.
+
+Here is an example of using Pulsar consumer properties directly on `PulsarListener`.
+
+====
+[source, java]
+----
+@PulsarListener(properties = { "subscriptionName=subscription-1", "topicNames=foo-1", "receiverQueueSize=5000" })
+void listen(String message) {
+}
+----
+====
+
+Note that the properties used are direct Pulsar consumer properties.
+
 [[pulsar-message-listener-container]]
-=== Pulsar Message Listener Container
+==== Pulsar Message Listener Container
 
 As briefly mentioned above, the message listener container is at the heart of message consumption when using Spring for Apache Pulsar.
 `PulsarListener` uses the message listener container infrastructure behind the scenes to create and manage the Pulsar consumer.
@@ -305,30 +213,17 @@ Once data is received, it is handed over to the selected message listener implem
 
 The following message listener types are available when using Spring for Apache Pulsar.
 
-====
-[source, java]
-----
-interface PulsarRecordMessageListener<T> extends MessageListener<T>{
-    void received(Consumer<T> consumer, Message<T> msg);
-}
+* link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarRecordMessageListener.java#L29[PulsarRecordMessageListener]
 
-interface PulsarAcknowledgingMessageListener<T> extends PulsarRecordMessageListener<T> {
-    void received(Consumer<T> consumer, Message<T> msg, Acknowledgement acknowledgement);
-}
+* link:{github}/blob/ade2c74482d8ac1407ffe4840fa058475c07bcfc/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarAcknowledgingMessageListener.java#L28[PulsarAcknowledgingMessageListener]
 
-interface PulsarBatchMessageListener<T> extends PulsarRecordMessageListener<T> {
-	void received(Consumer<T> consumer, Messages<T> msg);
-}
+* link:{github}/blob/ade2c74482d8ac1407ffe4840fa058475c07bcfc/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarBatchMessageListener.java#L36[PulsarBatchMessageListener]
 
-interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchMessageListener<T> {
-	void received(Consumer<T> consumer, Messages<T> msg, Acknowledgement acknowledgement);
-}
-----
-====
+* link:{github}/blob/ade2c74482d8ac1407ffe4840fa058475c07bcfc/spring-pulsar/src/main/java/org/springframework/pulsar/listener/PulsarBatchAcknowledgingMessageListener.java#L28[PulsarBatchAcknowledgingMessageListener]
 
 We will see the details about these various message listeners in the sections below.
 
-=== Consuming the Records
+==== Consuming the Records
 
 In this section, we are going to see how the message listener container enables both single record and batch based message consumption.
 
@@ -362,9 +257,7 @@ Here is the `PulsarListener` example of consuming records in batches.
 @PulsarListener(subscriptionName = "hello-batch-subscription", topics = "hello-batch", schemaType = SchemaType.JSON, batch = true)
 public void listen4(List<Foo> messages) {
     System.out.println("records received :" + messages.size());
-    for (Foo message : messages) {
-        System.out.println("record : " + message);
-    }
+    messages.forEach((message) -> System.out.println("record : " + message));
 }
 ----
 ====
@@ -372,7 +265,7 @@ public void listen4(List<Foo> messages) {
 When using this type of `PulsarListener`, the framework detects that you are in batch mode.
 Since it is already received the data in batches using the Consumer's `batchReceive` method, it simply hands off the entire batch to the listener method through an adapter for `PulsarBatchMessageListener`.
 
-=== Message Acknowledgment
+==== Message Acknowledgment
 
 When using Spring for Apache Pulsar, the message acknowledgment is handled by the framework unless opted out by the application.
 In this section, we go through the details of how the framework takes care of message acknowledgment.
@@ -396,7 +289,7 @@ MANUAL;
 When consuming single records using `PulsarRecordMessageListener` and the default ack mode of `BATCH` is used, the framework waits for all the record received from the `batchReceive` call to process successfully and then call the `acknowledge` method on the Pulsar Consumer.
 If any particular record throws an exception when invoking the handler method, Spring for Apache Pulsar tracks those records and separately call `negativeAcknowledge` on those records after the entire batch is processed.
 
-If the application wants the acknowledgment of negative acknoweldgement to occur per record, then the `RECORD` ack mode can be enabled.
+If the application wants the acknowledgment or negative acknowledgment to occur per record, then the `RECORD` ack mode can be enabled.
 In that case, after handling each record the message is acknowledged if no error or negatively acknowledged if there was an error.
 
 ==== Message Ack in Batch Consumption
@@ -450,12 +343,14 @@ When using a batch listener, the message listener container cannot know which re
 Therefore, in order to manually acknowledge, you need to use one of the overloaded `acknowledge` method that takes a `MessageId` or a `List<MessageId>`.
 You can also negatively acknowledge with the `MessageId` for the batch listener.
 
-=== Partitioned topics - Publishing and Consuming.
+==== Partitioned topics - Publishing and Consuming.
 
 In the sample below, we are publishing to a topic called `hello-pulsar-partitioned`.
 It is a topic that is partitioned and for this sample we assume that the topic is already created with three partitions.
 
-```
+====
+[source, java]
+----
 @SpringBootApplication
 public class PulsarBootPartitioned {
 
@@ -505,7 +400,8 @@ public class PulsarBootPartitioned {
 	}
 
 }
-```
+----
+====
 
 A few things require explanation in the application above.
 We are publishing to a partitioned topic and we would like to publish some data segment to a specific partition.
@@ -524,7 +420,9 @@ We can switch to the `failover` subscription mode and add three separate consume
 
 Here is an example.
 
-```
+====
+[source, java]
+----
 @PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "failover")
 public void listen1(String foo) {
     System.out.println("Message Received 1: " + foo);
@@ -536,10 +434,11 @@ public void listen2(String foo) {
 }
 
 @PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = "failover")
-public void liste3n(String foo) {
+public void listen3(String foo) {
     System.out.println("Message Received 3: " + foo);
 }
-```
+----
+====
 
 When following this approach, you can see that a single partition always gets consumed by a dedicated consumer.
 
@@ -548,7 +447,9 @@ Keep in mind though, that when using the `shared` mode, you lose any ordering gu
 
 Here is an example.
 
-```
+====
+[source, java]
+----
 @PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "shared")
 public void listen1(String foo) {
     System.out.println("Message Received 1: " + foo);
@@ -558,62 +459,75 @@ public void listen1(String foo) {
 public void listen2(String foo) {
     System.out.println("Message Received 2: " + foo);
 }
-```
+----
+====
 
-=== Accessing the Pulsar Message Object
+==== Accessing the Pulsar Message Object
 
 In your `PulsarListener` method, you can receive the record directly as a Pulsar Message instead of the actual payload type.
 Here is an example.
 
-```
+====
+[source, java]
+----
 @PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
 public void listen(org.apache.pulsar.client.api.Message<String> message) {
     System.out.println("Data Received: " + message.getValue());
 }
-```
+----
+====
 
-=== Accessing the Pulsar Messages Object
+==== Accessing the Pulsar Messages Object
 
 When consuming messages in batch mode using `PulsarListener`, instead of receiving them as a `List, you can receive them as Pulsar Messages type.
 Here is an example.
 
-```
+====
+[source, java]
+----
 @PulsarListener(subscriptionName = "batch-subscription", topics = "hello-pulsar", batch = "true")
 public void listen(org.apache.pulsar.client.api.Messages<String> messages) {
     // Iterate on the messages
     // Each iteration gives access to a org.apache.pulsar.client.api.Message object
 }
-```
+----
+====
 
-=== Accessing the Pulsar Consumer Object
+==== Accessing the Pulsar Consumer Object
 
 Sometimes, it is necessary to gain direct access to the Pulsar Consumer object.
 Here is how you may do so.
 
-```
+====
+[source, java]
+----
 @PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
 public void listen(String message, org.apache.pulsar.client.api.Consumer<String> consumer) {
     System.out.println("Message Received: " + message);
     ConsumerStats stats = consumer.getStats();
     ...
 }
-```
+----
+====
 
 When accessing the `Consumer` object this way, make sure NOT to invoke any operations that would change the Consumer's cursor position by invoking any receive methods.
 All such operations must be done by the container.
 
-=== Specify schema information
+==== Specify schema information
 
 As indicated above, for normal Java types (the primitive ones), Spring Pulsar framework can infer the proper Schema to use on the `PulsarListener`.
 However, for more complex types such as JSON or AVRO, you need to specify the schema type on the annotation.
 Here is how you provide that.
 
-```
+====
+[source, java]
+----
 @PulsarListener(subscriptionName = "json-subscription", topics = "hello-pulsar-json", schemaType = SchemaType.JSON)
 public void listen(Foo foo) {
     System.out.println("Message received: " + foo);
 }
-```
+----
+====
 
 On the producer side also, for the Java primitive types, the framework can infer the Schema, but for any other types, you need set that on the `PulsarTemmplate`.
 

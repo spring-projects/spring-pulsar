@@ -18,6 +18,7 @@ package org.springframework.pulsar.config;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Properties;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -70,6 +71,11 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 
 	@Override
 	public SchemaType getSchemaType() {
+		return null;
+	}
+
+	@Override
+	public Properties getConsumerProperties() {
 		return null;
 	}
 

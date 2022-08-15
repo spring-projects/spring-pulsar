@@ -21,7 +21,8 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageListener;
 
 /**
- * Base record MessageListener that takes into account acknowledgments.
+ * Base record MessageListener that simply extends from {@link MessageListener}. This
+ * extension is needed as a base class to deal with acknowledgments in the framework.
  *
  * @param <T> message payload type
  * @author Soby Chacko

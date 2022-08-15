@@ -38,4 +38,8 @@ public interface PulsarMessageListenerContainer extends SmartLifecycle, Disposab
 		// empty
 	}
 
+	default PulsarContainerProperties getContainerProperties() {
+		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");
+	}
+
 }

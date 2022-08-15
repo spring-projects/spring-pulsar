@@ -128,7 +128,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		verify(containerConsumer, never()).acknowledge(any(Message.class));
-		verify(containerConsumer, atLeastOnce()).acknowledge(any(Messages.class));
+		verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class));
 		container.stop();
 		pulsarClient.close();
 	}
@@ -270,7 +270,7 @@ class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(Messages.class));
-		verify(containerConsumer, times(1)).acknowledge(any(Messages.class));
+		verify(containerConsumer, times(1)).acknowledgeCumulative(any(Message.class));
 		container.stop();
 		pulsarClient.close();
 	}

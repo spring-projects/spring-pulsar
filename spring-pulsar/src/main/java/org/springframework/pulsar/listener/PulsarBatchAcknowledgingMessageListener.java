@@ -19,6 +19,12 @@ package org.springframework.pulsar.listener;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
 
+/**
+ * Batch message listener that allows manual acknowledgment.
+ *
+ * @param <T> payload type.
+ * @author Soby Chacko
+ */
 public interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchMessageListener<T> {
 
 	default void received(Consumer<T> consumer, Messages<T> msg) {

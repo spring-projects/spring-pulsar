@@ -10,4 +10,8 @@ TIP: Spring Boot provides various conversion mechanism with advanced value forma
 NOTE: Property contributions can come from additional jar files on your classpath, so you should not consider this an exhaustive list.
 Also, you can define your own properties.
 
-include::application-properties/pulsar.adoc[]
+include::application-properties/pulsar-client.adoc[]
+
+include::application-properties/pulsar-producer.adoc[]
+
+include::application-properties/pulsar-consumer.adoc[]

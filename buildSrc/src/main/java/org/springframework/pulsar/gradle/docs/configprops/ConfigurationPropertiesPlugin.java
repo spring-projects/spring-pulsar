@@ -79,11 +79,6 @@ public class ConfigurationPropertiesPlugin implements Plugin<Project> {
 	 private void addConfigurationProcessorDependency(Project project) {
 		 Configuration annotationProcessors = project.getConfigurations()
 				 .getByName(JavaPlugin.ANNOTATION_PROCESSOR_CONFIGURATION_NAME);
-//		 Object bootVersion = project.findProperty("springBootVersion");
-//		 if (bootVersion == null) {
-//			 bootVersion = project.findProperty("spring-boot.version");
-//		 }
-//		 Assert.notNull(bootVersion, "Unable to determine Spring Boot version");
 		 annotationProcessors.getDependencies().add(project.getDependencies().create(
 				 "org.springframework.boot:spring-boot-configuration-processor"));
 	 }

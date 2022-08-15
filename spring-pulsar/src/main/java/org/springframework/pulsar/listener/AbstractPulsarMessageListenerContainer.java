@@ -131,4 +131,8 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 		return this.phase;
 	}
 
+	public PulsarContainerProperties getContainerProperties() {
+		return this.pulsarContainerProperties;
+	}
+
 }

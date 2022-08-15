@@ -19,6 +19,12 @@ package org.springframework.pulsar.listener;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 
+/**
+ * Message listener for manually acknowledging messages.
+ *
+ * @param <T> payload type.
+ * @author Soby Chacko
+ */
 public interface PulsarAcknowledgingMessageListener<T> extends PulsarRecordMessageListener<T> {
 
 	default void received(Consumer<T> consumer, Message<T> msg) {

@@ -17,6 +17,7 @@
 package org.springframework.pulsar.listener;
 
 import java.time.Duration;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
@@ -63,7 +64,7 @@ public class PulsarContainerProperties {
 
 	private String subscriptionName;
 
-	private SubscriptionType subscriptionType;
+	private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
 	private Schema<?> schema;
 
@@ -82,6 +83,8 @@ public class PulsarContainerProperties {
 	private boolean batchListener;
 
 	private AckMode ackMode = AckMode.BATCH;
+
+	private Properties pulsarConsumerProperties = new Properties();
 
 	public PulsarContainerProperties(String... topics) {
 		this.topics = topics.clone();
@@ -209,6 +212,14 @@ public class PulsarContainerProperties {
 
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
+	}
+
+	public Properties getPulsarConsumerProperties() {
+		return this.pulsarConsumerProperties;
+	}
+
+	public void setPulsarConsumerProperties(Properties pulsarConsumerProperties) {
+		this.pulsarConsumerProperties = pulsarConsumerProperties;
 	}
 
 }

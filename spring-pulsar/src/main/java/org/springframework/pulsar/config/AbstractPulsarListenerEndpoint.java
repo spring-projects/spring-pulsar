@@ -181,6 +181,10 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		this.consumerProperties = consumerProperties;
 	}
 
+	public Properties getConsumerProperties() {
+		return this.consumerProperties;
+	}
+
 	@Nullable
 	public Boolean getBatchListener() {
 		return this.batchListener;
