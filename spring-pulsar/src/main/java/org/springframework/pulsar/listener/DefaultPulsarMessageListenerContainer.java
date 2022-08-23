@@ -59,8 +59,6 @@ import org.springframework.util.StringUtils;
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
-	private volatile boolean running = false;
-
 	private volatile CompletableFuture<?> listenerConsumerFuture;
 
 	private volatile Listener listenerConsumer;
@@ -76,11 +74,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	}
 
 	@Override
-	public void start() {
-		doStart();
-	}
-
-	private void doStart() {
+	protected void doStart() {
 
 		PulsarContainerProperties containerProperties = getPulsarContainerProperties();
 
@@ -114,7 +108,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	}
 
 	@Override
-	public void stop() {
+	public void doStop() {
 		setRunning(false);
 		this.logger.info("Pausing this consumer.");
 		this.listenerConsumer.consumer.pause();
@@ -125,15 +119,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		catch (PulsarClientException e) {
 			this.logger.error(e, () -> "Error closing Pulsar Client.");
 		}
-	}
-
-	@Override
-	public boolean isRunning() {
-		return this.running;
-	}
-
-	protected void setRunning(boolean running) {
-		this.running = running;
 	}
 
 	@Override

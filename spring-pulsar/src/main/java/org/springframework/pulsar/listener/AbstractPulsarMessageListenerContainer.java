@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.util.Assert;
 
 /**
  * Base implementation for the {@link PulsarMessageListenerContainer}.
@@ -47,11 +48,15 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 
 	private final PulsarContainerProperties pulsarContainerProperties;
 
-	private final PulsarConsumerFactory<T> pulsarConsumerFactory;
+	protected final PulsarConsumerFactory<T> pulsarConsumerFactory;
 
 	private boolean autoStartup = true;
 
 	private int phase;
+
+	protected final Object lifecycleMonitor = new Object();
+
+	private volatile boolean running = false;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
@@ -64,6 +69,15 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
+	}
+
+	@Override
+	public boolean isRunning() {
+		return this.running;
+	}
+
+	protected void setRunning(boolean running) {
+		this.running = running;
 	}
 
 	/**
@@ -133,6 +147,30 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 
 	public PulsarContainerProperties getContainerProperties() {
 		return this.pulsarContainerProperties;
+	}
+
+	protected abstract void doStart();
+
+	protected abstract void doStop();
+
+	@Override
+	public final void start() {
+		synchronized (this.lifecycleMonitor) {
+			if (!isRunning()) {
+				Assert.state(this.pulsarContainerProperties.getMessageListener() instanceof PulsarRecordMessageListener,
+						() -> "A " + PulsarRecordMessageListener.class.getName() + " implementation must be provided");
+				doStart();
+			}
+		}
+	}
+
+	@Override
+	public void stop() {
+		synchronized (this.lifecycleMonitor) {
+			if (!isRunning()) {
+				doStop();
+			}
+		}
 	}
 
 }
