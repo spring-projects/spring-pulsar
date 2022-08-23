@@ -19,6 +19,7 @@ package app1;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 
 @SpringBootApplication
@@ -86,9 +88,11 @@ public class SpringPulsarBootApp {
 	 * associated PulsarListener using an exclusive subscription.
 	 */
 	@Bean
-	ApplicationRunner runner3(PulsarTemplate<Foo> pulsarTemplate) {
+	ApplicationRunner runner3(PulsarProducerFactory<Foo> producerFactory) {
 
 		String topic = "hello-pulsar-exclusive-3";
+		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+		pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 		return args -> {
 			for (int i = 0; i < 10; i++) {
 				Foo foo = new Foo(i + "-" + "Foo-" + UUID.randomUUID(), i + "-" + "Bar-" + UUID.randomUUID());
@@ -107,9 +111,11 @@ public class SpringPulsarBootApp {
 	 * Publish and then use PulsarListener in batch listening mode.
 	 */
 	@Bean
-	ApplicationRunner runner4(PulsarTemplate<Foo> pulsarTemplate) {
+	ApplicationRunner runner4(PulsarProducerFactory<Foo> producerFactory) {
 
 		String topic = "hello-pulsar-exclusive-4";
+		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+		pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 		return args -> {
 			for (int i = 0; i < 100; i++) {
 				Foo foo = new Foo(i + "-" + "Foo-" + UUID.randomUUID(), i + "-" + "Bar-" + UUID.randomUUID());
