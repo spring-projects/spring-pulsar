@@ -54,7 +54,7 @@ import org.springframework.util.Assert;
 /**
  * @author Soby Chacko
  */
-class PulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
+class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 	@Test
 	void testRecordAck() throws Exception {

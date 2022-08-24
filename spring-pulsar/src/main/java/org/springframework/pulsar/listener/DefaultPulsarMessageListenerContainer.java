@@ -186,6 +186,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						.timeout(pulsarContainerProperties.getBatchTimeout(), TimeUnit.MILLISECONDS).build();
 				this.consumer = getPulsarConsumerFactory().createConsumer(
 						(Schema) pulsarContainerProperties.getSchema(), batchReceivePolicy, propertiesToOverride);
+				Assert.state(this.consumer != null, "Unable to create a consumer");
 			}
 			catch (PulsarClientException e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");

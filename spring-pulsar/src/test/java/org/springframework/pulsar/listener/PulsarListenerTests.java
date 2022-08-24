@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.config.DefaultPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
@@ -113,7 +113,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		@Bean
 		PulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			final DefaultPulsarListenerContainerFactory<?, ?> pulsarListenerContainerFactory = new DefaultPulsarListenerContainerFactory<>();
+			final ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>();
 			pulsarListenerContainerFactory.setPulsarConsumerFactory(pulsarConsumerFactory);
 			return pulsarListenerContainerFactory;
 		}

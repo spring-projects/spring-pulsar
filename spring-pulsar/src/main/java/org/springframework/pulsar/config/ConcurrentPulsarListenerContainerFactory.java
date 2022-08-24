@@ -21,23 +21,32 @@ import java.util.Collection;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 
-import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.util.StringUtils;
 
 /**
  * Concrete implementation for {@link PulsarListenerContainerFactory}.
  *
- * @param <C> container implementation type.
  * @param <T> message type in the listener.
  * @author Soby Chacko
  * @author Chris Bono
  */
-public class DefaultPulsarListenerContainerFactory<C, T>
-		extends AbstractPulsarListenerContainerFactory<DefaultPulsarMessageListenerContainer<T>, T> {
+public class ConcurrentPulsarListenerContainerFactory<T>
+		extends AbstractPulsarListenerContainerFactory<ConcurrentPulsarMessageListenerContainer<T>, T> {
+
+	private Integer concurrency;
+
+	/**
+	 * Specify the container concurrency.
+	 * @param concurrency the number of consumers to create.
+	 */
+	public void setConcurrency(Integer concurrency) {
+		this.concurrency = concurrency;
+	}
 
 	@Override
-	protected DefaultPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
+	protected ConcurrentPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
 
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		Collection<String> topics = endpoint.getTopics();
@@ -62,18 +71,25 @@ public class DefaultPulsarListenerContainerFactory<C, T>
 
 		properties.setSchemaType(endpoint.getSchemaType());
 
-		return new DefaultPulsarMessageListenerContainer<T>(getPulsarConsumerFactory(), properties);
+		return new ConcurrentPulsarMessageListenerContainer<T>(getPulsarConsumerFactory(), properties);
 	}
 
 	@Override
-	protected void initializeContainer(DefaultPulsarMessageListenerContainer<T> instance,
+	protected void initializeContainer(ConcurrentPulsarMessageListenerContainer<T> instance,
 			PulsarListenerEndpoint endpoint) {
 
 		super.initializeContainer(instance, endpoint);
+		Integer conc = endpoint.getConcurrency();
+		if (conc != null) {
+			instance.setConcurrency(conc);
+		}
+		else if (this.concurrency != null) {
+			instance.setConcurrency(this.concurrency);
+		}
 	}
 
 	@Override
-	public DefaultPulsarMessageListenerContainer<T> createContainer(String... topics) {
+	public ConcurrentPulsarMessageListenerContainer<T> createContainer(String... topics) {
 		PulsarListenerEndpoint endpoint = new PulsarListenerEndpointAdapter() {
 
 			@Override
@@ -82,7 +98,7 @@ public class DefaultPulsarListenerContainerFactory<C, T>
 			}
 
 		};
-		DefaultPulsarMessageListenerContainer<T> container = createContainerInstance(endpoint);
+		ConcurrentPulsarMessageListenerContainer<T> container = createContainerInstance(endpoint);
 		initializeContainer(container, endpoint);
 		// customizeContainer(container);
 		return container;

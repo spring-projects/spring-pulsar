@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
-import org.springframework.pulsar.config.DefaultPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -46,9 +46,9 @@ public class PulsarAnnotationDrivenConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean(name = "pulsarListenerContainerFactory")
-	DefaultPulsarListenerContainerFactory<?, ?> pulsarListenerContainerFactory(
+	ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
 			ObjectProvider<PulsarConsumerFactory<Object>> pulsarConsumerFactory) {
-		DefaultPulsarListenerContainerFactory<Object, Object> factory = new DefaultPulsarListenerContainerFactory<>();
+		ConcurrentPulsarListenerContainerFactory<Object> factory = new ConcurrentPulsarListenerContainerFactory<>();
 
 		final PulsarConsumerFactory<Object> pulsarConsumerFactory1 = pulsarConsumerFactory.getIfAvailable();
 		factory.setPulsarConsumerFactory(pulsarConsumerFactory1);

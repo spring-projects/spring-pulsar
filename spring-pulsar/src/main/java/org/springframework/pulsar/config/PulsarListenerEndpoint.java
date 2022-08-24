@@ -58,4 +58,7 @@ public interface PulsarListenerEndpoint {
 
 	Properties getConsumerProperties();
 
+	@Nullable
+	Integer getConcurrency();
+
 }

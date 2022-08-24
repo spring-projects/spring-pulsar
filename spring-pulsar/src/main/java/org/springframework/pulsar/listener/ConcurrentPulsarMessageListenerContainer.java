@@ -42,7 +42,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 
 	private final List<AsyncTaskExecutor> executors = new ArrayList<>();
 
-	protected ConcurrentPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
+	public ConcurrentPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
 			PulsarContainerProperties pulsarContainerProperties) {
 		super(pulsarConsumerFactory, pulsarContainerProperties);
 	}
@@ -98,13 +98,8 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 
 		AsyncTaskExecutor exec = container.getContainerProperties().getConsumerTaskExecutor();
 		if (exec == null) {
-			if ((this.executors.size() > index)) {
-				exec = this.executors.get(index);
-			}
-			else {
-				exec = new SimpleAsyncTaskExecutor(beanName + "-C-");
-				this.executors.add(exec);
-			}
+			exec = new SimpleAsyncTaskExecutor(beanName + "-C-");
+			this.executors.add(exec);
 			container.getContainerProperties().setConsumerTaskExecutor(exec);
 		}
 	}

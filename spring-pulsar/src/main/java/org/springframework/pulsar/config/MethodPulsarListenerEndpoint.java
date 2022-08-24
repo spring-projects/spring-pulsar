@@ -38,7 +38,7 @@ import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.listener.Acknowledgement;
-import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
@@ -122,7 +122,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			methodParameter = parameter.get();
 		}
 
-		final DefaultPulsarMessageListenerContainer<?> containerInstance = (DefaultPulsarMessageListenerContainer<?>) container;
+		final ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
 		final PulsarContainerProperties pulsarContainerProperties = containerInstance.getPulsarContainerProperties();
 		final SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		if (schemaType != SchemaType.NONE) {

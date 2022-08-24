@@ -36,7 +36,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarBootstrapConfiguration;
 import org.springframework.pulsar.annotation.PulsarListenerAnnotationBeanPostProcessor;
-import org.springframework.pulsar.config.DefaultPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
@@ -84,12 +84,13 @@ class PulsarAutoConfigurationTests {
 
 	@Test
 	void defaultBeansAreAutoConfigured() {
-		this.contextRunner.run((context) -> assertThat(context).hasNotFailed()
-				.hasSingleBean(PulsarClientConfiguration.class).hasSingleBean(PulsarClientFactoryBean.class)
-				.hasSingleBean(PulsarProducerFactory.class).hasSingleBean(PulsarTemplate.class)
-				.hasSingleBean(PulsarConsumerFactory.class).hasSingleBean(DefaultPulsarListenerContainerFactory.class)
-				.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
-				.hasSingleBean(PulsarListenerEndpointRegistry.class));
+		this.contextRunner
+				.run((context) -> assertThat(context).hasNotFailed().hasSingleBean(PulsarClientConfiguration.class)
+						.hasSingleBean(PulsarClientFactoryBean.class).hasSingleBean(PulsarProducerFactory.class)
+						.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
+						.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
+						.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
+						.hasSingleBean(PulsarListenerEndpointRegistry.class));
 	}
 
 	@Test

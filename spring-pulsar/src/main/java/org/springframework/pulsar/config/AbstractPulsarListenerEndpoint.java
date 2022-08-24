@@ -77,6 +77,8 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 
 	private Boolean batchListener;
 
+	private Integer concurrency;
+
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
 		this.beanFactory = beanFactory;
@@ -212,6 +214,21 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
+	}
+
+	@Override
+	@Nullable
+	public Integer getConcurrency() {
+		return this.concurrency;
+	}
+
+	/**
+	 * Set the concurrency for this endpoint's container.
+	 * @param concurrency the concurrency.
+	 * @since 2.2
+	 */
+	public void setConcurrency(Integer concurrency) {
+		this.concurrency = concurrency;
 	}
 
 }

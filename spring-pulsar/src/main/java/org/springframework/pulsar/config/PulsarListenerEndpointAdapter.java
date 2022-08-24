@@ -23,6 +23,7 @@ import java.util.Properties;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.support.MessageConverter;
 
@@ -76,6 +77,12 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 
 	@Override
 	public Properties getConsumerProperties() {
+		return null;
+	}
+
+	@Nullable
+	@Override
+	public Integer getConcurrency() {
 		return null;
 	}
 
