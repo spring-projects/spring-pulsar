@@ -100,12 +100,12 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 					if (topic.isPartitioned()) {
 						List<String> matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
 						if (matchingPartitions.isEmpty()) {
-							logger.info("Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
+							logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
 							topicsToCreate.add(topic);
 						} else {
 							int numberOfExistingPartitions = matchingPartitions.size();
 							if (numberOfExistingPartitions < topic.numberOfPartitions()) {
-								logger.info("Topic " + topic.getFullyQualifiedTopicName() + " found with "
+								logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " found with "
 										+ numberOfExistingPartitions + " partitions.");
 								topicsToModify.add(topic);
 							} else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
@@ -117,7 +117,7 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 						}
 					} else {
 						if (!existingTopicsInNamespace.contains(topic.getFullyQualifiedTopicName())) {
-							logger.info("Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
+							logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
 							topicsToCreate.add(topic);
 						}
 					}
@@ -133,7 +133,7 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 	}
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
-		logger.debug("Creating topics: "  + topicsToCreate.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
+		logger.debug(() -> "Creating topics: "  + topicsToCreate.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
@@ -144,7 +144,7 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 	}
 
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
-		logger.debug("Modifying topics: "  + topicsToModify.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
+		logger.debug(() -> "Modifying topics: "  + topicsToModify.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}
