@@ -35,7 +35,7 @@ public class PulsarAdministrationBadContextTests extends AbstractContainerBaseTe
 
 			@Bean
 			PulsarTopic partitionedTopic() {
-				return PulsarTopic.builder("dpc-partitioned-1").setNumberOfPartitions(4).build();
+				return PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(4).build();
 			}
 		}
 	}

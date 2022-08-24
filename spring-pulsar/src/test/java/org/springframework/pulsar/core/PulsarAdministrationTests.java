@@ -1,15 +1,18 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminException;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
@@ -23,23 +26,24 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 	private static final String NAMESPACE = "public/default";
 
 	@Autowired
-	private ApplicationContext applicationContext;
+	private PulsarAdmin pulsarAdminClient;
+
+	@Autowired
+	private PulsarAdministration pulsarAdministration;
 
 	@Configuration(proxyBeanMethods = false)
 	static class AdminConfiguration {
 		@Bean
-		PulsarAdministration admin() {
-			return new PulsarAdministration(Map.of("serviceUrl", getHttpServiceUrl()));
+		PulsarAdmin pulsarAdminClient() throws PulsarClientException {
+			return PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build();
+		}
+		@Bean
+		PulsarAdministration pulsarAdministration() {
+			return new PulsarAdministration(PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()));
 		}
 	}
 
-	List<String> getTopics() throws Exception {
-		try (PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build()) {
-			return admin.topics().getList(NAMESPACE);
-		}
-	}
-
-	void assertTopicsExist(List<String> actualTopics, ObjectProvider<PulsarTopic> expected) {
+	private void assertThatTopicsExist(List<PulsarTopic> expected) throws PulsarAdminException {
 		List<String> expectedTopics= expected.stream()
 				.<String>mapMulti((topic, consumer) -> {
 					if (topic.isPartitioned()) {
@@ -51,7 +55,7 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 					}
 
 				}).toList();
-		assertThat(actualTopics).containsAll(expectedTopics);
+		assertThat(pulsarAdminClient.topics().getList(NAMESPACE)).containsAll(expectedTopics);
 	}
 
 	@Nested
@@ -60,8 +64,7 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 
 		@Test
 		void testTopics(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
-			List<String> actualTopics = getTopics();
-			assertTopicsExist(actualTopics, expectedTopics);
+			assertThatTopicsExist(expectedTopics.stream().toList());
 		}
 
 		@Configuration(proxyBeanMethods = false)
@@ -79,7 +82,7 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 
 			@Bean
 			PulsarTopic partitionedTopic() {
-				return PulsarTopic.builder("cmt-partitioned-1").setNumberOfPartitions(4).build();
+				return PulsarTopic.builder("cmt-partitioned-1").numberOfPartitions(4).build();
 			}
 		}
 
@@ -91,26 +94,41 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 
 		@Test
 		void testTopics(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
-			List<String> actualTopics = getTopics();
-			assertTopicsExist(actualTopics, expectedTopics);
+			assertThatTopicsExist(expectedTopics.stream().toList());
+			PulsarTopic biggerTopic = PulsarTopic.builder("ipc-partitioned-1").numberOfPartitions(4).build();
+			pulsarAdministration.createOrModifyTopics(biggerTopic);
+			assertThatTopicsExist(Collections.singletonList(biggerTopic));
 		}
 
 		@Configuration(proxyBeanMethods = false)
 		static class IncrementPartitionCountConfig {
-
-			static {
-				try (PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build()) {
-					admin.topics().createPartitionedTopic("ipc-partitioned-1", 2);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-
 			@Bean
-			PulsarTopic partitionedTopic() {
-				return PulsarTopic.builder("ipc-partitioned-1").setNumberOfPartitions(4).build();
+			PulsarTopic smallerTopic() {
+				return PulsarTopic.builder("ipc-partitioned-1").numberOfPartitions(1).build();
 			}
 		}
 	}
 
+	@Nested
+	@ContextConfiguration(classes = DecrementPartitionCountTest.DecrementPartitionCountConfig.class)
+	class DecrementPartitionCountTest {
+
+		@Test
+		void testTopics(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
+			assertThatTopicsExist(expectedTopics.stream().toList());
+			PulsarTopic smallerTopic = PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(4).build();
+			assertThatIllegalStateException()
+					.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(smallerTopic))
+					.withMessage("Topic persistent://public/default/dpc-partitioned-1 found with 8 partitions. Needs to be deleted first.");
+
+		}
+
+		@Configuration(proxyBeanMethods = false)
+		static class DecrementPartitionCountConfig {
+			@Bean
+			PulsarTopic biggerTopic() {
+				return PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(8).build();
+			}
+		}
+	}
 }

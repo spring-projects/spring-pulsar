@@ -3,7 +3,7 @@ package org.springframework.pulsar.core;
 import java.util.Map;
 import org.apache.pulsar.common.naming.TopicDomain;
 
-public record PulsarTopic(String topicName, int numberOfPartitions, Map<String, String> properties) {
+public record PulsarTopic(String topicName, int numberOfPartitions) {
 
 	public static PulsarTopicBuilder builder(String topicName) {
 		return new PulsarTopicBuilder(topicName);

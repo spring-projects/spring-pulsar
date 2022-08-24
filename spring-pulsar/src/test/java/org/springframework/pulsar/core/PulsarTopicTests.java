@@ -18,7 +18,6 @@ public class PulsarTopicTests {
 
 		assertThat(topic.topicName()).isEqualTo(topicName);
 		assertThat(topic.numberOfPartitions()).isEqualTo(0);
-		assertThat(topic.properties()).isNull();
 	}
 
 	@ParameterizedTest

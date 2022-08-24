@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.core.log.LogMessage;
 import org.springframework.util.CollectionUtils;
 
 public class PulsarAdministration implements ApplicationContextAware, SmartInitializingSingleton, PulsarAdminOperations {
@@ -47,20 +49,7 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 
 	public void initialize() {
 		Collection<PulsarTopic> topics = this.applicationContext.getBeansOfType(PulsarTopic.class, false, false).values();
-		if (CollectionUtils.isEmpty(topics)) {
-			return;
-		}
-
-		PulsarAdmin admin = null;
-		try {
-			admin = createAdminClient();
-		} catch (Exception e) {
-			throw new IllegalStateException("Could not create PulsarAdmin", e);
-		}
-
-		if (admin != null) {
-			createOrModifyTopicsIfNeeded(admin, topics);
-		}
+		createOrModifyTopicsIfNeeded(topics);
 	}
 
 	private PulsarAdmin createAdminClient() throws PulsarClientException {
@@ -69,28 +58,14 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 
 	@Override
 	public void createOrModifyTopics(PulsarTopic... topics) {
-		PulsarAdmin admin;
-		try {
-			admin = createAdminClient();
-		} catch (Exception e) {
-			throw new IllegalStateException("Could not create PulsarAdmin", e);
-		}
-
-		if (admin != null) {
-			createOrModifyTopicsIfNeeded(admin, Arrays.asList(topics));
-		}
+		createOrModifyTopicsIfNeeded(Arrays.asList(topics));
 	}
 
 	private Map<String, List<PulsarTopic>> getTopicsPerNamespace(Collection<PulsarTopic> topics) {
-		Map<String, List<PulsarTopic>> topicsPerNamespace = new HashMap<>();
-		topics.forEach(topic -> {
-			PulsarTopic.TopicComponents topicComponents = topic.getComponents();
-			String tenant = topicComponents.tenant();
-			String namespace = topicComponents.namespace();
-			String namespaceIdentifier = tenant + "/" + namespace;
-			topicsPerNamespace.computeIfAbsent(namespaceIdentifier, k -> new ArrayList<>()).add(topic);
-		});
-		return topicsPerNamespace;
+		return topics.stream().collect(Collectors.groupingBy(this::getTopicNamespaceIdentifier));
+	}
+	private String getTopicNamespaceIdentifier(PulsarTopic topic) {
+		return topic.getComponents().tenant() + "/" + topic.getComponents().namespace();
 	}
 
 	private List<String> getMatchingTopicPartitions(PulsarTopic topic, List<String> existingTopics) {
@@ -100,9 +75,16 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 				.toList();
 	}
 
-	private void createOrModifyTopicsIfNeeded(PulsarAdmin admin, Collection<PulsarTopic> topics) {
+	private void createOrModifyTopicsIfNeeded(Collection<PulsarTopic> topics) {
 		if (CollectionUtils.isEmpty(topics)) {
 			return;
+		}
+
+		PulsarAdmin admin;
+		try {
+			admin = createAdminClient();
+		} catch (Exception e) {
+			throw new IllegalStateException("Could not create PulsarAdmin", e);
 		}
 
 		Map<String, List<PulsarTopic>> topicsPerNamespace = getTopicsPerNamespace(topics);
@@ -111,7 +93,7 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 		Set<PulsarTopic> topicsToModify = new HashSet<>();
 
 		topicsPerNamespace.forEach((namespace, requestedTopics) -> {
-			try (admin) {
+			try {
 				List<String> existingTopicsInNamespace = admin.topics().getList(namespace);
 
 				for (PulsarTopic topic : requestedTopics) {
@@ -147,9 +129,11 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 				throw new RuntimeException(e);
 			}
 		});
+		admin.close();
 	}
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
+		logger.debug("Creating topics: "  + topicsToCreate.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
@@ -160,6 +144,7 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 	}
 
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
+		logger.debug("Modifying topics: "  + topicsToModify.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}
