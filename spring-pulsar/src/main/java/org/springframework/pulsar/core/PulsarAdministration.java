@@ -1,38 +1,72 @@
+/*
+ * Copyright 2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.pulsar.core;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClientException;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.core.log.LogMessage;
 import org.springframework.util.CollectionUtils;
 
-public class PulsarAdministration implements ApplicationContextAware, SmartInitializingSingleton, PulsarAdminOperations {
+/**
+ * An administration class that delegates to {@link PulsarAdmin} to create and manage
+ * topics defined in the application context.
+ *
+ * @author Chris Bono
+ * @author Alexander Preuß
+ */
+public class PulsarAdministration
+		implements ApplicationContextAware, SmartInitializingSingleton, PulsarAdministrationOperations {
+
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
 	private final PulsarAdminBuilder adminBuilder;
 
 	private ApplicationContext applicationContext;
 
+	/**
+	 * Construct a {@code PulsarAdministration} instance using the given configuration for
+	 * the underlying {@link PulsarAdmin}.
+	 * @param adminConfig the {@link PulsarAdmin} configuration
+	 */
 	public PulsarAdministration(Map<String, Object> adminConfig) {
 		this.adminBuilder = PulsarAdmin.builder().loadConf(adminConfig);
 	}
 
+	/**
+	 * Construct a {@code PulsarAdministration} instance using the given builder for the
+	 * underlying {@link PulsarAdmin}.
+	 * @param adminBuilder the {@link PulsarAdminBuilder}
+	 */
 	public PulsarAdministration(PulsarAdminBuilder adminBuilder) {
 		this.adminBuilder = adminBuilder;
 	}
@@ -47,13 +81,14 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 		this.applicationContext = applicationContext;
 	}
 
-	public void initialize() {
-		Collection<PulsarTopic> topics = this.applicationContext.getBeansOfType(PulsarTopic.class, false, false).values();
+	private void initialize() {
+		Collection<PulsarTopic> topics = this.applicationContext.getBeansOfType(PulsarTopic.class, false, false)
+				.values();
 		createOrModifyTopicsIfNeeded(topics);
 	}
 
 	private PulsarAdmin createAdminClient() throws PulsarClientException {
-		return adminBuilder.build();
+		return this.adminBuilder.build();
 	}
 
 	@Override
@@ -64,15 +99,14 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 	private Map<String, List<PulsarTopic>> getTopicsPerNamespace(Collection<PulsarTopic> topics) {
 		return topics.stream().collect(Collectors.groupingBy(this::getTopicNamespaceIdentifier));
 	}
+
 	private String getTopicNamespaceIdentifier(PulsarTopic topic) {
 		return topic.getComponents().tenant() + "/" + topic.getComponents().namespace();
 	}
 
 	private List<String> getMatchingTopicPartitions(PulsarTopic topic, List<String> existingTopics) {
-		return existingTopics
-				.stream()
-				.filter(existing -> existing.startsWith(topic.getFullyQualifiedTopicName() + "-partition-"))
-				.toList();
+		return existingTopics.stream()
+				.filter(existing -> existing.startsWith(topic.getFullyQualifiedTopicName() + "-partition-")).toList();
 	}
 
 	private void createOrModifyTopicsIfNeeded(Collection<PulsarTopic> topics) {
@@ -80,9 +114,10 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 			return;
 		}
 
-		try(PulsarAdmin admin = createAdminClient()) {
+		try (PulsarAdmin admin = createAdminClient()) {
 			doCreateOrModifyTopicsIfNeeded(admin, topics);
-		} catch (PulsarClientException e) {
+		}
+		catch (PulsarClientException e) {
 			throw new IllegalStateException("Could not create PulsarAdmin", e);
 		}
 	}
@@ -101,24 +136,26 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 					if (topic.isPartitioned()) {
 						List<String> matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
 						if (matchingPartitions.isEmpty()) {
-							logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
+							this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
 							topicsToCreate.add(topic);
-						} else {
+						}
+						else {
 							int numberOfExistingPartitions = matchingPartitions.size();
 							if (numberOfExistingPartitions < topic.numberOfPartitions()) {
-								logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " found with "
+								this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " found with "
 										+ numberOfExistingPartitions + " partitions.");
 								topicsToModify.add(topic);
-							} else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
-								throw new IllegalStateException(
-										"Topic " + topic.getFullyQualifiedTopicName() + " found with "
-												+ numberOfExistingPartitions
-												+ " partitions. Needs to be deleted first.");
+							}
+							else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
+								throw new IllegalStateException("Topic " + topic.getFullyQualifiedTopicName()
+										+ " found with " + numberOfExistingPartitions
+										+ " partitions. Needs to be deleted first.");
 							}
 						}
-					} else {
+					}
+					else {
 						if (!existingTopicsInNamespace.contains(topic.getFullyQualifiedTopicName())) {
-							logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
+							this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
 							topicsToCreate.add(topic);
 						}
 					}
@@ -126,31 +163,32 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 
 				createTopics(admin, topicsToCreate);
 				modifyTopics(admin, topicsToModify);
-			} catch (PulsarAdminException e) {
+			}
+			catch (PulsarAdminException e) {
 				throw new RuntimeException(e);
 			}
 		});
 	}
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
-		logger.debug(() -> "Creating topics: "  + topicsToCreate.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
+		this.logger.debug(() -> "Creating topics: " + topicsToCreate.stream()
+				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
-			} else {
+			}
+			else {
 				admin.topics().createNonPartitionedTopic(topic.topicName());
 			}
 		}
 	}
 
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
-		logger.debug(() -> "Modifying topics: "  + topicsToModify.stream().map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
+		this.logger.debug(() -> "Modifying topics: " + topicsToModify.stream()
+				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}
 	}
 
-
-	
-	
 }
