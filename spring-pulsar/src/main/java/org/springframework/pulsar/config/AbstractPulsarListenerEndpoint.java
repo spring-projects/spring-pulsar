@@ -225,7 +225,6 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	/**
 	 * Set the concurrency for this endpoint's container.
 	 * @param concurrency the concurrency.
-	 * @since 2.2
 	 */
 	public void setConcurrency(Integer concurrency) {
 		this.concurrency = concurrency;

@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.listener;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -28,6 +29,7 @@ import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.AbstractContainerBaseTests;
@@ -40,7 +42,36 @@ public class ConcurrentPulsarMessageListenerContainerTests extends AbstractConta
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void basicConcurrency() throws Exception {
+	void basicConcurrencyTesting() throws Exception {
+		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
+		Consumer<String> consumer = mock(Consumer.class);
+
+		when(pulsarConsumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
+				.thenReturn(consumer);
+
+		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
+
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (cons, msg) -> {
+		});
+
+		ConcurrentPulsarMessageListenerContainer<String> container = new ConcurrentPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+
+		container.setConcurrency(3);
+
+		container.start();
+
+		verify(pulsarConsumerFactory, times(3)).createConsumer(any(Schema.class), any(BatchReceivePolicy.class),
+				any(Map.class));
+		verify(consumer, times(3)).batchReceive();
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void exclusiveSubscriptionMustUseSingleThread() throws Exception {
 		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
 		Consumer<String> consumer = mock(Consumer.class);
 
@@ -59,12 +90,8 @@ public class ConcurrentPulsarMessageListenerContainerTests extends AbstractConta
 
 		container.setConcurrency(3);
 
-		container.start();
-
-		verify(pulsarConsumerFactory, times(3)).createConsumer(any(Schema.class), any(BatchReceivePolicy.class),
-				any(Map.class));
-
-		verify(consumer, times(3)).batchReceive();
+		assertThatThrownBy(container::start).isInstanceOf(IllegalStateException.class)
+				.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
 	}
 
 }

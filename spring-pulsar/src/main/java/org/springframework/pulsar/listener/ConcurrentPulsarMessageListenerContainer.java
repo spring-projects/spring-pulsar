@@ -19,6 +19,8 @@ package org.springframework.pulsar.listener;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.pulsar.client.api.SubscriptionType;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -66,6 +68,10 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	public void doStart() {
 		if (!isRunning()) {
 			PulsarContainerProperties containerProperties = getContainerProperties();
+
+			if (containerProperties.getSubscriptionType() == SubscriptionType.Exclusive && this.concurrency > 1) {
+				throw new IllegalStateException("concurrency > 1 is not allowed on Exclusive subscription type");
+			}
 
 			setRunning(true);
 

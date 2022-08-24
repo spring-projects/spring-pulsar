@@ -142,9 +142,22 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		// BeanUtils.copyProperties(this.containerProperties, properties, "topics",
 		// "messageListener",
 		// "batchListener", "subscriptionName", "subscriptionType", "schema");
+
+		if (properties.getSchemaType() == null) {
+			if (this.containerProperties.getSchemaType() != null) {
+				properties.setSchemaType(this.containerProperties.getSchemaType());
+			}
+		}
+
 		if (properties.getSchema() == null) {
 			properties.setSchema(Schema.BYTES);
 		}
+
+		if (properties.getSubscriptionType() == null) {
+			properties.setSubscriptionType(this.containerProperties.getSubscriptionType());
+		}
+
+		properties.setAckMode(this.containerProperties.getAckMode());
 
 		Boolean autoStart = endpoint.getAutoStartup();
 		if (autoStart != null) {
