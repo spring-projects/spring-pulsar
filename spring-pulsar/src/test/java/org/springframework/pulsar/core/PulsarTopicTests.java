@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class PulsarTopicTests {
 
 	@Test
-	void testBuilderDefaultValues() {
+	void builderDefaultValues() {
 		String topicName = "test-default-values";
 		PulsarTopicBuilder builder = PulsarTopic.builder(topicName);
 		PulsarTopic topic = builder.build();
@@ -21,8 +21,8 @@ public class PulsarTopicTests {
 	}
 
 	@ParameterizedTest
-	@MethodSource("testTopicComponentsProvider")
-	void testTopicComponents(PulsarTopic topic, TopicDomain domain, String tenant, String namespace, String topicName) {
+	@MethodSource("topicComponentsProvider")
+	void topicComponents(PulsarTopic topic, TopicDomain domain, String tenant, String namespace, String topicName) {
 		PulsarTopic.TopicComponents components = topic.getComponents();
 		assertThat(components.domain()).isEqualTo(domain);
 		assertThat(components.tenant()).isEqualTo(tenant);
@@ -30,7 +30,7 @@ public class PulsarTopicTests {
 		assertThat(components.topic()).isEqualTo(topicName);
 	}
 
-	private static Stream<Arguments> testTopicComponentsProvider() {
+	private static Stream<Arguments> topicComponentsProvider() {
 		return Stream.of(
 				Arguments.of(PulsarTopic.builder("topic-1").build(),
 						TopicDomain.persistent, "public", "default", "topic-1"),

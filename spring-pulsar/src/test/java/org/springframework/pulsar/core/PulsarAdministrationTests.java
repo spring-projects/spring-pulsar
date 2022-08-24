@@ -63,7 +63,7 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 	class CreateMissingTopicsTest {
 
 		@Test
-		void testTopics(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
+		void topicsExist(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
 			assertThatTopicsExist(expectedTopics.stream().toList());
 		}
 
@@ -93,7 +93,7 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 	class IncrementPartitionCountTest {
 
 		@Test
-		void testTopics(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
+		void topicsExist(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
 			assertThatTopicsExist(expectedTopics.stream().toList());
 			PulsarTopic biggerTopic = PulsarTopic.builder("ipc-partitioned-1").numberOfPartitions(4).build();
 			pulsarAdministration.createOrModifyTopics(biggerTopic);
@@ -114,7 +114,7 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 	class DecrementPartitionCountTest {
 
 		@Test
-		void testTopics(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
+		void topicModificationThrows(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
 			assertThatTopicsExist(expectedTopics.stream().toList());
 			PulsarTopic smallerTopic = PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(4).build();
 			assertThatIllegalStateException()

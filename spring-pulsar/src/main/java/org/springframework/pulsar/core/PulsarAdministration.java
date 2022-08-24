@@ -80,13 +80,14 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 			return;
 		}
 
-		PulsarAdmin admin;
-		try {
-			admin = createAdminClient();
-		} catch (Exception e) {
+		try(PulsarAdmin admin = createAdminClient()) {
+			doCreateOrModifyTopicsIfNeeded(admin, topics);
+		} catch (PulsarClientException e) {
 			throw new IllegalStateException("Could not create PulsarAdmin", e);
 		}
+	}
 
+	private void doCreateOrModifyTopicsIfNeeded(PulsarAdmin admin, Collection<PulsarTopic> topics) {
 		Map<String, List<PulsarTopic>> topicsPerNamespace = getTopicsPerNamespace(topics);
 
 		Set<PulsarTopic> topicsToCreate = new HashSet<>();
@@ -129,7 +130,6 @@ public class PulsarAdministration implements ApplicationContextAware, SmartIniti
 				throw new RuntimeException(e);
 			}
 		});
-		admin.close();
 	}
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
