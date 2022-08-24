@@ -39,15 +39,6 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	}
 
 	/**
-	 * Get the fully-qualified name of the topic.
-	 * @return the fully-qualified topic name
-	 */
-	public String getFullyQualifiedTopicName() {
-		return this.getComponents().toString();
-
-	}
-
-	/**
 	 * Checks if the topic is partitioned.
 	 * @return true if the topic is partitioned
 	 */
@@ -76,6 +67,16 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	}
 
 	/**
+	 * Get the fully-qualified name of the topic.
+	 * @return the fully-qualified topic name
+	 */
+	@Override
+	public String toString() {
+		TopicComponents components = this.getComponents();
+		return components.domain + "://" + components.tenant + "/" + components.namespace + "/" + components.name;
+	}
+
+	/**
 	 * Model class for the individual identifying components of a Pulsar topic.
 	 * @param domain the topic domain
 	 * @param tenant the topic tenant
@@ -83,9 +84,6 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	 * @param name the topic name
 	 */
 	record TopicComponents(TopicDomain domain, String tenant, String namespace, String name) {
-		@Override
-		public String toString() {
-			return this.domain + "://" + this.tenant + "/" + this.namespace + "/" + this.name;
-		}
+
 	}
 }
