@@ -345,6 +345,11 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		endpoint.setSubscriptionType(getEndpointSubscriptionType(pulsarListener));
 		endpoint.setSchemaType(pulsarListener.schemaType());
 
+		String concurrency = pulsarListener.concurrency();
+		if (StringUtils.hasText(concurrency)) {
+			endpoint.setConcurrency(resolveExpressionAsInteger(concurrency, "concurrency"));
+		}
+
 		String autoStartup = pulsarListener.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
@@ -352,6 +357,23 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		resolvePulsarProperties(endpoint, pulsarListener.properties());
 		endpoint.setBatchListener(pulsarListener.batch());
 		endpoint.setBeanFactory(this.beanFactory);
+	}
+
+	private Integer resolveExpressionAsInteger(String value, String attribute) {
+		Object resolved = resolveExpression(value);
+		Integer result = null;
+		if (resolved instanceof String) {
+			result = Integer.parseInt((String) resolved);
+		}
+		else if (resolved instanceof Number) {
+			result = ((Number) resolved).intValue();
+		}
+		else if (resolved != null) {
+			throw new IllegalStateException(
+					THE_LEFT + attribute + "] must resolve to an Number or a String that can be parsed as an Integer. "
+							+ RESOLVED_TO_LEFT + resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
+		}
+		return result;
 	}
 
 	private Boolean resolveExpressionAsBoolean(String value, String attribute) {

@@ -32,13 +32,12 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 
 /**
  * @author Soby Chacko
  */
-public class ConcurrentPulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
+public class ConcurrentPulsarMessageListenerContainerTests {
 
 	@Test
 	@SuppressWarnings("unchecked")
