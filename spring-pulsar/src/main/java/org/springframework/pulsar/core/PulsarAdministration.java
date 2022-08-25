@@ -41,7 +41,6 @@ import org.springframework.util.CollectionUtils;
  * An administration class that delegates to {@link PulsarAdmin} to create and manage
  * topics defined in the application context.
  *
- * @author Chris Bono
  * @author Alexander Preuß
  */
 public class PulsarAdministration

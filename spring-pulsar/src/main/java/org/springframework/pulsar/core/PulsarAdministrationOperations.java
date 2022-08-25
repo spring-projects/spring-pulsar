@@ -19,7 +19,6 @@ package org.springframework.pulsar.core;
 /**
  * The Pulsar administration contract.
  *
- * @author Chris Bono
  * @author Alexander Preuß
  */
 public interface PulsarAdministrationOperations {

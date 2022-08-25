@@ -19,7 +19,6 @@ package org.springframework.pulsar.core;
 /**
  * Builder class to create {@link PulsarTopic} instances.
  *
- * @author Chris Bono
  * @author Alexander Preuß
  */
 public class PulsarTopicBuilder {

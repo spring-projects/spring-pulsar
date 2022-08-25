@@ -39,7 +39,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 /**
  * Tests for {@link PulsarAdministration}.
  *
- * @author Chris Bono
  * @author Alexander Preuß
  */
 @ExtendWith(SpringExtension.class)

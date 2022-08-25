@@ -29,7 +29,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Tests for {@link PulsarTopic}.
  *
- * @author Chris Bono
  * @author Alexander Preuß
  */
 public class PulsarTopicTests {

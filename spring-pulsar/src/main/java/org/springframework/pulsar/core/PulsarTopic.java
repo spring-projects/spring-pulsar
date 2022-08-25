@@ -29,7 +29,6 @@ import org.apache.pulsar.common.naming.TopicDomain;
  * @param topicName the topic name
  * @param numberOfPartitions the number of partitions, or 0 for non-partitioned topics
  *
- * @author Chris Bono
  * @author Alexander Preuß
  */
 public record PulsarTopic(String topicName, int numberOfPartitions) {
