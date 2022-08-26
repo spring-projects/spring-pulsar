@@ -17,12 +17,14 @@
 package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.BatchReceivePolicy;
@@ -63,9 +65,9 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		container.start();
 
-		verify(pulsarConsumerFactory, times(3)).createConsumer(any(Schema.class), any(BatchReceivePolicy.class),
-				any(Map.class));
-		verify(consumer, times(3)).batchReceive();
+		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(pulsarConsumerFactory, times(3))
+				.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)));
+		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(consumer, times(3)).batchReceive());
 	}
 
 	@Test
