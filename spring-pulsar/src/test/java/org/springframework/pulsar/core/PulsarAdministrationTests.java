@@ -57,11 +57,11 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 		List<String> expectedTopics = expected.stream().<String>mapMulti((topic, consumer) -> {
 			if (topic.isPartitioned()) {
 				for (int i = 0; i < topic.numberOfPartitions(); i++) {
-					consumer.accept(topic + "-partition-" + i);
+					consumer.accept(topic.getFullyQualifiedTopicName() + "-partition-" + i);
 				}
 			}
 			else {
-				consumer.accept(topic.toString());
+				consumer.accept(topic.getFullyQualifiedTopicName());
 			}
 
 		}).toList();

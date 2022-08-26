@@ -104,7 +104,8 @@ public class PulsarAdministration
 	}
 
 	private List<String> getMatchingTopicPartitions(PulsarTopic topic, List<String> existingTopics) {
-		return existingTopics.stream().filter(existing -> existing.startsWith(topic + "-partition-")).toList();
+		return existingTopics.stream()
+				.filter(existing -> existing.startsWith(topic.getFullyQualifiedTopicName() + "-partition-")).toList();
 	}
 
 	private void createOrModifyTopicsIfNeeded(Collection<PulsarTopic> topics) {
@@ -134,25 +135,26 @@ public class PulsarAdministration
 					if (topic.isPartitioned()) {
 						List<String> matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
 						if (matchingPartitions.isEmpty()) {
-							this.logger.debug(() -> "Topic " + topic + " does not exist.");
+							this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
 							topicsToCreate.add(topic);
 						}
 						else {
 							int numberOfExistingPartitions = matchingPartitions.size();
 							if (numberOfExistingPartitions < topic.numberOfPartitions()) {
-								this.logger.debug(() -> "Topic " + topic + " found with " + numberOfExistingPartitions
-										+ " partitions.");
+								this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " found with "
+										+ numberOfExistingPartitions + " partitions.");
 								topicsToModify.add(topic);
 							}
 							else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
-								throw new IllegalStateException("Topic " + topic + " found with "
-										+ numberOfExistingPartitions + " partitions. Needs to be deleted first.");
+								throw new IllegalStateException("Topic " + topic.getFullyQualifiedTopicName()
+										+ " found with " + numberOfExistingPartitions
+										+ " partitions. Needs to be deleted first.");
 							}
 						}
 					}
 					else {
-						if (!existingTopicsInNamespace.contains(topic.toString())) {
-							this.logger.debug(() -> "Topic " + topic + " does not exist.");
+						if (!existingTopicsInNamespace.contains(topic.getFullyQualifiedTopicName())) {
+							this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
 							topicsToCreate.add(topic);
 						}
 					}
@@ -168,8 +170,8 @@ public class PulsarAdministration
 	}
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
-		this.logger.debug(() -> "Creating topics: "
-				+ topicsToCreate.stream().map(PulsarTopic::toString).collect(Collectors.joining(",")));
+		this.logger.debug(() -> "Creating topics: " + topicsToCreate.stream()
+				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
@@ -181,8 +183,8 @@ public class PulsarAdministration
 	}
 
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
-		this.logger.debug(() -> "Modifying topics: "
-				+ topicsToModify.stream().map(PulsarTopic::toString).collect(Collectors.joining(",")));
+		this.logger.debug(() -> "Modifying topics: " + topicsToModify.stream()
+				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
 		for (PulsarTopic topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}
