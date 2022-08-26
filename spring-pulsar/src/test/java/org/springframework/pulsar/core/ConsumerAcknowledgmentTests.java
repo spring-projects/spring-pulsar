@@ -17,6 +17,7 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -127,8 +129,10 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
-		verify(containerConsumer, never()).acknowledge(any(Message.class));
-		verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, never()).acknowledge(any(Message.class)));
+		await().atMost(Duration.ofSeconds(10)).untilAsserted(
+				() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
 	}
@@ -170,8 +174,10 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		Thread.sleep(1_000);
 		// Half of the message get acknowledged, and the other half gets negatively
 		// acknowledged.
-		verify(containerConsumer, times(5)).acknowledge(any(Message.class));
-		verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
 	}
@@ -223,7 +229,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		// We are asserting that we got 10 valid ack objects through the receive method
 		// invocation.
 		assertThat(acksObjects.size()).isEqualTo(10);
-		verify(containerConsumer, times(10)).acknowledge(any(Message.class));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, times(10)).acknowledge(any(Message.class)));
 
 		container.stop();
 		pulsarClient.close();
@@ -269,8 +276,10 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
-		verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(Messages.class));
-		verify(containerConsumer, times(1)).acknowledgeCumulative(any(Message.class));
+		await().atMost(Duration.ofSeconds(10)).untilAsserted(
+				() -> verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(Messages.class)));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, times(1)).acknowledgeCumulative(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
 	}
@@ -316,8 +325,10 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		Thread.sleep(2_000);
-		verify(containerConsumer, times(1)).negativeAcknowledge(any(Messages.class));
-		verify(containerConsumer, never()).acknowledge(any(Messages.class));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, times(1)).negativeAcknowledge(any(Messages.class)));
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, never()).acknowledge(any(Messages.class)));
 		container.stop();
 		pulsarClient.close();
 	}
