@@ -47,6 +47,7 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
  * properties.
  *
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 @ConfigurationProperties(prefix = "spring.pulsar")
 public class PulsarProperties {
@@ -58,6 +59,8 @@ public class PulsarProperties {
 	private final Listener listener = new Listener();
 
 	private final Producer producer = new Producer();
+
+	private final Administration administration = new Administration();
 
 	public Map<String, Object> buildConsumerProperties() {
 		return new HashMap<>(this.consumer.buildProperties());
@@ -85,6 +88,10 @@ public class PulsarProperties {
 
 	public Map<String, Object> buildClientProperties() {
 		return new HashMap<>(this.client.buildProperties());
+	}
+
+	public Map<String, Object> buildAdministrationProperties() {
+		return new HashMap<>(this.administration.buildProperties());
 	}
 
 	public static class Consumer {
@@ -831,6 +838,186 @@ public class PulsarProperties {
 
 		public void setSchemaType(SchemaType schemaType) {
 			this.schemaType = schemaType;
+		}
+
+	}
+
+	public static class Administration {
+
+		private String serviceUrl;
+
+		private String authPluginClassName;
+
+		private String authParams;
+
+		private String tlsTrustCertsFilePath;
+
+		private boolean tlsAllowInsecureConnection = false;
+
+		private boolean tlsHostnameVerificationEnable = false;
+
+		private boolean useKeyStoreTls = false;
+
+		private String sslProvider;
+
+		private String tlsTrustStoreType;
+
+		private String tlsTrustStorePath;
+
+		private String tlsTrustStorePassword;
+
+		private String[] tlsCiphers;
+
+		private String[] tlsProtocols;
+
+		private long connectionTimeoutMs = 60_000L;
+
+		private long requestTimeoutMs = 300_000L;
+
+		public String getServiceUrl() {
+			return this.serviceUrl;
+		}
+
+		public void setServiceUrl(String serviceUrl) {
+			this.serviceUrl = serviceUrl;
+		}
+
+		public String getAuthPluginClassName() {
+			return this.authPluginClassName;
+		}
+
+		public void setAuthPluginClassName(String authPluginClassName) {
+			this.authPluginClassName = authPluginClassName;
+		}
+
+		public String getAuthParams() {
+			return this.authParams;
+		}
+
+		public void setAuthParams(String authParams) {
+			this.authParams = authParams;
+		}
+
+		public String getTlsTrustCertsFilePath() {
+			return this.tlsTrustCertsFilePath;
+		}
+
+		public void setTlsTrustCertsFilePath(String tlsTrustCertsFilePath) {
+			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
+		}
+
+		public boolean isTlsAllowInsecureConnection() {
+			return this.tlsAllowInsecureConnection;
+		}
+
+		public void setTlsAllowInsecureConnection(boolean tlsAllowInsecureConnection) {
+			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
+		}
+
+		public boolean isTlsHostnameVerificationEnable() {
+			return this.tlsHostnameVerificationEnable;
+		}
+
+		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
+			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
+		}
+
+		public boolean isUseKeyStoreTls() {
+			return this.useKeyStoreTls;
+		}
+
+		public void setUseKeyStoreTls(boolean useKeyStoreTls) {
+			this.useKeyStoreTls = useKeyStoreTls;
+		}
+
+		public String getSslProvider() {
+			return this.sslProvider;
+		}
+
+		public void setSslProvider(String sslProvider) {
+			this.sslProvider = sslProvider;
+		}
+
+		public String getTlsTrustStoreType() {
+			return this.tlsTrustStoreType;
+		}
+
+		public void setTlsTrustStoreType(String tlsTrustStoreType) {
+			this.tlsTrustStoreType = tlsTrustStoreType;
+		}
+
+		public String getTlsTrustStorePath() {
+			return this.tlsTrustStorePath;
+		}
+
+		public void setTlsTrustStorePath(String tlsTrustStorePath) {
+			this.tlsTrustStorePath = tlsTrustStorePath;
+		}
+
+		public String getTlsTrustStorePassword() {
+			return this.tlsTrustStorePassword;
+		}
+
+		public void setTlsTrustStorePassword(String tlsTrustStorePassword) {
+			this.tlsTrustStorePassword = tlsTrustStorePassword;
+		}
+
+		public String[] getTlsCiphers() {
+			return this.tlsCiphers;
+		}
+
+		public void setTlsCiphers(String[] tlsCiphers) {
+			this.tlsCiphers = tlsCiphers;
+		}
+
+		public String[] getTlsProtocols() {
+			return this.tlsProtocols;
+		}
+
+		public void setTlsProtocols(String[] tlsProtocols) {
+			this.tlsProtocols = tlsProtocols;
+		}
+
+		public long getConnectionTimeoutMs() {
+			return this.connectionTimeoutMs;
+		}
+
+		public void setConnectionTimeoutMs(long connectionTimeoutMs) {
+			this.connectionTimeoutMs = connectionTimeoutMs;
+		}
+
+		public long getRequestTimeoutMs() {
+			return this.requestTimeoutMs;
+		}
+
+		public void setRequestTimeoutMs(long requestTimeoutMs) {
+			this.requestTimeoutMs = requestTimeoutMs;
+		}
+
+		public Map<String, Object> buildProperties() {
+			PulsarProperties.Properties properties = new Properties();
+
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+
+			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
+			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
+			map.from(this::getAuthParams).to(properties.in("authParams"));
+			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
+			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
+			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
+			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
+			map.from(this::getSslProvider).to(properties.in("sslProvider"));
+			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
+			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
+			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
+			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
+			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
+			map.from(this::getConnectionTimeoutMs).to(properties.in("connectionTimeoutMs"));
+			map.from(this::getRequestTimeoutMs).to(properties.in("requestTimeoutMs"));
+
+			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
+
+			return properties;
 		}
 
 	}

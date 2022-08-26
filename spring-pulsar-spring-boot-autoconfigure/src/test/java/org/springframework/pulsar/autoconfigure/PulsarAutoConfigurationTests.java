@@ -43,6 +43,7 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
@@ -90,7 +91,7 @@ class PulsarAutoConfigurationTests {
 						.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
 						.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
 						.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
-						.hasSingleBean(PulsarListenerEndpointRegistry.class));
+						.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class));
 	}
 
 	@Test
