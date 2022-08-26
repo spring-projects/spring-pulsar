@@ -34,6 +34,7 @@ import org.gradle.api.tasks.TaskAction;
  * @author Andy Wilkinson
  * @author Phillip Webb
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public class DocumentConfigurationProperties extends DefaultTask {
 
@@ -69,6 +70,7 @@ public class DocumentConfigurationProperties extends DefaultTask {
 			c.accept("spring.pulsar.consumer");
 			c.accept("spring.pulsar.listener");
 		});
+		snippets.add("application-properties.pulsar-administration", "Pulsar Administration Properties", (c) -> c.accept("spring.pulsar.administration"));
 		snippets.writeTo(this.outputDir.toPath());
 	}
 }
