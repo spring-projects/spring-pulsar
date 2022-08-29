@@ -603,29 +603,55 @@ public class PulsarProperties {
 
 		private String serviceUrl;
 
+		private String listenerName;
+
 		private String authPluginClassName;
 
 		private String authParams;
 
+		private Map<String, String> authParamsMap;
+
 		private long operationTimeoutMs = 30000L;
 
-		private long statsIntervalSeconds = 60;
+		private long lookupTimeoutMs = -1;
 
 		private int numIoThreads = 1;
+
+		private int numListenerThreads = 1;
+
+		private int numConnectionsPerBroker = 1;
 
 		private boolean useTcpNoDelay = true;
 
 		private boolean useTls = false;
 
+		private boolean tlsHostnameVerificationEnable = false;
+
 		private String tlsTrustCertsFilePath;
 
 		private boolean tlsAllowInsecureConnection = false;
 
-		private boolean tlsHostnameVerificationEnable = false;
+		private boolean useKeyStoreTls = false;
 
-		private int concurrentLookupRequest = 5000;
+		private String sslProvider;
+
+		private String tlsTrustStoreType;
+
+		private String tlsTrustStorePath;
+
+		private String tlsTrustStorePassword;
+
+		private String[] tlsCiphers;
+
+		private String[] tlsProtocols;
+
+		private long statsIntervalSeconds = 60;
+
+		private int maxConcurrentLookupRequest = 5000;
 
 		private int maxLookupRequest = 50000;
+
+		private int maxLookupRedirects = 20;
 
 		private int maxNumberOfRejectedRequestPerConnection = 50;
 
@@ -633,11 +659,25 @@ public class PulsarProperties {
 
 		private int connectionTimeoutMs = 10000;
 
-		private int requestTimeoutMs = 60000;
-
 		private long initialBackoffIntervalNanos = TimeUnit.MILLISECONDS.toNanos(100);
 
 		private long maxBackoffIntervalNanos = TimeUnit.SECONDS.toNanos(30);
+
+		private boolean enableBusyWait = false;
+
+		private long memoryLimitBytes = 64 * 1024 * 1024;
+
+		private boolean enableTransaction = false;
+
+		private String dnsLookupBindAddress;
+
+		private int dnsLookupBindPort = 0;
+
+		private String socks5ProxyAddress;
+
+		private String socks5ProxyUsername;
+
+		private String socks5ProxyPassword;
 
 		public String getServiceUrl() {
 			return this.serviceUrl;
@@ -645,6 +685,14 @@ public class PulsarProperties {
 
 		public void setServiceUrl(String serviceUrl) {
 			this.serviceUrl = serviceUrl;
+		}
+
+		public String getListenerName() {
+			return this.listenerName;
+		}
+
+		public void setListenerName(String listenerName) {
+			this.listenerName = listenerName;
 		}
 
 		public String getAuthPluginClassName() {
@@ -663,6 +711,14 @@ public class PulsarProperties {
 			this.authParams = authParams;
 		}
 
+		public Map<String, String> getAuthParamsMap() {
+			return this.authParamsMap;
+		}
+
+		public void setAuthParamsMap(Map<String, String> authParamsMap) {
+			this.authParamsMap = authParamsMap;
+		}
+
 		public long getOperationTimeoutMs() {
 			return this.operationTimeoutMs;
 		}
@@ -671,12 +727,12 @@ public class PulsarProperties {
 			this.operationTimeoutMs = operationTimeoutMs;
 		}
 
-		public long getStatsIntervalSeconds() {
-			return this.statsIntervalSeconds;
+		public long getLookupTimeoutMs() {
+			return this.lookupTimeoutMs;
 		}
 
-		public void setStatsIntervalSeconds(long statsIntervalSeconds) {
-			this.statsIntervalSeconds = statsIntervalSeconds;
+		public void setLookupTimeoutMs(long lookupTimeoutMs) {
+			this.lookupTimeoutMs = lookupTimeoutMs;
 		}
 
 		public int getNumIoThreads() {
@@ -685,6 +741,22 @@ public class PulsarProperties {
 
 		public void setNumIoThreads(int numIoThreads) {
 			this.numIoThreads = numIoThreads;
+		}
+
+		public int getNumListenerThreads() {
+			return this.numListenerThreads;
+		}
+
+		public void setNumListenerThreads(int numListenerThreads) {
+			this.numListenerThreads = numListenerThreads;
+		}
+
+		public int getNumConnectionsPerBroker() {
+			return this.numConnectionsPerBroker;
+		}
+
+		public void setNumConnectionsPerBroker(int numConnectionsPerBroker) {
+			this.numConnectionsPerBroker = numConnectionsPerBroker;
 		}
 
 		public boolean isUseTcpNoDelay() {
@@ -703,6 +775,14 @@ public class PulsarProperties {
 			this.useTls = useTls;
 		}
 
+		public boolean isTlsHostnameVerificationEnable() {
+			return this.tlsHostnameVerificationEnable;
+		}
+
+		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
+			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
+		}
+
 		public String getTlsTrustCertsFilePath() {
 			return this.tlsTrustCertsFilePath;
 		}
@@ -719,20 +799,76 @@ public class PulsarProperties {
 			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
 		}
 
-		public boolean isTlsHostnameVerificationEnable() {
-			return this.tlsHostnameVerificationEnable;
+		public boolean isUseKeyStoreTls() {
+			return this.useKeyStoreTls;
 		}
 
-		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
-			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
+		public void setUseKeyStoreTls(boolean useKeyStoreTls) {
+			this.useKeyStoreTls = useKeyStoreTls;
 		}
 
-		public int getConcurrentLookupRequest() {
-			return this.concurrentLookupRequest;
+		public String getSslProvider() {
+			return this.sslProvider;
 		}
 
-		public void setConcurrentLookupRequest(int concurrentLookupRequest) {
-			this.concurrentLookupRequest = concurrentLookupRequest;
+		public void setSslProvider(String sslProvider) {
+			this.sslProvider = sslProvider;
+		}
+
+		public String getTlsTrustStoreType() {
+			return this.tlsTrustStoreType;
+		}
+
+		public void setTlsTrustStoreType(String tlsTrustStoreType) {
+			this.tlsTrustStoreType = tlsTrustStoreType;
+		}
+
+		public String getTlsTrustStorePath() {
+			return this.tlsTrustStorePath;
+		}
+
+		public void setTlsTrustStorePath(String tlsTrustStorePath) {
+			this.tlsTrustStorePath = tlsTrustStorePath;
+		}
+
+		public String getTlsTrustStorePassword() {
+			return this.tlsTrustStorePassword;
+		}
+
+		public void setTlsTrustStorePassword(String tlsTrustStorePassword) {
+			this.tlsTrustStorePassword = tlsTrustStorePassword;
+		}
+
+		public String[] getTlsCiphers() {
+			return this.tlsCiphers;
+		}
+
+		public void setTlsCiphers(String[] tlsCiphers) {
+			this.tlsCiphers = tlsCiphers;
+		}
+
+		public String[] getTlsProtocols() {
+			return this.tlsProtocols;
+		}
+
+		public void setTlsProtocols(String[] tlsProtocols) {
+			this.tlsProtocols = tlsProtocols;
+		}
+
+		public long getStatsIntervalSeconds() {
+			return this.statsIntervalSeconds;
+		}
+
+		public void setStatsIntervalSeconds(long statsIntervalSeconds) {
+			this.statsIntervalSeconds = statsIntervalSeconds;
+		}
+
+		public int getMaxConcurrentLookupRequest() {
+			return this.maxConcurrentLookupRequest;
+		}
+
+		public void setMaxConcurrentLookupRequest(int maxConcurrentLookupRequest) {
+			this.maxConcurrentLookupRequest = maxConcurrentLookupRequest;
 		}
 
 		public int getMaxLookupRequest() {
@@ -741,6 +877,14 @@ public class PulsarProperties {
 
 		public void setMaxLookupRequest(int maxLookupRequest) {
 			this.maxLookupRequest = maxLookupRequest;
+		}
+
+		public int getMaxLookupRedirects() {
+			return this.maxLookupRedirects;
+		}
+
+		public void setMaxLookupRedirects(int maxLookupRedirects) {
+			this.maxLookupRedirects = maxLookupRedirects;
 		}
 
 		public int getMaxNumberOfRejectedRequestPerConnection() {
@@ -767,14 +911,6 @@ public class PulsarProperties {
 			this.connectionTimeoutMs = connectionTimeoutMs;
 		}
 
-		public int getRequestTimeoutMs() {
-			return this.requestTimeoutMs;
-		}
-
-		public void setRequestTimeoutMs(int requestTimeoutMs) {
-			this.requestTimeoutMs = requestTimeoutMs;
-		}
-
 		public long getInitialBackoffIntervalNanos() {
 			return this.initialBackoffIntervalNanos;
 		}
@@ -791,31 +927,115 @@ public class PulsarProperties {
 			this.maxBackoffIntervalNanos = maxBackoffIntervalNanos;
 		}
 
+		public boolean isEnableBusyWait() {
+			return this.enableBusyWait;
+		}
+
+		public void setEnableBusyWait(boolean enableBusyWait) {
+			this.enableBusyWait = enableBusyWait;
+		}
+
+		public long getMemoryLimitBytes() {
+			return this.memoryLimitBytes;
+		}
+
+		public void setMemoryLimitBytes(long memoryLimitBytes) {
+			this.memoryLimitBytes = memoryLimitBytes;
+		}
+
+		public boolean isEnableTransaction() {
+			return this.enableTransaction;
+		}
+
+		public void setEnableTransaction(boolean enableTransaction) {
+			this.enableTransaction = enableTransaction;
+		}
+
+		public String getDnsLookupBindAddress() {
+			return this.dnsLookupBindAddress;
+		}
+
+		public void setDnsLookupBindAddress(String dnsLookupBindAddress) {
+			this.dnsLookupBindAddress = dnsLookupBindAddress;
+		}
+
+		public int getDnsLookupBindPort() {
+			return this.dnsLookupBindPort;
+		}
+
+		public void setDnsLookupBindPort(int dnsLookupBindPort) {
+			this.dnsLookupBindPort = dnsLookupBindPort;
+		}
+
+		public String getSocks5ProxyAddress() {
+			return this.socks5ProxyAddress;
+		}
+
+		public void setSocks5ProxyAddress(String socks5ProxyAddress) {
+			this.socks5ProxyAddress = socks5ProxyAddress;
+		}
+
+		public String getSocks5ProxyUsername() {
+			return this.socks5ProxyUsername;
+		}
+
+		public void setSocks5ProxyUsername(String socks5ProxyUsername) {
+			this.socks5ProxyUsername = socks5ProxyUsername;
+		}
+
+		public String getSocks5ProxyPassword() {
+			return this.socks5ProxyPassword;
+		}
+
+		public void setSocks5ProxyPassword(String socks5ProxyPassword) {
+			this.socks5ProxyPassword = socks5ProxyPassword;
+		}
+
 		public Map<String, Object> buildProperties() {
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
+			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
+			map.from(this::getAuthParamsMap).to(properties.in("authParamMap"));
 			map.from(this::getOperationTimeoutMs).to(properties.in("operationTimeoutMs"));
-			map.from(this::getStatsIntervalSeconds).to(properties.in("statsIntervalSeconds"));
+			map.from(this::getLookupTimeoutMs).to(properties.in("lookupTimeoutMs"));
 			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
+			map.from(this::getNumListenerThreads).to(properties.in("numListenerThreads"));
+			map.from(this::getNumConnectionsPerBroker).to(properties.in("connectionsPerBroker"));
 			map.from(this::isUseTcpNoDelay).to(properties.in("useTcpNoDelay"));
 			map.from(this::isUseTls).to(properties.in("useTls"));
+			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
-			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
-			map.from(this::getConcurrentLookupRequest).to(properties.in("concurrentLookupRequest"));
+			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
+			map.from(this::getSslProvider).to(properties.in("sslProvider"));
+			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
+			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
+			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
+			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
+			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
+			map.from(this::getStatsIntervalSeconds).to(properties.in("statsIntervalSeconds"));
+			map.from(this::getMaxConcurrentLookupRequest).to(properties.in("concurrentLookupRequest"));
 			map.from(this::getMaxLookupRequest).to(properties.in("maxLookupRequest"));
+			map.from(this::getMaxLookupRedirects).to(properties.in("maxLookupRedirects"));
 			map.from(this::getMaxNumberOfRejectedRequestPerConnection)
 					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
 			map.from(this::getKeepAliveIntervalSeconds).to(properties.in("keepAliveIntervalSeconds"));
 			map.from(this::getConnectionTimeoutMs).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getRequestTimeoutMs).to(properties.in("requestTimeoutMs"));
 			map.from(this::getInitialBackoffIntervalNanos).to(properties.in("initialBackoffIntervalNanos"));
 			map.from(this::getMaxBackoffIntervalNanos).to(properties.in("maxBackoffIntervalNanos"));
+			map.from(this::isEnableBusyWait).to(properties.in("enableBusyWait"));
+			map.from(this::getMemoryLimitBytes).to(properties.in("memoryLimitBytes"));
+			map.from(this::isEnableTransaction).to(properties.in("enableTransaction"));
+			map.from(this::getDnsLookupBindAddress).to(properties.in("dnsLookupBindAddress"));
+			map.from(this::getDnsLookupBindPort).to(properties.in("dnsLookupBindPort"));
+			map.from(this::getSocks5ProxyAddress).to(properties.in("socks5ProxyAddress"));
+			map.from(this::getSocks5ProxyUsername).to(properties.in("socks5ProxyUsername"));
+			map.from(this::getSocks5ProxyPassword).to(properties.in("socks5ProxyPassword"));
 
 			return properties;
 		}
