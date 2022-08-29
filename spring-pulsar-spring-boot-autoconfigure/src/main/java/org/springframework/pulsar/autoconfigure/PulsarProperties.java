@@ -854,6 +854,8 @@ public class PulsarProperties {
 
 		private String authParams;
 
+		private Map<String, String> authParamMap;
+
 		private String tlsTrustCertsFilePath;
 
 		private boolean tlsAllowInsecureConnection = false;
@@ -896,6 +898,14 @@ public class PulsarProperties {
 
 		public void setAuthParams(String authParams) {
 			this.authParams = authParams;
+		}
+
+		public Map<String, String> getAuthParamMap() {
+			return this.authParamMap;
+		}
+
+		public void setAuthParamMap(Map<String, String> authParamMap) {
+			this.authParamMap = authParamMap;
 		}
 
 		public String getTlsTrustCertsFilePath() {
@@ -986,6 +996,7 @@ public class PulsarProperties {
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
+			map.from(this::getAuthParamMap).to(properties.in("authParamMap"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
 			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
