@@ -100,50 +100,127 @@ public class PulsarProperties {
 
 	public static class Consumer {
 
+		/**
+		 * Comma-separated list of topics the consumer subscribes to.
+		 */
 		private String[] topics;
 
+		/**
+		 * Pattern for topics the consumer subscribes to.
+		 */
 		private String topicsPattern;
 
+		/**
+		 * Subscription name for the consumer.
+		 */
 		private String subscriptionName;
 
+		/**
+		 * Subscription type to be used when subscribing to a topic.
+		 */
 		private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
+		/**
+		 * Number of messages that can be accumulated before the consumer calls "receive".
+		 */
 		private int receiverQueueSize = 1000;
 
+		/**
+		 * Time to group acknowledgements before sending them to the broker in
+		 * microseconds.
+		 */
 		private long acknowledgementsGroupTimeMicros = TimeUnit.MILLISECONDS.toMicros(100);
 
+		/**
+		 * Delay before re-delivering messages that have failed to be processed in
+		 * microseconds.
+		 */
 		private long negativeAckRedeliveryDelayMicros = TimeUnit.MINUTES.toMicros(1);
 
+		/**
+		 * Maximum number of messages that a consumer can be pushed at once from a broker
+		 * across all partitions.
+		 */
 		private int maxTotalReceiverQueueSizeAcrossPartitions = 50000;
 
+		/**
+		 * Consumer name to identify a particular consumer from the topic stats.
+		 */
 		private String consumerName;
 
+		/**
+		 * Timeout for unacked messages to be redelivered.
+		 */
 		private long ackTimeoutMillis = 0;
 
+		/**
+		 * Precision for the ack timeout messages tracker in milliseconds.
+		 */
 		private long tickDurationMillis = 1000;
 
+		/**
+		 * Priority level for shared subscription consumers.
+		 */
 		private int priorityLevel = 0;
 
+		/**
+		 * Action the consumer will take in case of decryption failure.
+		 */
 		private ConsumerCryptoFailureAction cryptoFailureAction = ConsumerCryptoFailureAction.FAIL;
 
+		/**
+		 * Map of properties to add to the consumer.
+		 */
 		private SortedMap<String, String> properties = new TreeMap<>();
 
+		/**
+		 * Whether to read messages from the compacted topic rather than the full message
+		 * backlog.
+		 */
 		private boolean readCompacted = false;
 
+		/**
+		 * Position where to initialize a newly created subscription.
+		 */
 		private SubscriptionInitialPosition subscriptionInitialPosition = SubscriptionInitialPosition.Latest;
 
+		/**
+		 * Auto-discovery period for topics when topic pattern is used in minutes.
+		 */
 		private int patternAutoDiscoveryPeriod = 1;
 
+		/**
+		 * Determines which topics the consumer should be subscribed to when using pattern
+		 * subscriptions.
+		 */
 		private RegexSubscriptionMode regexSubscriptionMode = RegexSubscriptionMode.PersistentOnly;
 
+		/**
+		 * Whether the consumer auto-subscribes for partition increase. This is only for
+		 * partitioned consumers.
+		 */
 		private boolean autoUpdatePartitions = true;
 
+		/**
+		 * Whether to replicate subscription state.
+		 */
 		private boolean replicateSubscriptionState = false;
 
+		/**
+		 * Whether to automatically drop outstanding un-acked messages if the queue is
+		 * full.
+		 */
 		private boolean autoAckOldestChunkedMessageOnQueueFull = true;
 
+		/**
+		 * Maximum number of chunked messages to be kept in memory.
+		 */
 		private int maxPendingChunkedMessage = 10;
 
+		/**
+		 * Time to expire incomplete chunks if the consumer won't be able to receive all
+		 * chunks before in milliseconds.
+		 */
 		private long expireTimeOfIncompleteChunkedMessageMillis = 60000;
 
 		public String[] getTopics() {
