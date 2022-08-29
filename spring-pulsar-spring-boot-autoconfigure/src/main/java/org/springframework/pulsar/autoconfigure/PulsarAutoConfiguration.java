@@ -33,6 +33,7 @@ import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
@@ -96,6 +97,12 @@ public class PulsarAutoConfiguration {
 	@ConditionalOnMissingBean(PulsarConsumerFactory.class)
 	public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
 		return new DefaultPulsarConsumerFactory<>(pulsarClient, this.properties.buildConsumerProperties());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(PulsarAdministration.class)
+	public PulsarAdministration pulsarAdministration() {
+		return new PulsarAdministration(this.properties.buildAdminProperties());
 	}
 
 }

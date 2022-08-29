@@ -47,6 +47,7 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
  * properties.
  *
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 @ConfigurationProperties(prefix = "spring.pulsar")
 public class PulsarProperties {
@@ -59,80 +60,167 @@ public class PulsarProperties {
 
 	private final Producer producer = new Producer();
 
-	public Map<String, Object> buildConsumerProperties() {
-		return new HashMap<>(this.consumer.buildProperties());
-	}
-
-	public Map<String, Object> buildProducerProperties() {
-		return new HashMap<>(this.producer.buildProperties());
-	}
+	private final Admin admin = new Admin();
 
 	public Consumer getConsumer() {
 		return this.consumer;
-	}
-
-	public Listener getListener() {
-		return this.listener;
 	}
 
 	public Client getClient() {
 		return this.client;
 	}
 
+	public Listener getListener() {
+		return this.listener;
+	}
+
 	public Producer getProducer() {
 		return this.producer;
+	}
+
+	public Admin getAdministration() {
+		return this.admin;
+	}
+
+	public Map<String, Object> buildConsumerProperties() {
+		return new HashMap<>(this.consumer.buildProperties());
 	}
 
 	public Map<String, Object> buildClientProperties() {
 		return new HashMap<>(this.client.buildProperties());
 	}
 
+	public Map<String, Object> buildProducerProperties() {
+		return new HashMap<>(this.producer.buildProperties());
+	}
+
+	public Map<String, Object> buildAdminProperties() {
+		return new HashMap<>(this.admin.buildProperties());
+	}
+
 	public static class Consumer {
 
+		/**
+		 * Comma-separated list of topics the consumer subscribes to.
+		 */
 		private String[] topics;
 
+		/**
+		 * Pattern for topics the consumer subscribes to.
+		 */
 		private String topicsPattern;
 
+		/**
+		 * Subscription name for the consumer.
+		 */
 		private String subscriptionName;
 
+		/**
+		 * Subscription type to be used when subscribing to a topic.
+		 */
 		private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
+		/**
+		 * Number of messages that can be accumulated before the consumer calls "receive".
+		 */
 		private int receiverQueueSize = 1000;
 
+		/**
+		 * Time to group acknowledgements before sending them to the broker in
+		 * microseconds.
+		 */
 		private long acknowledgementsGroupTimeMicros = TimeUnit.MILLISECONDS.toMicros(100);
 
+		/**
+		 * Delay before re-delivering messages that have failed to be processed in
+		 * microseconds.
+		 */
 		private long negativeAckRedeliveryDelayMicros = TimeUnit.MINUTES.toMicros(1);
 
+		/**
+		 * Maximum number of messages that a consumer can be pushed at once from a broker
+		 * across all partitions.
+		 */
 		private int maxTotalReceiverQueueSizeAcrossPartitions = 50000;
 
+		/**
+		 * Consumer name to identify a particular consumer from the topic stats.
+		 */
 		private String consumerName;
 
+		/**
+		 * Timeout for unacked messages to be redelivered.
+		 */
 		private long ackTimeoutMillis = 0;
 
+		/**
+		 * Precision for the ack timeout messages tracker in milliseconds.
+		 */
 		private long tickDurationMillis = 1000;
 
+		/**
+		 * Priority level for shared subscription consumers.
+		 */
 		private int priorityLevel = 0;
 
+		/**
+		 * Action the consumer will take in case of decryption failure.
+		 */
 		private ConsumerCryptoFailureAction cryptoFailureAction = ConsumerCryptoFailureAction.FAIL;
 
+		/**
+		 * Map of properties to add to the consumer.
+		 */
 		private SortedMap<String, String> properties = new TreeMap<>();
 
+		/**
+		 * Whether to read messages from the compacted topic rather than the full message
+		 * backlog.
+		 */
 		private boolean readCompacted = false;
 
+		/**
+		 * Position where to initialize a newly created subscription.
+		 */
 		private SubscriptionInitialPosition subscriptionInitialPosition = SubscriptionInitialPosition.Latest;
 
+		/**
+		 * Auto-discovery period for topics when topic pattern is used in minutes.
+		 */
 		private int patternAutoDiscoveryPeriod = 1;
 
+		/**
+		 * Determines which topics the consumer should be subscribed to when using pattern
+		 * subscriptions.
+		 */
 		private RegexSubscriptionMode regexSubscriptionMode = RegexSubscriptionMode.PersistentOnly;
 
+		/**
+		 * Whether the consumer auto-subscribes for partition increase. This is only for
+		 * partitioned consumers.
+		 */
 		private boolean autoUpdatePartitions = true;
 
+		/**
+		 * Whether to replicate subscription state.
+		 */
 		private boolean replicateSubscriptionState = false;
 
+		/**
+		 * Whether to automatically drop outstanding un-acked messages if the queue is
+		 * full.
+		 */
 		private boolean autoAckOldestChunkedMessageOnQueueFull = true;
 
+		/**
+		 * Maximum number of chunked messages to be kept in memory.
+		 */
 		private int maxPendingChunkedMessage = 10;
 
+		/**
+		 * Time to expire incomplete chunks if the consumer won't be able to receive all
+		 * chunks before in milliseconds.
+		 */
 		private long expireTimeOfIncompleteChunkedMessageMillis = 60000;
 
 		public String[] getTopics() {
@@ -357,36 +445,86 @@ public class PulsarProperties {
 
 	public static class Producer {
 
+		/**
+		 * Topic the producer will publish to.
+		 */
 		private String topicName;
 
+		/**
+		 * Name for the producer. If not assigned, a unique name is generated.
+		 */
 		private String producerName;
 
+		/**
+		 * Time before a message has to be acknowledged by the broker in milliseconds.
+		 */
 		private long sendTimeoutMs = 30000;
 
+		/**
+		 * Whether the "send" and "sendAsync" methods should block if the outgoing message
+		 * queue is full.
+		 */
 		private boolean blockIfQueueFull = false;
 
+		/**
+		 * Maximum number of pending messages for the producer.
+		 */
 		private int maxPendingMessages = 1000;
 
+		/**
+		 * Maximum number of pending messages across all the partitions.
+		 */
 		private int maxPendingMessagesAcrossPartitions = 50000;
 
+		/**
+		 * Message routing mode for a partitioned producer.
+		 */
 		private MessageRoutingMode messageRoutingMode = MessageRoutingMode.RoundRobinPartition;
 
+		/**
+		 * Message hashing scheme to choose the partition to which the message is
+		 * published.
+		 */
 		private HashingScheme hashingScheme = HashingScheme.JavaStringHash;
 
+		/**
+		 * Action the producer will take in case of encryption failure.
+		 */
 		private ProducerCryptoFailureAction cryptoFailureAction = ProducerCryptoFailureAction.FAIL;
 
+		/**
+		 * Time period within which the messages sent will be batched in milliseconds.
+		 */
 		private long batchingMaxPublishDelayMicros = TimeUnit.MILLISECONDS.toMicros(1);
 
+		/**
+		 * Maximum number of messages to be batched.
+		 */
 		private int batchingMaxMessages = 1000;
 
+		/**
+		 * Whether to automatically batch messages.
+		 */
 		private boolean batchingEnabled = true;
 
+		/**
+		 * Whether to split large-size messages into multiple chunks.
+		 */
 		private boolean chunkingEnabled = false;
 
+		/**
+		 * Message compression type.
+		 */
 		private CompressionType compressionType;
 
+		/**
+		 * Name of the initial subscription of the topic.
+		 */
 		private String initialSubscriptionName;
 
+		/**
+		 * Type of access to the topic the producer requires.
+		 */
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
 
 		private Cache cache = new Cache();
@@ -590,43 +728,217 @@ public class PulsarProperties {
 
 	public static class Client {
 
+		/**
+		 * Pulsar cluster URL to connect to a broker.
+		 */
 		private String serviceUrl;
 
+		/**
+		 * Listener name for lookup. Clients can use listenerName to choose one of the
+		 * listeners as the service URL to create a connection to the broker. To use this,
+		 * "advertisedListeners" must be enabled on the broker.
+		 */
+		private String listenerName;
+
+		/**
+		 * Class name of the clients' authentication plugin.
+		 */
 		private String authPluginClassName;
 
+		/**
+		 * Authentication parameter(s) of the client.
+		 */
 		private String authParams;
 
+		/**
+		 * Authentication parameter map of the client.
+		 */
+		private Map<String, String> authParamsMap;
+
+		/**
+		 * Client operation timeout in milliseconds.
+		 */
 		private long operationTimeoutMs = 30000L;
 
-		private long statsIntervalSeconds = 60;
+		/**
+		 * Client lookup timeout in milliseconds.
+		 */
+		private long lookupTimeoutMs = -1;
 
+		/**
+		 * Number of threads to be used for handling connections to brokers.
+		 */
 		private int numIoThreads = 1;
 
+		/**
+		 * Number of threads to be used for message listeners.
+		 *
+		 * The listener thread pool is shared across all the consumers and readers that
+		 * are using a "listener" model to get messages. For a given consumer, the
+		 * listener will always be invoked from the same thread, to ensure ordering.
+		 */
+		private int numListenerThreads = 1;
+
+		/**
+		 * Maximum number of connections that the client will open to a single broker.
+		 */
+		private int numConnectionsPerBroker = 1;
+
+		/**
+		 * Whether to use TCP no-delay flag on the connection, to disable Nagle algorithm.
+		 */
 		private boolean useTcpNoDelay = true;
 
+		/**
+		 * Whether to use TLS encryption on the connection.
+		 */
 		private boolean useTls = false;
 
-		private String tlsTrustCertsFilePath;
-
-		private boolean tlsAllowInsecureConnection = false;
-
+		/**
+		 * Whether the hostname is validated when the proxy creates a TLS connection with
+		 * brokers.
+		 */
 		private boolean tlsHostnameVerificationEnable = false;
 
-		private int concurrentLookupRequest = 5000;
+		/**
+		 * Path to the trusted TLS certificate file.
+		 */
+		private String tlsTrustCertsFilePath;
 
+		/**
+		 * Whether the client accepts untrusted TLS certificates from the broker.
+		 */
+		private boolean tlsAllowInsecureConnection = false;
+
+		/**
+		 * Enable KeyStore instead of PEM type configuration if TLS is enabled.
+		 */
+		private boolean useKeyStoreTls = false;
+
+		/**
+		 * Name of the security provider used for SSL connections.
+		 */
+		private String sslProvider;
+
+		/**
+		 * File format of the trust store file.
+		 */
+		private String tlsTrustStoreType;
+
+		/**
+		 * Location of the trust store file.
+		 */
+		private String tlsTrustStorePath;
+
+		/**
+		 * Store password for the key store file.
+		 */
+		private String tlsTrustStorePassword;
+
+		/**
+		 * Comma-separated list of cipher suites. This is a named combination of
+		 * authentication, encryption, MAC and key exchange algorithm used to negotiate
+		 * the security settings for a network connection using TLS or SSL network
+		 * protocol. By default, all the available cipher suites are supported.
+		 */
+		private String[] tlsCiphers;
+
+		/**
+		 * Comma-separated list of SSL protocols used to generate the SSLContext. Allowed
+		 * values in recent JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
+		 */
+		private String[] tlsProtocols;
+
+		/**
+		 * Interval between each stat info in seconds.
+		 */
+		private long statsIntervalSeconds = 60;
+
+		/**
+		 * Number of concurrent lookup-requests allowed to send on each broker-connection
+		 * to prevent overload on broker.
+		 */
+		private int maxConcurrentLookupRequest = 5000;
+
+		/**
+		 * Number of max lookup-requests allowed on each broker-connection to prevent
+		 * overload on broker.
+		 */
 		private int maxLookupRequest = 50000;
 
+		/**
+		 * Maximum number of times a lookup-request to a broker will be redirected.
+		 */
+		private int maxLookupRedirects = 20;
+
+		/**
+		 * Maximum number of broker-rejected requests in a certain timeframe, after which
+		 * the current connection is closed and a new connection is created by the client.
+		 */
 		private int maxNumberOfRejectedRequestPerConnection = 50;
 
+		/**
+		 * Keep alive interval for broker-client connection in seconds.
+		 */
 		private int keepAliveIntervalSeconds = 30;
 
+		/**
+		 * Duration to wait for a connection to a broker to be established in
+		 * milliseconds.
+		 */
 		private int connectionTimeoutMs = 10000;
 
-		private int requestTimeoutMs = 60000;
-
+		/**
+		 * Initial backoff interval in nanoseconds.
+		 */
 		private long initialBackoffIntervalNanos = TimeUnit.MILLISECONDS.toNanos(100);
 
+		/**
+		 * Maximum backoff interval in nanoseconds.
+		 */
 		private long maxBackoffIntervalNanos = TimeUnit.SECONDS.toNanos(30);
+
+		/**
+		 * Enables spin-waiting on executors and IO threads in order to reduce latency
+		 * during context switches.
+		 */
+		private boolean enableBusyWait = false;
+
+		/**
+		 * Limit of direct memory that will be allocated by the client.
+		 */
+		private long memoryLimitBytes = 64 * 1024 * 1024;
+
+		/**
+		 * Enables transactions. To use this, start the transactionCoordinatorClient with
+		 * the pulsar client.
+		 */
+		private boolean enableTransaction = false;
+
+		/**
+		 * DNS lookup bind address.
+		 */
+		private String dnsLookupBindAddress;
+
+		/**
+		 * DNS lookup bind port.
+		 */
+		private int dnsLookupBindPort = 0;
+
+		/**
+		 * SOCKS5 proxy address.
+		 */
+		private String socks5ProxyAddress;
+
+		/**
+		 * SOCKS5 proxy username.
+		 */
+		private String socks5ProxyUsername;
+
+		/**
+		 * SOCKS5 proxy password.
+		 */
+		private String socks5ProxyPassword;
 
 		public String getServiceUrl() {
 			return this.serviceUrl;
@@ -634,6 +946,14 @@ public class PulsarProperties {
 
 		public void setServiceUrl(String serviceUrl) {
 			this.serviceUrl = serviceUrl;
+		}
+
+		public String getListenerName() {
+			return this.listenerName;
+		}
+
+		public void setListenerName(String listenerName) {
+			this.listenerName = listenerName;
 		}
 
 		public String getAuthPluginClassName() {
@@ -652,6 +972,14 @@ public class PulsarProperties {
 			this.authParams = authParams;
 		}
 
+		public Map<String, String> getAuthParamsMap() {
+			return this.authParamsMap;
+		}
+
+		public void setAuthParamsMap(Map<String, String> authParamsMap) {
+			this.authParamsMap = authParamsMap;
+		}
+
 		public long getOperationTimeoutMs() {
 			return this.operationTimeoutMs;
 		}
@@ -660,12 +988,12 @@ public class PulsarProperties {
 			this.operationTimeoutMs = operationTimeoutMs;
 		}
 
-		public long getStatsIntervalSeconds() {
-			return this.statsIntervalSeconds;
+		public long getLookupTimeoutMs() {
+			return this.lookupTimeoutMs;
 		}
 
-		public void setStatsIntervalSeconds(long statsIntervalSeconds) {
-			this.statsIntervalSeconds = statsIntervalSeconds;
+		public void setLookupTimeoutMs(long lookupTimeoutMs) {
+			this.lookupTimeoutMs = lookupTimeoutMs;
 		}
 
 		public int getNumIoThreads() {
@@ -674,6 +1002,22 @@ public class PulsarProperties {
 
 		public void setNumIoThreads(int numIoThreads) {
 			this.numIoThreads = numIoThreads;
+		}
+
+		public int getNumListenerThreads() {
+			return this.numListenerThreads;
+		}
+
+		public void setNumListenerThreads(int numListenerThreads) {
+			this.numListenerThreads = numListenerThreads;
+		}
+
+		public int getNumConnectionsPerBroker() {
+			return this.numConnectionsPerBroker;
+		}
+
+		public void setNumConnectionsPerBroker(int numConnectionsPerBroker) {
+			this.numConnectionsPerBroker = numConnectionsPerBroker;
 		}
 
 		public boolean isUseTcpNoDelay() {
@@ -692,6 +1036,14 @@ public class PulsarProperties {
 			this.useTls = useTls;
 		}
 
+		public boolean isTlsHostnameVerificationEnable() {
+			return this.tlsHostnameVerificationEnable;
+		}
+
+		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
+			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
+		}
+
 		public String getTlsTrustCertsFilePath() {
 			return this.tlsTrustCertsFilePath;
 		}
@@ -708,20 +1060,76 @@ public class PulsarProperties {
 			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
 		}
 
-		public boolean isTlsHostnameVerificationEnable() {
-			return this.tlsHostnameVerificationEnable;
+		public boolean isUseKeyStoreTls() {
+			return this.useKeyStoreTls;
 		}
 
-		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
-			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
+		public void setUseKeyStoreTls(boolean useKeyStoreTls) {
+			this.useKeyStoreTls = useKeyStoreTls;
 		}
 
-		public int getConcurrentLookupRequest() {
-			return this.concurrentLookupRequest;
+		public String getSslProvider() {
+			return this.sslProvider;
 		}
 
-		public void setConcurrentLookupRequest(int concurrentLookupRequest) {
-			this.concurrentLookupRequest = concurrentLookupRequest;
+		public void setSslProvider(String sslProvider) {
+			this.sslProvider = sslProvider;
+		}
+
+		public String getTlsTrustStoreType() {
+			return this.tlsTrustStoreType;
+		}
+
+		public void setTlsTrustStoreType(String tlsTrustStoreType) {
+			this.tlsTrustStoreType = tlsTrustStoreType;
+		}
+
+		public String getTlsTrustStorePath() {
+			return this.tlsTrustStorePath;
+		}
+
+		public void setTlsTrustStorePath(String tlsTrustStorePath) {
+			this.tlsTrustStorePath = tlsTrustStorePath;
+		}
+
+		public String getTlsTrustStorePassword() {
+			return this.tlsTrustStorePassword;
+		}
+
+		public void setTlsTrustStorePassword(String tlsTrustStorePassword) {
+			this.tlsTrustStorePassword = tlsTrustStorePassword;
+		}
+
+		public String[] getTlsCiphers() {
+			return this.tlsCiphers;
+		}
+
+		public void setTlsCiphers(String[] tlsCiphers) {
+			this.tlsCiphers = tlsCiphers;
+		}
+
+		public String[] getTlsProtocols() {
+			return this.tlsProtocols;
+		}
+
+		public void setTlsProtocols(String[] tlsProtocols) {
+			this.tlsProtocols = tlsProtocols;
+		}
+
+		public long getStatsIntervalSeconds() {
+			return this.statsIntervalSeconds;
+		}
+
+		public void setStatsIntervalSeconds(long statsIntervalSeconds) {
+			this.statsIntervalSeconds = statsIntervalSeconds;
+		}
+
+		public int getMaxConcurrentLookupRequest() {
+			return this.maxConcurrentLookupRequest;
+		}
+
+		public void setMaxConcurrentLookupRequest(int maxConcurrentLookupRequest) {
+			this.maxConcurrentLookupRequest = maxConcurrentLookupRequest;
 		}
 
 		public int getMaxLookupRequest() {
@@ -730,6 +1138,14 @@ public class PulsarProperties {
 
 		public void setMaxLookupRequest(int maxLookupRequest) {
 			this.maxLookupRequest = maxLookupRequest;
+		}
+
+		public int getMaxLookupRedirects() {
+			return this.maxLookupRedirects;
+		}
+
+		public void setMaxLookupRedirects(int maxLookupRedirects) {
+			this.maxLookupRedirects = maxLookupRedirects;
 		}
 
 		public int getMaxNumberOfRejectedRequestPerConnection() {
@@ -756,14 +1172,6 @@ public class PulsarProperties {
 			this.connectionTimeoutMs = connectionTimeoutMs;
 		}
 
-		public int getRequestTimeoutMs() {
-			return this.requestTimeoutMs;
-		}
-
-		public void setRequestTimeoutMs(int requestTimeoutMs) {
-			this.requestTimeoutMs = requestTimeoutMs;
-		}
-
 		public long getInitialBackoffIntervalNanos() {
 			return this.initialBackoffIntervalNanos;
 		}
@@ -780,31 +1188,115 @@ public class PulsarProperties {
 			this.maxBackoffIntervalNanos = maxBackoffIntervalNanos;
 		}
 
+		public boolean isEnableBusyWait() {
+			return this.enableBusyWait;
+		}
+
+		public void setEnableBusyWait(boolean enableBusyWait) {
+			this.enableBusyWait = enableBusyWait;
+		}
+
+		public long getMemoryLimitBytes() {
+			return this.memoryLimitBytes;
+		}
+
+		public void setMemoryLimitBytes(long memoryLimitBytes) {
+			this.memoryLimitBytes = memoryLimitBytes;
+		}
+
+		public boolean isEnableTransaction() {
+			return this.enableTransaction;
+		}
+
+		public void setEnableTransaction(boolean enableTransaction) {
+			this.enableTransaction = enableTransaction;
+		}
+
+		public String getDnsLookupBindAddress() {
+			return this.dnsLookupBindAddress;
+		}
+
+		public void setDnsLookupBindAddress(String dnsLookupBindAddress) {
+			this.dnsLookupBindAddress = dnsLookupBindAddress;
+		}
+
+		public int getDnsLookupBindPort() {
+			return this.dnsLookupBindPort;
+		}
+
+		public void setDnsLookupBindPort(int dnsLookupBindPort) {
+			this.dnsLookupBindPort = dnsLookupBindPort;
+		}
+
+		public String getSocks5ProxyAddress() {
+			return this.socks5ProxyAddress;
+		}
+
+		public void setSocks5ProxyAddress(String socks5ProxyAddress) {
+			this.socks5ProxyAddress = socks5ProxyAddress;
+		}
+
+		public String getSocks5ProxyUsername() {
+			return this.socks5ProxyUsername;
+		}
+
+		public void setSocks5ProxyUsername(String socks5ProxyUsername) {
+			this.socks5ProxyUsername = socks5ProxyUsername;
+		}
+
+		public String getSocks5ProxyPassword() {
+			return this.socks5ProxyPassword;
+		}
+
+		public void setSocks5ProxyPassword(String socks5ProxyPassword) {
+			this.socks5ProxyPassword = socks5ProxyPassword;
+		}
+
 		public Map<String, Object> buildProperties() {
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
+			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
+			map.from(this::getAuthParamsMap).to(properties.in("authParamMap"));
 			map.from(this::getOperationTimeoutMs).to(properties.in("operationTimeoutMs"));
-			map.from(this::getStatsIntervalSeconds).to(properties.in("statsIntervalSeconds"));
+			map.from(this::getLookupTimeoutMs).to(properties.in("lookupTimeoutMs"));
 			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
+			map.from(this::getNumListenerThreads).to(properties.in("numListenerThreads"));
+			map.from(this::getNumConnectionsPerBroker).to(properties.in("connectionsPerBroker"));
 			map.from(this::isUseTcpNoDelay).to(properties.in("useTcpNoDelay"));
 			map.from(this::isUseTls).to(properties.in("useTls"));
+			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
-			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
-			map.from(this::getConcurrentLookupRequest).to(properties.in("concurrentLookupRequest"));
+			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
+			map.from(this::getSslProvider).to(properties.in("sslProvider"));
+			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
+			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
+			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
+			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
+			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
+			map.from(this::getStatsIntervalSeconds).to(properties.in("statsIntervalSeconds"));
+			map.from(this::getMaxConcurrentLookupRequest).to(properties.in("concurrentLookupRequest"));
 			map.from(this::getMaxLookupRequest).to(properties.in("maxLookupRequest"));
+			map.from(this::getMaxLookupRedirects).to(properties.in("maxLookupRedirects"));
 			map.from(this::getMaxNumberOfRejectedRequestPerConnection)
 					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
 			map.from(this::getKeepAliveIntervalSeconds).to(properties.in("keepAliveIntervalSeconds"));
 			map.from(this::getConnectionTimeoutMs).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getRequestTimeoutMs).to(properties.in("requestTimeoutMs"));
 			map.from(this::getInitialBackoffIntervalNanos).to(properties.in("initialBackoffIntervalNanos"));
 			map.from(this::getMaxBackoffIntervalNanos).to(properties.in("maxBackoffIntervalNanos"));
+			map.from(this::isEnableBusyWait).to(properties.in("enableBusyWait"));
+			map.from(this::getMemoryLimitBytes).to(properties.in("memoryLimitBytes"));
+			map.from(this::isEnableTransaction).to(properties.in("enableTransaction"));
+			map.from(this::getDnsLookupBindAddress).to(properties.in("dnsLookupBindAddress"));
+			map.from(this::getDnsLookupBindPort).to(properties.in("dnsLookupBindPort"));
+			map.from(this::getSocks5ProxyAddress).to(properties.in("socks5ProxyAddress"));
+			map.from(this::getSocks5ProxyUsername).to(properties.in("socks5ProxyUsername"));
+			map.from(this::getSocks5ProxyPassword).to(properties.in("socks5ProxyPassword"));
 
 			return properties;
 		}
@@ -813,8 +1305,14 @@ public class PulsarProperties {
 
 	public static class Listener {
 
+		/**
+		 * AckMode for acknowledgements. Allowed values are RECORD, BATCH, MANUAL.
+		 */
 		private PulsarContainerProperties.AckMode ackMode;
 
+		/**
+		 * SchemaType of the consumed messages.
+		 */
 		private SchemaType schemaType;
 
 		public PulsarContainerProperties.AckMode getAckMode() {
@@ -831,6 +1329,222 @@ public class PulsarProperties {
 
 		public void setSchemaType(SchemaType schemaType) {
 			this.schemaType = schemaType;
+		}
+
+	}
+
+	public static class Admin {
+
+		/**
+		 * Pulsar service URL for the admin endpoint.
+		 */
+		private String serviceUrl;
+
+		/**
+		 * Class name of the clients' authentication plugin.
+		 */
+		private String authPluginClassName;
+
+		/**
+		 * Authentication parameter(s) of the client.
+		 */
+		private String authParams;
+
+		/**
+		 * Authentication parameter map of the client.
+		 */
+		private Map<String, String> authParamMap;
+
+		/**
+		 * Path to the trusted TLS certificate file.
+		 */
+		private String tlsTrustCertsFilePath;
+
+		/**
+		 * Whether the client accepts untrusted TLS certificates from the broker.
+		 */
+		private boolean tlsAllowInsecureConnection = false;
+
+		/**
+		 * Whether the hostname is validated when the proxy creates a TLS connection with
+		 * brokers.
+		 */
+		private boolean tlsHostnameVerificationEnable = false;
+
+		/**
+		 * Enable KeyStore instead of PEM type configuration if TLS is enabled.
+		 */
+		private boolean useKeyStoreTls = false;
+
+		/**
+		 * Name of the security provider used for SSL connections.
+		 */
+		private String sslProvider;
+
+		/**
+		 * File format of the trust store file.
+		 */
+		private String tlsTrustStoreType;
+
+		/**
+		 * Location of the trust store file.
+		 */
+		private String tlsTrustStorePath;
+
+		/**
+		 * Store password for the key store file.
+		 */
+		private String tlsTrustStorePassword;
+
+		/**
+		 * Comma-separated list of cipher suites. This is a named combination of
+		 * authentication, encryption, MAC and key exchange algorithm used to negotiate
+		 * the security settings for a network connection using TLS or SSL network
+		 * protocol. By default, all the available cipher suites are supported.
+		 */
+		private String[] tlsCiphers;
+
+		/**
+		 * Comma-separated list of SSL protocols used to generate the SSLContext. Allowed
+		 * values in recent JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
+		 */
+		private String[] tlsProtocols;
+
+		public String getServiceUrl() {
+			return this.serviceUrl;
+		}
+
+		public void setServiceUrl(String serviceUrl) {
+			this.serviceUrl = serviceUrl;
+		}
+
+		public String getAuthPluginClassName() {
+			return this.authPluginClassName;
+		}
+
+		public void setAuthPluginClassName(String authPluginClassName) {
+			this.authPluginClassName = authPluginClassName;
+		}
+
+		public String getAuthParams() {
+			return this.authParams;
+		}
+
+		public void setAuthParams(String authParams) {
+			this.authParams = authParams;
+		}
+
+		public Map<String, String> getAuthParamMap() {
+			return this.authParamMap;
+		}
+
+		public void setAuthParamMap(Map<String, String> authParamMap) {
+			this.authParamMap = authParamMap;
+		}
+
+		public String getTlsTrustCertsFilePath() {
+			return this.tlsTrustCertsFilePath;
+		}
+
+		public void setTlsTrustCertsFilePath(String tlsTrustCertsFilePath) {
+			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
+		}
+
+		public boolean isTlsAllowInsecureConnection() {
+			return this.tlsAllowInsecureConnection;
+		}
+
+		public void setTlsAllowInsecureConnection(boolean tlsAllowInsecureConnection) {
+			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
+		}
+
+		public boolean isTlsHostnameVerificationEnable() {
+			return this.tlsHostnameVerificationEnable;
+		}
+
+		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
+			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
+		}
+
+		public boolean isUseKeyStoreTls() {
+			return this.useKeyStoreTls;
+		}
+
+		public void setUseKeyStoreTls(boolean useKeyStoreTls) {
+			this.useKeyStoreTls = useKeyStoreTls;
+		}
+
+		public String getSslProvider() {
+			return this.sslProvider;
+		}
+
+		public void setSslProvider(String sslProvider) {
+			this.sslProvider = sslProvider;
+		}
+
+		public String getTlsTrustStoreType() {
+			return this.tlsTrustStoreType;
+		}
+
+		public void setTlsTrustStoreType(String tlsTrustStoreType) {
+			this.tlsTrustStoreType = tlsTrustStoreType;
+		}
+
+		public String getTlsTrustStorePath() {
+			return this.tlsTrustStorePath;
+		}
+
+		public void setTlsTrustStorePath(String tlsTrustStorePath) {
+			this.tlsTrustStorePath = tlsTrustStorePath;
+		}
+
+		public String getTlsTrustStorePassword() {
+			return this.tlsTrustStorePassword;
+		}
+
+		public void setTlsTrustStorePassword(String tlsTrustStorePassword) {
+			this.tlsTrustStorePassword = tlsTrustStorePassword;
+		}
+
+		public String[] getTlsCiphers() {
+			return this.tlsCiphers;
+		}
+
+		public void setTlsCiphers(String[] tlsCiphers) {
+			this.tlsCiphers = tlsCiphers;
+		}
+
+		public String[] getTlsProtocols() {
+			return this.tlsProtocols;
+		}
+
+		public void setTlsProtocols(String[] tlsProtocols) {
+			this.tlsProtocols = tlsProtocols;
+		}
+
+		public Map<String, Object> buildProperties() {
+			PulsarProperties.Properties properties = new Properties();
+
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+
+			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
+			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
+			map.from(this::getAuthParams).to(properties.in("authParams"));
+			map.from(this::getAuthParamMap).to(properties.in("authParamMap"));
+			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
+			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
+			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
+			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
+			map.from(this::getSslProvider).to(properties.in("sslProvider"));
+			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
+			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
+			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
+			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
+			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
+
+			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
+
+			return properties;
 		}
 
 	}

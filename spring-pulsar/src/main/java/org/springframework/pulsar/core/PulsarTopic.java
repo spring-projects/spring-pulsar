@@ -69,8 +69,7 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	 * Get the fully-qualified name of the topic.
 	 * @return the fully-qualified topic name
 	 */
-	@Override
-	public String toString() {
+	public String getFullyQualifiedTopicName() {
 		TopicComponents components = this.getComponents();
 		return components.domain + "://" + components.tenant + "/" + components.namespace + "/" + components.name;
 	}

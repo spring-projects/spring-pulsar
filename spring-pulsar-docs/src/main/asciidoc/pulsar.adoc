@@ -571,6 +571,42 @@ ProducerInterceptor secondInterceptor() {
 ----
 ====
 
+[[pulsar-admin]]
+==== Pulsar Admin
+On the Pulsar administration side, Spring Boot auto-configuration provides a `PulsarAdministration` to manage Pulsar clusters.
+The administration implements an interface called `PulsarAdminOperations` and provides {javadocs}/org/springframework/pulsar/core/PulsarAdminOperations.html[a 'createOrModify' method] to handle topic administration through its contract.
+
+When using the Pulsar Spring Boot Starter, you get the `PulsarAdministration` auto-configured.
+By default, the application tries to connect to a local Pulsar instance at `http://localhost:8080`. However, there are many application properties available to configure the client.
+
+.[.underline]#Click ##here## to view the available **Pulsar Administration Properties**#.
+[%collapsible]
+====
+include::application-properties/pulsar-administration.adoc[lines=3..-1]
+====
+
+On initialization, the `PulsarAdministration` checks if there are any `PulsarTopic` beans in the application context.
+For all such beans, the `PulsarAdministration` will either create the corresponding topic, or if necessary modify the number of partitions.
+
+Below is an example how to add `PulsarTopic` beans to let the `PulsarAdministration` auto-create topics for you.
+
+====
+[source,java]
+----
+@Bean
+PulsarTopic simpleTopic {
+	// This will create a non-partitioned topic in the public/default namespace
+	return PulsarTopic.builder("simple-topic").build();
+}
+
+@Bean
+PulsarTopic partitionedTopic {
+	// This will create a partitioned topic with 3 partitions in the provided tenant and namespace
+	return PulsarTopic.builder("persistent://my-tenant/my-namespace/partitioned-topic", 3).build();
+}
+----
+====
+
 
 ==== Appendix
 The reference documentation has the following appendices:

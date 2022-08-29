@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTopic;
 
 @SpringBootApplication
 public class SpringPulsarBootApp {
@@ -108,12 +109,35 @@ public class SpringPulsarBootApp {
 	}
 
 	/*
+	 * Create a partitioned topic using PulsarAdministration and then publish to the topic
+	 * and consume from it.
+	 */
+	@Bean
+	PulsarTopic partitionedTopic4() {
+		return PulsarTopic.builder("hello-pulsar-partitioned-4").numberOfPartitions(3).build();
+	}
+
+	@Bean
+	ApplicationRunner runner4(PulsarTemplate<String> pulsarTemplate) {
+		return args -> {
+			for (int i = 0; i < 10; i++) {
+				pulsarTemplate.send("hello-pulsar-partitioned-4", "This is message " + (i + 1));
+			}
+		};
+	}
+
+	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-partitioned-4")
+	void listen4(String message) {
+		this.logger.info("Message received from partitioned-topic : " + message);
+	}
+
+	/*
 	 * Publish and then use PulsarListener in batch listening mode.
 	 */
 	@Bean
-	ApplicationRunner runner4(PulsarProducerFactory<Foo> producerFactory) {
+	ApplicationRunner runner5(PulsarProducerFactory<Foo> producerFactory) {
 
-		String topic = "hello-pulsar-exclusive-4";
+		String topic = "hello-pulsar-exclusive-5";
 		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 		pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 		return args -> {
@@ -124,9 +148,9 @@ public class SpringPulsarBootApp {
 		};
 	}
 
-	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-exclusive-4",
+	@PulsarListener(subscriptionName = "subscription-5", topics = "hello-pulsar-exclusive-5",
 			schemaType = SchemaType.JSON, batch = true)
-	void listen4(List<Foo> messages) {
+	void listen5(List<Foo> messages) {
 		this.logger.info("records received :" + messages.size());
 		for (Foo message : messages) {
 			this.logger.info("record : " + message);
