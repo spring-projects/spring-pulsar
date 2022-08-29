@@ -874,10 +874,6 @@ public class PulsarProperties {
 
 		private String[] tlsProtocols;
 
-		private long connectionTimeoutMs = 60_000L;
-
-		private long requestTimeoutMs = 300_000L;
-
 		public String getServiceUrl() {
 			return this.serviceUrl;
 		}
@@ -982,22 +978,6 @@ public class PulsarProperties {
 			this.tlsProtocols = tlsProtocols;
 		}
 
-		public long getConnectionTimeoutMs() {
-			return this.connectionTimeoutMs;
-		}
-
-		public void setConnectionTimeoutMs(long connectionTimeoutMs) {
-			this.connectionTimeoutMs = connectionTimeoutMs;
-		}
-
-		public long getRequestTimeoutMs() {
-			return this.requestTimeoutMs;
-		}
-
-		public void setRequestTimeoutMs(long requestTimeoutMs) {
-			this.requestTimeoutMs = requestTimeoutMs;
-		}
-
 		public Map<String, Object> buildProperties() {
 			PulsarProperties.Properties properties = new Properties();
 
@@ -1016,8 +996,6 @@ public class PulsarProperties {
 			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
 			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
 			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
-			map.from(this::getConnectionTimeoutMs).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getRequestTimeoutMs).to(properties.in("requestTimeoutMs"));
 
 			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
 
