@@ -601,82 +601,216 @@ public class PulsarProperties {
 
 	public static class Client {
 
+		/**
+		 * Pulsar cluster URL to connect to a broker.
+		 */
 		private String serviceUrl;
 
+		/**
+		 * Listener name for lookup. Clients can use listenerName to choose one of the
+		 * listeners as the service URL to create a connection to the broker. To use this,
+		 * "advertisedListeners" must be enabled on the broker.
+		 */
 		private String listenerName;
 
+		/**
+		 * Class name of the clients' authentication plugin.
+		 */
 		private String authPluginClassName;
 
+		/**
+		 * Authentication parameter(s) of the client.
+		 */
 		private String authParams;
 
+		/**
+		 * Authentication parameter map of the client.
+		 */
 		private Map<String, String> authParamsMap;
 
+		/**
+		 * Client operation timeout in milliseconds.
+		 */
 		private long operationTimeoutMs = 30000L;
 
+		/**
+		 * Client lookup timeout in milliseconds.
+		 */
 		private long lookupTimeoutMs = -1;
 
+		/**
+		 * Number of threads to be used for handling connections to brokers.
+		 */
 		private int numIoThreads = 1;
 
+		/**
+		 * Number of threads to be used for message listeners.
+		 *
+		 * The listener thread pool is shared across all the consumers and readers that
+		 * are using a "listener" model to get messages. For a given consumer, the
+		 * listener will always be invoked from the same thread, to ensure ordering.
+		 */
 		private int numListenerThreads = 1;
 
+		/**
+		 * Maximum number of connections that the client will open to a single broker.
+		 */
 		private int numConnectionsPerBroker = 1;
 
+		/**
+		 * Whether to use TCP no-delay flag on the connection, to disable Nagle algorithm.
+		 */
 		private boolean useTcpNoDelay = true;
 
+		/**
+		 * Whether to use TLS encryption on the connection.
+		 */
 		private boolean useTls = false;
 
+		/**
+		 * Whether the hostname is validated when the proxy creates a TLS connection with
+		 * brokers.
+		 */
 		private boolean tlsHostnameVerificationEnable = false;
 
+		/**
+		 * Path to the trusted TLS certificate file.
+		 */
 		private String tlsTrustCertsFilePath;
 
+		/**
+		 * Whether the client accepts untrusted TLS certificates from the broker.
+		 */
 		private boolean tlsAllowInsecureConnection = false;
 
+		/**
+		 * Enable KeyStore instead of PEM type configuration if TLS is enabled.
+		 */
 		private boolean useKeyStoreTls = false;
 
+		/**
+		 * Name of the security provider used for SSL connections.
+		 */
 		private String sslProvider;
 
+		/**
+		 * File format of the trust store file.
+		 */
 		private String tlsTrustStoreType;
 
+		/**
+		 * Location of the trust store file.
+		 */
 		private String tlsTrustStorePath;
 
+		/**
+		 * Store password for the key store file.
+		 */
 		private String tlsTrustStorePassword;
 
+		/**
+		 * Comma-separated list of cipher suites. This is a named combination of
+		 * authentication, encryption, MAC and key exchange algorithm used to negotiate
+		 * the security settings for a network connection using TLS or SSL network
+		 * protocol. By default, all the available cipher suites are supported.
+		 */
 		private String[] tlsCiphers;
 
+		/**
+		 * Comma-separated list of SSL protocols used to generate the SSLContext. Allowed
+		 * values in recent JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
+		 */
 		private String[] tlsProtocols;
 
+		/**
+		 * Interval between each stat info in seconds.
+		 */
 		private long statsIntervalSeconds = 60;
 
+		/**
+		 * Number of concurrent lookup-requests allowed to send on each broker-connection
+		 * to prevent overload on broker.
+		 */
 		private int maxConcurrentLookupRequest = 5000;
 
+		/**
+		 * Number of max lookup-requests allowed on each broker-connection to prevent
+		 * overload on broker.
+		 */
 		private int maxLookupRequest = 50000;
 
+		/**
+		 * Maximum number of times a lookup-request to a broker will be redirected.
+		 */
 		private int maxLookupRedirects = 20;
 
+		/**
+		 * Maximum number of broker-rejected requests in a certain timeframe, after which
+		 * the current connection is closed and a new connection is created by the client.
+		 */
 		private int maxNumberOfRejectedRequestPerConnection = 50;
 
+		/**
+		 * Keep alive interval for broker-client connection in seconds.
+		 */
 		private int keepAliveIntervalSeconds = 30;
 
+		/**
+		 * Duration to wait for a connection to a broker to be established in
+		 * milliseconds.
+		 */
 		private int connectionTimeoutMs = 10000;
 
+		/**
+		 * Initial backoff interval in nanoseconds.
+		 */
 		private long initialBackoffIntervalNanos = TimeUnit.MILLISECONDS.toNanos(100);
 
+		/**
+		 * Maximum backoff interval in nanoseconds.
+		 */
 		private long maxBackoffIntervalNanos = TimeUnit.SECONDS.toNanos(30);
 
+		/**
+		 * Enables spin-waiting on executors and IO threads in order to reduce latency
+		 * during context switches.
+		 */
 		private boolean enableBusyWait = false;
 
+		/**
+		 * Limit of direct memory that will be allocated by the client.
+		 */
 		private long memoryLimitBytes = 64 * 1024 * 1024;
 
+		/**
+		 * Enables transactions. To use this, start the transactionCoordinatorClient with
+		 * the pulsar client.
+		 */
 		private boolean enableTransaction = false;
 
+		/**
+		 * DNS lookup bind address.
+		 */
 		private String dnsLookupBindAddress;
 
+		/**
+		 * DNS lookup bind port.
+		 */
 		private int dnsLookupBindPort = 0;
 
+		/**
+		 * SOCKS5 proxy address.
+		 */
 		private String socks5ProxyAddress;
 
+		/**
+		 * SOCKS5 proxy username.
+		 */
 		private String socks5ProxyUsername;
 
+		/**
+		 * SOCKS5 proxy password.
+		 */
 		private String socks5ProxyPassword;
 
 		public String getServiceUrl() {
@@ -1116,22 +1250,22 @@ public class PulsarProperties {
 		private boolean useKeyStoreTls = false;
 
 		/**
-		 * The name of the security provider used for SSL connections.
+		 * Name of the security provider used for SSL connections.
 		 */
 		private String sslProvider;
 
 		/**
-		 * The file format of the trust store file.
+		 * File format of the trust store file.
 		 */
 		private String tlsTrustStoreType;
 
 		/**
-		 * The location of the trust store file.
+		 * Location of the trust store file.
 		 */
 		private String tlsTrustStorePath;
 
 		/**
-		 * The store password for the key store file.
+		 * Store password for the key store file.
 		 */
 		private String tlsTrustStorePassword;
 
