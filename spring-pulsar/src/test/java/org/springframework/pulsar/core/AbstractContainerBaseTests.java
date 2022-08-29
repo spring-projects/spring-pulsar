@@ -16,16 +16,17 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Locale;
+
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.utility.DockerImageName;
 
 public abstract class AbstractContainerBaseTests {
 
-	static final DockerImageName PULSAR_IMAGE = DockerImageName.parse("apachepulsar/pulsar:2.10.1");
-
-	static PulsarContainer PULSAR_CONTAINER;
+	static final PulsarContainer PULSAR_CONTAINER;
 
 	static {
+		final DockerImageName PULSAR_IMAGE = isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage();
 		PULSAR_CONTAINER = new PulsarContainer(PULSAR_IMAGE);
 		PULSAR_CONTAINER.start();
 	}
@@ -36,6 +37,20 @@ public abstract class AbstractContainerBaseTests {
 
 	protected static String getHttpServiceUrl() {
 		return PULSAR_CONTAINER.getHttpServiceUrl();
+	}
+
+	private static boolean isRunningOnMacM1() {
+		String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+		String osArchitecture = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+		return osName.contains("mac") && osArchitecture.equals("aarch64");
+	}
+
+	private static DockerImageName getStandardPulsarImage() {
+		return DockerImageName.parse("apachepulsar/pulsar:2.10.1");
+	}
+
+	private static DockerImageName getMacM1PulsarImage() {
+		return DockerImageName.parse("kezhenxu94/pulsar").asCompatibleSubstituteFor("apachepulsar/pulsar");
 	}
 
 }
