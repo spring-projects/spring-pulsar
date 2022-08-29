@@ -29,7 +29,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
@@ -114,14 +113,15 @@ public class SpringPulsarBootApp {
 	 * and consume from it.
 	 */
 	@Bean
-	ApplicationRunner runner4(PulsarTemplate<String> pulsarTemplate, PulsarAdministration pulsarAdministration) {
-		String topicName = "hello-pulsar-partitioned-4";
-		PulsarTopic partitionedTopic = PulsarTopic.builder(topicName).numberOfPartitions(3).build();
-		pulsarAdministration.createOrModifyTopics(partitionedTopic);
+	PulsarTopic partitionedTopic4() {
+		return PulsarTopic.builder("hello-pulsar-partitioned-4").numberOfPartitions(3).build();
+	}
 
+	@Bean
+	ApplicationRunner runner4(PulsarTemplate<String> pulsarTemplate) {
 		return args -> {
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send(topicName, "This is message " + (i + 1));
+				pulsarTemplate.send("hello-pulsar-partitioned-4", "This is message " + (i + 1));
 			}
 		};
 	}
