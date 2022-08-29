@@ -1068,32 +1068,79 @@ public class PulsarProperties {
 
 	public static class Admin {
 
+		/**
+		 * Pulsar service URL for the admin endpoint.
+		 */
 		private String serviceUrl;
 
+		/**
+		 * Class name of the clients' authentication plugin.
+		 */
 		private String authPluginClassName;
 
+		/**
+		 * Authentication parameter(s) of the client.
+		 */
 		private String authParams;
 
+		/**
+		 * Authentication parameter map of the client.
+		 */
 		private Map<String, String> authParamMap;
 
+		/**
+		 * Path to the trusted TLS certificate file.
+		 */
 		private String tlsTrustCertsFilePath;
 
+		/**
+		 * Whether the client accepts untrusted TLS certificates from the broker.
+		 */
 		private boolean tlsAllowInsecureConnection = false;
 
+		/**
+		 * Whether the hostname is validated when the proxy creates a TLS connection with
+		 * brokers.
+		 */
 		private boolean tlsHostnameVerificationEnable = false;
 
+		/**
+		 * Enable KeyStore instead of PEM type configuration if TLS is enabled.
+		 */
 		private boolean useKeyStoreTls = false;
 
+		/**
+		 * The name of the security provider used for SSL connections.
+		 */
 		private String sslProvider;
 
+		/**
+		 * The file format of the trust store file.
+		 */
 		private String tlsTrustStoreType;
 
+		/**
+		 * The location of the trust store file.
+		 */
 		private String tlsTrustStorePath;
 
+		/**
+		 * The store password for the key store file.
+		 */
 		private String tlsTrustStorePassword;
 
+		/**
+		 * Comma-separated list of cipher suites. This is a named combination of
+		 * authentication, encryption, MAC and key exchange algorithm used to negotiate
+		 * the security settings for a network connection using TLS or SSL network
+		 * protocol. By default, all the available cipher suites are supported.
+		 */
 		private String[] tlsCiphers;
 
+		/**
+		 * Comma-separated list of SSL protocols used to generate the SSLContext. Allowed
+		 * values in recent JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
+		 */
 		private String[] tlsProtocols;
 
 		public String getServiceUrl() {
