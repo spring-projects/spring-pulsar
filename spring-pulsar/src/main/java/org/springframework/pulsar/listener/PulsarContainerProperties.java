@@ -48,7 +48,7 @@ public class PulsarContainerProperties {
 		 */
 		BATCH,
 		/**
-		 * Recod ack mode.
+		 * Record ack mode.
 		 */
 		RECORD,
 		/**

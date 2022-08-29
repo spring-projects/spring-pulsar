@@ -1044,8 +1044,14 @@ public class PulsarProperties {
 
 	public static class Listener {
 
+		/**
+		 * AckMode for acknowledgements. Allowed values are RECORD, BATCH, MANUAL.
+		 */
 		private PulsarContainerProperties.AckMode ackMode;
 
+		/**
+		 * SchemaType of the consumed messages.
+		 */
 		private SchemaType schemaType;
 
 		public PulsarContainerProperties.AckMode getAckMode() {
