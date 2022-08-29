@@ -102,7 +102,7 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(PulsarAdministration.class)
 	public PulsarAdministration pulsarAdministration() {
-		return new PulsarAdministration(this.properties.buildAdministrationProperties());
+		return new PulsarAdministration(this.properties.buildAdminProperties());
 	}
 
 }

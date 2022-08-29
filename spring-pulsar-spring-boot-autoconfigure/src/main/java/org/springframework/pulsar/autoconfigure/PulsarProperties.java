@@ -60,38 +60,42 @@ public class PulsarProperties {
 
 	private final Producer producer = new Producer();
 
-	private final Administration administration = new Administration();
-
-	public Map<String, Object> buildConsumerProperties() {
-		return new HashMap<>(this.consumer.buildProperties());
-	}
-
-	public Map<String, Object> buildProducerProperties() {
-		return new HashMap<>(this.producer.buildProperties());
-	}
+	private final Admin admin = new Admin();
 
 	public Consumer getConsumer() {
 		return this.consumer;
-	}
-
-	public Listener getListener() {
-		return this.listener;
 	}
 
 	public Client getClient() {
 		return this.client;
 	}
 
+	public Listener getListener() {
+		return this.listener;
+	}
+
 	public Producer getProducer() {
 		return this.producer;
+	}
+
+	public Admin getAdministration() {
+		return this.admin;
+	}
+
+	public Map<String, Object> buildConsumerProperties() {
+		return new HashMap<>(this.consumer.buildProperties());
 	}
 
 	public Map<String, Object> buildClientProperties() {
 		return new HashMap<>(this.client.buildProperties());
 	}
 
-	public Map<String, Object> buildAdministrationProperties() {
-		return new HashMap<>(this.administration.buildProperties());
+	public Map<String, Object> buildProducerProperties() {
+		return new HashMap<>(this.producer.buildProperties());
+	}
+
+	public Map<String, Object> buildAdminProperties() {
+		return new HashMap<>(this.admin.buildProperties());
 	}
 
 	public static class Consumer {
@@ -842,7 +846,7 @@ public class PulsarProperties {
 
 	}
 
-	public static class Administration {
+	public static class Admin {
 
 		private String serviceUrl;
 
