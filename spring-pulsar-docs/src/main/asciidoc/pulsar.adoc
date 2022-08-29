@@ -23,7 +23,7 @@ include::application-properties/pulsar-client.adoc[lines=3..-1]
 [[pulsar-producer]]
 ==== Pulsar Producer
 
-On the Pulsar producer side, Spring Boot auto-configuration provides a `PulsarTemplate` for publishing records. The template implements an interface called `PulsarOperations` and provides {javadocs}/org/springframework/pulsar/core/PulsarOperations.html[several variants of 'send' methods] to publish records through its contract.
+On the Pulsar producer side, Spring Boot auto-configuration provides a `PulsarTemplate` for publishing records. The template implements an interface called `PulsarOperations` and provides methods to publish records through its contract.
 
 There are two categories of these send API methods - `send` and `sendAsync`.
 The `send` methods are blocking calls using the synchronous sending capabilities on the Pulsar producer.
@@ -31,20 +31,40 @@ They return the `MessageId` of the message that was published once the message i
 The `sendAsync` method calls are asynchronous calls that are non-blocking.
 They return a `CompletableFuture` using which you can asynchronously receive the message id once the messages are published.
 
-Both `send` and `sendAsync` methods have a variant that allows to publish simply with the message.
-When you do that, the application must provide the topic name using the property `spring.pulsar.producer.topicName`.
-There is another variant for both flavors that takes the topic name as an argument.
+===== Simple API
+The template provides a handful of methods ({javadocs}/org/springframework/pulsar/core/PulsarOperations.html[prefixed with _'send'_]) for simple send requests that contain only a message and/or destination topic. For more complicated send requests there is a fluent API that allows the user to configure more options (see below).
 
-The methods using a `TypedMessageBuilderCustomizer` allow modifying the basic `TypedMessageBuilder`.
-This can be used to send a keyed message for example:
+TIP: Both `send` and `sendAsync` methods have a variant that allows to publish simply with the message.
+When you do that, the application must provide the topic name using the property `spring.pulsar.producer.topic-name`.
 
+===== Fluent API
+The template provides a {javadocs}/org/springframework/pulsar/core/PulsarOperations.html#newMessage(T)[fluent builder] to handle more complicated send requests.
+
+====== Message customization
+A `TypedMessageBuilderCustomizer` can be specified in order to configure the outgoing message. For example, the following code shows how to send a keyed message:
 ====
 [source, java]
 ----
-template.send(msg, (messageBuilder -> messageBuilder.key(myMessageKey)));
+template.newMessage(msg)
+    .withMessageCustomizer((mb) -> mb.key("foo-msg-key"))
+    .send();
 ----
 ====
 
+====== Custom routing
+You can use custom routing when publishing records to partitioned topics. Simple specify your custom `MessageRouter` implementation on the fluent builder such as:
+====
+[source, java]
+----
+template.newMessage(msg)
+    .withCustomRouter(myCustomRouter)
+    .send();
+----
+====
+
+TIP: Note that, when using a `MessageRouter`, the only valid setting for `spring.pulsar.producer.message-routing-mode` is `custom`.
+
+===== Schema
 If you are using simple Java primitive types, then the framework auto-detects the schema for you, and you do not need to specify any schema types for publishing the data.
 However, if you are using any complex types such as `JSON`, `AVRO`, `PROTOBUF`, etc. then you need to set the proper schema type on the `PulsarTemplate` before invoking any send operations as shown below.
 
@@ -54,11 +74,6 @@ However, if you are using any complex types such as `JSON`, `AVRO`, `PROTOBUF`, 
 pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 ----
 ====
-
-
-When using partitioned topics, then you can use custom partitioning routing when publishing records.
-For this purpose, you can provide an implementation of a `MessageRouter` and pass it along with both `send` and `sendAsync` methods.
-Note that, when using a `MessageRouter`, you must set the `spring.pulsar.producer.messageRoutingMode` property to `custom`.
 
 [[producer-application-properties]]
 .[.underline]#Click ##here## to view the available **Pulsar Producer Properties**#
@@ -366,7 +381,7 @@ It is a topic that is partitioned and for this sample we assume that the topic i
 public class PulsarBootPartitioned {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PulsarBootPartitioned.class, "--spring.pulsar.producer.messageRoutingMode=CustomPartition");
+		SpringApplication.run(PulsarBootPartitioned.class, "--spring.pulsar.producer.message-routing-mode=CustomPartition");
 	}
 
 	@Bean
@@ -421,7 +436,7 @@ In order to do that, we are providing a message router object with the send meth
 Look at the three message routers implemented.
 `FooRouter` always sends data to partition `0`, `BarRouter` to partition `1` and `BuzzRouter` to partition `2`.
 Also note that, we are now using the `sendAsync` method of `PulsarTemplate` that returns a `CompletableFuture`.
-When running the application, we also need to set the `messageRoutingMode` on the producer to `CustomPartition` (`spring.pulsar.producer.messageRoutingMode`).
+When running the application, we also need to set the `messageRoutingMode` on the producer to `CustomPartition` (`spring.pulsar.producer.message-routing-mode`).
 
 On the consumer side, we are using a `PulsarListener` with the exclusive subscription type.
 This means that data from all the partitions will end up in the same consumer and there is no ordering guarantee.

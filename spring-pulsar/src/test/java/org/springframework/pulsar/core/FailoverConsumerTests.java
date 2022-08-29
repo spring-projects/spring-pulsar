@@ -82,9 +82,10 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
-		pulsarTemplate.sendAsync("hello john doe", new FooRouter());
-		pulsarTemplate.sendAsync("hello alice doe", new BarRouter());
-		pulsarTemplate.sendAsync("hello buzz doe", new BuzzRouter());
+		pulsarTemplate.newMessage("hello john doe").withCustomRouter(new FooRouter()).sendAsync();
+		pulsarTemplate.newMessage("hello alice doe").withCustomRouter(new BarRouter()).sendAsync();
+		pulsarTemplate.newMessage("hello buzz doe").withCustomRouter(new BuzzRouter()).sendAsync();
+
 		final boolean await = latch.await(10, TimeUnit.SECONDS);
 		assertThat(await).isTrue();
 	}

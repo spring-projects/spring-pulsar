@@ -45,9 +45,12 @@ public class FailoverConsumerApp {
 		String topic = "failover-demo-topic";
 		return args -> {
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.sendAsync(topic, "hello john doe 0 ", new FooRouter());
-				pulsarTemplate.sendAsync(topic, "hello alice doe 1", new BarRouter());
-				pulsarTemplate.sendAsync(topic, "hello buzz doe 2", new BuzzRouter());
+				pulsarTemplate.newMessage("hello john doe 0 ").withTopic(topic).withCustomRouter(new FooRouter())
+						.sendAsync();
+				pulsarTemplate.newMessage("hello alice doe 1").withTopic(topic).withCustomRouter(new BarRouter())
+						.sendAsync();
+				pulsarTemplate.newMessage("hello buzz doe 2").withTopic(topic).withCustomRouter(new BuzzRouter())
+						.sendAsync();
 				Thread.sleep(1_000);
 			}
 		};

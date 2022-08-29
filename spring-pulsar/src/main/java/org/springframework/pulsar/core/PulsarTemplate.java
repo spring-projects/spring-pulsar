@@ -49,19 +49,17 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	private Schema<T> schema;
 
 	/**
-	 * Constructs a template instance.
-	 * @param producerFactory the producer factory used to create the backing Pulsar
-	 * producers.
+	 * Construct a template instance.
+	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory) {
 		this(producerFactory, null);
 	}
 
 	/**
-	 * Constructs a template instance.
-	 * @param producerFactory the producer factory used to create the backing Pulsar
-	 * producers.
-	 * @param interceptors the {@link ProducerInterceptor}s to add to the producer.
+	 * Construct a template instance.
+	 * @param producerFactory the factory used to create the backing Pulsar producers.
+	 * @param interceptors the interceptors to add to the producer.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
 		this.producerFactory = producerFactory;
@@ -69,18 +67,49 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	@Override
-	public MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
+	public MessageId send(T message) throws PulsarClientException {
+		return doSend(null, message, null, null);
+	}
+
+	@Override
+	public MessageId send(String topic, T message) throws PulsarClientException {
+		return doSend(topic, message, null, null);
+	}
+
+	@Override
+	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
+		return doSendAsync(null, message, null, null);
+	}
+
+	@Override
+	public CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException {
+		return doSendAsync(topic, message, null, null);
+	}
+
+	@Override
+	public SendMessageBuilder<T> newMessage(T message) {
+		return new SendMessageBuilderImpl<>(this, message);
+	}
+
+	/**
+	 * Setter for schema.
+	 * @param schema provides the {@link Schema} used on this template
+	 */
+	public void setSchema(Schema<T> schema) {
+		this.schema = schema;
+	}
+
+	private MessageId doSend(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			MessageRouter messageRouter) throws PulsarClientException {
 		try {
-			return this.sendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter).get();
+			return doSendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
 		}
 	}
 
-	@Override
-	public CompletableFuture<MessageId> sendAsync(String topic, T message,
+	private CompletableFuture<MessageId> doSendAsync(String topic, T message,
 			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter)
 			throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
@@ -109,12 +138,51 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors);
 	}
 
-	/**
-	 * Setter for schema.
-	 * @param schema provides the {@link Schema} used on this template
-	 */
-	public void setSchema(Schema<T> schema) {
-		this.schema = schema;
+	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
+
+		private final PulsarTemplate<T> template;
+
+		private final T message;
+
+		private String topic;
+
+		private TypedMessageBuilderCustomizer<T> messageCustomizer;
+
+		private MessageRouter messageRouter;
+
+		SendMessageBuilderImpl(PulsarTemplate<T> template, T message) {
+			this.template = template;
+			this.message = message;
+		}
+
+		@Override
+		public SendMessageBuilder<T> withTopic(String topic) {
+			this.topic = topic;
+			return this;
+		}
+
+		@Override
+		public SendMessageBuilder<T> withMessageCustomizer(TypedMessageBuilderCustomizer<T> messageCustomizer) {
+			this.messageCustomizer = messageCustomizer;
+			return this;
+		}
+
+		@Override
+		public SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter) {
+			this.messageRouter = messageRouter;
+			return this;
+		}
+
+		@Override
+		public MessageId send() throws PulsarClientException {
+			return this.template.doSend(this.topic, this.message, this.messageCustomizer, this.messageRouter);
+		}
+
+		@Override
+		public CompletableFuture<MessageId> sendAsync() throws PulsarClientException {
+			return this.template.doSendAsync(this.topic, this.message, this.messageCustomizer, this.messageRouter);
+		}
+
 	}
 
 }

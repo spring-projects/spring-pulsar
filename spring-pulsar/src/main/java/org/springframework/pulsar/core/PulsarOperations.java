@@ -34,201 +34,90 @@ public interface PulsarOperations<T> {
 	/**
 	 * Sends a message to the default topic in a blocking manner.
 	 * @param message the message to send
-	 * @return the id of the sent message
+	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default MessageId send(T message) throws PulsarClientException {
-		return send(null, message);
-	}
+	MessageId send(T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a blocking manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the
 	 * default topic
 	 * @param message the message to send
-	 * @return the id of the sent message
+	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default MessageId send(String topic, T message) throws PulsarClientException {
-		return send(topic, message, (MessageRouter) null);
-	}
-
-	/**
-	 * Sends a message to the default topic in a blocking manner.
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
-	 * @return the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer)
-			throws PulsarClientException {
-		return send(message, typedMessageBuilderCustomizer, null);
-	}
-
-	/**
-	 * Sends a message to the default topic in a blocking manner.
-	 * @param message the message to send
-	 * @param messageRouter the optional message router to use
-	 * @return the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default MessageId send(T message, MessageRouter messageRouter) throws PulsarClientException {
-		return send(null, message, messageRouter);
-	}
-
-	/**
-	 * Sends a message to the specified topic in a blocking manner.
-	 * @param topic the topic to send the message to or {@code null} to send to the
-	 * default topic
-	 * @param message the message to send
-	 * @param messageRouter the optional message router to use
-	 * @return the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default MessageId send(String topic, T message, MessageRouter messageRouter) throws PulsarClientException {
-		return send(topic, message, null, messageRouter);
-	}
-
-	/**
-	 * Sends a message to the default topic in a blocking manner.
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the TypeMessageBuilder customizer
-	 * @param messageRouter the optional message router to use
-	 * @return the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default MessageId send(T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			MessageRouter messageRouter) throws PulsarClientException {
-		return send(null, message, typedMessageBuilderCustomizer, messageRouter);
-	}
-
-	/**
-	 * Sends a message to the specified topic in a blocking manner.
-	 * @param topic the topic to send the message to or {@code null} to send to the
-	 * default topic
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the TypeMessageBuilder customizer
-	 * @return the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer)
-			throws PulsarClientException {
-		return send(topic, message, typedMessageBuilderCustomizer, null);
-	}
-
-	/**
-	 * Sends a message to the specified topic in a blocking manner.
-	 * @param topic the topic to send the message to or {@code null} to send to the
-	 * default topic
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the optional TypedMessageBuilder customizer
-	 * @param messageRouter the optional message router to use
-	 * @return the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	MessageId send(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			MessageRouter messageRouter) throws PulsarClientException;
+	MessageId send(String topic, T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a non-blocking manner.
 	 * @param message the message to send
-	 * @return a future that holds the id of the sent message
+	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		return sendAsync(null, message);
-	}
+	CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a non-blocking manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the
 	 * default topic
 	 * @param message the message to send
-	 * @return a future that holds the id of the sent message
+	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	default CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException {
-		return sendAsync(topic, message, (MessageRouter) null);
-	}
+	CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException;
 
 	/**
-	 * Sends a message to the default topic in a non-blocking manner.
-	 * @param message the message to send
-	 * @param messageRouter the optional message router to use
-	 * @return a future that holds the id of the sent message
-	 * @throws PulsarClientException if an error occurs
+	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message.
+	 * @param message the payload of the message
+	 * @return the builder to configure and send the message
 	 */
-	default CompletableFuture<MessageId> sendAsync(T message, MessageRouter messageRouter)
-			throws PulsarClientException {
-		return sendAsync(null, message, messageRouter);
-	}
+	SendMessageBuilder<T> newMessage(T message);
 
 	/**
-	 * Sends a message to the default topic in a non-blocking manner.
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
-	 * @return a future that holds the id of the sent message
-	 * @throws PulsarClientException if an error occurs
+	 * Builder that can be used to configure and send a message. Provides more options
+	 * than the basic send/sendAsync methods provided by {@link PulsarOperations}.
+	 *
+	 * @param <T> the message payload type
 	 */
-	default CompletableFuture<MessageId> sendAsync(T message,
-			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
-		return sendAsync(null, message, typedMessageBuilderCustomizer);
-	}
+	interface SendMessageBuilder<T> {
 
-	/**
-	 * Sends a message to the specified topic in a non-blocking manner.
-	 * @param topic the topic to send the message to or {@code null} to send to the
-	 * default topic
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
-	 * @return a future that holds the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default CompletableFuture<MessageId> sendAsync(String topic, T message,
-			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer) throws PulsarClientException {
-		return sendAsync(topic, message, typedMessageBuilderCustomizer, null);
-	}
+		/**
+		 * Specify the topic to send the message to.
+		 * @param topic the destination topic
+		 * @return the current builder with the destination topic specified
+		 */
+		SendMessageBuilder<T> withTopic(String topic);
 
-	/**
-	 * Sends a message to the default in a non-blocking manner.
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the TypedMessageBuilder customizer
-	 * @param messageRouter the optional message router to use
-	 * @return a future that holds the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default CompletableFuture<MessageId> sendAsync(T message,
-			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter)
-			throws PulsarClientException {
-		return sendAsync(null, message, typedMessageBuilderCustomizer, messageRouter);
-	}
+		/**
+		 * Specifies the message customizer to use to further configure the message.
+		 * @param messageCustomizer the message customizer
+		 * @return the current builder with the message customizer specified
+		 */
+		SendMessageBuilder<T> withMessageCustomizer(TypedMessageBuilderCustomizer<T> messageCustomizer);
 
-	/**
-	 * Sends a message to the specified topic in a non-blocking manner.
-	 * @param topic the topic to send the message to or {@code null} to send to the
-	 * default topic
-	 * @param message the message to send
-	 * @param messageRouter the optional message router to use
-	 * @return a future that holds the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	default CompletableFuture<MessageId> sendAsync(String topic, T message, MessageRouter messageRouter)
-			throws PulsarClientException {
-		return sendAsync(topic, message, null, messageRouter);
-	}
+		/**
+		 * Specifies the custom message router to use when sending the message.
+		 * @param messageRouter the custom message router
+		 * @return the current builder with the custom message router specified
+		 */
+		SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter);
 
-	/**
-	 * Sends a message to the specified topic in a non-blocking manner.
-	 * @param topic the topic to send the message to or {@code null} to send to the
-	 * default topic
-	 * @param message the message to send
-	 * @param typedMessageBuilderCustomizer the optional TypedMessageBuilder customizer
-	 * @param messageRouter the optional message router to use
-	 * @return a future that holds the id of the sent message
-	 * @throws PulsarClientException if an error occurs
-	 */
-	CompletableFuture<MessageId> sendAsync(String topic, T message,
-			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter)
-			throws PulsarClientException;
+		/**
+		 * Send the message in a blocking manner using the configured specification.
+		 * @return the id assigned by the broker to the published message
+		 * @throws PulsarClientException if an error occurs
+		 */
+		MessageId send() throws PulsarClientException;
+
+		/**
+		 * Uses the configured specification to send the message in a non-blocking manner.
+		 * @return a future that holds the id assigned by the broker to the published
+		 * message
+		 * @throws PulsarClientException if an error occurs
+		 */
+		CompletableFuture<MessageId> sendAsync() throws PulsarClientException;
+
+	}
 
 }
