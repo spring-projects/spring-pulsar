@@ -163,6 +163,15 @@ class PulsarAutoConfigurationTests {
 	}
 
 	@Test
+	void customPulsarAdministrationIsRespected() {
+		PulsarAdministration pulsarAdministration = mock(PulsarAdministration.class);
+		this.contextRunner
+				.withBean("customPulsarAdministration", PulsarAdministration.class, () -> pulsarAdministration)
+				.run((context) -> assertThat(context).hasNotFailed().getBean(PulsarAdministration.class)
+						.isSameAs(pulsarAdministration));
+	}
+
+	@Test
 	void customProducerInterceptorIsUsedInPulsarTemplate() {
 		ProducerInterceptor interceptor = mock(ProducerInterceptor.class);
 		this.contextRunner.withBean("customProducerInterceptor", ProducerInterceptor.class, () -> interceptor)
