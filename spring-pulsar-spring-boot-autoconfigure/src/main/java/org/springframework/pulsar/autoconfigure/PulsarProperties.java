@@ -1024,7 +1024,7 @@ public class PulsarProperties {
 			map.from(this::getMaxLookupRedirects).to(properties.in("maxLookupRedirects"));
 			map.from(this::getMaxNumberOfRejectedRequestPerConnection)
 					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
-			map.from(this::getKeepAliveIntervalSeconds).to(properties.in("keepAliveIntervalSeconds"));
+			map.from(this::getKeepAliveIntervalSeconds).to(properties.in("keepAliveInternalSeconds"));
 			map.from(this::getConnectionTimeoutMs).to(properties.in("connectionTimeoutMs"));
 			map.from(this::getInitialBackoffIntervalNanos).to(properties.in("initialBackoffIntervalNanos"));
 			map.from(this::getMaxBackoffIntervalNanos).to(properties.in("maxBackoffIntervalNanos"));
