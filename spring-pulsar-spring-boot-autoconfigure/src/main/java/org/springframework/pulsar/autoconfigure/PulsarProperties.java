@@ -368,36 +368,86 @@ public class PulsarProperties {
 
 	public static class Producer {
 
+		/**
+		 * Topic the producer will publish to.
+		 */
 		private String topicName;
 
+		/**
+		 * Name for the producer. If not assigned, a unique name is generated.
+		 */
 		private String producerName;
 
+		/**
+		 * Time before a message has to be acknowledged by the broker in milliseconds.
+		 */
 		private long sendTimeoutMs = 30000;
 
+		/**
+		 * Whether the "send" and "sendAsync" methods should block if the outgoing message
+		 * queue is full.
+		 */
 		private boolean blockIfQueueFull = false;
 
+		/**
+		 * Maximum number of pending messages for the producer.
+		 */
 		private int maxPendingMessages = 1000;
 
+		/**
+		 * Maximum number of pending messages across all the partitions.
+		 */
 		private int maxPendingMessagesAcrossPartitions = 50000;
 
+		/**
+		 * Message routing mode for a partitioned producer.
+		 */
 		private MessageRoutingMode messageRoutingMode = MessageRoutingMode.RoundRobinPartition;
 
+		/**
+		 * Message hashing scheme to choose the partition to which the message is
+		 * published.
+		 */
 		private HashingScheme hashingScheme = HashingScheme.JavaStringHash;
 
+		/**
+		 * Action the producer will take in case of encryption failure.
+		 */
 		private ProducerCryptoFailureAction cryptoFailureAction = ProducerCryptoFailureAction.FAIL;
 
+		/**
+		 * Time period within which the messages sent will be batched in milliseconds.
+		 */
 		private long batchingMaxPublishDelayMicros = TimeUnit.MILLISECONDS.toMicros(1);
 
+		/**
+		 * Maximum number of messages to be batched.
+		 */
 		private int batchingMaxMessages = 1000;
 
+		/**
+		 * Whether to automatically batch messages.
+		 */
 		private boolean batchingEnabled = true;
 
+		/**
+		 * Whether to split large-size messages into multiple chunks.
+		 */
 		private boolean chunkingEnabled = false;
 
+		/**
+		 * Message compression type.
+		 */
 		private CompressionType compressionType;
 
+		/**
+		 * Name of the initial subscription of the topic.
+		 */
 		private String initialSubscriptionName;
 
+		/**
+		 * Type of access to the topic the producer requires.
+		 */
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
 
 		private Cache cache = new Cache();
