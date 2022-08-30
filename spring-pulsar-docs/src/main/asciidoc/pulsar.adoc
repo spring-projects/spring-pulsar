@@ -249,6 +249,75 @@ The following message listener types are available when using Spring for Apache 
 
 We will see the details about these various message listeners in the sections below.
 
+Before doing so however, lets take a closer look at the container itself
+
+===== DefaultPulsarMessageListenerContainer
+
+This is a single consumer based message listener container.
+Here is it's constructor.
+
+====
+[source, java]
+----
+public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
+			PulsarContainerProperties pulsarContainerProperties)
+}
+----
+====
+
+It receives a `PulsarConsumerFactory` that it uses to create the consumer and a `PulsarContainerProperties` object that contains information about the container properties.
+`PulsarContainerProperties` has the following constructors.
+
+====
+[source, java]
+----
+public PulsarContainerProperties(String... topics)
+
+public PulsarContainerProperties(Pattern topicPattern)
+----
+====
+
+You can provide the topic information through `PulsarContainerProperties` or as a consumer property that is provided to the consumer factory.
+Here is an example of using the `DefaultPulsarMessageListenerContainer`.
+
+====
+[source, java]
+----
+Map<String, Object> config = new HashMap<>();
+config.put("topics", "my-topic");
+PulsarConsumerFactory<String> pulsarConsumerFactorY = DefaultPulsarConsumerFactory<>(pulsarClient, config);
+
+PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+
+pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+		});
+
+DefaultPulsarMessageListenerContainer<String> pulsarListenerContainer = new DefaultPulsarMessageListenerContainer(pulsarConsumerFacotyr,
+        pulsarContainerProperties);
+
+return pulsarListenerContainer;
+----
+====
+
+`DefaultPulsarMessageListenerContainer` only creates a single consumer.
+If you want to have multiple consumers managed through multiple threads, you need to use `ConcurrentPulsarMessageListenerContainer`.
+
+===== ConcurrentPulsarMessageListenerContainer
+
+`ConcurrentPulsarMessageListenerContainer` has the following constructor.
+
+====
+[source, java]
+----
+public ConcurrentPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
+    PulsarContainerProperties pulsarContainerProperties)
+----
+====
+
+`ConcurrentPulsarMessageListenerContainer` allows to specify a `concurrency` property through a setter.
+Concurrency of more than `1` is only allowed on non-exclusive subscriptions (`failover`, `shared` and `key-shared`).
+You can only have the default `1` for concurrency when you have an exclusive subscription mode.
+
 ==== Consuming the Records
 
 In this section, we are going to see how the message listener container enables both single record and batch based message consumption.

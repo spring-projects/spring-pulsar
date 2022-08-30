@@ -17,6 +17,7 @@
 package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,10 +27,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
@@ -42,10 +44,13 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
@@ -62,83 +67,11 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 	PulsarTemplate<String> pulsarTemplate;
 
 	@Autowired
-	private PulsarListenerEndpointRegistry registry;
-
-	@Autowired
 	private PulsarClient pulsarClient;
 
-	@BeforeAll
-	static void setup() throws Exception {
-		PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build();
-
-		String topicName = "persistent://public/default/concurrency-on-pl";
-		int numPartitions = 3;
-		admin.topics().createPartitionedTopic(topicName, numPartitions);
-	}
-
-	@Test
-	void testPulsarListenerProvidedConsumerProperties() throws Exception {
-
-		final PulsarContainerProperties pulsarContainerProperties = this.registry.getListenerContainer("foo")
-				.getContainerProperties();
-		final Properties pulsarConsumerProperties = pulsarContainerProperties.getPulsarConsumerProperties();
-		assertThat(pulsarConsumerProperties.size()).isEqualTo(2);
-		assertThat(pulsarConsumerProperties.get("topicNames")).isEqualTo("foo-1");
-		assertThat(pulsarConsumerProperties.get("subscriptionName")).isEqualTo("subscription-1");
-		pulsarTemplate.send("hello foo");
-		assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-	}
-
-	@Test
-	void concurrencyOnPulsarListenerWithFailoverSubscription() throws Exception {
-		PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				Map.of("batchingEnabled", false));
-		PulsarTemplate<String> customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-
-		final ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) this.registry
-				.getListenerContainer("bar");
-
-		assertThat(bar.getConcurrency()).isEqualTo(3);
-
-		customTemplate.sendAsync("concurrency-on-pl", "hello john doe");
-		customTemplate.sendAsync("concurrency-on-pl", "hello alice doe");
-		customTemplate.sendAsync("concurrency-on-pl", "hello buzz doe");
-
-		assertThat(latch1.await(10, TimeUnit.SECONDS)).isTrue();
-	}
-
-	@Test
-	void nonDefaultConcurrencySettingNotAllowedOnExclusiveSubscriptions() throws Exception {
-		PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				Map.of("batchingEnabled", false));
-		PulsarTemplate<String> customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-
-		final ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) this.registry
-				.getListenerContainer("bar");
-
-		assertThat(bar.getConcurrency()).isEqualTo(3);
-
-		customTemplate.sendAsync("concurrency-on-pl", "hello john doe");
-		customTemplate.sendAsync("concurrency-on-pl", "hello alice doe");
-		customTemplate.sendAsync("concurrency-on-pl", "hello buzz doe");
-
-		assertThat(latch1.await(10, TimeUnit.SECONDS)).isTrue();
-	}
-
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
-	public static class Config {
-
-		@PulsarListener(id = "foo", properties = { "subscriptionName=subscription-1", "topicNames=foo-1" })
-		void listen1(String message) {
-			latch.countDown();
-		}
-
-		@PulsarListener(id = "bar", topics = "concurrency-on-pl", subscriptionName = "subscription-2",
-				subscriptionType = "failover", concurrency = "3")
-		void listen2(String message) {
-			latch1.countDown();
-		}
+	public static class TopLevelConfig {
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
@@ -174,6 +107,114 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			final ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>();
 			pulsarListenerContainerFactory.setPulsarConsumerFactory(pulsarConsumerFactory);
 			return pulsarListenerContainerFactory;
+		}
+
+		@Bean
+		PulsarAdministration pulsarAdministration() {
+			return new PulsarAdministration(PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()));
+		}
+
+		@Bean
+		PulsarTopic partitionedTopic() {
+			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
+	class PulsarListenerBasicTestCases {
+
+		@Test
+		void testPulsarListenerProvidedConsumerProperties(@Autowired PulsarListenerEndpointRegistry registry)
+				throws Exception {
+
+			final PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("foo")
+					.getContainerProperties();
+			final Properties pulsarConsumerProperties = pulsarContainerProperties.getPulsarConsumerProperties();
+			assertThat(pulsarConsumerProperties.size()).isEqualTo(2);
+			assertThat(pulsarConsumerProperties.get("topicNames")).isEqualTo("foo-1");
+			assertThat(pulsarConsumerProperties.get("subscriptionName")).isEqualTo("subscription-1");
+			pulsarTemplate.send("hello foo");
+			assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void concurrencyOnPulsarListenerWithFailoverSubscription(@Autowired PulsarListenerEndpointRegistry registry)
+				throws Exception {
+			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Map.of("batchingEnabled", false));
+			PulsarTemplate<String> customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+
+			final ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) registry
+					.getListenerContainer("bar");
+
+			assertThat(bar.getConcurrency()).isEqualTo(3);
+
+			customTemplate.sendAsync("concurrency-on-pl", "hello john doe");
+			customTemplate.sendAsync("concurrency-on-pl", "hello alice doe");
+			customTemplate.sendAsync("concurrency-on-pl", "hello buzz doe");
+
+			assertThat(latch1.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void nonDefaultConcurrencySettingNotAllowedOnExclusiveSubscriptions(
+				@Autowired PulsarListenerEndpointRegistry registry) throws Exception {
+			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Map.of("batchingEnabled", false));
+			PulsarTemplate<String> customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+
+			final ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) registry
+					.getListenerContainer("bar");
+
+			assertThat(bar.getConcurrency()).isEqualTo(3);
+
+			customTemplate.sendAsync("concurrency-on-pl", "hello john doe");
+			customTemplate.sendAsync("concurrency-on-pl", "hello alice doe");
+			customTemplate.sendAsync("concurrency-on-pl", "hello buzz doe");
+
+			assertThat(latch1.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class TestPulsarListenersForBasicScenario {
+
+			@PulsarListener(id = "foo", properties = { "subscriptionName=subscription-1", "topicNames=foo-1" })
+			void listen1(String message) {
+				latch.countDown();
+			}
+
+			@PulsarListener(id = "bar", topics = "concurrency-on-pl", subscriptionName = "subscription-2",
+					subscriptionType = "failover", concurrency = "3")
+			void listen2(String message) {
+				latch1.countDown();
+			}
+
+		}
+
+	}
+
+	@Nested
+	class NegativeConcurrency {
+
+		@Test
+		void exclusiveSubscriptionNotAllowedToHaveMultipleConsumers() {
+			assertThatThrownBy(
+					() -> new AnnotationConfigApplicationContext(TopLevelConfig.class, ConcurrencyConfig.class))
+							.rootCause().isInstanceOf(IllegalStateException.class)
+							.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
+		}
+
+		@EnablePulsar
+		static class ConcurrencyConfig {
+
+			@PulsarListener(id = "foobar", topics = "concurrency-on-pl", subscriptionName = "subscription-3",
+					concurrency = "3")
+			void listen3(String message) {
+			}
+
 		}
 
 	}
