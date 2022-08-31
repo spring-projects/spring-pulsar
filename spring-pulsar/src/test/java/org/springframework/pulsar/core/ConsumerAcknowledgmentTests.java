@@ -139,6 +139,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 	@Test
 	void testBatchAckButSomeRecordsFail() throws Exception {
+		final Object lock = new Object();
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
 		strings.add("cons-ack-tests-013");
@@ -151,9 +152,11 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			latch.countDown();
-			if (latch.getCount() % 2 == 0) {
-				throw new RuntimeException("fail");
+			synchronized (lock) {
+				latch.countDown();
+				if (latch.getCount() % 2 == 0) {
+					throw new RuntimeException("fail");
+				}
 			}
 		});
 		pulsarContainerProperties.setSchema(Schema.STRING);
@@ -174,9 +177,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		Thread.sleep(1_000);
 		// Half of the message get acknowledged, and the other half gets negatively
 		// acknowledged.
-		await().atMost(Duration.ofSeconds(30))
+		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
-		await().atMost(Duration.ofSeconds(30))
+		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
