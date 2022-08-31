@@ -276,7 +276,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 							}
 							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
 								try {
-									if (isSharedSubsriptionType()) {
+									if (isSharedSubscriptionType()) {
 										this.consumer.acknowledge(messages);
 									}
 									else {
@@ -331,7 +331,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
-		private boolean isSharedSubsriptionType() {
+		private boolean isSharedSubscriptionType() {
 			return this.containerProperties.getSubscriptionType() == SubscriptionType.Shared
 					|| this.containerProperties.getSubscriptionType() == SubscriptionType.Key_Shared;
 		}
@@ -340,7 +340,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			if (this.nackableMessages.isEmpty()) {
 				try {
 					if (messages.size() > 0) {
-						if (isSharedSubsriptionType()) {
+						if (isSharedSubscriptionType()) {
 							this.consumer.acknowledge(messages);
 						}
 						else {
