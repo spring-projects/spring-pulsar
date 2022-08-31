@@ -31,6 +31,7 @@ import org.springframework.pulsar.support.MessageConverter;
  * Adapter to avoid having to implement all methods.
  *
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 
@@ -52,6 +53,11 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 	@Override
 	public Collection<String> getTopics() {
 		return Collections.emptyList();
+	}
+
+	@Override
+	public String getTopicPattern() {
+		return null;
 	}
 
 	@Override

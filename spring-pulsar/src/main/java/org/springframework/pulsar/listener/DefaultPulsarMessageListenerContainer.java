@@ -56,6 +56,7 @@ import org.springframework.util.StringUtils;
  *
  * @param <T> message type.
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
@@ -223,6 +224,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					propertiesToOverride.put("topicNames", listenerDefinedTopics);
 				}
 			}
+
+			if (!propertiesToOverride.containsKey("topicsPattern")) {
+				final String topicsPattern = pulsarContainerProperties.getTopicsPattern();
+				if (topicsPattern != null) {
+					propertiesToOverride.put("topicsPattern", topicsPattern);
+				}
+			}
+
 			if (!propertiesToOverride.containsKey("subscriptionName")) {
 				if (StringUtils.hasText(pulsarContainerProperties.getSubscriptionName())) {
 					propertiesToOverride.put("subscriptionName", pulsarContainerProperties.getSubscriptionName());
@@ -267,7 +276,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 							}
 							if (this.containerProperties.getAckMode() == PulsarContainerProperties.AckMode.BATCH) {
 								try {
-									if (isSharedSubsriptionType()) {
+									if (isSharedSubscriptionType()) {
 										this.consumer.acknowledge(messages);
 									}
 									else {
@@ -322,7 +331,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
-		private boolean isSharedSubsriptionType() {
+		private boolean isSharedSubscriptionType() {
 			return this.containerProperties.getSubscriptionType() == SubscriptionType.Shared
 					|| this.containerProperties.getSubscriptionType() == SubscriptionType.Key_Shared;
 		}
@@ -331,7 +340,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			if (this.nackableMessages.isEmpty()) {
 				try {
 					if (messages.size() > 0) {
-						if (isSharedSubsriptionType()) {
+						if (isSharedSubscriptionType()) {
 							this.consumer.acknowledge(messages);
 						}
 						else {

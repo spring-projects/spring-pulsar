@@ -39,7 +39,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 /**
  * @author Soby Chacko
  */
-class DefaultPulsarMessageListenerContainierTests extends AbstractContainerBaseTests {
+class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
 
 	@Test
 	void basicDefaultConsumer() throws Exception {

@@ -32,6 +32,7 @@ import org.springframework.pulsar.support.MessageConverter;
  * endpoints programmatically.
  *
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public interface PulsarListenerEndpoint {
 
@@ -45,6 +46,8 @@ public interface PulsarListenerEndpoint {
 	SubscriptionType getSubscriptionType();
 
 	Collection<String> getTopics();
+
+	String getTopicPattern();
 
 	@Nullable
 	Boolean getAutoStartup();
