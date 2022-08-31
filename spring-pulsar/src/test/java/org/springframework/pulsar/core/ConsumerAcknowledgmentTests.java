@@ -62,6 +62,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
+	static int COUNTER = 0;
+
 	@Test
 	void testRecordAck() throws Exception {
 		Map<String, Object> config = new HashMap<>();
@@ -143,7 +145,6 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 	@Test
 	void testBatchAckButSomeRecordsFail() throws Exception {
-		final Object lock = new Object();
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
 		strings.add("cons-ack-tests-013");
@@ -155,14 +156,14 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
+
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			synchronized (lock) {
-				latch.countDown();
-				this.logger.error("Current count: " + latch.getCount());
-				if (latch.getCount() % 2 == 0) {
-					this.logger.error("Failing to acknowledge.");
-					throw new RuntimeException("fail");
-				}
+			latch.countDown();
+			this.logger.warn("Listener invoked: " + COUNTER++);
+			this.logger.warn("Msg received: " + msg.getValue());
+			if (latch.getCount() % 2 == 0) {
+				this.logger.error("Failing to acknowledge.");
+				throw new RuntimeException("fail");
 			}
 		});
 		pulsarContainerProperties.setSchema(Schema.STRING);
@@ -183,8 +184,13 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		Thread.sleep(1_000);
 		// Half of the message get acknowledged, and the other half gets negatively
 		// acknowledged.
-		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
+		try {
+			await().atMost(Duration.ofSeconds(10))
+					.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
+		}
+		catch (Throwable t) {
+			this.logger.error(t.getMessage());
+		}
 		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
 		container.stop();
