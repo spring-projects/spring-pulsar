@@ -1,0 +1,143 @@
+/*
+ * Copyright 2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.springframework.pulsar.listener;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.junit.jupiter.api.Test;
+
+import org.springframework.pulsar.core.AbstractContainerBaseTests;
+import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
+import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarTemplate;
+
+/**
+ * @author Soby Chacko
+ */
+class DefaultPulsarMessageListenerContainierTests extends AbstractContainerBaseTests {
+
+	@Test
+	void basicDefaultConsumer() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		final HashSet<String> strings = new HashSet<>();
+		strings.add("dpmlct-012");
+		config.put("topicNames", strings);
+		config.put("subscriptionName", "dpmlct-sb-012");
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
+		CountDownLatch latch = new CountDownLatch(1);
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+		Map<String, Object> prodConfig = new HashMap<>();
+		prodConfig.put("topicName", "dpmlct-012");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		pulsarTemplate.sendAsync("hello john doe");
+		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		container.stop();
+		pulsarClient.close();
+	}
+
+	@Test
+	void subscriptionInitialPositionEarliest() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		final HashSet<String> strings = new HashSet<>();
+		strings.add("dpmlct-013");
+		config.put("topicNames", strings);
+		config.put("subscriptionName", "dpmlct-sb-013");
+		config.put("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
+		CountDownLatch latch = new CountDownLatch(5);
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+
+		Map<String, Object> prodConfig = new HashMap<>();
+		prodConfig.put("topicName", "dpmlct-013");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 0; i < 5; i++) {
+			pulsarTemplate.send("hello john doe" + i);
+		}
+		// Only start container after all the messages are sent
+		container.start();
+		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		container.stop();
+		pulsarClient.close();
+	}
+
+	@Test
+	void subscriptionInitialPositionDefaultLatest() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		final HashSet<String> strings = new HashSet<>();
+		strings.add("dpmlct-014");
+		config.put("topicNames", strings);
+		config.put("subscriptionName", "dpmlct-sb-014");
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		List<String> messages = new ArrayList<>();
+		pulsarContainerProperties.setMessageListener(
+				(PulsarRecordMessageListener<?>) (consumer, msg) -> messages.add((String) msg.getValue()));
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+
+		Map<String, Object> prodConfig = new HashMap<>();
+		prodConfig.put("topicName", "dpmlct-014");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 0; i < 5; i++) {
+			pulsarTemplate.send("hello john doe" + i);
+		}
+		// Only start container after all the messages are sent
+		container.start();
+		pulsarTemplate.send("hello john doe" + 5);
+		Thread.sleep(2_000);
+		assertThat(messages.size()).isEqualTo(1);
+		assertThat(messages.get(0)).isEqualTo("hello john doe5");
+		container.stop();
+		pulsarClient.close();
+	}
+
+}

@@ -62,9 +62,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 	void testRecordAck() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
-		strings.add("foobar-011");
+		strings.add("cons-ack-tests-011");
 		config.put("topicNames", strings);
-		config.put("subscriptionName", "foobar-sb-011");
+		config.put("subscriptionName", "cons-ack-tests-sb-011");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
@@ -87,7 +87,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		}).when(containerConsumer).acknowledge(any(Message.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "foobar-011");
+		prodConfig.put("topicName", "cons-ack-tests-011");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -103,9 +103,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 	void testBatchAck() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
-		strings.add("foobar-012");
+		strings.add("cons-ack-tests-012");
 		config.put("topicNames", strings);
-		config.put("subscriptionName", "foobar-sb-012");
+		config.put("subscriptionName", "cons-ack-tests-sb-012");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
@@ -121,7 +121,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		final Consumer<?> containerConsumer = spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "foobar-012");
+		prodConfig.put("topicName", "cons-ack-tests-012");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -141,9 +141,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 	void testBatchAckButSomeRecordsFail() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
-		strings.add("foobar-013");
+		strings.add("cons-ack-tests-013");
 		config.put("topicNames", strings);
-		config.put("subscriptionName", "foobar-sb-013");
+		config.put("subscriptionName", "cons-ack-tests-sb-013");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
@@ -163,7 +163,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		final Consumer<?> containerConsumer = spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "foobar-013");
+		prodConfig.put("topicName", "cons-ack-tests-013");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -187,9 +187,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 	void testManualAckForRecordListener() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
-		strings.add("foobar-014");
+		strings.add("cons-ack-tests-014");
 		config.put("topicNames", strings);
-		config.put("subscriptionName", "foobar-sb-014");
+		config.put("subscriptionName", "cons-ack-tests-sb-014");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
@@ -218,7 +218,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		}).when(containerConsumer).acknowledge(any(Message.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "foobar-014");
+		prodConfig.put("topicName", "cons-ack-tests-014");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -241,9 +241,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 	void testBatchAckForBatchListener() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
-		strings.add("foobar-015");
+		strings.add("cons-ack-tests-015");
 		config.put("topicNames", strings);
-		config.put("subscriptionName", "foobar-sb-015");
+		config.put("subscriptionName", "cons-ack-tests-sb-015");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
@@ -268,7 +268,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		final Consumer<?> containerConsumer = spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "foobar-015");
+		prodConfig.put("topicName", "cons-ack-tests-015");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -289,9 +289,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 	void testBatchNackForEntireBatchWhenUsingBatchListener() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		final Set<String> strings = new HashSet<>();
-		strings.add("foobar-016");
+		strings.add("cons-ack-tests-016");
 		config.put("topicNames", strings);
-		config.put("subscriptionName", "foobar-sb-016");
+		config.put("subscriptionName", "cons-ack-tests-sb-016");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
@@ -316,7 +316,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		final Consumer<?> containerConsumer = spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "foobar-016");
+		prodConfig.put("topicName", "cons-ack-tests-016");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
