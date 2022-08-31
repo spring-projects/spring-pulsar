@@ -174,9 +174,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		Thread.sleep(1_000);
 		// Half of the message get acknowledged, and the other half gets negatively
 		// acknowledged.
-		await().atMost(Duration.ofSeconds(10))
+		await().atMost(Duration.ofSeconds(30))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
-		await().atMost(Duration.ofSeconds(10))
+		await().atMost(Duration.ofSeconds(30))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
