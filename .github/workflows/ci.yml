@@ -48,12 +48,12 @@ jobs:
         run: |
           ./gradlew clean build --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
       - name: Capture Test Results
-          if: failure()
-          uses: actions/upload-artifact@v3
-          with:
-            name: test-results
-            path: '*/build/reports/tests/**/*.*'
-            retention-days: 3
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: '*/build/reports/tests/**/*.*'
+          retention-days: 3
       - name: Deploy artifacts
 #        env:
 #          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
