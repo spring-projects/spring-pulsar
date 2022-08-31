@@ -18,7 +18,6 @@ package org.springframework.pulsar.listener;
 
 import java.time.Duration;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -31,6 +30,7 @@ import org.springframework.util.Assert;
  * Contains runtime properties for a listener container.
  *
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class PulsarContainerProperties {
 
@@ -60,7 +60,7 @@ public class PulsarContainerProperties {
 
 	private String[] topics;
 
-	private Pattern topicsPattern;
+	private String topicsPattern;
 
 	private String subscriptionName;
 
@@ -91,7 +91,7 @@ public class PulsarContainerProperties {
 		this.topicsPattern = null;
 	}
 
-	public PulsarContainerProperties(Pattern topicPattern) {
+	public PulsarContainerProperties(String topicPattern) {
 		this.topicsPattern = topicPattern;
 		this.topics = null;
 	}
@@ -190,11 +190,11 @@ public class PulsarContainerProperties {
 		this.topics = topics;
 	}
 
-	public Pattern getTopicsPattern() {
+	public String getTopicsPattern() {
 		return this.topicsPattern;
 	}
 
-	public void setTopicsPattern(Pattern topicsPattern) {
+	public void setTopicsPattern(String topicsPattern) {
 		this.topicsPattern = topicsPattern;
 	}
 

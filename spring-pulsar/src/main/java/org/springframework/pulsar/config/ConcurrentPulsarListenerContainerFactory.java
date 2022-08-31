@@ -31,6 +31,7 @@ import org.springframework.util.StringUtils;
  * @param <T> message type in the listener.
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 public class ConcurrentPulsarListenerContainerFactory<T>
 		extends AbstractPulsarListenerContainerFactory<ConcurrentPulsarMessageListenerContainer<T>, T> {
@@ -50,10 +51,15 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		Collection<String> topics = endpoint.getTopics();
+		String topicPattern = endpoint.getTopicPattern();
 
 		if (!topics.isEmpty()) {
 			final String[] topics1 = topics.toArray(new String[0]);
 			properties.setTopics(topics1);
+		}
+
+		if (StringUtils.hasText(topicPattern)) {
+			properties.setTopicsPattern(topicPattern);
 		}
 
 		final String subscriptionName = endpoint.getSubscriptionName();

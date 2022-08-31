@@ -56,6 +56,7 @@ import org.springframework.util.StringUtils;
  *
  * @param <T> message type.
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
@@ -223,6 +224,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					propertiesToOverride.put("topicNames", listenerDefinedTopics);
 				}
 			}
+
+			if (!propertiesToOverride.containsKey("topicsPattern")) {
+				final String topicsPattern = pulsarContainerProperties.getTopicsPattern();
+				if (topicsPattern != null) {
+					propertiesToOverride.put("topicsPattern", topicsPattern);
+				}
+			}
+
 			if (!propertiesToOverride.containsKey("subscriptionName")) {
 				if (StringUtils.hasText(pulsarContainerProperties.getSubscriptionName())) {
 					propertiesToOverride.put("subscriptionName", pulsarContainerProperties.getSubscriptionName());

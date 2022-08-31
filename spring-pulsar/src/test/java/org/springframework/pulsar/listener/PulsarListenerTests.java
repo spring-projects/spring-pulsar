@@ -55,6 +55,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 @SpringJUnitConfig
 @DirtiesContext
@@ -62,6 +63,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 
 	static CountDownLatch latch = new CountDownLatch(1);
 	static CountDownLatch latch1 = new CountDownLatch(3);
+	static CountDownLatch latch2 = new CountDownLatch(3);
 
 	@Autowired
 	PulsarTemplate<String> pulsarTemplate;
@@ -124,6 +126,19 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 	@Nested
 	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
 	class PulsarListenerBasicTestCases {
+
+		@Test
+		void testPulsarListenerWithTopicsPattern(@Autowired PulsarListenerEndpointRegistry registry) throws Exception {
+			PulsarMessageListenerContainer baz = registry.getListenerContainer("baz");
+			PulsarContainerProperties containerProperties = baz.getContainerProperties();
+			assertThat(containerProperties.getTopicsPattern()).isEqualTo("persistent://public/default/pattern.*");
+
+			pulsarTemplate.send("persistent://public/default/pattern-1", "hello baz");
+			pulsarTemplate.send("persistent://public/default/pattern-2", "hello baz");
+			pulsarTemplate.send("persistent://public/default/pattern-3", "hello baz");
+
+			assertThat(latch2.await(10, TimeUnit.SECONDS)).isTrue();
+		}
 
 		@Test
 		void testPulsarListenerProvidedConsumerProperties(@Autowired PulsarListenerEndpointRegistry registry)
@@ -190,6 +205,13 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 					subscriptionType = "failover", concurrency = "3")
 			void listen2(String message) {
 				latch1.countDown();
+			}
+
+			@PulsarListener(id = "baz", topicPattern = "persistent://public/default/pattern.*",
+					subscriptionName = "subscription-3",
+					properties = { "patternAutoDiscoveryPeriod=5", "subscriptionInitialPosition=Earliest" })
+			void listen3(String message) {
+				latch2.countDown();
 			}
 
 		}

@@ -41,12 +41,14 @@ import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Base implementation for {@link PulsarListenerEndpoint}.
  *
  * @param <K> Message payload type.
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public abstract class AbstractPulsarListenerEndpoint<K>
 		implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
@@ -62,6 +64,8 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	private String id;
 
 	private final Collection<String> topics = new ArrayList<>();
+
+	private String topicPattern;
 
 	private BeanFactory beanFactory;
 
@@ -97,8 +101,8 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	@Override
 	public void afterPropertiesSet() {
 		boolean topicsEmpty = getTopics().isEmpty();
-		if (!topicsEmpty) {
-			throw new IllegalStateException("Topics or topicPartitions must be provided but not both for " + this);
+		if (!topicsEmpty && !StringUtils.hasText(getTopicPattern())) {
+			throw new IllegalStateException("Topics or topicPattern must be provided but not both for " + this);
 		}
 	}
 
@@ -146,6 +150,16 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	@Override
 	public Collection<String> getTopics() {
 		return Collections.unmodifiableCollection(this.topics);
+	}
+
+	public void setTopicPattern(String topicPattern) {
+		Assert.notNull(topicPattern, "'topicPattern' must not be null");
+		this.topicPattern = topicPattern;
+	}
+
+	@Override
+	public String getTopicPattern() {
+		return this.topicPattern;
 	}
 
 	@Override

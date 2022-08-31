@@ -109,6 +109,7 @@ import org.springframework.validation.Validator;
  * @param <V> the value type.
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  * @see PulsarListener
  * @see EnablePulsar
  * @see PulsarListenerConfigurer
@@ -277,14 +278,15 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		String beanRef = pulsarListener.beanRef();
 		this.listenerScope.addListener(beanRef, bean);
 		String[] topics = resolveTopics(pulsarListener);
-		processListener(endpoint, pulsarListener, bean, beanName, topics);
+		String topicPattern = getTopicPattern(pulsarListener);
+		processListener(endpoint, pulsarListener, bean, beanName, topics, topicPattern);
 		this.listenerScope.removeListener(beanRef);
 	}
 
 	protected void processListener(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener PulsarListener, Object bean,
-			String beanName, String[] topics) {
+			String beanName, String[] topics, String topicPattern) {
 
-		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics);
+		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics, topicPattern);
 
 		String containerFactory = resolve(PulsarListener.containerFactory());
 		PulsarListenerContainerFactory<?> listenerContainerFactory = resolveContainerFactory(PulsarListener,
@@ -335,13 +337,14 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 	}
 
 	private void processPulsarListenerAnnotation(MethodPulsarListenerEndpoint<?> endpoint,
-			PulsarListener pulsarListener, Object bean, String[] topics) {
+			PulsarListener pulsarListener, Object bean, String[] topics, String topicPattern) {
 
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
 		endpoint.setSubscriptionName(getEndpointSubscriptionName(pulsarListener));
 		endpoint.setId(getEndpointId(pulsarListener));
 		endpoint.setTopics(topics);
+		endpoint.setTopicPattern(topicPattern);
 		endpoint.setSubscriptionType(getEndpointSubscriptionType(pulsarListener));
 		endpoint.setSchemaType(pulsarListener.schemaType());
 
@@ -462,6 +465,10 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		else {
 			return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 		}
+	}
+
+	private String getTopicPattern(PulsarListener pulsarListener) {
+		return resolveExpressionAsString(pulsarListener.topicPattern(), "topicPattern");
 	}
 
 	private String resolveExpressionAsString(String value, String attribute) {
