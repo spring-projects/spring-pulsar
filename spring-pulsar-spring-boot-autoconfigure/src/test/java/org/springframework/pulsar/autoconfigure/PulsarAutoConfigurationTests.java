@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
@@ -54,6 +55,7 @@ import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer
  *
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Soby Chacko
  */
 @SuppressWarnings("unchecked")
 class PulsarAutoConfigurationTests {
@@ -137,6 +139,14 @@ class PulsarAutoConfigurationTests {
 		this.contextRunner.withBean("customPulsarConsumerFactory", PulsarConsumerFactory.class, () -> consumerFactory)
 				.run((context) -> assertThat(context).hasNotFailed().getBean(PulsarConsumerFactory.class)
 						.isSameAs(consumerFactory));
+	}
+
+	@Test
+	void pulsarConsumerFactoryWithEnumPropertyValue() {
+		this.contextRunner.withPropertyValues("spring.pulsar.consumer.subscriptionInitialPosition=Earliest")
+				.run((context -> assertThat(context).hasNotFailed().getBean(PulsarConsumerFactory.class)
+						.extracting("consumerConfig").hasFieldOrPropertyWithValue("subscriptionInitialPosition",
+								SubscriptionInitialPosition.Earliest)));
 	}
 
 	@Test
