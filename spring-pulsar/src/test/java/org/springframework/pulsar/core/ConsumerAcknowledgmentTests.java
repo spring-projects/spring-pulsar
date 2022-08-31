@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
@@ -45,6 +46,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
@@ -57,6 +59,8 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  */
 class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
+
+	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
 	@Test
 	void testRecordAck() throws Exception {
@@ -154,7 +158,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 			synchronized (lock) {
 				latch.countDown();
+				this.logger.error("Current count: " + latch.getCount());
 				if (latch.getCount() % 2 == 0) {
+					this.logger.error("Failing to acknowledge.");
 					throw new RuntimeException("fail");
 				}
 			}
