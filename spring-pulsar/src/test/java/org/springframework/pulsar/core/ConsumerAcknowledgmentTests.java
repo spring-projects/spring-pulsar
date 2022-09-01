@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
@@ -46,7 +46,6 @@ import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
-import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
@@ -59,10 +58,6 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  */
 class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
-
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
-
-	static int COUNTER = 0;
 
 	@Test
 	void testRecordAck() throws Exception {
@@ -143,12 +138,13 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		pulsarClient.close();
 	}
 
+	// CHECKSTYLE:OFF
+	static int COUNTER = 0;
+
 	@Test
 	void testBatchAckButSomeRecordsFail() throws Exception {
 		Map<String, Object> config = new HashMap<>();
-		final Set<String> strings = new HashSet<>();
-		strings.add("cons-ack-tests-013");
-		config.put("topicNames", strings);
+		config.put("topicNames", Collections.singleton("cons-ack-tests-013"));
 		config.put("subscriptionName", "cons-ack-tests-sb-013");
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
@@ -159,10 +155,9 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 			latch.countDown();
-			this.logger.warn("Listener invoked: " + COUNTER++);
-			this.logger.warn("Msg received: " + msg.getValue());
+			System.out.println("*** Listener invoked (" + (COUNTER++) + ")");
 			if (latch.getCount() % 2 == 0) {
-				this.logger.error("Failing to acknowledge.");
+				System.out.println("*** Forcing failure -> should result in nack");
 				throw new RuntimeException("fail");
 			}
 		});
@@ -189,13 +184,17 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 					.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
 		}
 		catch (Throwable t) {
-			this.logger.error(t.getMessage());
+			System.out.println("*** ACK assertions failed - was not 5: " + t.getMessage());
+			t.printStackTrace();
 		}
 		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
+
 		container.stop();
+
 		pulsarClient.close();
 	}
+	// CHECKSTYLE:ON
 
 	@Test
 	@SuppressWarnings("unchecked")

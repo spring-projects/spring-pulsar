@@ -18,6 +18,11 @@
 	<!-- TreeWalker Checks -->
 	<module name="TreeWalker">
 
+		<module name="SuppressionCommentFilter">
+			<property name="offCommentFormat" value="CHECKSTYLE:OFF"/>
+			<property name="onCommentFormat" value="CHECKSTYLE:ON"/>
+		</module>
+
 		<!-- Annotations -->
 		<module name="AnnotationUseStyle">
 			<property name="elementStyle" value="compact"/>
