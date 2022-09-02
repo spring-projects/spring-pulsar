@@ -167,7 +167,7 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 	@Override
 	public void stop() {
 		synchronized (this.lifecycleMonitor) {
-			if (!isRunning()) {
+			if (isRunning()) {
 				doStop();
 			}
 		}
