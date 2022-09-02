@@ -627,9 +627,9 @@ public void listen(Foo foo) {
 On the producer side also, for the Java primitive types, the framework can infer the Schema, but for any other types, you need set that on the `PulsarTemmplate`.
 
 
-=== Intercepting messages
+==== Intercepting messages
 
-==== Intercept messages on the Producer
+===== Intercept messages on the Producer
 Adding a `ProducerInterceptor`  allows you to intercept and mutate messages received by the producer before being published to the brokers.
 To do so, you can pass a list of interceptors into the `PulsarTemplate` constructor.
 When using multiple interceptors, the order they are applied in will be the order they appear in the list.
