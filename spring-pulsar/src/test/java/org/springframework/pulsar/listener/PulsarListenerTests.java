@@ -19,14 +19,22 @@ package org.springframework.pulsar.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.schema.AvroSchema;
+import org.apache.pulsar.client.impl.schema.JSONSchema;
+import org.apache.pulsar.common.schema.KeyValue;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -235,6 +243,132 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			@PulsarListener(id = "foobar", topics = "concurrency-on-pl", subscriptionName = "subscription-3",
 					concurrency = "3")
 			void listen3(String message) {
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = SchemaTestCases.SchemaTestConfig.class)
+	class SchemaTestCases {
+
+		static CountDownLatch jsonLatch = new CountDownLatch(1);
+
+		static CountDownLatch avroLatch = new CountDownLatch(1);
+
+		static CountDownLatch keyvalueLatch = new CountDownLatch(1);
+
+
+
+		@Test
+		void jsonSchema() throws Exception {
+			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setSchema(JSONSchema.of(User.class));
+			template.send("json-topic", new User("Jason", 1));
+			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void avroSchema() throws Exception {
+			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setSchema(AvroSchema.of(User.class));
+			template.send("avro-topic", new User("Avi", 2));
+			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void keyvalueSchema() throws Exception {
+			PulsarProducerFactory<KeyValue<String, Integer>> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient, Collections.emptyMap());
+			PulsarTemplate<KeyValue<String, Integer>> template = new PulsarTemplate<>(pulsarProducerFactory);
+
+			Schema<KeyValue<String, Integer>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.INT32,
+					KeyValueEncodingType.INLINE);
+
+			template.setSchema(kvSchema);
+			template.send("keyvalue-topic", new KeyValue<>("Kevin", 3));
+			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class SchemaTestConfig {
+
+			@PulsarListener(id = "jsonListener", topics = "json-topic", subscriptionName = "subscription-4",
+					schemaType = SchemaType.JSON, properties = { "subscriptionInitialPosition=Earliest" })
+			void listenJson(User message) {
+				jsonLatch.countDown();
+			}
+
+			@PulsarListener(id = "avroListener", topics = "avro-topic", subscriptionName = "subscription-5",
+					schemaType = SchemaType.AVRO, properties = { "subscriptionInitialPosition=Earliest" })
+			void listenAvro(User message) {
+				avroLatch.countDown();
+			}
+
+			@PulsarListener(id = "keyvalueListener", topics = "keyvalue-topic", subscriptionName = "subscription-6",
+					schemaType = SchemaType.KEY_VALUE, properties = { "subscriptionInitialPosition=Earliest" })
+			void listenKeyvalue(KeyValue<String, Integer> message) {
+				keyvalueLatch.countDown();
+			}
+		}
+
+		static class User {
+
+			private String name;
+
+			private int age;
+
+			User() {
+
+			}
+
+			User(String name, int age) {
+				this.name = name;
+				this.age = age;
+			}
+
+			public String getName() {
+				return name;
+			}
+
+			public void setName(String name) {
+				this.name = name;
+			}
+
+			public int getAge() {
+				return age;
+			}
+
+			public void setAge(int age) {
+				this.age = age;
+			}
+
+			@Override
+			public boolean equals(Object o) {
+				if (this == o) {
+					return true;
+				}
+				if (o == null || getClass() != o.getClass()) {
+					return false;
+				}
+				User user = (User) o;
+				return age == user.age && Objects.equals(name, user.name);
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(name, age);
+			}
+
+			@Override
+			public String toString() {
+				return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
 			}
 
 		}

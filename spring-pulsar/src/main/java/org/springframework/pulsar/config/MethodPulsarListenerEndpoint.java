@@ -20,13 +20,16 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.MethodParameter;
@@ -37,6 +40,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.core.SchemaUtils;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -56,6 +60,7 @@ import org.springframework.util.Assert;
  *
  * @param <V> Message payload type
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpoint<V> {
 
@@ -143,7 +148,15 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				case LOCAL_DATE_TIME -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE_TIME);
 				case LOCAL_TIME -> pulsarContainerProperties.setSchema(Schema.LOCAL_TIME);
 				case JSON -> {
-					final Schema<?> requiredSchema = getRequiredSchema(methodParameters[0], pulsarContainerProperties);
+					final Schema<?> requiredSchema = getRequiredSchema(methodParameters[0], JSONSchema::of);
+					pulsarContainerProperties.setSchema(requiredSchema);
+				}
+				case AVRO -> {
+					final Schema<?> requiredSchema = getRequiredSchema(methodParameters[0], AvroSchema::of);
+					pulsarContainerProperties.setSchema(requiredSchema);
+				}
+				case KEY_VALUE -> {
+					final Schema<?> requiredSchema = getRequiredKeyValueSchema(methodParameters[0]);
 					pulsarContainerProperties.setSchema(requiredSchema);
 				}
 			}
@@ -188,15 +201,29 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		return messageListener;
 	}
 
-	private Schema<?> getRequiredSchema(MethodParameter methodParameter,
-			PulsarContainerProperties pulsarContainerProperties) {
+	private Schema<?> getRequiredSchema(MethodParameter methodParameter, Function<Class<?>, Schema<?>> schemaFactory) {
 		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
 		final Class<?> rawClass = resolvableType.getRawClass();
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
 		final Class<?> rawClazz = resolvableType.getRawClass();
-		return JSONSchema.of(rawClazz);
+
+		return schemaFactory.apply(rawClazz);
+	}
+
+	private Schema<?> getRequiredKeyValueSchema(MethodParameter methodParameter) {
+		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
+		final Class<?> rawClass = resolvableType.getRawClass();
+		if (rawClass != null && isContainerType(rawClass)) {
+			resolvableType = resolvableType.getGeneric(0);
+		}
+		Class<?> generic1 = resolvableType.resolveGeneric(0);
+		Class<?> generic2 = resolvableType.resolveGeneric(1);
+		Schema<? extends Class<?>> schema1 = SchemaUtils.getSchema(generic1.getName());
+		Schema<? extends Class<?>> schema2 = SchemaUtils.getSchema(generic2.getName());
+
+		return Schema.KeyValue(schema1, schema2, KeyValueEncodingType.INLINE);
 	}
 
 	private boolean isContainerType(Class<?> rawClass) {
