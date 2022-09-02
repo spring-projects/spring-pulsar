@@ -22,6 +22,7 @@ import org.apache.pulsar.client.api.Schema;
  * Utility class for Pulsar schema inference.
  *
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public final class SchemaUtils {
 
@@ -29,9 +30,13 @@ public final class SchemaUtils {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <T> Schema<T> getSchema(T message) {
 		final String clazzName = message.getClass().getName();
+		return getSchema(clazzName);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Schema<T> getSchema(String clazzName) {
 		return switch (clazzName) {
 			case "java.lang.String" -> (Schema<T>) Schema.STRING;
 			case "[B" -> (Schema<T>) Schema.BYTES;
