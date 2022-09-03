@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
@@ -167,6 +169,12 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		container.start();
 		final Consumer<?> containerConsumer = spyOnConsumer(container);
 
+		AtomicInteger ackCallCount = new AtomicInteger(0);
+		doAnswer(invocation -> {
+			ackCallCount.incrementAndGet();
+			return invocation.callRealMethod();
+		}).when(containerConsumer).acknowledge(any(Message.class));
+
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-013");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
@@ -179,19 +187,31 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		Thread.sleep(1_000);
 		// Half of the message get acknowledged, and the other half gets negatively
 		// acknowledged.
-		try {
-			await().atMost(Duration.ofSeconds(10))
-					.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledge(any(Message.class)));
-		}
-		catch (Throwable t) {
-			System.out.println("*** ACK assertions failed - was not 5: " + t.getMessage());
-			t.printStackTrace();
-		}
+
 		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
 
+		final int ackCalls = ackCallCount.get();
+		if (ackCalls < 5) {
+			try {
+				await().atMost(Duration.ofSeconds(10))
+						.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(Message.class)));
+				await().atMost(Duration.ofSeconds(10)).untilAsserted(
+						() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
+				if (ackCalls == 0) {
+					await().atMost(Duration.ofSeconds(10)).untilAsserted(
+							() -> verify(containerConsumer, times(5)).acknowledgeCumulative(any(Message.class)));
+				}
+			}
+			catch (Throwable t) {
+				System.out.println("*** ACK assertions failed - was not 5: " + t.getMessage());
+				t.printStackTrace();
+			}
+		}
+		else {
+			assertThat(ackCalls == 5).isTrue();
+		}
 		container.stop();
-
 		pulsarClient.close();
 	}
 	// CHECKSTYLE:ON
