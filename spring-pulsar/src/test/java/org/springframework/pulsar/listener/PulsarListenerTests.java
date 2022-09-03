@@ -259,8 +259,6 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 
 		static CountDownLatch keyvalueLatch = new CountDownLatch(1);
 
-
-
 		@Test
 		void jsonSchema() throws Exception {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
@@ -316,6 +314,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			void listenKeyvalue(KeyValue<String, Integer> message) {
 				keyvalueLatch.countDown();
 			}
+
 		}
 
 		static class User {

@@ -113,7 +113,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
 		final MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
-		MethodParameter methodParameter = null;
+		MethodParameter messageParameter = null;
 		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
 						|| !methodParameter1.getParameterType().equals(Acknowledgement.class))
@@ -124,14 +124,13 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				.count();
 		Assert.isTrue(count == 1, "More than 1 expected payload types found");
 		if (parameter.isPresent()) {
-			methodParameter = parameter.get();
+			messageParameter = parameter.get();
 		}
 
 		final ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
 		final PulsarContainerProperties pulsarContainerProperties = containerInstance.getPulsarContainerProperties();
 		final SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		if (schemaType != SchemaType.NONE) {
-
 			switch (schemaType) {
 				case STRING -> pulsarContainerProperties.setSchema(Schema.STRING);
 				case BYTES -> pulsarContainerProperties.setSchema(Schema.BYTES);
@@ -148,50 +147,25 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				case LOCAL_DATE_TIME -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE_TIME);
 				case LOCAL_TIME -> pulsarContainerProperties.setSchema(Schema.LOCAL_TIME);
 				case JSON -> {
-					final Schema<?> requiredSchema = getRequiredSchema(methodParameters[0], JSONSchema::of);
-					pulsarContainerProperties.setSchema(requiredSchema);
+					Schema<?> messageSchema = getMessageSchema(messageParameter, JSONSchema::of);
+					pulsarContainerProperties.setSchema(messageSchema);
 				}
 				case AVRO -> {
-					final Schema<?> requiredSchema = getRequiredSchema(methodParameters[0], AvroSchema::of);
-					pulsarContainerProperties.setSchema(requiredSchema);
+					Schema<?> messageSchema = getMessageSchema(messageParameter, AvroSchema::of);
+					pulsarContainerProperties.setSchema(messageSchema);
 				}
 				case KEY_VALUE -> {
-					final Schema<?> requiredSchema = getRequiredKeyValueSchema(methodParameters[0]);
-					pulsarContainerProperties.setSchema(requiredSchema);
+					Schema<?> messageSchema = getMessageKeyValueSchema(messageParameter);
+					pulsarContainerProperties.setSchema(messageSchema);
 				}
 			}
 		}
 		else {
-			if (methodParameter != null) {
-				final Class<?> type = methodParameter.getParameter().getType();
-
-				String typeName = null;
-				if (isContainerType(type)) {
-					final ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameters[0]);
-					final ResolvableType generic = resolvableType.getGeneric(0);
-					if (generic.getRawClass() != null) {
-						typeName = generic.getRawClass().getName();
-					}
-				}
-				if (typeName == null) {
-					typeName = type.getName();
-				}
-				switch (typeName) {
-					case "java.lang.String" -> pulsarContainerProperties.setSchema(Schema.STRING);
-					case "[B" -> pulsarContainerProperties.setSchema(Schema.BYTES);
-					case "java.lang.Byte", "byte" -> pulsarContainerProperties.setSchema(Schema.INT8);
-					case "java.lang.Short", "short" -> pulsarContainerProperties.setSchema(Schema.INT16);
-					case "java.lang.Integer", "int" -> pulsarContainerProperties.setSchema(Schema.INT32);
-					case "java.lang.Long", "long" -> pulsarContainerProperties.setSchema(Schema.INT64);
-					case "java.lang.Boolean", "boolean" -> pulsarContainerProperties.setSchema(Schema.BOOL);
-					case "java.nio.ByteBuffer" -> pulsarContainerProperties.setSchema(Schema.BYTEBUFFER);
-					case "java.util.Date" -> pulsarContainerProperties.setSchema(Schema.DATE);
-					case "java.lang.Double", "double" -> pulsarContainerProperties.setSchema(Schema.DOUBLE);
-					case "java.lang.Float", "float" -> pulsarContainerProperties.setSchema(Schema.FLOAT);
-					case "java.time.Instant" -> pulsarContainerProperties.setSchema(Schema.INSTANT);
-					case "java.time.LocalDate" -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE);
-					case "java.time.LocalDateTime" -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE_TIME);
-					case "java.time.LocalTime" -> pulsarContainerProperties.setSchema(Schema.LOCAL_TIME);
+			if (messageParameter != null) {
+				Schema<?> messageSchema = getMessageSchema(messageParameter,
+						(messageClass) -> SchemaUtils.getSchema(messageClass, false));
+				if (messageSchema != null) {
+					pulsarContainerProperties.setSchema(messageSchema);
 				}
 			}
 		}
@@ -201,29 +175,28 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		return messageListener;
 	}
 
-	private Schema<?> getRequiredSchema(MethodParameter methodParameter, Function<Class<?>, Schema<?>> schemaFactory) {
-		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
-		final Class<?> rawClass = resolvableType.getRawClass();
-		if (rawClass != null && isContainerType(rawClass)) {
-			resolvableType = resolvableType.getGeneric(0);
-		}
-		final Class<?> rawClazz = resolvableType.getRawClass();
-
-		return schemaFactory.apply(rawClazz);
+	private Schema<?> getMessageSchema(MethodParameter messageParameter, Function<Class<?>, Schema<?>> schemaFactory) {
+		ResolvableType messageType = resolvableType(messageParameter);
+		final Class<?> messageClass = messageType.getRawClass();
+		return schemaFactory.apply(messageClass);
 	}
 
-	private Schema<?> getRequiredKeyValueSchema(MethodParameter methodParameter) {
+	private Schema<?> getMessageKeyValueSchema(MethodParameter messageParameter) {
+		ResolvableType messageType = resolvableType(messageParameter);
+		Class<?> keyClass = messageType.resolveGeneric(0);
+		Class<?> valueClass = messageType.resolveGeneric(1);
+		Schema<? extends Class<?>> keySchema = SchemaUtils.getSchema(keyClass);
+		Schema<? extends Class<?>> valueSchema = SchemaUtils.getSchema(valueClass);
+		return Schema.KeyValue(keySchema, valueSchema, KeyValueEncodingType.INLINE);
+	}
+
+	private ResolvableType resolvableType(MethodParameter methodParameter) {
 		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
 		final Class<?> rawClass = resolvableType.getRawClass();
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
-		Class<?> generic1 = resolvableType.resolveGeneric(0);
-		Class<?> generic2 = resolvableType.resolveGeneric(1);
-		Schema<? extends Class<?>> schema1 = SchemaUtils.getSchema(generic1.getName());
-		Schema<? extends Class<?>> schema2 = SchemaUtils.getSchema(generic2.getName());
-
-		return Schema.KeyValue(schema1, schema2, KeyValueEncodingType.INLINE);
+		return resolvableType;
 	}
 
 	private boolean isContainerType(Class<?> rawClass) {

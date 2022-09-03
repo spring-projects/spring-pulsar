@@ -27,17 +27,19 @@ import org.apache.pulsar.client.api.Schema;
 public final class SchemaUtils {
 
 	private SchemaUtils() {
-
 	}
 
 	public static <T> Schema<T> getSchema(T message) {
-		final String clazzName = message.getClass().getName();
-		return getSchema(clazzName);
+		return getSchema(message.getClass());
+	}
+
+	public static <T> Schema<T> getSchema(Class<?> messageClass) {
+		return getSchema(messageClass, true);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> Schema<T> getSchema(String clazzName) {
-		return switch (clazzName) {
+	public static <T> Schema<T> getSchema(Class<?> messageClass, boolean returnDefault) {
+		return switch (messageClass.getName()) {
 			case "java.lang.String" -> (Schema<T>) Schema.STRING;
 			case "[B" -> (Schema<T>) Schema.BYTES;
 			case "java.lang.Byte", "byte" -> (Schema<T>) Schema.INT8;
@@ -53,7 +55,7 @@ public final class SchemaUtils {
 			case "java.time.LocalDate" -> (Schema<T>) Schema.LOCAL_DATE;
 			case "java.time.LocalDateTime" -> (Schema<T>) Schema.LOCAL_DATE_TIME;
 			case "java.time.LocalTime" -> (Schema<T>) Schema.LOCAL_TIME;
-			default -> (Schema<T>) Schema.BYTES;
+			default -> (returnDefault ? (Schema<T>) Schema.BYTES : null);
 		};
 	}
 
