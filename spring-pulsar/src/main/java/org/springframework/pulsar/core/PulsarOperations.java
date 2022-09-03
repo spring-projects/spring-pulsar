@@ -104,6 +104,13 @@ public interface PulsarOperations<T> {
 		SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter);
 
 		/**
+		 * Specifies the customizer to use to further configure the producer builder.
+		 * @param producerCustomizer the producer builder customizer
+		 * @return the current builder with the producer builder customizer specified
+		 */
+		SendMessageBuilder<T> withProducerCustomizer(ProducerBuilderCustomizer<T> producerCustomizer);
+
+		/**
 		 * Send the message in a blocking manner using the configured specification.
 		 * @return the id assigned by the broker to the published message
 		 * @throws PulsarClientException if an error occurs

@@ -57,23 +57,43 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException {
-		return createProducer(topic, schema, null, null);
+		return doCreateProducer(topic, schema, null, null, null);
 	}
 
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
 			throws PulsarClientException {
-		return createProducer(topic, schema, messageRouter, null);
+		return doCreateProducer(topic, schema, messageRouter, null, null);
 	}
 
 	@Override
 	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
 			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
-		return doCreateProducer(topic, schema, messageRouter, producerInterceptors);
+		return doCreateProducer(topic, schema, messageRouter, producerInterceptors, null);
 	}
 
+	@Override
+	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors,
+			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException {
+		return doCreateProducer(topic, schema, messageRouter, producerInterceptors, producerBuilderCustomizers);
+	}
+
+	/**
+	 * Create the actual producer.
+	 * @param topic the topic the producer will send messages to or {@code null} to use
+	 * the default topic
+	 * @param schema the schema of the messages to be sent
+	 * @param messageRouter the optional message router to use
+	 * @param producerInterceptors the optional producer interceptors to use
+	 * @param producerBuilderCustomizers the optional list of customizers to apply to the
+	 * producer builder
+	 * @return the created producer
+	 * @throws PulsarClientException if any error occurs
+	 */
 	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
+			List<ProducerInterceptor> producerInterceptors,
+			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException {
 		final String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
 		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
@@ -86,6 +106,9 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		}
 		if (!CollectionUtils.isEmpty(producerInterceptors)) {
 			producerBuilder.intercept(producerInterceptors.toArray(new ProducerInterceptor[0]));
+		}
+		if (!CollectionUtils.isEmpty(producerBuilderCustomizers)) {
+			producerBuilderCustomizers.forEach((c) -> c.customize(producerBuilder));
 		}
 		return producerBuilder.create();
 	}
