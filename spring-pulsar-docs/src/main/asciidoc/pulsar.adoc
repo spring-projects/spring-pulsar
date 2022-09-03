@@ -51,6 +51,21 @@ template.newMessage(msg)
 ----
 ====
 
+====== Producer customization
+A `ProducerBuilderCustomizer` can be specified in order to configure the underlying Pulsar producer builder that  ultimately constructs the producer used to send the outgoing message.
+
+WARNING: Use with caution as this gives full access to the producer builder and invoking some of its method's may have unintended side effects (eg. `create`).
+
+For example, the following code shows how to disable batching and enable chunking:
+====
+[source, java]
+----
+template.newMessage(msg)
+        .withProducerCustomizer((pb) -> pb.enableChunking(true).enableBatching(false))
+        .send();
+----
+====
+
 ====== Custom routing
 You can use custom routing when publishing records to partitioned topics. Simple specify your custom `MessageRouter` implementation on the fluent builder such as:
 ====

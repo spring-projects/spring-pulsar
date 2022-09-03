@@ -92,28 +92,30 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	public Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors) {
+	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors,
+			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter,
 				producerInterceptors);
-		return this.producerCache.get(producerCacheKey, (st) -> {
-			try {
-				return this.doCreateProducer(st.topic, st.schema, st.router, producerInterceptors);
-			}
-			catch (PulsarClientException ex) {
-				throw new RuntimeException(ex);
-			}
-		});
+		return this.producerCache.get(producerCacheKey, (st) -> createCacheableProducer(st.topic, st.schema, st.router,
+				st.interceptors, producerBuilderCustomizers));
 	}
 
-	@Override
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
-		Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors);
-		return wrapProducerWithCloseCallback(producer,
-				(p) -> this.logger.trace(() -> String.format("Client closed producer %s but will skip actual closing",
-						ProducerUtils.formatProducer(producer))));
+	private Producer<T> createCacheableProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors,
+			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
+		try {
+			Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors,
+					producerBuilderCustomizers);
+			return wrapProducerWithCloseCallback(producer,
+					(p) -> this.logger
+							.trace(() -> String.format("Client closed producer %s but will skip actual closing",
+									ProducerUtils.formatProducer(producer))));
+		}
+		catch (PulsarClientException ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 
 	@SuppressWarnings("unchecked")

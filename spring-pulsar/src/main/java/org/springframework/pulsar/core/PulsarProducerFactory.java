@@ -71,6 +71,22 @@ public interface PulsarProducerFactory<T> {
 			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException;
 
 	/**
+	 * Create a producer.
+	 * @param topic the topic the producer will send messages to or {@code null} to use
+	 * the default topic
+	 * @param schema the schema of the messages to be sent
+	 * @param messageRouter the optional message router to use
+	 * @param producerInterceptors the optional producer interceptors to use
+	 * @param producerBuilderCustomizers the optional list of customizers to apply to the
+	 * producer builder
+	 * @return the producer
+	 * @throws PulsarClientException if any error occurs
+	 */
+	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
+			List<ProducerInterceptor> producerInterceptors,
+			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException;
+
+	/**
 	 * Return a map of configuration options to use when creating producers.
 	 * @return the map of configuration options
 	 */

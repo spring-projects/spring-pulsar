@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -68,22 +69,22 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	@Override
 	public MessageId send(T message) throws PulsarClientException {
-		return doSend(null, message, null, null);
+		return doSend(null, message, null, null, null);
 	}
 
 	@Override
 	public MessageId send(String topic, T message) throws PulsarClientException {
-		return doSend(topic, message, null, null);
+		return doSend(topic, message, null, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		return doSendAsync(null, message, null, null);
+		return doSendAsync(null, message, null, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException {
-		return doSendAsync(topic, message, null, null);
+		return doSendAsync(topic, message, null, null, null);
 	}
 
 	@Override
@@ -100,9 +101,9 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	private MessageId doSend(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			MessageRouter messageRouter) throws PulsarClientException {
+			MessageRouter messageRouter, ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		try {
-			return doSendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter).get();
+			return doSendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter, producerCustomizer).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
@@ -110,11 +111,11 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 	}
 
 	private CompletableFuture<MessageId> doSendAsync(String topic, T message,
-			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter)
-			throws PulsarClientException {
+			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter,
+			ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
-		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter);
+		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter, producerCustomizer);
 		TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
 		if (typedMessageBuilderCustomizer != null) {
 			typedMessageBuilderCustomizer.customize(messageBuilder);
@@ -132,10 +133,11 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 		});
 	}
 
-	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter)
-			throws PulsarClientException {
+	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter,
+			ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
-		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors);
+		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors,
+				producerCustomizer == null ? Collections.emptyList() : Collections.singletonList(producerCustomizer));
 	}
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
@@ -149,6 +151,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 		private TypedMessageBuilderCustomizer<T> messageCustomizer;
 
 		private MessageRouter messageRouter;
+
+		private ProducerBuilderCustomizer<T> producerCustomizer;
 
 		SendMessageBuilderImpl(PulsarTemplate<T> template, T message) {
 			this.template = template;
@@ -174,13 +178,21 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 		}
 
 		@Override
+		public SendMessageBuilder<T> withProducerCustomizer(ProducerBuilderCustomizer<T> producerCustomizer) {
+			this.producerCustomizer = producerCustomizer;
+			return this;
+		}
+
+		@Override
 		public MessageId send() throws PulsarClientException {
-			return this.template.doSend(this.topic, this.message, this.messageCustomizer, this.messageRouter);
+			return this.template.doSend(this.topic, this.message, this.messageCustomizer, this.messageRouter,
+					this.producerCustomizer);
 		}
 
 		@Override
 		public CompletableFuture<MessageId> sendAsync() throws PulsarClientException {
-			return this.template.doSendAsync(this.topic, this.message, this.messageCustomizer, this.messageRouter);
+			return this.template.doSendAsync(this.topic, this.message, this.messageCustomizer, this.messageRouter,
+					this.producerCustomizer);
 		}
 
 	}

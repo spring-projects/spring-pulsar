@@ -18,14 +18,18 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
@@ -105,6 +109,30 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 		List<ProducerInterceptor> interceptors = Collections.singletonList(mock(ProducerInterceptor.class));
 		try (Producer<String> producer = producerFactory.createProducer(null, schema, null, interceptors)) {
 			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null, interceptors);
+		}
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void createProducerWithSingleProducerCustomizer() throws PulsarClientException {
+		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
+		ProducerBuilderCustomizer<String> producerCustomizer = mock(ProducerBuilderCustomizer.class);
+		try (Producer<String> producer = producerFactory.createProducer("topic0", schema, null, null,
+				Collections.singletonList(producerCustomizer))) {
+			verify(producerCustomizer).customize(any(ProducerBuilder.class));
+		}
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void createProducerWithMultipleProducerCustomizers() throws PulsarClientException {
+		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
+		ProducerBuilderCustomizer<String> producerCustomizer1 = mock(ProducerBuilderCustomizer.class);
+		ProducerBuilderCustomizer<String> producerCustomizer2 = mock(ProducerBuilderCustomizer.class);
+		try (Producer<String> producer = producerFactory.createProducer("topic0", schema, null, null,
+				Arrays.asList(producerCustomizer1, producerCustomizer2))) {
+			verify(producerCustomizer1).customize(any(ProducerBuilder.class));
+			verify(producerCustomizer2).customize(any(ProducerBuilder.class));
 		}
 	}
 
