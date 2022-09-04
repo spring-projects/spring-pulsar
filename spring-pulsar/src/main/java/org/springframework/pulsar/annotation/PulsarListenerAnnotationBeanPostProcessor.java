@@ -39,6 +39,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.SubscriptionType;
 
 import org.springframework.aop.framework.Advised;
@@ -360,6 +361,24 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		resolvePulsarProperties(endpoint, pulsarListener.properties());
 		endpoint.setBatchListener(pulsarListener.batch());
 		endpoint.setBeanFactory(this.beanFactory);
+
+		resolveNegativeAckRedeliveryBackoff(endpoint, pulsarListener);
+	}
+
+	private void resolveNegativeAckRedeliveryBackoff(MethodPulsarListenerEndpoint<?> endpoint,
+			PulsarListener pulsarListener) {
+		Object negativeAckRedeliveryBackoff = resolveExpression(pulsarListener.negativeAckRedeliveryBackoff());
+		if (negativeAckRedeliveryBackoff instanceof RedeliveryBackoff) {
+			endpoint.setNegativeAckRedeliveryBackoff((RedeliveryBackoff) negativeAckRedeliveryBackoff);
+		}
+		else {
+			String negativeAckRedeliveryBackoffBeanName = resolveExpressionAsString(
+					pulsarListener.negativeAckRedeliveryBackoff(), "negativeAckRedeliveryBackoff");
+			if (StringUtils.hasText(negativeAckRedeliveryBackoffBeanName)) {
+				endpoint.setNegativeAckRedeliveryBackoff(
+						this.beanFactory.getBean(negativeAckRedeliveryBackoffBeanName, RedeliveryBackoff.class));
+			}
+		}
 	}
 
 	private Integer resolveExpressionAsInteger(String value, String attribute) {

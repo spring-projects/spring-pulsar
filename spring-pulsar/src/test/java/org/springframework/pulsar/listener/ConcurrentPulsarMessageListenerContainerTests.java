@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.listener;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,8 +31,10 @@ import java.util.Map;
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -40,6 +43,35 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
  * @author Soby Chacko
  */
 public class ConcurrentPulsarMessageListenerContainerTests {
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void nackRedeliveryBackoffAppliedOnChildContainer() throws Exception {
+		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
+		Consumer<String> consumer = mock(Consumer.class);
+
+		when(pulsarConsumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
+				.thenReturn(consumer);
+
+		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
+
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (cons, msg) -> {
+		});
+
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = new ConcurrentPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
+				.maxDelayMs(5 * 1000).build();
+		concurrentContainer.setNegativeAckRedeliveryBackoff(redeliveryBackoff);
+
+		concurrentContainer.start();
+
+		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		assertThat(childContainer.getNegativeAckRedeliveryBackoff()).isEqualTo(redeliveryBackoff);
+	}
 
 	@Test
 	@SuppressWarnings("unchecked")

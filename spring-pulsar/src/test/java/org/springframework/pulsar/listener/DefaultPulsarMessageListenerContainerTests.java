@@ -17,8 +17,14 @@
 package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,12 +32,18 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.AbstractContainerBaseTests;
+import org.springframework.pulsar.core.ConsumerTestUtils;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
@@ -136,6 +148,56 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		Thread.sleep(2_000);
 		assertThat(messages.size()).isEqualTo(1);
 		assertThat(messages.get(0)).isEqualTo("hello john doe5");
+		container.stop();
+		pulsarClient.close();
+	}
+
+	@Test
+	void negativeAckRedeliveryBackoff() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("topicNames", Collections.singleton("dpmlct-015"));
+		config.put("subscriptionName", "dpmlct-sb-015");
+
+		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
+				.maxDelayMs(5 * 1000).build();
+		config.put("negativeAckRedeliveryBackoff", redeliveryBackoff);
+
+		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
+		CountDownLatch latch = new CountDownLatch(10);
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			latch.countDown();
+			if (((String) msg.getValue()).endsWith("4")) {
+				throw new RuntimeException("fail");
+			}
+		});
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+
+		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-015");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 0; i < 5; i++) {
+			pulsarTemplate.send("hello john doe" + i);
+		}
+		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+
+		// At this point, we should have 6 call to nack. The first send + 5 more resends
+		// due to the backoff setting and the above latch now counted down to zero.
+		// There may be a race condition, the below assertion find an extra nack,
+		// but the probability for that is low as we have a long enough backoff
+		// multiplier.
+		await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> verify(containerConsumer, times(6)).negativeAcknowledge(any(Message.class)));
+
 		container.stop();
 		pulsarClient.close();
 	}

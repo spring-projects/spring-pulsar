@@ -37,6 +37,7 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 
@@ -179,14 +180,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			try {
 				final PulsarContainerProperties pulsarContainerProperties = getPulsarContainerProperties();
-				Map<String, Object> propertiesToOverride = extractPropertiesToOverride(pulsarContainerProperties);
+				Map<String, Object> propertiesToConsumer = extractDirectConsumerProperties();
+				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
 
 				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
 						.maxNumMessages(pulsarContainerProperties.getMaxNumMessages())
 						.maxNumBytes(pulsarContainerProperties.getMaxNumBytes())
 						.timeout(pulsarContainerProperties.getBatchTimeout(), TimeUnit.MILLISECONDS).build();
 				this.consumer = getPulsarConsumerFactory().createConsumer(
-						(Schema) pulsarContainerProperties.getSchema(), batchReceivePolicy, propertiesToOverride);
+						(Schema) pulsarContainerProperties.getSchema(), batchReceivePolicy, propertiesToConsumer);
 				Assert.state(this.consumer != null, "Unable to create a consumer");
 			}
 			catch (PulsarClientException e) {
@@ -194,50 +196,49 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
-		private Map<String, Object> extractPropertiesToOverride(PulsarContainerProperties pulsarContainerProperties) {
-
+		private Map<String, Object> extractDirectConsumerProperties() {
 			Properties propertyOverrides = this.containerProperties.getPulsarConsumerProperties();
+			return propertyOverrides.entrySet().stream().collect(Collectors.toMap(e -> String.valueOf(e.getKey()),
+					Map.Entry::getValue, (prev, next) -> next, HashMap::new));
+		}
 
-			final Map<String, Object> propOverridesAsMap = propertyOverrides.entrySet().stream().collect(Collectors
-					.toMap(e -> String.valueOf(e.getKey()), Map.Entry::getValue, (prev, next) -> next, HashMap::new));
-
-			final Map<String, Object> propertiesToOverride = new HashMap<>(propOverridesAsMap);
-			if (propertiesToOverride.containsKey("topicNames")) {
-				final String topicsFromMap = (String) propertiesToOverride.get("topicNames");
-				final String[] topicNames = topicsFromMap.split(",");
-				final Set<String> propertiesDefinedTopics = new HashSet<>(Arrays.stream(topicNames).toList());
+		private void populateAllNecessaryPropertiesIfNeedBe(Map<String, Object> currentProperties) {
+			if (currentProperties.containsKey("topicNames")) {
+				final String topicsFromMap = (String) currentProperties.get("topicNames");
+				final String[] topicNames = StringUtils.delimitedListToStringArray(topicsFromMap, ",");
+				final Set<String> propertiesDefinedTopics = Set.of(topicNames);
 				if (!propertiesDefinedTopics.isEmpty()) {
-					propertiesToOverride.put("topicNames", propertiesDefinedTopics);
+					currentProperties.put("topicNames", propertiesDefinedTopics);
 				}
 			}
-
-			if (!propertiesToOverride.containsKey("subscriptionType")) {
-				final SubscriptionType subscriptionType = pulsarContainerProperties.getSubscriptionType();
+			if (!currentProperties.containsKey("subscriptionType")) {
+				final SubscriptionType subscriptionType = this.containerProperties.getSubscriptionType();
 				if (subscriptionType != null) {
-					propertiesToOverride.put("subscriptionType", subscriptionType);
+					currentProperties.put("subscriptionType", subscriptionType);
 				}
 			}
-			if (!propertiesToOverride.containsKey("topicNames")) {
-				final String[] topics = pulsarContainerProperties.getTopics();
+			if (!currentProperties.containsKey("topicNames")) {
+				final String[] topics = this.containerProperties.getTopics();
 				final Set<String> listenerDefinedTopics = new HashSet<>(Arrays.stream(topics).toList());
 				if (!listenerDefinedTopics.isEmpty()) {
-					propertiesToOverride.put("topicNames", listenerDefinedTopics);
+					currentProperties.put("topicNames", listenerDefinedTopics);
 				}
 			}
-
-			if (!propertiesToOverride.containsKey("topicsPattern")) {
-				final String topicsPattern = pulsarContainerProperties.getTopicsPattern();
+			if (!currentProperties.containsKey("topicsPattern")) {
+				final String topicsPattern = this.containerProperties.getTopicsPattern();
 				if (topicsPattern != null) {
-					propertiesToOverride.put("topicsPattern", topicsPattern);
+					currentProperties.put("topicsPattern", topicsPattern);
 				}
 			}
-
-			if (!propertiesToOverride.containsKey("subscriptionName")) {
-				if (StringUtils.hasText(pulsarContainerProperties.getSubscriptionName())) {
-					propertiesToOverride.put("subscriptionName", pulsarContainerProperties.getSubscriptionName());
+			if (!currentProperties.containsKey("subscriptionName")) {
+				if (StringUtils.hasText(this.containerProperties.getSubscriptionName())) {
+					currentProperties.put("subscriptionName", this.containerProperties.getSubscriptionName());
 				}
 			}
-			return propertiesToOverride;
+			final RedeliveryBackoff negativeAckRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.negativeAckRedeliveryBackoff;
+			if (negativeAckRedeliveryBackoff != null) {
+				currentProperties.put("negativeAckRedeliveryBackoff", negativeAckRedeliveryBackoff);
+			}
 		}
 
 		@Override
@@ -253,7 +254,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			publishConsumerStartedEvent();
 			while (isRunning()) {
 				Messages<T> messages = null;
-
 				// Always receive messages in batch mode.
 				try {
 					messages = this.consumer.batchReceive();

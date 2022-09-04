@@ -17,6 +17,7 @@
 package org.springframework.pulsar.listener;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanNameAware;
@@ -57,6 +58,8 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 	protected final Object lifecycleMonitor = new Object();
 
 	private volatile boolean running = false;
+
+	protected RedeliveryBackoff negativeAckRedeliveryBackoff;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
@@ -171,6 +174,15 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 				doStop();
 			}
 		}
+	}
+
+	@Override
+	public void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff) {
+		this.negativeAckRedeliveryBackoff = redeliveryBackoff;
+	}
+
+	public RedeliveryBackoff getNegativeAckRedeliveryBackoff() {
+		return this.negativeAckRedeliveryBackoff;
 	}
 
 }

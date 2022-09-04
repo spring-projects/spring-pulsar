@@ -108,6 +108,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 			this.executors.add(exec);
 			container.getContainerProperties().setConsumerTaskExecutor(exec);
 		}
+		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
 	}
 
 	@Override
@@ -124,6 +125,10 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	@Override
 	public boolean isRunning() {
 		return false;
+	}
+
+	public List<DefaultPulsarMessageListenerContainer<T>> getContainers() {
+		return this.containers;
 	}
 
 }

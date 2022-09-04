@@ -29,7 +29,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 import org.apache.pulsar.common.schema.KeyValue;
@@ -220,6 +222,41 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 					properties = { "patternAutoDiscoveryPeriod=5", "subscriptionInitialPosition=Earliest" })
 			void listen3(String message) {
 				latch2.countDown();
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = NegativeAckRedeliveryBackoffTest.NegativeAckRedeliveryConfig.class)
+	class NegativeAckRedeliveryBackoffTest {
+
+		static CountDownLatch nackRedeliveryBackoffLatch = new CountDownLatch(5);
+
+		@Test
+		void pulsarListenerWithNackRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
+				throws Exception {
+			pulsarTemplate.send("withNegRedeliveryBackoff-test-topic", "hello john doe");
+			assertThat(nackRedeliveryBackoffLatch.await(15, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class NegativeAckRedeliveryConfig {
+
+			@PulsarListener(id = "withNegRedeliveryBackoff", subscriptionName = "withNegRedeliveryBackoffSubscription",
+					topics = "withNegRedeliveryBackoff-test-topic", negativeAckRedeliveryBackoff = "redeliveryBackoff",
+					subscriptionType = "Shared")
+			void listen(String msg) {
+				nackRedeliveryBackoffLatch.countDown();
+				throw new RuntimeException("fail " + msg);
+			}
+
+			@Bean
+			public RedeliveryBackoff redeliveryBackoff() {
+				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(5 * 1000).multiplier(2)
+						.build();
 			}
 
 		}
