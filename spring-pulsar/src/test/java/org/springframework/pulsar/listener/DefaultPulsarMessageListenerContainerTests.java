@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -153,9 +154,7 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 	@Test
 	void negativeAckRedeliveryBackoff() throws Exception {
 		Map<String, Object> config = new HashMap<>();
-		final HashSet<String> strings = new HashSet<>();
-		strings.add("dpmlct-015");
-		config.put("topicNames", strings);
+		config.put("topicNames", Collections.singleton("dpmlct-015"));
 		config.put("subscriptionName", "dpmlct-sb-015");
 
 		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
@@ -181,8 +180,7 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 
 		final Consumer<?> containerConsumer = spyOnConsumer(container);
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "dpmlct-015");
+		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-015");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);

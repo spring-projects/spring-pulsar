@@ -176,6 +176,7 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 		}
 	}
 
+	@Override
 	public void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff) {
 		this.negativeAckRedeliveryBackoff = redeliveryBackoff;
 	}

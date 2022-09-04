@@ -182,7 +182,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				final PulsarContainerProperties pulsarContainerProperties = getPulsarContainerProperties();
 				Map<String, Object> propertiesToConsumer = extractDirectConsumerProperties();
 				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
-				retrieveNegativeAckRedeliveryBackoff(propertiesToConsumer);
 
 				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
 						.maxNumMessages(pulsarContainerProperties.getMaxNumMessages())
@@ -206,8 +205,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		private void populateAllNecessaryPropertiesIfNeedBe(Map<String, Object> currentProperties) {
 			if (currentProperties.containsKey("topicNames")) {
 				final String topicsFromMap = (String) currentProperties.get("topicNames");
-				final String[] topicNames = topicsFromMap.split(",");
-				final Set<String> propertiesDefinedTopics = new HashSet<>(Arrays.stream(topicNames).toList());
+				final String[] topicNames = StringUtils.delimitedListToStringArray(topicsFromMap, ",");
+				final Set<String> propertiesDefinedTopics = Set.of(topicNames);
 				if (!propertiesDefinedTopics.isEmpty()) {
 					currentProperties.put("topicNames", propertiesDefinedTopics);
 				}
@@ -236,9 +235,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					currentProperties.put("subscriptionName", this.containerProperties.getSubscriptionName());
 				}
 			}
-		}
-
-		private void retrieveNegativeAckRedeliveryBackoff(Map<String, Object> currentProperties) {
 			final RedeliveryBackoff negativeAckRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.negativeAckRedeliveryBackoff;
 			if (negativeAckRedeliveryBackoff != null) {
 				currentProperties.put("negativeAckRedeliveryBackoff", negativeAckRedeliveryBackoff);

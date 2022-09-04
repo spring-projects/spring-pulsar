@@ -163,11 +163,10 @@ public @interface PulsarListener {
 	String concurrency() default "";
 
 	/**
-	 * The bean name of negativeAckRedeliveryBackoff which is provided to the consumer.
-	 * The bean must be an implementation of
-	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff}. When provided, this will be
-	 * used to control the redelivery of messages after a negative ack.
-	 * @return the negativeAckRedeliveryBackoff bean name.
+	 * The bean name or a 'SpEL' expression that resolves to a
+	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
+	 * control the redelivery backoff of messages after a negative ack.
+	 * @return the bean name or empty string to not set the backoff
 	 */
 	String negativeAckRedeliveryBackoff() default "";
 
