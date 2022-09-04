@@ -43,6 +43,7 @@ import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.AbstractContainerBaseTests;
+import org.springframework.pulsar.core.ConsumerTestUtils;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
@@ -178,7 +179,7 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
 
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-015");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(

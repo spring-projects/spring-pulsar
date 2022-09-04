@@ -16,17 +16,10 @@
 
 package org.springframework.pulsar.core;
 
-import static org.mockito.Mockito.spy;
-
 import java.util.Locale;
 
-import org.apache.pulsar.client.api.Consumer;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.utility.DockerImageName;
-
-import org.springframework.beans.DirectFieldAccessor;
-import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
-import org.springframework.util.Assert;
 
 public abstract class AbstractContainerBaseTests {
 
@@ -58,49 +51,6 @@ public abstract class AbstractContainerBaseTests {
 
 	private static DockerImageName getMacM1PulsarImage() {
 		return DockerImageName.parse("kezhenxu94/pulsar").asCompatibleSubstituteFor("apachepulsar/pulsar");
-	}
-
-	protected Consumer<?> spyOnConsumer(DefaultPulsarMessageListenerContainer<String> container) {
-		Consumer<?> consumer = getPropertyValue(container, "listenerConsumer.consumer", Consumer.class);
-		consumer = spy(consumer);
-		new DirectFieldAccessor(getPropertyValue(container, "listenerConsumer")).setPropertyValue("consumer", consumer);
-		return consumer;
-	}
-
-	/**
-	 * Uses nested {@link DirectFieldAccessor}s to obtain a property using dotted notation
-	 * to traverse fields; e.g. "foo.bar.baz" will obtain a reference to the baz field of
-	 * the bar field of foo. Adopted from Spring Integration.
-	 * @param root The object.
-	 * @param propertyPath The path.
-	 * @return The field.
-	 */
-	public static Object getPropertyValue(Object root, String propertyPath) {
-		Object value = null;
-		DirectFieldAccessor accessor = new DirectFieldAccessor(root);
-		String[] tokens = propertyPath.split("\\.");
-		for (int i = 0; i < tokens.length; i++) {
-			value = accessor.getPropertyValue(tokens[i]);
-			if (value != null) {
-				accessor = new DirectFieldAccessor(value);
-			}
-			else if (i == tokens.length - 1) {
-				return null;
-			}
-			else {
-				throw new IllegalArgumentException("intermediate property '" + tokens[i] + "' is null");
-			}
-		}
-		return value;
-	}
-
-	@SuppressWarnings("unchecked")
-	public static <T> T getPropertyValue(Object root, String propertyPath, Class<T> type) {
-		Object value = getPropertyValue(root, propertyPath);
-		if (value != null) {
-			Assert.isAssignable(type, value.getClass());
-		}
-		return (T) value;
 	}
 
 }

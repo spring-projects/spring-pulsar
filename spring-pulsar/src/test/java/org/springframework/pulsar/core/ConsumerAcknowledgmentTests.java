@@ -77,7 +77,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
@@ -118,7 +118,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-012");
@@ -164,7 +164,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		AtomicInteger ackCallCount = new AtomicInteger(0);
 		doAnswer(invocation -> {
@@ -239,7 +239,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
@@ -296,7 +296,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-015");
@@ -344,7 +344,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
-		final Consumer<?> containerConsumer = spyOnConsumer(container);
+		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-016");
