@@ -127,4 +127,8 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 		return false;
 	}
 
+	public List<DefaultPulsarMessageListenerContainer<T>> getContainers() {
+		return this.containers;
+	}
+
 }
