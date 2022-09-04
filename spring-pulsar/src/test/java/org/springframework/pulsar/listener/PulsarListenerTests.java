@@ -19,8 +19,6 @@ package org.springframework.pulsar.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -237,7 +235,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		static CountDownLatch nackRedeliveryBackoffLatch = new CountDownLatch(5);
 
 		@Test
-		void pulsarListenerWithNackRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry) throws Exception {
+		void pulsarListenerWithNackRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
+				throws Exception {
 			pulsarTemplate.send("withNegRedeliveryBackoff-test-topic", "hello john doe");
 			assertThat(nackRedeliveryBackoffLatch.await(15, TimeUnit.SECONDS)).isTrue();
 		}
@@ -247,7 +246,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		static class NegativeAckRedeliveryConfig {
 
 			@PulsarListener(id = "withNegRedeliveryBackoff", subscriptionName = "withNegRedeliveryBackoffSubscription",
-					topics= "withNegRedeliveryBackoff-test-topic", negativeAckRedeliveryBackoff = "redeliveryBackoff",
+					topics = "withNegRedeliveryBackoff-test-topic", negativeAckRedeliveryBackoff = "redeliveryBackoff",
 					subscriptionType = "Shared")
 			void listen(String msg) {
 				nackRedeliveryBackoffLatch.countDown();
@@ -256,13 +255,13 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 
 			@Bean
 			public RedeliveryBackoff redeliveryBackoff() {
-				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
-						.maxDelayMs(5 * 1000).multiplier(2).build();
+				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(5 * 1000).multiplier(2)
+						.build();
 			}
+
 		}
 
 	}
-
 
 	@Nested
 	class NegativeConcurrency {

@@ -194,7 +194,8 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		// At this point, we should have 6 call to nack. The first send + 5 more resends
 		// due to the backoff setting and the above latch now counted down to zero.
 		// There may be a race condition, the below assertion find an extra nack,
-		// but the probability for that is low as we have a long enough backoff multiplier.
+		// but the probability for that is low as we have a long enough backoff
+		// multiplier.
 		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(6)).negativeAcknowledge(any(Message.class)));
 
