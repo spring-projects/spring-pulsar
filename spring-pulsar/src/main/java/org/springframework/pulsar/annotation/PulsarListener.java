@@ -157,9 +157,18 @@ public @interface PulsarListener {
 	 * be a property placeholder or SpEL expression that evaluates to a {@link Number}, in
 	 * which case {@link Number#intValue()} is used to obtain the value.
 	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
 	 * @return the concurrency.
 	 */
 	String concurrency() default "";
+
+	/**
+	 * The bean name of negativeAckRedeliveryBackoff which is provided to the consumer.
+	 * The bean must be an implementation of
+	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff}. When provided, this will be
+	 * used to control the redelivery of messages after a negative ack.
+	 * @return the negativeAckRedeliveryBackoff bean name.
+	 */
+	String negativeAckRedeliveryBackoff() default "";
 
 }

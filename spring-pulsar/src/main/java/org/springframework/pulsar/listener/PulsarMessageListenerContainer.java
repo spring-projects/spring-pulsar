@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.listener;
 
+import org.apache.pulsar.client.api.RedeliveryBackoff;
+
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.SmartLifecycle;
 
@@ -41,5 +43,7 @@ public interface PulsarMessageListenerContainer extends SmartLifecycle, Disposab
 	default PulsarContainerProperties getContainerProperties() {
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");
 	}
+
+	void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff);
 
 }

@@ -26,6 +26,7 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.util.CollectionUtils;
@@ -78,6 +79,12 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 
 		if (!CollectionUtils.isEmpty(properties)) {
 			consumerBuilder.loadConf(properties);
+		}
+
+		if (properties.containsKey("negativeAckRedeliveryBackoff")) {
+			final RedeliveryBackoff negativeAckRedeliveryBackoff = (RedeliveryBackoff) properties
+					.get("negativeAckRedeliveryBackoff");
+			consumerBuilder.negativeAckRedeliveryBackoff(negativeAckRedeliveryBackoff);
 		}
 
 		consumerBuilder.batchReceivePolicy(batchReceivePolicy);
