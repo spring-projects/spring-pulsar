@@ -648,7 +648,7 @@ template.setSchema(JSONSchema.of(Foo.class));
 ----
 ====
 
-TIP: Complex Schema types that are currently supported are JSON, AVRO, and KEY_VALUE. For KEY_VALUE schemata, only INLINE encoding is supported.
+TIP: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE. For KEY_VALUE schemata, only INLINE encoding is supported.
 
 ==== Intercepting messages
 

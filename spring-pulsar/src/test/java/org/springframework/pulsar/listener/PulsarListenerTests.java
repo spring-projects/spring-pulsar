@@ -34,6 +34,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
+import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -261,6 +262,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		static CountDownLatch avroBatchLatch = new CountDownLatch(3);
 		static CountDownLatch keyvalueLatch = new CountDownLatch(3);
 		static CountDownLatch keyvalueBatchLatch = new CountDownLatch(3);
+		static CountDownLatch protobufLatch = new CountDownLatch(3);
+		static CountDownLatch protobufBatchLatch = new CountDownLatch(3);
 
 		@Test
 		void jsonSchema() throws Exception {
@@ -306,6 +309,20 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			assertThat(keyvalueBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
+		@Test
+		void protobufSchema() throws Exception {
+			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setSchema(ProtobufSchema.of(Proto.Person.class));
+
+			for (int i = 0; i < 3; i++) {
+				template.send("protobuf-topic", Proto.Person.newBuilder().setId(i).setName("Paul").build());
+			}
+			assertThat(protobufLatch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(protobufBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
 		@EnablePulsar
 		@Configuration
 		static class SchemaTestConfig {
@@ -341,10 +358,23 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			}
 
 			@PulsarListener(id = "keyvalueBatchListener", topics = "keyvalue-topic",
-					subscriptionName = "subscription-9", schemaType = SchemaType.KEY_VALUE,
+					subscriptionName = "subscription-9", schemaType = SchemaType.KEY_VALUE, batch = true,
 					properties = { "subscriptionInitialPosition=Earliest" })
-			void listenKeyvalue(List<KeyValue<String, Integer>> messages) {
+			void listenKeyvalueBatch(List<KeyValue<String, Integer>> messages) {
 				messages.forEach(m -> keyvalueBatchLatch.countDown());
+			}
+
+			@PulsarListener(id = "protobufListener", topics = "protobuf-topic", subscriptionName = "subscription-10",
+					schemaType = SchemaType.PROTOBUF, properties = { "subscriptionInitialPosition=Earliest" })
+			void listenProtobuf(Proto.Person message) {
+				protobufLatch.countDown();
+			}
+
+			@PulsarListener(id = "protobufBatchListener", topics = "protobuf-topic",
+					subscriptionName = "subscription-11", schemaType = SchemaType.PROTOBUF, batch = true,
+					properties = { "subscriptionInitialPosition=Earliest" })
+			void listenProtobufBatch(List<Proto.Person> messages) {
+				messages.forEach(m -> protobufBatchLatch.countDown());
 			}
 
 		}

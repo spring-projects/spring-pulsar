@@ -15,6 +15,7 @@ dependencies {
 	api ('org.springframework.retry:spring-retry') {
 		exclude group: 'org.springframework'
 	}
+	api 'com.google.protobuf:protobuf-java:3.21.5'
 	implementation 'com.google.code.findbugs:jsr305'
 	optional 'com.fasterxml.jackson.core:jackson-core'
 	optional 'com.fasterxml.jackson.core:jackson-databind'
