@@ -24,6 +24,7 @@ ext {
 	springRetryVersion = '1.3.3'
 	springVersion = '6.0.0-SNAPSHOT'
 	caffeineVersion = '3.1.1'
+	protobufJavaVersion = '3.21.5'
 }
 
 dependencies {
@@ -38,6 +39,7 @@ dependencies {
 	constraints {
 		api "com.github.ben-manes.caffeine:caffeine:$caffeineVersion"
 		api "com.google.code.findbugs:jsr305:$googleJsr305Version"
+		api "com.google.protobuf:protobuf-java:$protobufJavaVersion"
 		api "com.jayway.jsonpath:json-path:$jaywayJsonPathVersion"
 		api "org.apache.pulsar:pulsar-client:$pulsarVersion"
 		api "org.apache.pulsar:pulsar-client-admin:$pulsarVersion"

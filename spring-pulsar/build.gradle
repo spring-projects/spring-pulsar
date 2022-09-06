@@ -6,6 +6,7 @@ description = 'Spring Pulsar Support'
 
 dependencies {
 	api 'com.github.ben-manes.caffeine:caffeine'
+	api 'com.google.protobuf:protobuf-java'
 	api 'org.apache.pulsar:pulsar-client'
 	api 'org.apache.pulsar:pulsar-client-admin'
 	api 'org.apache.pulsar:pulsar-client-admin-api'
@@ -15,7 +16,6 @@ dependencies {
 	api ('org.springframework.retry:spring-retry') {
 		exclude group: 'org.springframework'
 	}
-	api 'com.google.protobuf:protobuf-java:3.21.5'
 	implementation 'com.google.code.findbugs:jsr305'
 	optional 'com.fasterxml.jackson.core:jackson-core'
 	optional 'com.fasterxml.jackson.core:jackson-databind'
