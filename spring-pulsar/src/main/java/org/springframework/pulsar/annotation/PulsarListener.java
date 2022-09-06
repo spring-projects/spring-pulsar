@@ -167,15 +167,15 @@ public @interface PulsarListener {
 	 * The bean name or a 'SpEL' expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
 	 * control the redelivery backoff of messages after a negative ack.
-	 * @return the bean name or empty string to not set the backoff
+	 * @return the bean name or empty string to not set the backoff.
 	 */
 	String negativeAckRedeliveryBackoff() default "";
 
 	/**
 	 * The bean name or a 'SpEL' expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
-	 * configure a maximum message redelivery.
-	 * @return the bean name or empty string to not set any dead letter policy
+	 * configure a dead letter policy for message redelivery.
+	 * @return the bean name or empty string to not set any dead letter policy.
 	 */
 	String deadLetterPolicy() default "";
 
