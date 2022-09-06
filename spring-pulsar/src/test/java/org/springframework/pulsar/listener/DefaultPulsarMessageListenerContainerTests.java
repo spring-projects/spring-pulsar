@@ -215,7 +215,7 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		config.put("deadLetterPolicy", deadLetterPolicy);
 
 		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
@@ -224,32 +224,32 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		PulsarContainerProperties dlqContainerProperties = new PulsarContainerProperties();
 		dlqContainerProperties
 				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
-		dlqContainerProperties.setSchema(Schema.STRING);
+		dlqContainerProperties.setSchema(Schema.INT32);
 		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		dlqContainerProperties.setTopics(new String[] { "dlq-topic" });
-		DefaultPulsarMessageListenerContainer<String> dlqContainer = new DefaultPulsarMessageListenerContainer<>(
+		DefaultPulsarMessageListenerContainer<Integer> dlqContainer = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, dlqContainerProperties);
 		dlqContainer.start();
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<Integer>) (consumer, msg) -> {
 			latch.countDown();
-			if (((String) msg.getValue()).endsWith("4")) {
+			if (msg.getValue() == 5) {
 				throw new RuntimeException("fail");
 			}
 		});
-		pulsarContainerProperties.setSchema(Schema.STRING);
+		pulsarContainerProperties.setSchema(Schema.INT32);
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
-		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
 
 		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-016");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
-		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-		for (int i = 0; i < 5; i++) {
-			pulsarTemplate.send("hello john doe" + i);
+		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 1; i < 6; i++) {
+			pulsarTemplate.send(i);
 		}
 
 		// DLQ consumer should receive 1 msg

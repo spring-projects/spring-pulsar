@@ -268,8 +268,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 	@ContextConfiguration(classes = DeadLetterPolicyTest.DeadLetterPolicyConfig.class)
 	class DeadLetterPolicyTest {
 
-		static CountDownLatch latch = new CountDownLatch(2);
-		static CountDownLatch dlqLatch = new CountDownLatch(1);
+		private static final CountDownLatch latch = new CountDownLatch(2);
+		private static final CountDownLatch dlqLatch = new CountDownLatch(1);
 
 		@Test
 		void pulsarListenerWithDeadLetterPolicy() throws Exception {
