@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
@@ -36,6 +37,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @param <T> underlying payload type for the consumer.
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
 
@@ -77,8 +79,19 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		final Map<String, Object> properties = new HashMap<>(this.consumerConfig);
 		properties.putAll(propertiesToOverride);
 
+		// Remove deadLetterPolicy from the properties here and save it to re-apply after
+		// calling `loadConf` (https://github.com/apache/pulsar/issues/11646)
+		DeadLetterPolicy deadLetterPolicy = null;
+		if (properties.containsKey("deadLetterPolicy")) {
+			deadLetterPolicy = (DeadLetterPolicy) properties.remove("deadLetterPolicy");
+		}
+
 		if (!CollectionUtils.isEmpty(properties)) {
 			consumerBuilder.loadConf(properties);
+		}
+
+		if (deadLetterPolicy != null) {
+			consumerBuilder.deadLetterPolicy(deadLetterPolicy);
 		}
 
 		if (properties.containsKey("negativeAckRedeliveryBackoff")) {

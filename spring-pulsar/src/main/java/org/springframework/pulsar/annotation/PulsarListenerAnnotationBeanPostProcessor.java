@@ -39,6 +39,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.SubscriptionType;
 
@@ -363,6 +364,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		endpoint.setBeanFactory(this.beanFactory);
 
 		resolveNegativeAckRedeliveryBackoff(endpoint, pulsarListener);
+		resolveDeadLetterPolicy(endpoint, pulsarListener);
 	}
 
 	private void resolveNegativeAckRedeliveryBackoff(MethodPulsarListenerEndpoint<?> endpoint,
@@ -377,6 +379,21 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 			if (StringUtils.hasText(negativeAckRedeliveryBackoffBeanName)) {
 				endpoint.setNegativeAckRedeliveryBackoff(
 						this.beanFactory.getBean(negativeAckRedeliveryBackoffBeanName, RedeliveryBackoff.class));
+			}
+		}
+	}
+
+	private void resolveDeadLetterPolicy(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
+		Object deadLetterPolicy = resolveExpression(pulsarListener.deadLetterPolicy());
+		if (deadLetterPolicy instanceof DeadLetterPolicy) {
+			endpoint.setDeadLetterPolicy((DeadLetterPolicy) deadLetterPolicy);
+		}
+		else {
+			String deadLetterPolicyBeanName = resolveExpressionAsString(pulsarListener.deadLetterPolicy(),
+					"deadLetterPolicy");
+			if (StringUtils.hasText(deadLetterPolicyBeanName)) {
+				endpoint.setDeadLetterPolicy(
+						this.beanFactory.getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class));
 			}
 		}
 	}

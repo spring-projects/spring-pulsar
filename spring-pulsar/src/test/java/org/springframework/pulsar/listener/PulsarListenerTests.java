@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
@@ -260,6 +261,47 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			public RedeliveryBackoff redeliveryBackoff() {
 				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(5 * 1000).multiplier(2)
 						.build();
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = DeadLetterPolicyTest.DeadLetterPolicyConfig.class)
+	class DeadLetterPolicyTest {
+
+		private static CountDownLatch latch = new CountDownLatch(2);
+
+		private static CountDownLatch dlqLatch = new CountDownLatch(1);
+
+		@Test
+		void pulsarListenerWithDeadLetterPolicy() throws Exception {
+			pulsarTemplate.send("dlpt-topic-1", "hello");
+			assertThat(dlqLatch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class DeadLetterPolicyConfig {
+
+			@PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
+					topics = "dlpt-topic-1", deadLetterPolicy = "deadLetterPolicy", subscriptionType = "Shared",
+					properties = { "ackTimeoutMillis=1" })
+			void listen(String msg) {
+				latch.countDown();
+				throw new RuntimeException("fail " + msg);
+			}
+
+			@PulsarListener(id = "dlqListener", subscriptionType = "dlqListenerSubscription", topics = "dlq-topic")
+			void listenDlq(String msg) {
+				dlqLatch.countDown();
+			}
+
+			@Bean
+			DeadLetterPolicy deadLetterPolicy() {
+				return DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlq-topic").build();
 			}
 
 		}

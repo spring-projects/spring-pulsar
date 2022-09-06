@@ -35,6 +35,7 @@ import org.springframework.util.Assert;
  *
  * @param <T> the payload type.
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
@@ -109,6 +110,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 			container.getContainerProperties().setConsumerTaskExecutor(exec);
 		}
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
+		container.setDeadLetterPolicy(this.deadLetterPolicy);
 	}
 
 	@Override

@@ -32,6 +32,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageListener;
@@ -238,6 +239,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			final RedeliveryBackoff negativeAckRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.negativeAckRedeliveryBackoff;
 			if (negativeAckRedeliveryBackoff != null) {
 				currentProperties.put("negativeAckRedeliveryBackoff", negativeAckRedeliveryBackoff);
+			}
+			final DeadLetterPolicy deadLetterPolicy = DefaultPulsarMessageListenerContainer.this.deadLetterPolicy;
+			if (deadLetterPolicy != null) {
+				currentProperties.put("deadLetterPolicy", deadLetterPolicy);
 			}
 		}
 
