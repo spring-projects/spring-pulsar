@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.listener;
 
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
 import org.springframework.beans.factory.DisposableBean;
@@ -45,5 +46,7 @@ public interface PulsarMessageListenerContainer extends SmartLifecycle, Disposab
 	}
 
 	void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff);
+
+	void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy);
 
 }

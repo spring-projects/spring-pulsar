@@ -30,6 +30,7 @@ import java.util.Map;
 
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
@@ -41,28 +42,30 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 
 /**
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public class ConcurrentPulsarMessageListenerContainerTests {
 
 	@Test
 	@SuppressWarnings("unchecked")
+	void deadLetterPolicyAppliedOnChildContainer() throws Exception {
+		MockEnvironment env = setupMockEnvironment(SubscriptionType.Shared);
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(5).deadLetterTopic("dlq-topic")
+				.retryLetterTopic("retry-topic").build();
+		concurrentContainer.setDeadLetterPolicy(deadLetterPolicy);
+
+		concurrentContainer.start();
+
+		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		assertThat(childContainer.getDeadLetterPolicy()).isEqualTo(deadLetterPolicy);
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
 	void nackRedeliveryBackoffAppliedOnChildContainer() throws Exception {
-		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
-		Consumer<String> consumer = mock(Consumer.class);
-
-		when(pulsarConsumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
-				.thenReturn(consumer);
-
-		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
-
-		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setSchema(Schema.STRING);
-		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
-		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (cons, msg) -> {
-		});
-
-		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = new ConcurrentPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties);
+		MockEnvironment env = setupMockEnvironment(SubscriptionType.Shared);
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
 		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
 				.maxDelayMs(5 * 1000).build();
 		concurrentContainer.setNegativeAckRedeliveryBackoff(redeliveryBackoff);
@@ -76,26 +79,14 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	@Test
 	@SuppressWarnings("unchecked")
 	void basicConcurrencyTesting() throws Exception {
-		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
-		Consumer<String> consumer = mock(Consumer.class);
+		MockEnvironment env = setupMockEnvironment(SubscriptionType.Failover);
+		PulsarConsumerFactory<String> pulsarConsumerFactory = env.consumerFactory();
+		Consumer<String> consumer = env.consumer();
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
 
-		when(pulsarConsumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
-				.thenReturn(consumer);
+		concurrentContainer.setConcurrency(3);
 
-		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
-
-		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setSchema(Schema.STRING);
-		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
-		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (cons, msg) -> {
-		});
-
-		ConcurrentPulsarMessageListenerContainer<String> container = new ConcurrentPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties);
-
-		container.setConcurrency(3);
-
-		container.start();
+		concurrentContainer.start();
 
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(pulsarConsumerFactory, times(3))
 				.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)));
@@ -105,6 +96,17 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	@Test
 	@SuppressWarnings("unchecked")
 	void exclusiveSubscriptionMustUseSingleThread() throws Exception {
+		MockEnvironment env = setupMockEnvironment(SubscriptionType.Exclusive);
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+
+		concurrentContainer.setConcurrency(3);
+
+		assertThatThrownBy(concurrentContainer::start).isInstanceOf(IllegalStateException.class)
+				.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
+	}
+
+	@SuppressWarnings("unchecked")
+	private MockEnvironment setupMockEnvironment(SubscriptionType subscriptionType) throws Exception {
 		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
 		Consumer<String> consumer = mock(Consumer.class);
 
@@ -115,16 +117,18 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setSchema(Schema.STRING);
+		pulsarContainerProperties.setSubscriptionType(subscriptionType);
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (cons, msg) -> {
 		});
 
-		ConcurrentPulsarMessageListenerContainer<String> container = new ConcurrentPulsarMessageListenerContainer<>(
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = new ConcurrentPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 
-		container.setConcurrency(3);
+		return new MockEnvironment(pulsarConsumerFactory, consumer, concurrentContainer);
+	}
 
-		assertThatThrownBy(container::start).isInstanceOf(IllegalStateException.class)
-				.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
+	private record MockEnvironment(PulsarConsumerFactory<String> consumerFactory, Consumer<String> consumer,
+			ConcurrentPulsarMessageListenerContainer<String> concurrentContainer) {
 	}
 
 }

@@ -17,6 +17,7 @@
 package org.springframework.pulsar.listener;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
 import org.springframework.beans.BeansException;
@@ -35,6 +36,7 @@ import org.springframework.util.Assert;
  *
  * @param <T> message type.
  * @author Soby Chacko
+ * @author Alexander Preuß
  */
 public abstract class AbstractPulsarMessageListenerContainer<T> implements PulsarMessageListenerContainer,
 		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
@@ -60,6 +62,8 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 	private volatile boolean running = false;
 
 	protected RedeliveryBackoff negativeAckRedeliveryBackoff;
+
+	protected DeadLetterPolicy deadLetterPolicy;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
@@ -183,6 +187,15 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 
 	public RedeliveryBackoff getNegativeAckRedeliveryBackoff() {
 		return this.negativeAckRedeliveryBackoff;
+	}
+
+	@Override
+	public void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy) {
+		this.deadLetterPolicy = deadLetterPolicy;
+	}
+
+	public DeadLetterPolicy getDeadLetterPolicy() {
+		return this.deadLetterPolicy;
 	}
 
 }

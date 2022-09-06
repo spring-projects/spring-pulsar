@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
@@ -76,6 +77,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	private SmartMessageConverter messagingConverter;
 
 	private RedeliveryBackoff negativeAckRedeliveryBackoff;
+
+	private DeadLetterPolicy deadLetterPolicy;
 
 	public void setBean(Object bean) {
 		this.bean = bean;
@@ -176,6 +179,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		pulsarContainerProperties.setSchemaType(type);
 
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
+		container.setDeadLetterPolicy(this.deadLetterPolicy);
 
 		return messageListener;
 	}
@@ -252,6 +256,10 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	public void setNegativeAckRedeliveryBackoff(RedeliveryBackoff negativeAckRedeliveryBackoff) {
 		this.negativeAckRedeliveryBackoff = negativeAckRedeliveryBackoff;
+	}
+
+	public void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy) {
+		this.deadLetterPolicy = deadLetterPolicy;
 	}
 
 }

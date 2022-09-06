@@ -46,6 +46,7 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
  *
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Alexander Preuß
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
@@ -169,5 +170,13 @@ public @interface PulsarListener {
 	 * @return the bean name or empty string to not set the backoff
 	 */
 	String negativeAckRedeliveryBackoff() default "";
+
+	/**
+	 * The bean name or a 'SpEL' expression that resolves to a
+	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
+	 * configure a maximum message redelivery.
+	 * @return the bean name or empty string to not set any dead letter policy
+	 */
+	String deadLetterPolicy() default "";
 
 }
