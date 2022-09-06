@@ -30,6 +30,7 @@ import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
+import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
@@ -54,6 +55,8 @@ import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
+
+import com.google.protobuf.GeneratedMessageV3;
 
 /**
  * A {@link PulsarListenerEndpoint} providing the method to invoke to process an incoming
@@ -155,6 +158,12 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				}
 				case AVRO -> {
 					Schema<?> messageSchema = getMessageSchema(messageParameter, AvroSchema::of);
+					pulsarContainerProperties.setSchema(messageSchema);
+				}
+				case PROTOBUF -> {
+					@SuppressWarnings("unchecked")
+					Schema<?> messageSchema = getMessageSchema(messageParameter,
+							(c -> ProtobufSchema.of((Class<? extends GeneratedMessageV3>) c)));
 					pulsarContainerProperties.setSchema(messageSchema);
 				}
 				case KEY_VALUE -> {

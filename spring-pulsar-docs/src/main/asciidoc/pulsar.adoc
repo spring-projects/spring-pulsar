@@ -639,8 +639,16 @@ public void listen(Foo foo) {
 ----
 ====
 
-On the producer side also, for the Java primitive types, the framework can infer the Schema, but for any other types, you need set that on the `PulsarTemmplate`.
+On the producer side also, for the Java primitive types, the framework can infer the Schema, but for any other types, you need to set them on the `PulsarTemplate` as shown below.
 
+====
+[source, java]
+----
+template.setSchema(JSONSchema.of(Foo.class));
+----
+====
+
+TIP: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE. For KEY_VALUE schemata, only INLINE encoding is supported.
 
 ==== Intercepting messages
 
