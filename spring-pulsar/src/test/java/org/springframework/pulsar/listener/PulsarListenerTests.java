@@ -294,14 +294,14 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 				throw new RuntimeException("fail " + msg);
 			}
 
-			@PulsarListener(id = "dlqListener", subscriptionType = "dlqListenerSubscription", topics = "dlq-topic")
+			@PulsarListener(id = "dlqListener", subscriptionType = "dlqListenerSubscription", topics = "dlpt-dlq-topic")
 			void listenDlq(String msg) {
 				dlqLatch.countDown();
 			}
 
 			@Bean
 			DeadLetterPolicy deadLetterPolicy() {
-				return DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlq-topic").build();
+				return DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlpt-dlq-topic").build();
 			}
 
 		}
