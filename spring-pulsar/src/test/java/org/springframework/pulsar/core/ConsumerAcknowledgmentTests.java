@@ -289,7 +289,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		doAnswer(invocation -> {
 			latch.countDown();
 			return null;
-		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
+		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(List.class));
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
@@ -308,7 +308,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(
-				() -> verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(Messages.class)));
+				() -> verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(List.class)));
 		await().atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> verify(containerConsumer, times(1)).acknowledgeCumulative(any(Message.class)));
 		container.stop();
@@ -337,7 +337,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		doAnswer(invocation -> {
 			latch.countDown();
 			throw new RuntimeException();
-		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(Messages.class));
+		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(List.class));
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);

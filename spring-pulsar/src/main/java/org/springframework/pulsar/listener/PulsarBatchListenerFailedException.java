@@ -16,23 +16,31 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.List;
-
-import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 
+import org.springframework.pulsar.PulsarException;
+
 /**
- * Batch message listener that allows manual acknowledgment.
+ * Batch message listeners should throw this exception in the event of an error.
  *
- * @param <T> payload type.
  * @author Soby Chacko
  */
-public interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchMessageListener<T> {
+public class PulsarBatchListenerFailedException extends PulsarException {
 
-	default void received(Consumer<T> consumer, List<Message<T>> msg) {
-		throw new UnsupportedOperationException("Not Supported.");
+	private final Object pulsarMessage;
+
+	public PulsarBatchListenerFailedException(String msg, Message<?> message) {
+		super(msg);
+		this.pulsarMessage = message;
 	}
 
-	void received(Consumer<T> consumer, List<Message<T>> msg, Acknowledgement acknowledgement);
+	public PulsarBatchListenerFailedException(String msg, Throwable cause, Message<?> message) {
+		super(msg, cause);
+		this.pulsarMessage = message;
+	}
+
+	public Object getPulsarMessage() {
+		return this.pulsarMessage;
+	}
 
 }

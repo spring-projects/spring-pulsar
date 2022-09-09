@@ -17,6 +17,7 @@
 package org.springframework.pulsar.support.converter;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
@@ -32,7 +33,7 @@ import org.springframework.pulsar.support.MessageConverter;
  */
 public interface PulsarBatchMessageConverter<T> extends MessageConverter {
 
-	Message<?> toMessage(Messages<T> records, Consumer<T> consumer, Type payloadType);
+	Message<?> toMessage(List<org.apache.pulsar.client.api.Message<T>> msg, Consumer<T> consumer, Type payloadType);
 
 	T fromMessage(Messages<T> message, String defaultTopic);
 

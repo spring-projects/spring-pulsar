@@ -48,7 +48,8 @@ public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessa
 	}
 
 	@Override
-	public Message<?> toMessage(Messages<T> records, Consumer<T> consumer, Type type) {
+	public Message<?> toMessage(List<org.apache.pulsar.client.api.Message<T>> records, Consumer<T> consumer,
+			Type type) {
 		List<Object> payloads = new ArrayList<>();
 		List<Exception> conversionFailures = new ArrayList<>();
 		for (org.apache.pulsar.client.api.Message<T> message : records) {

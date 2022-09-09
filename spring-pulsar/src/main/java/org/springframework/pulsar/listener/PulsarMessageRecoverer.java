@@ -16,23 +16,24 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 
 /**
- * Batch message listener that allows manual acknowledgment.
+ * Allows recovering a failed Pulsar message.
  *
- * @param <T> payload type.
+ * Implementations can choose how the message needs to be recovered by providing a
+ * {@link java.util.function.Function} implementation that takes a {@link Consumer} and
+ * then provide a {@link BiConsumer} which takes {@link Message} and the thrown
+ * {@link Exception}.
+ *
+ * @param <T> payload type of Pulsar message.
  * @author Soby Chacko
  */
-public interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchMessageListener<T> {
-
-	default void received(Consumer<T> consumer, List<Message<T>> msg) {
-		throw new UnsupportedOperationException("Not Supported.");
-	}
-
-	void received(Consumer<T> consumer, List<Message<T>> msg, Acknowledgement acknowledgement);
+@FunctionalInterface
+public interface PulsarMessageRecoverer<T> extends Function<Consumer<T>, BiConsumer<Message<T>, Exception>> {
 
 }
