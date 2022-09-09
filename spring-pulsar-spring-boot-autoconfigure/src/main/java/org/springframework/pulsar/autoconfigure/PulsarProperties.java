@@ -39,6 +39,8 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.pulsar.listener.AckMode;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Configuration properties for Spring for Apache Pulsar.
@@ -753,7 +755,7 @@ public class PulsarProperties {
 		/**
 		 * Authentication parameter map of the client.
 		 */
-		private Map<String, String> authParamsMap;
+		private Map<String, String> authentication;
 
 		/**
 		 * Client operation timeout in milliseconds.
@@ -972,12 +974,12 @@ public class PulsarProperties {
 			this.authParams = authParams;
 		}
 
-		public Map<String, String> getAuthParamsMap() {
-			return this.authParamsMap;
+		public Map<String, String> getAuthentication() {
+			return this.authentication;
 		}
 
-		public void setAuthParamsMap(Map<String, String> authParamsMap) {
-			this.authParamsMap = authParamsMap;
+		public void setAuthentication(Map<String, String> authentication) {
+			this.authentication = authentication;
 		}
 
 		public long getOperationTimeoutMs() {
@@ -1253,6 +1255,11 @@ public class PulsarProperties {
 		}
 
 		public Map<String, Object> buildProperties() {
+			if (StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
+				throw new IllegalArgumentException(
+						"Cannot set both spring.pulsar.client.authParams and spring.pulsar.client.authentication.*");
+			}
+
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
@@ -1261,7 +1268,8 @@ public class PulsarProperties {
 			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(this::getAuthParamsMap).to(properties.in("authParamMap"));
+			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication()))
+					.to(properties.in("authParams"));
 			map.from(this::getOperationTimeoutMs).to(properties.in("operationTimeoutMs"));
 			map.from(this::getLookupTimeoutMs).to(properties.in("lookupTimeoutMs"));
 			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
@@ -1353,7 +1361,7 @@ public class PulsarProperties {
 		/**
 		 * Authentication parameter map of the client.
 		 */
-		private Map<String, String> authParamMap;
+		private Map<String, String> authentication;
 
 		/**
 		 * Path to the trusted TLS certificate file.
@@ -1434,12 +1442,12 @@ public class PulsarProperties {
 			this.authParams = authParams;
 		}
 
-		public Map<String, String> getAuthParamMap() {
-			return this.authParamMap;
+		public Map<String, String> getAuthentication() {
+			return this.authentication;
 		}
 
-		public void setAuthParamMap(Map<String, String> authParamMap) {
-			this.authParamMap = authParamMap;
+		public void setAuthentication(Map<String, String> authentication) {
+			this.authentication = authentication;
 		}
 
 		public String getTlsTrustCertsFilePath() {
@@ -1523,6 +1531,10 @@ public class PulsarProperties {
 		}
 
 		public Map<String, Object> buildProperties() {
+			if (!StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
+				throw new IllegalArgumentException(
+						"Cannot set both spring.pulsar.admin.authParams and spring.pulsar.admin.authentication.*");
+			}
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
@@ -1530,7 +1542,8 @@ public class PulsarProperties {
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(this::getAuthParamMap).to(properties.in("authParamMap"));
+			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication()))
+					.to(properties.in("authParams"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
 			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));

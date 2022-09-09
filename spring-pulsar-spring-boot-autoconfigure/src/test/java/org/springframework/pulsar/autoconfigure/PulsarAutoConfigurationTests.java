@@ -202,6 +202,23 @@ class PulsarAutoConfigurationTests {
 	}
 
 	@Nested
+	class ClientAutoConfigurationTests {
+
+		@Test
+		void authParamMapConvertedToEncodedParamString() {
+			contextRunner.withPropertyValues(
+					"spring.pulsar.client.auth-plugin-class-name=org.apache.pulsar.client.impl.auth.AuthenticationBasic",
+					"spring.pulsar.client.authentication.userId=username",
+					"spring.pulsar.client.authentication.password=topsecret")
+					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarClientConfiguration.class)
+							.extracting("configs", InstanceOfAssertFactories.map(String.class, Object.class))
+							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
+							.containsEntry("authParams", "{\"password\":\"topsecret\",\"userId\":\"username\"}")));
+		}
+
+	}
+
+	@Nested
 	class ProducerFactoryAutoConfigurationTests {
 
 		@Test
