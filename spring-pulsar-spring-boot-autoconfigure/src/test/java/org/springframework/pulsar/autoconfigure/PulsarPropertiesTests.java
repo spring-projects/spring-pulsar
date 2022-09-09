@@ -19,6 +19,7 @@ package org.springframework.pulsar.autoconfigure;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,12 +32,12 @@ public class PulsarPropertiesTests {
 
 	@Test
 	void encodedParamStringConversion() {
-		Map<String, String> authParamsMap = Map.of("issuerUrl", "https://auth.server.cloud", "privateKey",
-				"file://Users/xyz/key.json", "audience", "urn:sn:pulsar:abc:xyz");
+		Map<String, String> authParamsMap = new TreeMap<>(Map.of("issuerUrl", "https://auth.server.cloud", "privateKey",
+				"file://Users/xyz/key.json", "audience", "urn:sn:pulsar:abc:xyz"));
 
 		String encodedAuthParamString = PulsarProperties.convertToEncodedParamString(authParamsMap);
-		assertThat(encodedAuthParamString).isEqualTo("\"{\"audience\":\"urn:sn:pulsar:abc:xyz\","
-				+ "\"privateKey\":\"file://Users/xyz/key.json\",\"issuerUrl\":\"https://auth.server.cloud\"}\"");
+		assertThat(encodedAuthParamString).isEqualTo("{\"audience\":\"urn:sn:pulsar:abc:xyz\","
+				+ "\"issuerUrl\":\"https://auth.server.cloud\",\"privateKey\":\"file://Users/xyz/key.json\"}");
 	}
 
 }

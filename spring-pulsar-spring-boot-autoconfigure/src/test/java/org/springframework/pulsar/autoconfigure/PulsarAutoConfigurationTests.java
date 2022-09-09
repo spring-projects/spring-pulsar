@@ -213,7 +213,7 @@ class PulsarAutoConfigurationTests {
 					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarClientConfiguration.class)
 							.extracting("configs", InstanceOfAssertFactories.map(String.class, Object.class))
 							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
-							.containsEntry("authParams", "{\"userId\":\"username\",\"password\":\"topsecret\"}")));
+							.containsEntry("authParams", "{\"password\":\"topsecret\",\"userId\":\"username\"}")));
 		}
 
 	}
