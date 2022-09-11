@@ -16,23 +16,23 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.List;
-
 import org.apache.pulsar.client.api.Consumer;
-import org.apache.pulsar.client.api.Message;
 
 /**
- * Batch message listener that allows manual acknowledgment.
+ * Factory interface for {@link PulsarMessageRecoverer}.
  *
- * @param <T> payload type.
+ * @param <T> message type
  * @author Soby Chacko
+ * @author Chris Bono
  */
-public interface PulsarBatchAcknowledgingMessageListener<T> extends PulsarBatchMessageListener<T> {
+@FunctionalInterface
+public interface PulsarMessageRecovererFactory<T> {
 
-	default void received(Consumer<T> consumer, List<Message<T>> msg) {
-		throw new UnsupportedOperationException("Not Supported.");
-	}
-
-	void received(Consumer<T> consumer, List<Message<T>> msg, Acknowledgement acknowledgement);
+	/**
+	 * Provides a message recoverer {@link PulsarMessageRecoverer}.
+	 * @param consumer Pulsar consumer
+	 * @return {@link PulsarMessageRecoverer}.
+	 */
+	PulsarMessageRecoverer<T> recovererForConsumer(Consumer<T> consumer);
 
 }

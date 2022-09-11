@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener.adapter;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -65,7 +66,8 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 	}
 
 	@Override
-	public void received(Consumer<V> consumer, Messages<V> msg, @Nullable Acknowledgement acknowledgement) {
+	public void received(Consumer<V> consumer, List<org.apache.pulsar.client.api.Message<V>> msg,
+			@Nullable Acknowledgement acknowledgement) {
 		Message<?> message;
 		if (!isConsumerRecordList()) {
 			if (isMessageList()) {
@@ -83,7 +85,21 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 			message = null; // optimization since we won't need any conversion to invoke
 		}
 		logger.debug(() -> "Processing [" + message + "]");
-		invoke(msg, consumer, message, acknowledgement);
+
+		// In order to avoid clash with target List payload type.
+		final Messages<V> messages = new Messages<>() {
+
+			@Override
+			public Iterator<org.apache.pulsar.client.api.Message<V>> iterator() {
+				return msg.iterator();
+			}
+
+			@Override
+			public int size() {
+				return msg.size();
+			}
+		};
+		invoke(messages, consumer, message, acknowledgement);
 	}
 
 	protected void invoke(Object records, Consumer<V> consumer, final Message<?> messageArg,
@@ -101,7 +117,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		}
 	}
 
-	protected Message<?> toMessagingMessage(Messages<V> msg, Consumer<V> consumer) {
+	protected Message<?> toMessagingMessage(List<org.apache.pulsar.client.api.Message<V>> msg, Consumer<V> consumer) {
 
 		return getBatchMessageConverter().toMessage(msg, consumer, getType());
 	}
