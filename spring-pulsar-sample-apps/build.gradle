@@ -10,13 +10,24 @@ dependencies {
 	implementation 'com.google.code.findbugs:jsr305'
 }
 
-ext {
-	sampleMainClass = project.hasProperty("sampleMainClass") ?
-			project.getProperty("sampleMainClass") : "app1.SpringPulsarBootApp"
+springBoot {
+	mainClass = 'app1.SpringPulsarBootApp' // default app to run
 }
 
-springBoot {
-	mainClass = sampleMainClass
+task bootRunApp1(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'build') {
+	group = 'application'
+	mainClass = 'app1.SpringPulsarBootApp'
+	doFirst() {
+		classpath = sourceSets.main.runtimeClasspath
+	}
+}
+
+task bootRunApp2(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'build') {
+	group = 'application'
+	mainClass = 'app2.FailoverConsumerApp'
+	doFirst() {
+		classpath = sourceSets.main.runtimeClasspath
+	}
 }
 
 project.afterEvaluate {

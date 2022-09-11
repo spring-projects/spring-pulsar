@@ -29,12 +29,12 @@ Make sure the above pre-requisites are satisfied and that you are in the `spring
 To start the link:./src/main/java/app1/SpringPulsarBootApp.java[SpringPulsarBootApp] run the following command:
 [source,bash]
 ----
-../gradlew bootRun -PsampleMainClass='app1.SpringPulsarBootApp'
+../gradlew bootRunApp1
 ----
 
 === App2
 To start the link:./src/main/java/app2/FailoverConsumerApp.java[FailoverConsumerApp] run the following command:
 [source,bash]
 ----
-../gradlew bootRun -PsampleMainClass='app2.FailoverConsumerApp'
+../gradlew bootRunApp2
 ----
