@@ -1,6 +1,6 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
-	id 'org.springframework.boot' version '2.7.2'
+	id 'org.springframework.boot' version '3.0.0-SNAPSHOT'
 }
 
 description = 'Spring Pulsar Sample Applications'
