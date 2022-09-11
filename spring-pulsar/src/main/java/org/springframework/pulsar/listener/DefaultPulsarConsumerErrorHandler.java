@@ -16,9 +16,6 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 
@@ -32,37 +29,40 @@ import org.springframework.util.backoff.BackOffExecution;
  * After handling the errors, if necessary, this implementation is capable of recovering
  * the record(s) using a {@link PulsarMessageRecoverer}
  *
+ * Note: This implementation uses a ThreadLocal to manage the current message in error and
+ * it's associated BackOffExecution.
+ *
  * @param <T> payload type managed by the Pulsar consumer
  * @author Soby Chacko
  */
 public class DefaultPulsarConsumerErrorHandler<T> implements PulsarConsumerErrorHandler<T> {
 
-	private final PulsarMessageRecoverer<T> pulsarConsumerRecordRecoverer;
+	private final PulsarMessageRecovererFactory<T> pulsarMessageRecovererFactory;
 
 	private final BackOff backOff;
 
-	private final ThreadLocal<Map<Message<T>, BackOffExecution>> backOffExecutionThreadLocal = new ThreadLocal<>();
+	private final ThreadLocal<Pair> backOffExecutionThreadLocal = new ThreadLocal<>();
 
-	public DefaultPulsarConsumerErrorHandler(PulsarMessageRecoverer<T> pulsarConsumerRecordRecoverer, BackOff backOff) {
-		this.pulsarConsumerRecordRecoverer = pulsarConsumerRecordRecoverer;
+	public DefaultPulsarConsumerErrorHandler(PulsarMessageRecovererFactory<T> pulsarMessageRecovererFactory,
+			BackOff backOff) {
+		this.pulsarMessageRecovererFactory = pulsarMessageRecovererFactory;
 		this.backOff = backOff;
 	}
 
 	@Override
-	public boolean shouldRetryMessageInError(Exception thrownException, Message<T> message) {
-		final Map<Message<T>, BackOffExecution> messageBackOffExecutionMap = this.backOffExecutionThreadLocal.get();
+	public boolean shouldRetryMessage(Exception exception, Message<T> message) {
+		final Pair pair = this.backOffExecutionThreadLocal.get();
 		long nextBackOff;
-		if (messageBackOffExecutionMap != null && messageBackOffExecutionMap.containsKey(message)) {
-			final BackOffExecution backOffExecution = messageBackOffExecutionMap.get(message);
-			nextBackOff = backOffExecution.nextBackOff();
-			onNextBackoff(nextBackOff);
+		BackOffExecution backOffExecution;
+		if (pair != null && pair.message.equals(message)) {
+			backOffExecution = pair.backOffExecution;
 		}
 		else {
-			final BackOffExecution backOffExecution = this.backOff.start();
-			this.backOffExecutionThreadLocal.set(Map.of(message, backOffExecution));
-			nextBackOff = backOffExecution.nextBackOff();
-			onNextBackoff(nextBackOff);
+			backOffExecution = this.backOff.start();
+			this.backOffExecutionThreadLocal.set(new Pair(message, backOffExecution));
 		}
+		nextBackOff = backOffExecution.nextBackOff();
+		onNextBackoff(nextBackOff);
 		return nextBackOff != BackOffExecution.STOP;
 	}
 
@@ -78,22 +78,25 @@ public class DefaultPulsarConsumerErrorHandler<T> implements PulsarConsumerError
 	}
 
 	@Override
-	public void recoverMessage(Consumer<T> consumer, Message<T> message, Exception thrownException) {
-		this.pulsarConsumerRecordRecoverer.apply(consumer).accept(message, thrownException);
+	public void recoverMessage(Consumer<T> consumer, Message<T> message, Exception exception) {
+		this.pulsarMessageRecovererFactory.recovererForConsumer(consumer).recoverMessage(message, exception);
 	}
 
-	public Message<T> getTheCurrentPulsarMessageTracked() {
+	@SuppressWarnings("unchecked")
+	public Message<T> currentMessage() {
 		// there is only one message tracked at any time.
-		final Map<Message<T>, BackOffExecution> messageBackOffExecutionMap = this.backOffExecutionThreadLocal.get();
-		if (messageBackOffExecutionMap == null) {
+		final Pair pair = this.backOffExecutionThreadLocal.get();
+		if (pair == null) {
 			return null;
 		}
-		final Iterator<Message<T>> iterator = messageBackOffExecutionMap.keySet().iterator();
-		return iterator.hasNext() ? iterator.next() : null;
+		return (Message<T>) pair.message();
 	}
 
-	public void clearThreadState() {
+	public void clearMessage() {
 		this.backOffExecutionThreadLocal.remove();
 	}
+
+	private record Pair(Message<?> message, BackOffExecution backOffExecution) {
+	};
 
 }

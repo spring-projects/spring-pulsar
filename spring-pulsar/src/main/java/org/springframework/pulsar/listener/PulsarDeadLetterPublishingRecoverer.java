@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +33,7 @@ import org.springframework.pulsar.core.PulsarOperations;
  * @param <T> payload type of the Pulsar message
  * @author Soby Chacko
  */
-public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageRecoverer<T> {
+public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageRecovererFactory<T> {
 
 	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
@@ -63,7 +62,7 @@ public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageReco
 	}
 
 	@Override
-	public BiConsumer<Message<T>, Exception> apply(Consumer<T> consumer) {
+	public PulsarMessageRecoverer<T> recovererForConsumer(Consumer<T> consumer) {
 		return (message, exception) -> {
 			try {
 				this.pulsarTemplate.newMessage(message.getValue())

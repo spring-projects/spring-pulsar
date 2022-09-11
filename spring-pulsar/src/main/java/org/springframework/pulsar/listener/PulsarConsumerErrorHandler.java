@@ -20,15 +20,12 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 
 /**
- * Spring provided error handler for tackling errors from Pulsar consumer. When using this
- * mechanism, make sure not to set ackTimeoutMillis as a property.
  *
  * Contract for consumer error handling through the message listener container. Both
  * record and batch message listener errors are handled through this interface.
  *
- * When an implementation for this interface is provided to the message listener
- * container, then if the listener method throws an exception, errors will be handled
- * through it.
+ * When an error handler implementation is provided to the message listener container, the
+ * container will funnel all errors through it for handling.
  *
  * @param <T> payload type managed by the consumer
  * @author Soby Chacko
@@ -37,15 +34,15 @@ public interface PulsarConsumerErrorHandler<T> {
 
 	/**
 	 * Decide if the failed message should be retried.
-	 * @param thrownException throws exception
+	 * @param exception throws exception
 	 * @param message Pulsar message
 	 * @return if the failed message should be retried or not
 	 */
-	boolean shouldRetryMessageInError(Exception thrownException, Message<T> message);
+	boolean shouldRetryMessage(Exception exception, Message<T> message);
 
 	/**
 	 * Recover the message based on the implementation provided. Once this method returns,
-	 * callers can assume that the message is recovered and can acknowledge the message.
+	 * callers can assume that the message is recovered and has not been acknowledged yet.
 	 * @param consumer Pulsar consumer
 	 * @param message Pulsar message
 	 * @param thrownException thrown exception
@@ -53,14 +50,14 @@ public interface PulsarConsumerErrorHandler<T> {
 	void recoverMessage(Consumer<T> consumer, Message<T> message, Exception thrownException);
 
 	/**
-	 * Returns the Pulsar message that is tracked by the error handler.
+	 * Returns the current message in error.
 	 * @return the Pulsar Message currently tracked by the error handler
 	 */
-	Message<T> getTheCurrentPulsarMessageTracked();
+	Message<T> currentMessage();
 
 	/**
-	 * Clears the thread state managed by this error handler.
+	 * Clear the message in error from managing (such as resetting any thread state etc.).
 	 */
-	void clearThreadState();
+	void clearMessage();
 
 }

@@ -16,31 +16,23 @@
 
 package org.springframework.pulsar.listener;
 
-import org.apache.pulsar.client.api.Message;
-
-import org.springframework.pulsar.PulsarException;
+import org.apache.pulsar.client.api.Consumer;
 
 /**
- * Batch message listeners should throw this exception in the event of an error.
+ * Factory interface for {@link PulsarMessageRecoverer}.
  *
+ * @param <T> message type
  * @author Soby Chacko
+ * @author Chris Bono
  */
-public class PulsarBatchListenerFailedException extends PulsarException {
+@FunctionalInterface
+public interface PulsarMessageRecovererFactory<T> {
 
-	private final Object messageInError;
-
-	public PulsarBatchListenerFailedException(String msg, Message<?> message) {
-		super(msg);
-		this.messageInError = message;
-	}
-
-	public PulsarBatchListenerFailedException(String msg, Throwable cause, Message<?> message) {
-		super(msg, cause);
-		this.messageInError = message;
-	}
-
-	public Object getMessageInError() {
-		return this.messageInError;
-	}
+	/**
+	 * Provides a message recoverer {@link PulsarMessageRecoverer}.
+	 * @param consumer Pulsar consumer
+	 * @return {@link PulsarMessageRecoverer}.
+	 */
+	PulsarMessageRecoverer<T> recovererForConsumer(Consumer<T> consumer);
 
 }

@@ -17,7 +17,6 @@
 package org.springframework.pulsar.listener;
 
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
@@ -32,8 +31,16 @@ import org.apache.pulsar.client.api.Message;
  *
  * @param <T> payload type of Pulsar message.
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @FunctionalInterface
-public interface PulsarMessageRecoverer<T> extends Function<Consumer<T>, BiConsumer<Message<T>, Exception>> {
+public interface PulsarMessageRecoverer<T> {
+
+	/**
+	 * Recover a failed message, for e.g. send the message to a DLT.
+	 * @param message Pulsar message
+	 * @param exception exception from failed message
+	 */
+	void recoverMessage(Message<T> message, Exception exception);
 
 }
