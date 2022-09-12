@@ -39,6 +39,7 @@ import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.util.backoff.BackOff;
 
 /**
  * @author Soby Chacko
@@ -72,6 +73,22 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getNegativeAckRedeliveryBackoff()).isEqualTo(redeliveryBackoff);
+	}
+
+	@Test
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	void pulsarConsumerErrorHandlerAppliedOnChildContainer() throws Exception {
+		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+
+		PulsarConsumerErrorHandler<String> pulsarConsumerErrorHandler = new DefaultPulsarConsumerErrorHandler(
+				mock(PulsarMessageRecovererFactory.class), mock(BackOff.class));
+		concurrentContainer.setPulsarConsumerErrorHandler(pulsarConsumerErrorHandler);
+
+		concurrentContainer.start();
+
+		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		assertThat(childContainer.getPulsarConsumerErrorHandler()).isEqualTo(pulsarConsumerErrorHandler);
 	}
 
 	@Test

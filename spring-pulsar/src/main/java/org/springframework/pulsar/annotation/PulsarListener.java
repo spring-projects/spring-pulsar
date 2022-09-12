@@ -186,4 +186,12 @@ public @interface PulsarListener {
 	 */
 	AckMode ackMode() default AckMode.BATCH;
 
+	/**
+	 * The bean name or a 'SpEL' expression that resolves to a
+	 * {@link org.springframework.pulsar.listener.PulsarConsumerErrorHandler} which is
+	 * used as a Spring provided mechanism to handle errors from processing the message.
+	 * @return the bean name for the consumer error handler or an empty string.
+	 */
+	String pulsarConsumerErrorHandler() default "";
+
 }

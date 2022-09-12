@@ -46,6 +46,7 @@ import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.core.SchemaUtils;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
@@ -82,6 +83,9 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	private RedeliveryBackoff negativeAckRedeliveryBackoff;
 
 	private DeadLetterPolicy deadLetterPolicy;
+
+	@SuppressWarnings("rawtypes")
+	private PulsarConsumerErrorHandler pulsarConsumerErrorHandler;
 
 	public void setBean(Object bean) {
 		this.bean = bean;
@@ -189,6 +193,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
+		container.setPulsarConsumerErrorHandler(this.pulsarConsumerErrorHandler);
 
 		return messageListener;
 	}
@@ -269,6 +274,11 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	public void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy) {
 		this.deadLetterPolicy = deadLetterPolicy;
+	}
+
+	@SuppressWarnings("rawtypes")
+	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
+		this.pulsarConsumerErrorHandler = pulsarConsumerErrorHandler;
 	}
 
 }

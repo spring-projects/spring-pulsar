@@ -49,4 +49,7 @@ public interface PulsarMessageListenerContainer extends SmartLifecycle, Disposab
 
 	void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy);
 
+	@SuppressWarnings("rawtypes")
+	void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler);
+
 }

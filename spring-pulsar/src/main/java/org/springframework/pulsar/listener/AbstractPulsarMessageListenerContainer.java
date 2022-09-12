@@ -65,7 +65,7 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 
 	protected DeadLetterPolicy deadLetterPolicy;
 
-	private PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
+	protected PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
@@ -204,7 +204,8 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 		return this.pulsarConsumerErrorHandler;
 	}
 
-	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
 		this.pulsarConsumerErrorHandler = pulsarConsumerErrorHandler;
 	}
 
