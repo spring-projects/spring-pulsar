@@ -284,7 +284,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 	@ContextConfiguration(classes = PulsarConsumerErrorHandlerTest.PulsarConsumerErrorHandlerConfig.class)
 	class PulsarConsumerErrorHandlerTest {
 
-		static CountDownLatch pcehLatch = new CountDownLatch(11);
+		private static CountDownLatch pulsarConsumerErrorHandlerLatch = new CountDownLatch(11);
 
 		private static CountDownLatch dltLatch = new CountDownLatch(1);
 
@@ -292,7 +292,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		void pulsarListenerWithNackRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
 				throws Exception {
 			pulsarTemplate.send("pceht-topic", "hello john doe");
-			assertThat(pcehLatch.await(30, TimeUnit.SECONDS)).isTrue();
+			assertThat(pulsarConsumerErrorHandlerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(dltLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
@@ -303,7 +303,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			@PulsarListener(id = "pceht-id", subscriptionName = "pceht-subscription", topics = "pceht-topic",
 					pulsarConsumerErrorHandler = "pulsarConsumerErrorHandler")
 			void listen(String msg) {
-				pcehLatch.countDown();
+				pulsarConsumerErrorHandlerLatch.countDown();
 				throw new RuntimeException("fail " + msg);
 			}
 
