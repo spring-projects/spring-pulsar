@@ -24,6 +24,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.support.MessageConverter;
 
@@ -89,6 +90,11 @@ public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 	@Nullable
 	@Override
 	public Integer getConcurrency() {
+		return null;
+	}
+
+	@Override
+	public AckMode getAckMode() {
 		return null;
 	}
 

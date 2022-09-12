@@ -28,6 +28,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.support.JavaUtils;
 import org.springframework.pulsar.support.MessageConverter;
@@ -148,16 +149,19 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 				properties.setSchemaType(this.containerProperties.getSchemaType());
 			}
 		}
-
 		if (properties.getSchema() == null) {
 			properties.setSchema(Schema.BYTES);
 		}
-
 		if (properties.getSubscriptionType() == null) {
 			properties.setSubscriptionType(this.containerProperties.getSubscriptionType());
 		}
 
-		properties.setAckMode(this.containerProperties.getAckMode());
+		if (endpoint.getAckMode() != AckMode.BATCH) {
+			properties.setAckMode(endpoint.getAckMode());
+		}
+		else if (this.containerProperties.getAckMode() != AckMode.BATCH) {
+			properties.setAckMode(this.containerProperties.getAckMode());
+		}
 
 		Boolean autoStart = endpoint.getAutoStartup();
 		if (autoStart != null) {

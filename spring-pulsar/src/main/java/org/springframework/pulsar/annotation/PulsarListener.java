@@ -27,6 +27,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.listener.AckMode;
 
 /**
  * Annotation that marks a method to be the target of a Pulsar message listener on the
@@ -178,5 +179,11 @@ public @interface PulsarListener {
 	 * @return the bean name or empty string to not set any dead letter policy.
 	 */
 	String deadLetterPolicy() default "";
+
+	/**
+	 * Override the container default ack mode of BATCH.
+	 * @return ack mode used by the listener
+	 */
+	AckMode ackMode() default AckMode.BATCH;
 
 }

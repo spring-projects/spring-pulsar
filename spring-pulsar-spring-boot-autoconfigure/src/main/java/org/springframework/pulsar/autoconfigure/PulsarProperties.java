@@ -38,7 +38,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
-import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.listener.AckMode;
 
 /**
  * Configuration properties for Spring for Apache Pulsar.
@@ -1308,18 +1308,18 @@ public class PulsarProperties {
 		/**
 		 * AckMode for acknowledgements. Allowed values are RECORD, BATCH, MANUAL.
 		 */
-		private PulsarContainerProperties.AckMode ackMode;
+		private AckMode ackMode;
 
 		/**
 		 * SchemaType of the consumed messages.
 		 */
 		private SchemaType schemaType;
 
-		public PulsarContainerProperties.AckMode getAckMode() {
+		public AckMode getAckMode() {
 			return this.ackMode;
 		}
 
-		public void setAckMode(PulsarContainerProperties.AckMode ackMode) {
+		public void setAckMode(AckMode ackMode) {
 			this.ackMode = ackMode;
 		}
 

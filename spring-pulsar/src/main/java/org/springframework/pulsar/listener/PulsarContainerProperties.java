@@ -38,26 +38,6 @@ public class PulsarContainerProperties {
 
 	private Duration consumerStartTimeout = DEFAULT_CONSUMER_START_TIMEOUT;
 
-	/**
-	 * Enumeration for ack mode.
-	 */
-	public enum AckMode {
-
-		/**
-		 * Batch ack mode.
-		 */
-		BATCH,
-		/**
-		 * Record ack mode.
-		 */
-		RECORD,
-		/**
-		 * Manual ack mode.
-		 */
-		MANUAL;
-
-	}
-
 	private String[] topics;
 
 	private String topicsPattern;

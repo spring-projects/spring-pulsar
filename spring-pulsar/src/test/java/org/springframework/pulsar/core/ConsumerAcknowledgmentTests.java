@@ -46,6 +46,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
@@ -73,7 +74,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 		});
 		pulsarContainerProperties.setSchema(Schema.STRING);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.RECORD);
+		pulsarContainerProperties.setAckMode(AckMode.RECORD);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
@@ -235,7 +236,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		pulsarContainerProperties.setMessageListener(pulsarAcknowledgingMessageListener);
 
 		pulsarContainerProperties.setSchema(Schema.STRING);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();

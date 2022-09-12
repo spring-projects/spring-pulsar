@@ -349,6 +349,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 		endpoint.setTopicPattern(topicPattern);
 		endpoint.setSubscriptionType(getEndpointSubscriptionType(pulsarListener));
 		endpoint.setSchemaType(pulsarListener.schemaType());
+		endpoint.setAckMode(pulsarListener.ackMode());
 
 		String concurrency = pulsarListener.concurrency();
 		if (StringUtils.hasText(concurrency)) {

@@ -206,6 +206,13 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			assertThat(latch1.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
+		@Test
+		void ackModeAppliedToContainerFromListener(@Autowired PulsarListenerEndpointRegistry registry) {
+			final PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("ackMode-test-id")
+					.getContainerProperties();
+			assertThat(pulsarContainerProperties.getAckMode()).isEqualTo(AckMode.RECORD);
+		}
+
 		@EnablePulsar
 		@Configuration
 		static class TestPulsarListenersForBasicScenario {
@@ -226,6 +233,11 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 					properties = { "patternAutoDiscoveryPeriod=5", "subscriptionInitialPosition=Earliest" })
 			void listen3(String message) {
 				latch2.countDown();
+			}
+
+			@PulsarListener(id = "ackMode-test-id", subscriptionName = "ackModeTest-sub", topics = "ackModeTest-topic",
+					ackMode = AckMode.RECORD)
+			void ackModeTestListener(String message) {
 			}
 
 		}

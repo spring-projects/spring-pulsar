@@ -246,7 +246,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		PulsarTemplate<Integer> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);
@@ -316,7 +316,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		PulsarTemplate<Integer> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);
@@ -385,7 +385,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		PulsarTemplate<Integer> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);
@@ -460,7 +460,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		PulsarTemplate<Integer> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);
@@ -531,7 +531,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
-		pulsarContainerProperties.setAckMode(PulsarContainerProperties.AckMode.MANUAL);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		PulsarTemplate<Integer> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);

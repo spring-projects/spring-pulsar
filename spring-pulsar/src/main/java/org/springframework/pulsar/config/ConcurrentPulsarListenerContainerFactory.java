@@ -48,7 +48,6 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 	@Override
 	protected ConcurrentPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
-
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		Collection<String> topics = endpoint.getTopics();
 		String topicPattern = endpoint.getTopicPattern();
@@ -57,13 +56,11 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 			final String[] topics1 = topics.toArray(new String[0]);
 			properties.setTopics(topics1);
 		}
-
 		if (StringUtils.hasText(topicPattern)) {
 			properties.setTopicsPattern(topicPattern);
 		}
 
 		final String subscriptionName = endpoint.getSubscriptionName();
-
 		if (StringUtils.hasText(subscriptionName)) {
 			properties.setSubscriptionName(endpoint.getSubscriptionName());
 		}

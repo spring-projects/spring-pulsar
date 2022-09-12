@@ -37,6 +37,7 @@ import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
 import org.springframework.pulsar.support.MessageConverter;
@@ -82,6 +83,8 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	private Boolean batchListener;
 
 	private Integer concurrency;
+
+	private AckMode ackMode;
 
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -242,6 +245,14 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	 */
 	public void setConcurrency(Integer concurrency) {
 		this.concurrency = concurrency;
+	}
+
+	public AckMode getAckMode() {
+		return this.ackMode;
+	}
+
+	public void setAckMode(AckMode ackMode) {
+		this.ackMode = ackMode;
 	}
 
 }
