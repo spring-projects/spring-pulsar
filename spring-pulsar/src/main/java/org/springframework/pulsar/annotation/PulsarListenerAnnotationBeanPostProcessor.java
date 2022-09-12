@@ -85,6 +85,7 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
@@ -107,8 +108,7 @@ import org.springframework.validation.Validator;
  * fine-grained control over endpoints registration. See {@link EnablePulsar} Javadoc for
  * complete usage details.
  *
- * @param <K> the key type.
- * @param <V> the value type.
+ * @param <V> the payload type.
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
@@ -120,7 +120,7 @@ import org.springframework.validation.Validator;
  * @see PulsarListenerEndpoint
  * @see MethodPulsarListenerEndpoint
  */
-public class PulsarListenerAnnotationBeanPostProcessor<K, V>
+public class PulsarListenerAnnotationBeanPostProcessor<V>
 		implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
@@ -366,6 +366,24 @@ public class PulsarListenerAnnotationBeanPostProcessor<K, V>
 
 		resolveNegativeAckRedeliveryBackoff(endpoint, pulsarListener);
 		resolveDeadLetterPolicy(endpoint, pulsarListener);
+		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
+	}
+
+	@SuppressWarnings({ "rawtypes" })
+	private void resolvePulsarConsumerErrorHandler(MethodPulsarListenerEndpoint<?> endpoint,
+			PulsarListener pulsarListener) {
+		Object pulsarConsumerErrorHandler = resolveExpression(pulsarListener.pulsarConsumerErrorHandler());
+		if (pulsarConsumerErrorHandler instanceof PulsarConsumerErrorHandler) {
+			endpoint.setPulsarConsumerErrorHandler((PulsarConsumerErrorHandler) pulsarConsumerErrorHandler);
+		}
+		else {
+			String pulsarConsumerErrorHandlerBeanName = resolveExpressionAsString(
+					pulsarListener.pulsarConsumerErrorHandler(), "pulsarConsumerErrorHandler");
+			if (StringUtils.hasText(pulsarConsumerErrorHandlerBeanName)) {
+				endpoint.setPulsarConsumerErrorHandler(
+						this.beanFactory.getBean(pulsarConsumerErrorHandlerBeanName, PulsarConsumerErrorHandler.class));
+			}
+		}
 	}
 
 	private void resolveNegativeAckRedeliveryBackoff(MethodPulsarListenerEndpoint<?> endpoint,

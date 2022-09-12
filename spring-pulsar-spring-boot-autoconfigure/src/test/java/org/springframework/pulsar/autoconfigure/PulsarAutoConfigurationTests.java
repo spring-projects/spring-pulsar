@@ -162,7 +162,7 @@ class PulsarAutoConfigurationTests {
 
 	@Test
 	void customPulsarListenerAnnotationBeanPostProcessorIsRespected() {
-		PulsarListenerAnnotationBeanPostProcessor<String, String> listenerAnnotationBeanPostProcessor = mock(
+		PulsarListenerAnnotationBeanPostProcessor<String> listenerAnnotationBeanPostProcessor = mock(
 				PulsarListenerAnnotationBeanPostProcessor.class);
 		this.contextRunner
 				.withBean("org.springframework.pulsar.config.internalPulsarListenerAnnotationProcessor",

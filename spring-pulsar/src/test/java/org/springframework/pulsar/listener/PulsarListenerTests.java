@@ -66,6 +66,7 @@ import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * @author Soby Chacko
@@ -273,6 +274,50 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			public RedeliveryBackoff redeliveryBackoff() {
 				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(5 * 1000).multiplier(2)
 						.build();
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = PulsarConsumerErrorHandlerTest.PulsarConsumerErrorHandlerConfig.class)
+	class PulsarConsumerErrorHandlerTest {
+
+		static CountDownLatch pcehLatch = new CountDownLatch(11);
+
+		private static CountDownLatch dltLatch = new CountDownLatch(1);
+
+		@Test
+		void pulsarListenerWithNackRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
+				throws Exception {
+			pulsarTemplate.send("pceht-topic", "hello john doe");
+			assertThat(pcehLatch.await(30, TimeUnit.SECONDS)).isTrue();
+			assertThat(dltLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class PulsarConsumerErrorHandlerConfig {
+
+			@PulsarListener(id = "pceht-id", subscriptionName = "pceht-subscription", topics = "pceht-topic",
+					pulsarConsumerErrorHandler = "pulsarConsumerErrorHandler")
+			void listen(String msg) {
+				pcehLatch.countDown();
+				throw new RuntimeException("fail " + msg);
+			}
+
+			@PulsarListener(id = "pceh-dltListener", subscriptionType = "dltListenerSubscription",
+					topics = "pceht-topic-pceht-subscription-DLT")
+			void listenDlq(String msg) {
+				dltLatch.countDown();
+			}
+
+			@Bean
+			public PulsarConsumerErrorHandler<String> pulsarConsumerErrorHandler(
+					PulsarTemplate<String> pulsarTemplate) {
+				return new DefaultPulsarConsumerErrorHandler<>(
+						new PulsarDeadLetterPublishingRecoverer<>(pulsarTemplate), new FixedBackOff(100, 10));
 			}
 
 		}
