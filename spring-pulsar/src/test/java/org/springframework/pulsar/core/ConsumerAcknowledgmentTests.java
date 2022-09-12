@@ -138,9 +138,6 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		pulsarClient.close();
 	}
 
-	// CHECKSTYLE:OFF
-	static int COUNTER = 0;
-
 	@Test
 	void testBatchAckButSomeRecordsFail() throws Exception {
 		Map<String, Object> config = new HashMap<>();
@@ -155,9 +152,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 			latch.countDown();
-			System.out.println("*** Listener invoked (" + (COUNTER++) + ")");
 			if (latch.getCount() % 2 == 0) {
-				System.out.println("*** Forcing failure -> should result in nack");
 				throw new RuntimeException("fail");
 			}
 		});
@@ -191,19 +186,13 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 		final int ackCalls = ackCallCount.get();
 		if (ackCalls < 5) {
-			try {
-				await().atMost(Duration.ofSeconds(10))
-						.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(Message.class)));
+			await().atMost(Duration.ofSeconds(10))
+					.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(Message.class)));
+			await().atMost(Duration.ofSeconds(10)).untilAsserted(
+					() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
+			if (ackCalls == 0) {
 				await().atMost(Duration.ofSeconds(10)).untilAsserted(
-						() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
-				if (ackCalls == 0) {
-					await().atMost(Duration.ofSeconds(10)).untilAsserted(
-							() -> verify(containerConsumer, times(5)).acknowledgeCumulative(any(Message.class)));
-				}
-			}
-			catch (Throwable t) {
-				System.out.println("*** ACK assertions failed - was not 5: " + t.getMessage());
-				t.printStackTrace();
+						() -> verify(containerConsumer, times(5)).acknowledgeCumulative(any(Message.class)));
 			}
 		}
 		else {
