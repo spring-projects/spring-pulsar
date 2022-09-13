@@ -19,6 +19,7 @@ package org.springframework.pulsar.autoconfigure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -37,12 +38,17 @@ public class AuthParameterUtilsTests {
 	@MethodSource("encodedParamStringConversionProvider")
 	void encodedParamStringConversion(String testName, Map<String, String> authParamsMap) {
 		String encodedAuthParamString = AuthParameterUtils.maybeConvertToEncodedParamString(authParamsMap);
-		assertThat(encodedAuthParamString).isEqualTo("{\"audience\":\"urn:sn:pulsar:abc:xyz\","
-				+ "\"issuerUrl\":\"https://auth.server.cloud\",\"privateKey\":\"file://Users/xyz/key.json\"}");
+		if (authParamsMap == null || authParamsMap.isEmpty()) {
+			assertThat(encodedAuthParamString).isNull();
+		}
+		else {
+			assertThat(encodedAuthParamString).isEqualTo("{\"audience\":\"urn:sn:pulsar:abc:xyz\","
+					+ "\"issuerUrl\":\"https://auth.server.cloud\",\"privateKey\":\"file://Users/xyz/key.json\"}");
+		}
 	}
 
 	private static Stream<Arguments> encodedParamStringConversionProvider() {
-		return Stream.of(
+		return Stream.of(arguments("null", null), arguments("empty", Collections.emptyMap()),
 				arguments("camelCase",
 						Map.of("issuerUrl", "https://auth.server.cloud", "privateKey", "file://Users/xyz/key.json",
 								"audience", "urn:sn:pulsar:abc:xyz")),

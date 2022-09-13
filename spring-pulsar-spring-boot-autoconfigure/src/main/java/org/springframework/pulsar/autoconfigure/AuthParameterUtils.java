@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 
 import org.apache.pulsar.common.util.ObjectMapperFactory;
 
+import org.springframework.util.CollectionUtils;
+
 /**
  * Utility methods for Pulsar authentication parameters.
  *
@@ -51,7 +53,7 @@ public final class AuthParameterUtils {
 	}
 
 	protected static String maybeConvertToEncodedParamString(Map<String, String> params) {
-		if (params == null) {
+		if (CollectionUtils.isEmpty(params)) {
 			return null;
 		}
 		params = convertWellKnownLowerCaseKeysToCamelCase(params);
