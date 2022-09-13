@@ -753,7 +753,7 @@ public class PulsarProperties {
 		/**
 		 * Authentication parameter map of the client.
 		 */
-		private SortedMap<String, String> authParamsMap = new TreeMap<>();
+		private Map<String, String> authParamsMap;
 
 		/**
 		 * Client operation timeout in milliseconds.
@@ -976,7 +976,7 @@ public class PulsarProperties {
 			return this.authParamsMap;
 		}
 
-		public void setAuthParamsMap(SortedMap<String, String> authParamsMap) {
+		public void setAuthParamsMap(Map<String, String> authParamsMap) {
 			this.authParamsMap = authParamsMap;
 		}
 
@@ -1354,7 +1354,7 @@ public class PulsarProperties {
 		/**
 		 * Authentication parameter map of the client.
 		 */
-		private SortedMap<String, String> authParamMap = new TreeMap<>();
+		private Map<String, String> authParamMap;
 
 		/**
 		 * Path to the trusted TLS certificate file.
@@ -1439,7 +1439,7 @@ public class PulsarProperties {
 			return this.authParamMap;
 		}
 
-		public void setAuthParamMap(SortedMap<String, String> authParamMap) {
+		public void setAuthParamMap(Map<String, String> authParamMap) {
 			this.authParamMap = authParamMap;
 		}
 
