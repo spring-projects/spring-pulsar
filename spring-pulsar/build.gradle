@@ -16,9 +16,9 @@ dependencies {
 	api ('org.springframework.retry:spring-retry') {
 		exclude group: 'org.springframework'
 	}
+	implementation 'com.fasterxml.jackson.core:jackson-core'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.google.code.findbugs:jsr305'
-	optional 'com.fasterxml.jackson.core:jackson-core'
-	optional 'com.fasterxml.jackson.core:jackson-databind'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'

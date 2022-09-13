@@ -35,7 +35,7 @@ public class PulsarPropertiesTests {
 		Map<String, String> authParamsMap = new TreeMap<>(Map.of("issuerUrl", "https://auth.server.cloud", "privateKey",
 				"file://Users/xyz/key.json", "audience", "urn:sn:pulsar:abc:xyz"));
 
-		String encodedAuthParamString = PulsarProperties.convertToEncodedParamString(authParamsMap);
+		String encodedAuthParamString = PulsarProperties.maybeConvertToEncodedParamString(authParamsMap);
 		assertThat(encodedAuthParamString).isEqualTo("{\"audience\":\"urn:sn:pulsar:abc:xyz\","
 				+ "\"issuerUrl\":\"https://auth.server.cloud\",\"privateKey\":\"file://Users/xyz/key.json\"}");
 	}
