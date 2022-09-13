@@ -1255,7 +1255,7 @@ public class PulsarProperties {
 		}
 
 		public Map<String, Object> buildProperties() {
-			if (!StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
+			if (StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
 				throw new IllegalArgumentException(
 						"Cannot set both spring.pulsar.client.authParams and spring.pulsar.client.authentication.*");
 			}

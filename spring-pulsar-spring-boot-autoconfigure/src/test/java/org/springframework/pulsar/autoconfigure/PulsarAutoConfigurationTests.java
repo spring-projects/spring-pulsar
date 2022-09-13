@@ -208,8 +208,8 @@ class PulsarAutoConfigurationTests {
 		void authParamMapConvertedToEncodedParamString() {
 			contextRunner.withPropertyValues(
 					"spring.pulsar.client.auth-plugin-class-name=org.apache.pulsar.client.impl.auth.AuthenticationBasic",
-					"spring.pulsar.client.auth-params-map.userId=username",
-					"spring.pulsar.client.auth-params-map.password=topsecret")
+					"spring.pulsar.client.authentication.userId=username",
+					"spring.pulsar.client.authentication.password=topsecret")
 					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarClientConfiguration.class)
 							.extracting("configs", InstanceOfAssertFactories.map(String.class, Object.class))
 							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
