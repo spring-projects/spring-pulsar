@@ -753,7 +753,7 @@ public class PulsarProperties {
 		/**
 		 * Authentication parameter map of the client.
 		 */
-		private Map<String, String> authParamsMap;
+		private Map<String, String> authentication;
 
 		/**
 		 * Client operation timeout in milliseconds.
@@ -972,12 +972,12 @@ public class PulsarProperties {
 			this.authParams = authParams;
 		}
 
-		public Map<String, String> getAuthParamsMap() {
-			return this.authParamsMap;
+		public Map<String, String> getAuthentication() {
+			return this.authentication;
 		}
 
-		public void setAuthParamsMap(Map<String, String> authParamsMap) {
-			this.authParamsMap = authParamsMap;
+		public void setAuthentication(Map<String, String> authentication) {
+			this.authentication = authentication;
 		}
 
 		public long getOperationTimeoutMs() {
@@ -1261,7 +1261,7 @@ public class PulsarProperties {
 			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthParamsMap()))
+			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication()))
 					.to(properties.in("authParams"));
 			map.from(this::getOperationTimeoutMs).to(properties.in("operationTimeoutMs"));
 			map.from(this::getLookupTimeoutMs).to(properties.in("lookupTimeoutMs"));
@@ -1354,7 +1354,7 @@ public class PulsarProperties {
 		/**
 		 * Authentication parameter map of the client.
 		 */
-		private Map<String, String> authParamMap;
+		private Map<String, String> authentication;
 
 		/**
 		 * Path to the trusted TLS certificate file.
@@ -1435,12 +1435,12 @@ public class PulsarProperties {
 			this.authParams = authParams;
 		}
 
-		public Map<String, String> getAuthParamMap() {
-			return this.authParamMap;
+		public Map<String, String> getAuthentication() {
+			return this.authentication;
 		}
 
-		public void setAuthParamMap(Map<String, String> authParamMap) {
-			this.authParamMap = authParamMap;
+		public void setAuthentication(Map<String, String> authentication) {
+			this.authentication = authentication;
 		}
 
 		public String getTlsTrustCertsFilePath() {
@@ -1531,7 +1531,7 @@ public class PulsarProperties {
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthParamMap()))
+			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication()))
 					.to(properties.in("authParams"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
