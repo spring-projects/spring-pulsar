@@ -19,40 +19,9 @@ This is done through a factory bean called `PulsarClientFactoryBean`, which take
 include::application-properties/pulsar-client.adoc[lines=3..-1]
 ====
 
-To connect against a Pulsar cluster requiring authentication, you need to set the `authPluginClassName` and parameters for your authentication scheme.
-To set the authentication parameters you can either pass them as a json-encoded string or as a nested map. Please see the examples below for each option:
-
-====
-[source, yaml]
-----
-# using json-encoded string
-spring:
-  pulsar:
-    client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
-      auth-params: "{\"privateKey\":\"file:///Users/some-key.json\",\"issuerUrl\":\"https://auth.server.cloud/", \"audience\":\"urn:sn:acme:dev:my-instance"}"
-----
-====
-
-====
-[source, yaml]
-----
-# using nested parameter map
-spring:
-  pulsar:
-    client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
-      authentication.issuer-url: https://auth.server.cloud/
-      authentication.private-key: file:///Users/some-key.json
-      authentication.audience: urn:sn:acme:dev:my-instance
-----
-====
-
-.[.underline]#Click ##here## to view how to configure the different **authentication schemes**#.
-[%collapsible]
-====
-include::authentication.adoc[lines=3..-1]
-====
+[[client-authentication]]
+===== Authentication
+include::authentication.adoc[]
 
 [[pulsar-producer]]
 ==== Pulsar Producer
@@ -726,6 +695,10 @@ By default, the application tries to connect to a local Pulsar instance at `http
 include::application-properties/pulsar-administration.adoc[lines=3..-1]
 ====
 
+===== Authentication
+When accessing a Pulsar cluster that requires authentication, the admin client requires the same security configuration as the regular Pulsar Client. You can use the aforementioned <<client-authentication,security configuration>> by simply replacing `spring.pulsar.client` with `spring.pulsar.administration`.
+
+==== Auto-topic creation
 On initialization, the `PulsarAdministration` checks if there are any `PulsarTopic` beans in the application context.
 For all such beans, the `PulsarAdministration` will either create the corresponding topic, or if necessary modify the number of partitions.
 

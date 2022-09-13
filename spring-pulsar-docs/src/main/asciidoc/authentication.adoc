@@ -1,91 +1,134 @@
-[appendix]
-[[appendix.authentication]]
-= Authentication
+To connect to a Pulsar cluster requiring authentication, you need to set the `authPluginClassName` and any parameters required by the authentication plugin. The parameters can be set as a single JSON encoded string or as map of parameter names to parameter values.
+
+[source,yaml,indent=0,role="primary"]
+.[.small]#Map#
+----
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
+      authentication:
+        issuer-url: https://auth.server.cloud/
+        private-key: file:///Users/some-key.json
+        audience: urn:sn:acme:dev:my-instance
+----
+.[.small]#JSON encoded string#
+[source,yaml,indent=0,role="secondary"]
+----
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
+      auth-params: "{\"privateKey\":\"file:///Users/some-key.json\",\"issuerUrl\":\"https://auth.server.cloud/", \"audience\":\"urn:sn:acme:dev:my-instance"}"
+----
+
+TIP: Using a map is the recommended approach as it is less error-prone and easier to read
+
+The following shows how to configure each of the supported authentication mechanisms.
 
 [[Athenz]]
-== Athenz
+.[.underline]#Click ##here## for **Athenz**#
+[%collapsible]
 ====
 [source, yaml]
 ----
-spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationAthenz
-spring.pulsar.client.authentication.tenant-domain: ...
-spring.pulsar.client.authentication.tenant-service: ...
-spring.pulsar.client.authentication.provider-domain: ...
-spring.pulsar.client.authentication.private-key: ...
-spring.pulsar.client.authentication.private-key-path: ...
-spring.pulsar.client.authentication.key-id: ...
-spring.pulsar.client.authentication.auto-prefetch-enabled: ...
-spring.pulsar.client.authentication.athenz-conf-path: ...
-spring.pulsar.client.authentication.principal-header: ...
-spring.pulsar.client.authentication.role-header: ...
-spring.pulsar.client.authentication.zts-url: ...
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationAthenz
+      authentication:
+        tenant-domain: ...
+        tenant-service: ...
+        provider-domain: ...
+        private-key: ...
+        key-id: ...
+      enable-tls: true
+      tls-trust-certs-file: /path/to/cacert.pem
 ----
 ====
 
 [[Basic]]
-== Basic
+.[.underline]#Click ##here## for **Basic**#
+[%collapsible]
 ====
 [source, yaml]
 ----
-spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationBasic
-spring.pulsar.client.authentication.user-id: ...
-spring.pulsar.client.authentication.password: ...
-----
-====
-
-[[KeyStoreTls]]
-== KeyStoreTls
-====
-[source, yaml]
-----
-spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationKeyStoreTls
-spring.pulsar.client.authentication.key-store-type: ...
-spring.pulsar.client.authentication.key-store-path: ...
-spring.pulsar.client.authentication.key-store-password: ...
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationBasic
+      authentication:
+        user-id: ...
+        password: ...
 ----
 ====
 
 [[OAuth2]]
-== OAuth2
+.[.underline]#Click ##here## for **OAuth2**#
+[%collapsible]
 ====
 [source, yaml]
 ----
-spring.pulsar.client.auth-plugin-class-name: ...
-spring.pulsar.client.authentication.issuer-url: ...
-spring.pulsar.client.authentication.private-key: ...
-spring.pulsar.client.authentication.audience: ...
-spring.pulsar.client.authentication.scope: ...
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationFactoryOAuth2
+      authentication:
+        issuer-url: ...
+        private-key: ...
+        audience: ...
+        scope: ...
 ----
 ====
 
 [[Sasl]]
-== Sasl
+.[.underline]#Click ##here## for **Sasl**#
+[%collapsible]
 ====
 [source, yaml]
 ----
-spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationSasl
-spring.pulsar.client.authentication.sasl-jaas-client-section-name: ...
-spring.pulsar.client.authentication.server-type: ...
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationSasl
+      authentication:
+        sasl-jaas-client-section-name: ...
+        server-type: ...
 ----
 ====
 
 [[Tls]]
-== Tls
+.[.underline]#Click ##here## for **Tls**#
+[%collapsible]
 ====
 [source, yaml]
 ----
-spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationTls
-spring.pulsar.client.authentication.tls-cert-file: ...
-spring.pulsar.client.authentication.tls-key-file: ...
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationTls
+      authentication:
+        tls-cert-file: /path/to/my-role.cert.pem
+        tls-key-file: /path/to/my-role.key-pk8.pem
+      enable-tls: true
+      tls-trust-certs-file: /path/to/cacert.pem
 ----
 ====
 
 [[Token]]
-== Token
+.[.underline]#Click ##here## for **Token**#
+[%collapsible]
 ====
 [source, yaml]
 ----
-spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationToken
-spring.pulsar.client.authentication.token: ...
+spring:
+  pulsar:
+    client:
+      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationToken
+      authentication:
+        token: some-token-goes-here
 ----
 ====
+
+
+NOTE: [.small]#More information on each of the schemes and their required properties can be found in the official link:https://pulsar.apache.org/docs/security-overview#authentication-providers[Pulsar security] documentation.#
