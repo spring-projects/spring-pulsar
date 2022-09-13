@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -61,10 +61,11 @@ import org.springframework.util.StringUtils;
  * @param <T> message type.
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
-	private volatile CompletableFuture<?> listenerConsumerFuture;
+	private volatile Future<?> listenerConsumerFuture;
 
 	private volatile Listener listenerConsumer;
 
@@ -97,7 +98,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		this.listenerConsumer = new Listener(messageListener);
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
-		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
+		this.listenerConsumerFuture = consumerExecutor.submit(this.listenerConsumer);
 
 		try {
 			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(),
