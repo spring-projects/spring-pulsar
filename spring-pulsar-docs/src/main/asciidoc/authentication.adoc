@@ -1,4 +1,4 @@
-[appendix.]
+[appendix]
 [[appendix.authentication]]
 = Authentication
 
