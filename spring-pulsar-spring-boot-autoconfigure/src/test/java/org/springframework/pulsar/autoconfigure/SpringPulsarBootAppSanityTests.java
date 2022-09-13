@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.autoconfigure;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,8 +27,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.pulsar.autoconfigure.SpringPulsarBootAppSanityTests.SpringPulsarBootTestApp;
 import org.springframework.pulsar.core.PulsarTemplate;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Sanity tests to ensure that {@code Spring Pulsar} can be auto-configured into a Spring
