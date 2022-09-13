@@ -103,7 +103,7 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		if (properties.containsKey("ackTimeoutRedeliveryBackoff")) {
 			final RedeliveryBackoff ackTimeoutRedeliveryBackoff = (RedeliveryBackoff) properties
 					.get("ackTimeoutRedeliveryBackoff");
-			consumerBuilder.negativeAckRedeliveryBackoff(ackTimeoutRedeliveryBackoff);
+			consumerBuilder.ackTimeoutRedeliveryBackoff(ackTimeoutRedeliveryBackoff);
 		}
 
 		consumerBuilder.batchReceivePolicy(batchReceivePolicy);

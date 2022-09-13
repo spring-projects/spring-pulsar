@@ -290,7 +290,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		void pulsarListenerWithAckTimeoutRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
 				throws Exception {
 			pulsarTemplate.send("withAckTimeoutRedeliveryBackoff-test-topic", "hello john doe");
-			assertThat(ackTimeoutRedeliveryBackoffLatch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(ackTimeoutRedeliveryBackoffLatch.await(15, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@EnablePulsar
@@ -300,10 +300,11 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			@PulsarListener(id = "withAckTimeoutRedeliveryBackoff",
 					subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
 					topics = "withAckTimeoutRedeliveryBackoff-test-topic",
-					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff")
+					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff", subscriptionType = "Shared",
+					properties = { "ackTimeoutMillis=1" })
 			void listen(String msg) {
 				ackTimeoutRedeliveryBackoffLatch.countDown();
-				throw new RuntimeException("fail " + msg);
+				throw new RuntimeException();
 			}
 
 			@Bean
