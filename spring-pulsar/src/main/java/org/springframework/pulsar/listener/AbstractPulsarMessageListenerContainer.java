@@ -63,6 +63,8 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 
 	protected RedeliveryBackoff negativeAckRedeliveryBackoff;
 
+	protected RedeliveryBackoff ackTimeoutRedeliveryBackoff;
+
 	protected DeadLetterPolicy deadLetterPolicy;
 
 	protected PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
@@ -187,8 +189,17 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 		this.negativeAckRedeliveryBackoff = redeliveryBackoff;
 	}
 
+	@Override
+	public void setAckTimeoutRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff) {
+		this.ackTimeoutRedeliveryBackoff = redeliveryBackoff;
+	}
+
 	public RedeliveryBackoff getNegativeAckRedeliveryBackoff() {
 		return this.negativeAckRedeliveryBackoff;
+	}
+
+	public RedeliveryBackoff getAckTimeoutkRedeliveryBackoff() {
+		return this.ackTimeoutRedeliveryBackoff;
 	}
 
 	@Override

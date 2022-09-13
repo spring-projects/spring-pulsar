@@ -110,6 +110,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 			container.getContainerProperties().setConsumerTaskExecutor(exec);
 		}
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
+		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
 		container.setPulsarConsumerErrorHandler(this.pulsarConsumerErrorHandler);
 	}

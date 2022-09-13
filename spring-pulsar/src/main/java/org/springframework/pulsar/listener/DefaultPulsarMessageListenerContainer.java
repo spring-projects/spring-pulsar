@@ -246,6 +246,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			if (negativeAckRedeliveryBackoff != null) {
 				currentProperties.put("negativeAckRedeliveryBackoff", negativeAckRedeliveryBackoff);
 			}
+			final RedeliveryBackoff ackTimeoutRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.ackTimeoutRedeliveryBackoff;
+			if (ackTimeoutRedeliveryBackoff != null) {
+				currentProperties.put("ackTimeoutRedeliveryBackoff", ackTimeoutRedeliveryBackoff);
+			}
 			final DeadLetterPolicy deadLetterPolicy = DefaultPulsarMessageListenerContainer.this.deadLetterPolicy;
 			if (deadLetterPolicy != null) {
 				currentProperties.put("deadLetterPolicy", deadLetterPolicy);

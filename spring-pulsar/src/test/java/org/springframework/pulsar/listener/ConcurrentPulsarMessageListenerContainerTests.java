@@ -76,6 +76,20 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	}
 
 	@Test
+	void ackTimeoutRedeliveryBackoffAppliedOnChildContainer() throws Exception {
+		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Exclusive);
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
+				.maxDelayMs(5 * 1000).build();
+		concurrentContainer.setAckTimeoutRedeliveryBackoff(redeliveryBackoff);
+
+		concurrentContainer.start();
+
+		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		assertThat(childContainer.getAckTimeoutkRedeliveryBackoff()).isEqualTo(redeliveryBackoff);
+	}
+
+	@Test
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	void pulsarConsumerErrorHandlerAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);

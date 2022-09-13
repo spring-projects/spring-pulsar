@@ -174,6 +174,14 @@ public @interface PulsarListener {
 
 	/**
 	 * The bean name or a 'SpEL' expression that resolves to a
+	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
+	 * control the redelivery backoff of messages after an acknowledgment timeout.
+	 * @return the bean name or empty string to not set the backoff.
+	 */
+	String ackTimeoutRedeliveryBackoff() default "";
+
+	/**
+	 * The bean name or a 'SpEL' expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
 	 * configure a dead letter policy for message redelivery.
 	 * @return the bean name or empty string to not set any dead letter policy.
