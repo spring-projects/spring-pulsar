@@ -365,6 +365,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		endpoint.setBeanFactory(this.beanFactory);
 
 		resolveNegativeAckRedeliveryBackoff(endpoint, pulsarListener);
+		resolveAckTimeoutRedeliveryBackoff(endpoint, pulsarListener);
 		resolveDeadLetterPolicy(endpoint, pulsarListener);
 		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
 	}
@@ -398,6 +399,22 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 			if (StringUtils.hasText(negativeAckRedeliveryBackoffBeanName)) {
 				endpoint.setNegativeAckRedeliveryBackoff(
 						this.beanFactory.getBean(negativeAckRedeliveryBackoffBeanName, RedeliveryBackoff.class));
+			}
+		}
+	}
+
+	private void resolveAckTimeoutRedeliveryBackoff(MethodPulsarListenerEndpoint<?> endpoint,
+			PulsarListener pulsarListener) {
+		Object ackTimeoutRedeliveryBackoff = resolveExpression(pulsarListener.ackTimeoutRedeliveryBackoff());
+		if (ackTimeoutRedeliveryBackoff instanceof RedeliveryBackoff) {
+			endpoint.setAckTimeoutRedeliveryBackoff((RedeliveryBackoff) ackTimeoutRedeliveryBackoff);
+		}
+		else {
+			String ackTimeoutRedeliveryBackoffBeanName = resolveExpressionAsString(
+					pulsarListener.ackTimeoutRedeliveryBackoff(), "ackTimeoutRedeliveryBackoff");
+			if (StringUtils.hasText(ackTimeoutRedeliveryBackoffBeanName)) {
+				endpoint.setAckTimeoutRedeliveryBackoff(
+						this.beanFactory.getBean(ackTimeoutRedeliveryBackoffBeanName, RedeliveryBackoff.class));
 			}
 		}
 	}

@@ -281,6 +281,43 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 	}
 
 	@Nested
+	@ContextConfiguration(classes = AckTimeoutkRedeliveryBackoffTest.AckTimeoutRedeliveryConfig.class)
+	class AckTimeoutkRedeliveryBackoffTest {
+
+		static CountDownLatch ackTimeoutRedeliveryBackoffLatch = new CountDownLatch(5);
+
+		@Test
+		void pulsarListenerWithAckTimeoutRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
+				throws Exception {
+			pulsarTemplate.send("withAckTimeoutRedeliveryBackoff-test-topic", "hello john doe");
+			assertThat(ackTimeoutRedeliveryBackoffLatch.await(15, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class AckTimeoutRedeliveryConfig {
+
+			@PulsarListener(id = "withAckTimeoutRedeliveryBackoff",
+					subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
+					topics = "withAckTimeoutRedeliveryBackoff-test-topic",
+					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff", subscriptionType = "Shared",
+					properties = { "ackTimeoutMillis=1" })
+			void listen(String msg) {
+				ackTimeoutRedeliveryBackoffLatch.countDown();
+				throw new RuntimeException();
+			}
+
+			@Bean
+			public RedeliveryBackoff ackTimeoutRedeliveryBackoff() {
+				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(5 * 1000).multiplier(2)
+						.build();
+			}
+
+		}
+
+	}
+
+	@Nested
 	@ContextConfiguration(classes = PulsarConsumerErrorHandlerTest.PulsarConsumerErrorHandlerConfig.class)
 	class PulsarConsumerErrorHandlerTest {
 

@@ -82,6 +82,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	private RedeliveryBackoff negativeAckRedeliveryBackoff;
 
+	private RedeliveryBackoff ackTimeoutRedeliveryBackoff;
+
 	private DeadLetterPolicy deadLetterPolicy;
 
 	@SuppressWarnings("rawtypes")
@@ -192,6 +194,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		pulsarContainerProperties.setSchemaType(type);
 
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
+		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
 		container.setPulsarConsumerErrorHandler(this.pulsarConsumerErrorHandler);
 
@@ -279,6 +282,10 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	@SuppressWarnings("rawtypes")
 	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
 		this.pulsarConsumerErrorHandler = pulsarConsumerErrorHandler;
+	}
+
+	public void setAckTimeoutRedeliveryBackoff(RedeliveryBackoff ackTimeoutRedeliveryBackoff) {
+		this.ackTimeoutRedeliveryBackoff = ackTimeoutRedeliveryBackoff;
 	}
 
 }

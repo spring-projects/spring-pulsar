@@ -47,6 +47,8 @@ public interface PulsarMessageListenerContainer extends SmartLifecycle, Disposab
 
 	void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff);
 
+	void setAckTimeoutRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff);
+
 	void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy);
 
 	@SuppressWarnings("rawtypes")

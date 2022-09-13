@@ -100,6 +100,12 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			consumerBuilder.negativeAckRedeliveryBackoff(negativeAckRedeliveryBackoff);
 		}
 
+		if (properties.containsKey("ackTimeoutRedeliveryBackoff")) {
+			final RedeliveryBackoff ackTimeoutRedeliveryBackoff = (RedeliveryBackoff) properties
+					.get("ackTimeoutRedeliveryBackoff");
+			consumerBuilder.ackTimeoutRedeliveryBackoff(ackTimeoutRedeliveryBackoff);
+		}
+
 		consumerBuilder.batchReceivePolicy(batchReceivePolicy);
 		Consumer<T> consumer = consumerBuilder.subscribe();
 		this.consumers.add(consumer);
