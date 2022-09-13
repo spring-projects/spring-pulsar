@@ -1,0 +1,91 @@
+[appendix.]
+[[appendix.authentication]]
+= Authentication
+
+[[Athenz]]
+== Athenz
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationAthenz
+spring.pulsar.client.authentication.tenant-domain: ...
+spring.pulsar.client.authentication.tenant-service: ...
+spring.pulsar.client.authentication.provider-domain: ...
+spring.pulsar.client.authentication.private-key: ...
+spring.pulsar.client.authentication.private-key-path: ...
+spring.pulsar.client.authentication.key-id: ...
+spring.pulsar.client.authentication.auto-prefetch-enabled: ...
+spring.pulsar.client.authentication.athenz-conf-path: ...
+spring.pulsar.client.authentication.principal-header: ...
+spring.pulsar.client.authentication.role-header: ...
+spring.pulsar.client.authentication.zts-url: ...
+----
+====
+
+[[Basic]]
+== Basic
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationBasic
+spring.pulsar.client.authentication.user-id: ...
+spring.pulsar.client.authentication.password: ...
+----
+====
+
+[[KeyStoreTls]]
+== KeyStoreTls
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationKeyStoreTls
+spring.pulsar.client.authentication.key-store-type: ...
+spring.pulsar.client.authentication.key-store-path: ...
+spring.pulsar.client.authentication.key-store-password: ...
+----
+====
+
+[[OAuth2]]
+== OAuth2
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: ...
+spring.pulsar.client.authentication.issuer-url: ...
+spring.pulsar.client.authentication.private-key: ...
+spring.pulsar.client.authentication.audience: ...
+spring.pulsar.client.authentication.scope: ...
+----
+====
+
+[[Sasl]]
+== Sasl
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationSasl
+spring.pulsar.client.authentication.sasl-jaas-client-section-name: ...
+spring.pulsar.client.authentication.server-type: ...
+----
+====
+
+[[Tls]]
+== Tls
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationTls
+spring.pulsar.client.authentication.tls-cert-file: ...
+spring.pulsar.client.authentication.tls-key-file: ...
+----
+====
+
+[[Token]]
+== Token
+====
+[source, yaml]
+----
+spring.pulsar.client.auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationToken
+spring.pulsar.client.authentication.token: ...
+----
+====
