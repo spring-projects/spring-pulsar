@@ -35,7 +35,6 @@ import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
-import org.apache.pulsar.common.util.ObjectMapperFactory;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
@@ -97,18 +96,6 @@ public class PulsarProperties {
 
 	public Map<String, Object> buildAdminProperties() {
 		return new HashMap<>(this.admin.buildProperties());
-	}
-
-	protected static String maybeConvertToEncodedParamString(Map<String, String> params) {
-		if (params == null) {
-			return null;
-		}
-		try {
-			return ObjectMapperFactory.create().writeValueAsString(params);
-		}
-		catch (Exception e) {
-			throw new RuntimeException("Could not convert parameters to encoded string", e);
-		}
 	}
 
 	public static class Consumer {
@@ -1274,7 +1261,8 @@ public class PulsarProperties {
 			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(maybeConvertToEncodedParamString(this.getAuthParamsMap())).to(properties.in("authParams"));
+			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthParamsMap()))
+					.to(properties.in("authParams"));
 			map.from(this::getOperationTimeoutMs).to(properties.in("operationTimeoutMs"));
 			map.from(this::getLookupTimeoutMs).to(properties.in("lookupTimeoutMs"));
 			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
@@ -1543,7 +1531,8 @@ public class PulsarProperties {
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(maybeConvertToEncodedParamString(this.getAuthParamMap())).to(properties.in("authParams"));
+			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthParamMap()))
+					.to(properties.in("authParams"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
 			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
