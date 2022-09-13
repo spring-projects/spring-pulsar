@@ -30,7 +30,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Alexander Preuß
  */
-public final class AuthParameterUtils {
+final class AuthParameterUtils {
 
 	private static final Pattern KEBAB_CASE_PATTERN = Pattern.compile("-(.)");
 
@@ -52,10 +52,12 @@ public final class AuthParameterUtils {
 				.collect(Collectors.toMap(entry -> convertKebabCaseToCamelCase(entry.getKey()), Map.Entry::getValue));
 	}
 
-	protected static String maybeConvertToEncodedParamString(Map<String, String> params) {
+	static String maybeConvertToEncodedParamString(Map<String, String> params) {
 		if (CollectionUtils.isEmpty(params)) {
 			return null;
 		}
+		// env vars are bound like this ISSUER_ID -> issuerid, have to be camel-cased to
+		// work
 		params = convertWellKnownLowerCaseKeysToCamelCase(params);
 		params = convertKebabCaseKeysToCamelCase(params);
 		params = new TreeMap<>(params); // sort keys for testing and readability

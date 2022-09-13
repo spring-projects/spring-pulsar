@@ -55,7 +55,10 @@ public class AuthParameterUtilsTests {
 				arguments("kebabCase",
 						Map.of("issuer-url", "https://auth.server.cloud", "private-key", "file://Users/xyz/key.json",
 								"audience", "urn:sn:pulsar:abc:xyz")),
-				arguments("lowerCase", Map.of("issuerurl", "https://auth.server.cloud", "privatekey",
+				arguments("lowerCase",
+						Map.of("issuerurl", "https://auth.server.cloud", "privatekey", "file://Users/xyz/key.json",
+								"audience", "urn:sn:pulsar:abc:xyz")),
+				arguments("mixed", Map.of("issuerurl", "https://auth.server.cloud", "private-key",
 						"file://Users/xyz/key.json", "audience", "urn:sn:pulsar:abc:xyz")));
 	}
 

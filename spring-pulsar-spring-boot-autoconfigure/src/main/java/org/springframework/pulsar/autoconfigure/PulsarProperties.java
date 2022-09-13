@@ -39,6 +39,8 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Configuration properties for Spring for Apache Pulsar.
@@ -1253,6 +1255,11 @@ public class PulsarProperties {
 		}
 
 		public Map<String, Object> buildProperties() {
+			if (!StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
+				throw new IllegalArgumentException(
+						"Cannot set both spring.pulsar.client.authParams and spring.pulsar.client.authentication.*");
+			}
+
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
@@ -1524,6 +1531,10 @@ public class PulsarProperties {
 		}
 
 		public Map<String, Object> buildProperties() {
+			if (!StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
+				throw new IllegalArgumentException(
+						"Cannot set both spring.pulsar.admin.authParams and spring.pulsar.admin.authentication.*");
+			}
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
