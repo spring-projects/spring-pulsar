@@ -743,17 +743,17 @@ public class PulsarProperties {
 		private String listenerName;
 
 		/**
-		 * Class name of the clients' authentication plugin.
+		 * Fully qualified class name of the authentication plugin.
 		 */
 		private String authPluginClassName;
 
 		/**
-		 * Authentication parameter(s) of the client.
+		 * Authentication parameter(s) as a JSON encoded string.
 		 */
 		private String authParams;
 
 		/**
-		 * Authentication parameter map of the client.
+		 * Authentication parameter(s) as a map of parameter names to parameter values.
 		 */
 		private Map<String, String> authentication;
 
@@ -1349,17 +1349,17 @@ public class PulsarProperties {
 		private String serviceUrl;
 
 		/**
-		 * Class name of the clients' authentication plugin.
+		 * Fully qualified class name of the authentication plugin.
 		 */
 		private String authPluginClassName;
 
 		/**
-		 * Authentication parameter(s) of the client.
+		 * Authentication parameter(s) as a JSON encoded string.
 		 */
 		private String authParams;
 
 		/**
-		 * Authentication parameter map of the client.
+		 * Authentication parameter(s) as a map of parameter names to parameter values.
 		 */
 		private Map<String, String> authentication;
 
