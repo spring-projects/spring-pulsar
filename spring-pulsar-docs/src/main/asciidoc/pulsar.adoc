@@ -536,17 +536,17 @@ Here is an example.
 ====
 [source, java]
 ----
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
 public void listen1(String foo) {
     System.out.println("Message Received 1: " + foo);
 }
 
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
 public void listen2(String foo) {
     System.out.println("Message Received 2: " + foo);
 }
 
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = "failover")
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
 public void listen3(String foo) {
     System.out.println("Message Received 3: " + foo);
 }
@@ -563,12 +563,12 @@ Here is an example.
 ====
 [source, java]
 ----
-@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "shared")
+@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Shared)
 public void listen1(String foo) {
     System.out.println("Message Received 1: " + foo);
 }
 
-@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = "shared")
+@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Shared)
 public void listen2(String foo) {
     System.out.println("Message Received 2: " + foo);
 }

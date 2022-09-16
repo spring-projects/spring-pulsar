@@ -34,6 +34,7 @@ import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
@@ -224,7 +225,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			}
 
 			@PulsarListener(id = "bar", topics = "concurrency-on-pl", subscriptionName = "subscription-2",
-					subscriptionType = "failover", concurrency = "3")
+					subscriptionType = SubscriptionType.Failover, concurrency = "3")
 			void listen2(String message) {
 				latch1.countDown();
 			}
@@ -264,7 +265,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 
 			@PulsarListener(id = "withNegRedeliveryBackoff", subscriptionName = "withNegRedeliveryBackoffSubscription",
 					topics = "withNegRedeliveryBackoff-test-topic", negativeAckRedeliveryBackoff = "redeliveryBackoff",
-					subscriptionType = "Shared")
+					subscriptionType = SubscriptionType.Shared)
 			void listen(String msg) {
 				nackRedeliveryBackoffLatch.countDown();
 				throw new RuntimeException("fail " + msg);
@@ -300,8 +301,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 			@PulsarListener(id = "withAckTimeoutRedeliveryBackoff",
 					subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
 					topics = "withAckTimeoutRedeliveryBackoff-test-topic",
-					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff", subscriptionType = "Shared",
-					properties = { "ackTimeoutMillis=1" })
+					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff",
+					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
 			void listen(String msg) {
 				ackTimeoutRedeliveryBackoffLatch.countDown();
 				throw new RuntimeException();
@@ -344,8 +345,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 				throw new RuntimeException("fail " + msg);
 			}
 
-			@PulsarListener(id = "pceh-dltListener", subscriptionType = "dltListenerSubscription",
-					topics = "pceht-topic-pceht-subscription-DLT")
+			@PulsarListener(id = "pceh-dltListener", topics = "pceht-topic-pceht-subscription-DLT")
 			void listenDlq(String msg) {
 				dltLatch.countDown();
 			}
@@ -381,14 +381,14 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 		static class DeadLetterPolicyConfig {
 
 			@PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
-					topics = "dlpt-topic-1", deadLetterPolicy = "deadLetterPolicy", subscriptionType = "Shared",
-					properties = { "ackTimeoutMillis=1" })
+					topics = "dlpt-topic-1", deadLetterPolicy = "deadLetterPolicy",
+					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
 			void listen(String msg) {
 				latch.countDown();
 				throw new RuntimeException("fail " + msg);
 			}
 
-			@PulsarListener(id = "dlqListener", subscriptionType = "dlqListenerSubscription", topics = "dlpt-dlq-topic")
+			@PulsarListener(id = "dlqListener", topics = "dlpt-dlq-topic")
 			void listenDlq(String msg) {
 				dlqLatch.countDown();
 			}

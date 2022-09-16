@@ -22,6 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -76,7 +77,7 @@ public @interface PulsarListener {
 	 * Pulsar subscription type for this listener.
 	 * @return the {@code subscriptionType} for this listener
 	 */
-	String subscriptionType() default "";
+	SubscriptionType subscriptionType() default SubscriptionType.Exclusive;
 
 	SchemaType schemaType() default SchemaType.NONE;
 

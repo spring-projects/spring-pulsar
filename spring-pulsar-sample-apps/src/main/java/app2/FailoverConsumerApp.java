@@ -20,6 +20,7 @@ import java.io.Serial;
 
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageRouter;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.TopicMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,19 +58,19 @@ public class FailoverConsumerApp {
 	}
 
 	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
-			subscriptionType = "failover")
+			subscriptionType = SubscriptionType.Failover)
 	void listen1(String foo) {
 		this.logger.info("failover-listen1 : " + foo);
 	}
 
 	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
-			subscriptionType = "failover")
+			subscriptionType = SubscriptionType.Failover)
 	void listen2(String foo) {
 		this.logger.info("failover-listen2 : " + foo);
 	}
 
 	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
-			subscriptionType = "failover")
+			subscriptionType = SubscriptionType.Failover)
 	void listen(String foo) {
 		this.logger.info("failover-listen3 : " + foo);
 	}

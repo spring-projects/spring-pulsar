@@ -36,12 +36,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
-import org.apache.pulsar.client.api.SubscriptionType;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -347,7 +345,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		endpoint.setId(getEndpointId(pulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
-		endpoint.setSubscriptionType(getEndpointSubscriptionType(pulsarListener));
+		endpoint.setSubscriptionType(pulsarListener.subscriptionType());
 		endpoint.setSchemaType(pulsarListener.schemaType());
 		endpoint.setAckMode(pulsarListener.ackMode());
 
@@ -511,32 +509,14 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		if (StringUtils.hasText(pulsarListener.subscriptionName())) {
 			return resolveExpressionAsString(pulsarListener.subscriptionName(), "subscriptionName");
 		}
-		else {
-			return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
-		}
-	}
-
-	private SubscriptionType getEndpointSubscriptionType(PulsarListener pulsarListener) {
-		final String subscriptionType = pulsarListener.subscriptionType().toLowerCase();
-		if (StringUtils.hasText(subscriptionType)) {
-			return switch (subscriptionType) {
-				case "exclusive" -> SubscriptionType.Exclusive;
-				case "failover" -> SubscriptionType.Failover;
-				case "shared" -> SubscriptionType.Shared;
-				case "key_shared" -> SubscriptionType.Key_Shared;
-				default -> SubscriptionType.Exclusive;
-			};
-		}
-		return null;
+		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
 	private String getEndpointId(PulsarListener pulsarListener) {
 		if (StringUtils.hasText(pulsarListener.id())) {
 			return resolveExpressionAsString(pulsarListener.id(), "id");
 		}
-		else {
-			return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
-		}
+		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
 	private String getTopicPattern(PulsarListener pulsarListener) {
@@ -642,8 +622,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		}
 		PulsarListeners anns = AnnotationUtils.findAnnotation(clazz, PulsarListeners.class);
 		if (anns != null) {
-			listeners
-					.addAll(Arrays.stream(anns.value()).map(anno -> enhance(clazz, anno)).collect(Collectors.toList()));
+			listeners.addAll(Arrays.stream(anns.value()).map(anno -> enhance(clazz, anno)).toList());
 		}
 		return listeners;
 	}
@@ -657,8 +636,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		}
 		PulsarListeners anns = AnnotationUtils.findAnnotation(method, PulsarListeners.class);
 		if (anns != null) {
-			listeners.addAll(
-					Arrays.stream(anns.value()).map(anno -> enhance(method, anno)).collect(Collectors.toList()));
+			listeners.addAll(Arrays.stream(anns.value()).map(anno -> enhance(method, anno)).toList());
 		}
 		return listeners;
 	}
@@ -667,11 +645,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		if (this.enhancer == null) {
 			return ann;
 		}
-		else {
-			return AnnotationUtils.synthesizeAnnotation(
-					this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarListener.class,
-					null);
-		}
+		return AnnotationUtils.synthesizeAnnotation(
+				this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarListener.class, null);
 	}
 
 	private void addFormatters(FormatterRegistry registry) {
@@ -817,9 +792,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 						|| target.equals(byte.class) || target.equals(Long.class) || target.equals(Integer.class)
 						|| target.equals(Short.class) || target.equals(Byte.class);
 			}
-			else {
-				return false;
-			}
+			return false;
 		}
 
 	}
