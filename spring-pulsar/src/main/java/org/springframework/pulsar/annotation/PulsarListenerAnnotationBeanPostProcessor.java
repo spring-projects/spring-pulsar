@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
