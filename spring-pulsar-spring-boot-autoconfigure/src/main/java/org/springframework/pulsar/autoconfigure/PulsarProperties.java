@@ -1324,19 +1324,20 @@ public class PulsarProperties {
 		private SchemaType schemaType;
 
 		/**
-		 * Max number of messages for batch.
+		 * Max number of messages in a single batch request.
 		 */
 		private int maxNumMessages = -1;
 
 		/**
-		 * Max number of bytes for batch.
+		 * Max number of bytes in a single batch request.
 		 */
 		private int maxNumBytes = 10 * 1024 * 1024;
 
 		/**
-		 * Timeout for batch.
+		 * Number of milliseconds to wait for enough message to fill a batch request
+		 * before timing out.
 		 */
-		private int batchTimeout = 100;
+		private int batchTimeoutMillis = 100;
 
 		public AckMode getAckMode() {
 			return this.ackMode;
@@ -1370,12 +1371,12 @@ public class PulsarProperties {
 			this.maxNumBytes = maxNumBytes;
 		}
 
-		public int getBatchTimeout() {
-			return this.batchTimeout;
+		public int getBatchTimeoutMillis() {
+			return this.batchTimeoutMillis;
 		}
 
-		public void setBatchTimeout(int batchTimeout) {
-			this.batchTimeout = batchTimeout;
+		public void setBatchTimeoutMillis(int batchTimeoutMillis) {
+			this.batchTimeoutMillis = batchTimeoutMillis;
 		}
 
 	}

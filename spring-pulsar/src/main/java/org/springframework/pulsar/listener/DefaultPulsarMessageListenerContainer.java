@@ -361,9 +361,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 										this.nackableMessages.add(message.getMessageId());
 									}
 									else {
-										throw new IllegalStateException(
-												"Exception occurred and not negatively acknowledged or handled properly",
-												e);
+										throw new IllegalStateException(String.format(
+												"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks",
+												message.getMessageId()), e);
 									}
 								}
 							}

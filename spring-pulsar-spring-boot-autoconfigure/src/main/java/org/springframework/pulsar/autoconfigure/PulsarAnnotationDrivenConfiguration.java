@@ -61,7 +61,7 @@ public class PulsarAnnotationDrivenConfiguration {
 
 		map.from(properties::getSchemaType).to(containerProperties::setSchemaType);
 		map.from(properties::getAckMode).to(containerProperties::setAckMode);
-		map.from(properties::getBatchTimeout).to(containerProperties::setBatchTimeout);
+		map.from(properties::getBatchTimeoutMillis).to(containerProperties::setBatchTimeout);
 		map.from(properties::getMaxNumBytes).to(containerProperties::setMaxNumBytes);
 		map.from(properties::getMaxNumMessages).to(containerProperties::setMaxNumMessages);
 

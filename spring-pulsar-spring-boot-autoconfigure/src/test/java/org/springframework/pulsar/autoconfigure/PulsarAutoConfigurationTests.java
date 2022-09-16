@@ -204,8 +204,8 @@ class PulsarAutoConfigurationTests {
 	@Test
 	void consumerBatchPropertiesAreHonored() {
 		contextRunner
-				.withPropertyValues("spring.pulsar.listener.maxNumMessages=10",
-						"spring.pulsar.listener.maxNumBytes=101", "spring.pulsar.listener.batchTimeout=50")
+				.withPropertyValues("spring.pulsar.listener.max-num-messages=10",
+						"spring.pulsar.listener.max-num-bytes=101", "spring.pulsar.listener.batch-timeout-millis=50")
 				.run((context -> assertThat(context).hasNotFailed()
 						.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("containerProperties")
 						.hasFieldOrPropertyWithValue("maxNumMessages", 10)
