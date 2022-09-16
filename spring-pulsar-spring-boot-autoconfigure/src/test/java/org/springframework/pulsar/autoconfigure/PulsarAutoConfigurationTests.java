@@ -201,6 +201,18 @@ class PulsarAutoConfigurationTests {
 								InterceptorTestConfiguration.interceptorFoo)));
 	}
 
+	@Test
+	void consumerBatchPropertiesAreHonored() {
+		contextRunner
+				.withPropertyValues("spring.pulsar.listener.maxNumMessages=10",
+						"spring.pulsar.listener.maxNumBytes=101", "spring.pulsar.listener.batchTimeout=50")
+				.run((context -> assertThat(context).hasNotFailed()
+						.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("containerProperties")
+						.hasFieldOrPropertyWithValue("maxNumMessages", 10)
+						.hasFieldOrPropertyWithValue("maxNumBytes", 101)
+						.hasFieldOrPropertyWithValue("batchTimeout", 50)));
+	}
+
 	@Nested
 	class ClientAutoConfigurationTests {
 

@@ -360,6 +360,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 									else if (this.containerProperties.getAckMode() == AckMode.BATCH) {
 										this.nackableMessages.add(message.getMessageId());
 									}
+									else {
+										throw new IllegalStateException(
+												"Exception occurred and not negatively acknowledged or handled properly",
+												e);
+									}
 								}
 							}
 						}
@@ -541,12 +546,29 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		@Override
 		public void acknowledge(MessageId messageId) {
-			throw new UnsupportedOperationException();
+			try {
+				this.consumer.acknowledge(messageId);
+			}
+			catch (PulsarClientException e) {
+				this.consumer.negativeAcknowledge(messageId);
+			}
 		}
 
 		@Override
 		public void acknowledge(List<MessageId> messageIds) {
-			throw new UnsupportedOperationException();
+			try {
+				this.consumer.acknowledge(messageIds);
+			}
+			catch (PulsarClientException e) {
+				for (MessageId messageId : messageIds) {
+					try {
+						this.consumer.acknowledge(messageId);
+					}
+					catch (PulsarClientException ex) {
+						this.consumer.negativeAcknowledge(messageId);
+					}
+				}
+			}
 		}
 
 		@Override
@@ -556,7 +578,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		@Override
 		public void nack(MessageId messageId) {
-			throw new UnsupportedOperationException();
+			this.consumer.negativeAcknowledge(messageId);
 		}
 
 	}
