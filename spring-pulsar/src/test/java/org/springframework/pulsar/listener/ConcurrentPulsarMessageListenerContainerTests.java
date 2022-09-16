@@ -38,6 +38,8 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.backoff.BackOff;
 
@@ -46,6 +48,31 @@ import org.springframework.util.backoff.BackOff;
  * @author Alexander Preuß
  */
 public class ConcurrentPulsarMessageListenerContainerTests {
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void createConcurrentContainerFromFactoryAndVerifyBatchReceivePolicy() {
+		ConcurrentPulsarListenerContainerFactory<String> factory = new ConcurrentPulsarListenerContainerFactory<>();
+		final PulsarConsumerFactory<Object> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
+		factory.setPulsarConsumerFactory(pulsarConsumerFactory);
+
+		PulsarContainerProperties containerProperties = factory.getContainerProperties();
+		containerProperties.setBatchTimeout(60_000);
+		containerProperties.setMaxNumMessages(120);
+		containerProperties.setMaxNumBytes(32000);
+
+		factory.setConcurrency(1);
+
+		PulsarListenerEndpoint pulsarListenerEndpoint = mock(PulsarListenerEndpoint.class);
+		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
+
+		final ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = factory
+				.createListenerContainer(pulsarListenerEndpoint);
+		final PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();
+		assertThat(pulsarContainerProperties.getBatchTimeout()).isEqualTo(60_000);
+		assertThat(pulsarContainerProperties.getMaxNumMessages()).isEqualTo(120);
+		assertThat(pulsarContainerProperties.getMaxNumBytes()).isEqualTo(32_000);
+	}
 
 	@Test
 	void deadLetterPolicyAppliedOnChildContainer() throws Exception {

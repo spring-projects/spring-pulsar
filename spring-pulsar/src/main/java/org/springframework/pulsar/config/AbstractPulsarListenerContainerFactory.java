@@ -16,10 +16,14 @@
 
 package org.springframework.pulsar.config;
 
+import java.util.Arrays;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Schema;
 
+import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -171,11 +175,27 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 			instance.setAutoStartup(this.autoStartup);
 		}
 
+		copyProperties(this.containerProperties, instance.getContainerProperties(),
+				Arrays.asList("maxNumMessages", "maxNumBytes", "batchTimeout"));
+
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
 				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
 				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher)
 				.acceptIfNotNull(endpoint.getConsumerProperties(),
 						instance.getContainerProperties()::setPulsarConsumerProperties);
+	}
+
+	/**
+	 * Copy a list of properties from the source object to the target.
+	 * @param source Object source to copy from
+	 * @param target Object target to copy to
+	 * @param requestProperties list of properties to copy from source to target
+	 */
+	public static void copyProperties(Object source, Object target, Iterable<String> requestProperties) {
+		BeanWrapper wrappedSource = PropertyAccessorFactory.forBeanPropertyAccess(source);
+		BeanWrapper wrappedTarget = PropertyAccessorFactory.forBeanPropertyAccess(target);
+
+		requestProperties.forEach(p -> wrappedTarget.setPropertyValue(p, wrappedSource.getPropertyValue(p)));
 	}
 
 }
