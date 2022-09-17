@@ -47,9 +47,9 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+          releaseVersion="${{ inputs.releaseVersion }}"
           git checkout -b cbono-wip-$releaseVersion
           currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-          releaseVersion="${{ inputs.releaseVersion }}"
           echo "Updating version from $currentVersion to $releaseVersion"
           sed -i.orig "s/version=.*/version=$releaseVersion/" gradle.properties
           rm -rf gradle.properties.orig          
