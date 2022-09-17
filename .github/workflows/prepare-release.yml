@@ -48,7 +48,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           releaseVersion="${{ inputs.releaseVersion }}"
-          releaseBranch="release$releaseVersion"
+          releaseBranch="release/$releaseVersion"
           git checkout -b $releaseBranch
           currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           echo "Updating version from $currentVersion to $releaseVersion"
@@ -60,5 +60,5 @@ jobs:
             exit 1
           fi
           git commit -am "[Release $releaseVersion] Update version"
-          git push origin cbono-wip-$releaseVersion
+          git push origin $releaseBranch
 
