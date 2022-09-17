@@ -47,7 +47,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git checkout -b cbono-wip-release
+          git checkout -b cbono-wip-$releaseVersion
           currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           releaseVersion="${{ inputs.releaseVersion }}"
           echo "Updating version from $currentVersion to $releaseVersion"
@@ -57,6 +57,4 @@ jobs:
           updatedVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           # TODO put check that updatedVersion == nextVersion
           git commit -am "[Release $releaseVersion] Update version"
-          git tag v$releaseVersion
-          git push
-          git push origin $updatedVersion
+          git push origin cbono-wip-$releaseVersion
