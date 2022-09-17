@@ -1,0 +1,66 @@
+name: Prepare Release Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Version to release'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_version:
+    name: Initiate Release
+    if: github.repository == 'spring-projects-experimental/spring-pulsar'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - id: checkout-source
+        name: Checkout Source Code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - id: check-open-issues
+        name: Check for open issues
+        run: |
+          echo "::set-output name=is_open_issues::false"
+          echo "TODO actually check for open issues"
+      - id: validate-release-state
+        name: Validate release state
+        if: steps.check-open-issues.outputs.is_open_issues == 'true'
+        run: |
+          echo "There are open issues"
+          exit 1
+      - id: update-version-and-push
+        name: Update version and push
+        if: steps.check-open-issues.outputs.is_open_issues == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          releaseVersion="${{ inputs.releaseVersion }}"
+          releaseBranch="release/$releaseVersion"
+          git checkout -b $releaseBranch
+          currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "Updating version from $currentVersion to $releaseVersion"
+          sed -i.orig "s/version=$currentVersion/version=$releaseVersion/" gradle.properties
+          rm -rf gradle.properties.orig          
+          updatedVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          if [ "$updatedVersion" != "$releaseVersion" ]; then
+            echo "Version was updated to $updatedVersion but expected $releaseVersion"
+            exit 1
+          fi
+          git commit -am "[Release $releaseVersion] Update version"
+          git push origin $releaseBranch
+          gh pr create --title "[Release $releaseVersion] Update version" --body "Merge to initiate release."
