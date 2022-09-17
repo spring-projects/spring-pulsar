@@ -1,18 +1,12 @@
 name: Prepare Release Version
 
 on:
-  workflow_dispatch: # Manual trigger only.
+  workflow_dispatch: 
     inputs:
       releaseVersion:
         description: 'Version to release'
         required: true
         type: string
-
-#env:
-#  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-#  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-#  GRADLE_ENTERPRISE_SECRET_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
 
 permissions:
   contents: read
