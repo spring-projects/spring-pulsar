@@ -55,7 +55,7 @@ jobs:
           sed -i.orig "s/version=$currentVersion/version=$releaseVersion/" gradle.properties
           rm -rf gradle.properties.orig          
           updatedVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-          if [ "$updatedVersion" != "x$releaseVersion" ]; then
+          if [ "$updatedVersion" != "$releaseVersion" ]; then
             echo "Version was updated to $updatedVersion but expected $releaseVersion"
             exit 1
           fi
