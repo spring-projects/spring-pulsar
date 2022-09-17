@@ -223,7 +223,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
@@ -294,7 +294,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
@@ -363,7 +363,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
@@ -432,7 +432,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
@@ -500,7 +500,7 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);

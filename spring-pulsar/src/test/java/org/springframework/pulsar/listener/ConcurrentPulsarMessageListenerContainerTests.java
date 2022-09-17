@@ -57,7 +57,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		factory.setPulsarConsumerFactory(pulsarConsumerFactory);
 
 		PulsarContainerProperties containerProperties = factory.getContainerProperties();
-		containerProperties.setBatchTimeout(60_000);
+		containerProperties.setBatchTimeoutMillis(60_000);
 		containerProperties.setMaxNumMessages(120);
 		containerProperties.setMaxNumBytes(32000);
 
@@ -69,7 +69,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		final ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = factory
 				.createListenerContainer(pulsarListenerEndpoint);
 		final PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();
-		assertThat(pulsarContainerProperties.getBatchTimeout()).isEqualTo(60_000);
+		assertThat(pulsarContainerProperties.getBatchTimeoutMillis()).isEqualTo(60_000);
 		assertThat(pulsarContainerProperties.getMaxNumMessages()).isEqualTo(120);
 		assertThat(pulsarContainerProperties.getMaxNumBytes()).isEqualTo(32_000);
 	}

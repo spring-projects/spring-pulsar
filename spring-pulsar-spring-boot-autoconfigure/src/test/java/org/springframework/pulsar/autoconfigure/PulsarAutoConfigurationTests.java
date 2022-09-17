@@ -210,7 +210,7 @@ class PulsarAutoConfigurationTests {
 						.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("containerProperties")
 						.hasFieldOrPropertyWithValue("maxNumMessages", 10)
 						.hasFieldOrPropertyWithValue("maxNumBytes", 101)
-						.hasFieldOrPropertyWithValue("batchTimeout", 50)));
+						.hasFieldOrPropertyWithValue("batchTimeoutMillis", 50)));
 	}
 
 	@Nested

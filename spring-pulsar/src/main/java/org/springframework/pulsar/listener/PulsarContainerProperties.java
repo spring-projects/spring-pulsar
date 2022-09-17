@@ -58,7 +58,7 @@ public class PulsarContainerProperties {
 
 	private int maxNumBytes = 10 * 1024 * 1024;
 
-	private int batchTimeout = 100;
+	private int batchTimeoutMillis = 100;
 
 	private boolean batchListener;
 
@@ -116,12 +116,12 @@ public class PulsarContainerProperties {
 		this.maxNumBytes = maxNumBytes;
 	}
 
-	public int getBatchTimeout() {
-		return this.batchTimeout;
+	public int getBatchTimeoutMillis() {
+		return this.batchTimeoutMillis;
 	}
 
-	public void setBatchTimeout(int batchTimeout) {
-		this.batchTimeout = batchTimeout;
+	public void setBatchTimeoutMillis(int batchTimeoutMillis) {
+		this.batchTimeoutMillis = batchTimeoutMillis;
 	}
 
 	public boolean isBatchListener() {

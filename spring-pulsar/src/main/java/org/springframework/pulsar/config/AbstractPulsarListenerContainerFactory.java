@@ -16,14 +16,10 @@
 
 package org.springframework.pulsar.config;
 
-import java.util.Arrays;
-
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Schema;
 
-import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -136,35 +132,32 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	protected abstract C createContainerInstance(PulsarListenerEndpoint endpoint);
 
 	private void configureEndpoint(AbstractPulsarListenerEndpoint<C> aplEndpoint) {
-
 		if (aplEndpoint.getBatchListener() == null) {
 			JavaUtils.INSTANCE.acceptIfNotNull(this.batchListener, aplEndpoint::setBatchListener);
 		}
 	}
 
 	protected void initializeContainer(C instance, PulsarListenerEndpoint endpoint) {
-		PulsarContainerProperties properties = instance.getPulsarContainerProperties();
-		// BeanUtils.copyProperties(this.containerProperties, properties, "topics",
-		// "messageListener",
-		// "batchListener", "subscriptionName", "subscriptionType", "schema");
+		PulsarContainerProperties instanceProperties = instance.getPulsarContainerProperties();
 
-		if (properties.getSchemaType() == null) {
-			if (this.containerProperties.getSchemaType() != null) {
-				properties.setSchemaType(this.containerProperties.getSchemaType());
-			}
+		if (instanceProperties.getSchemaType() == null) {
+			JavaUtils.INSTANCE.acceptIfNotNull(this.containerProperties.getSchemaType(),
+					instanceProperties::setSchemaType);
 		}
-		if (properties.getSchema() == null) {
-			properties.setSchema(Schema.BYTES);
+
+		if (instanceProperties.getSchema() == null) {
+			instanceProperties.setSchema(Schema.BYTES);
 		}
-		if (properties.getSubscriptionType() == null) {
-			properties.setSubscriptionType(this.containerProperties.getSubscriptionType());
+
+		if (instanceProperties.getSubscriptionType() == null) {
+			instanceProperties.setSubscriptionType(this.containerProperties.getSubscriptionType());
 		}
 
 		if (endpoint.getAckMode() != AckMode.BATCH) {
-			properties.setAckMode(endpoint.getAckMode());
+			instanceProperties.setAckMode(endpoint.getAckMode());
 		}
 		else if (this.containerProperties.getAckMode() != AckMode.BATCH) {
-			properties.setAckMode(this.containerProperties.getAckMode());
+			instanceProperties.setAckMode(this.containerProperties.getAckMode());
 		}
 
 		Boolean autoStart = endpoint.getAutoStartup();
@@ -175,27 +168,15 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 			instance.setAutoStartup(this.autoStartup);
 		}
 
-		copyProperties(this.containerProperties, instance.getContainerProperties(),
-				Arrays.asList("maxNumMessages", "maxNumBytes", "batchTimeout"));
+		instanceProperties.setMaxNumMessages(this.containerProperties.getMaxNumMessages());
+		instanceProperties.setMaxNumBytes(this.containerProperties.getMaxNumBytes());
+		instanceProperties.setBatchTimeoutMillis(this.containerProperties.getBatchTimeoutMillis());
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
 				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
 				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher)
 				.acceptIfNotNull(endpoint.getConsumerProperties(),
 						instance.getContainerProperties()::setPulsarConsumerProperties);
-	}
-
-	/**
-	 * Copy a list of properties from the source object to the target.
-	 * @param source Object source to copy from
-	 * @param target Object target to copy to
-	 * @param requestProperties list of properties to copy from source to target
-	 */
-	public static void copyProperties(Object source, Object target, Iterable<String> requestProperties) {
-		BeanWrapper wrappedSource = PropertyAccessorFactory.forBeanPropertyAccess(source);
-		BeanWrapper wrappedTarget = PropertyAccessorFactory.forBeanPropertyAccess(target);
-
-		requestProperties.forEach(p -> wrappedTarget.setPropertyValue(p, wrappedSource.getPropertyValue(p)));
 	}
 
 }

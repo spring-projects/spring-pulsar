@@ -193,7 +193,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
 						.maxNumMessages(pulsarContainerProperties.getMaxNumMessages())
 						.maxNumBytes(pulsarContainerProperties.getMaxNumBytes())
-						.timeout(pulsarContainerProperties.getBatchTimeout(), TimeUnit.MILLISECONDS).build();
+						.timeout(pulsarContainerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS).build();
 				this.consumer = getPulsarConsumerFactory().createConsumer(
 						(Schema) pulsarContainerProperties.getSchema(), batchReceivePolicy, propertiesToConsumer);
 				Assert.state(this.consumer != null, "Unable to create a consumer");

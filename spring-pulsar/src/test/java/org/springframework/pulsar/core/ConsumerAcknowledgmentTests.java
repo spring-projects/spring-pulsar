@@ -271,7 +271,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		CountDownLatch latch = new CountDownLatch(1);
 		final PulsarBatchMessageListener<?> pulsarBatchMessageListener = mock(PulsarBatchMessageListener.class);
@@ -319,7 +319,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
-		pulsarContainerProperties.setBatchTimeout(60_000);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
 		final PulsarBatchMessageListener<?> pulsarBatchMessageListener = mock(PulsarBatchMessageListener.class);
 		CountDownLatch latch = new CountDownLatch(1);
