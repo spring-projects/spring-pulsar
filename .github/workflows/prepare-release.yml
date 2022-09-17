@@ -1,7 +1,7 @@
 name: Prepare Release Version
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
     inputs:
       releaseVersion:
         description: 'Version to release'
@@ -44,6 +44,8 @@ jobs:
       - id: update-version-and-push
         name: Update version and push
         if: steps.check-open-issues.outputs.is_open_issues == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
@@ -62,4 +64,3 @@ jobs:
           git commit -am "[Release $releaseVersion] Update version"
           git push origin $releaseBranch
           gh pr create --title "[Release $releaseVersion] Update version" --body "Merge to initiate release."
-
