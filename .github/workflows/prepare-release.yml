@@ -33,6 +33,7 @@ jobs:
       - id: check-open-issues
         name: Check for open issues
         run: |
+          echo "::set-output name=is_open_issues::false"
           echo "TODO actually check for open issues"
       - id: validate-release-state
         name: Validate release state
