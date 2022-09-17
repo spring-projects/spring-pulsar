@@ -1,0 +1,83 @@
+name: Prepare Release Version
+
+on:
+  workflow_dispatch: # Manual trigger only.
+    inputs:
+      releaseVersion:
+        description: 'Version to release'
+        required: true
+        type: string
+
+env:
+#  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
+#  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+#  GRADLE_ENTERPRISE_SECRET_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_version:
+    name: Initiate Release
+    if: github.repository == 'spring-projects-experimental/spring-pulsar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - id: checkout-source
+        name: Checkout Source Code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - id: check-open-issues
+        name: Check for open issues
+        run: |
+#          export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
+#          export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
+#          export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
+#          ./gradlew gitHubCheckMilestoneHasNoOpenIssues
+#          echo "::set-output name=is_open_issues::$(cat build/github/milestones/is-open-issues)"
+          echo "::set-output name=is_open_issues::false"
+          echo "TODO actually check for open issues"
+      - id: validate-release-state
+        name: Validate release state
+        if: steps.check-open-issues.outputs.is_open_issues == 'true'
+        run: |
+          echo "There are open issues"
+          exit 1
+      - id: update-version-and-push
+        name: Update version and push
+        if: steps.check-open-issues.outputs.is_open_issues == 'false'
+        run: |
+#          export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
+#          export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
+#          export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "Updating version from $currentVersion to $releaseVersion"
+          sed -i.orig "s/version=.*/version=$releaseVersion/" gradle.properties
+          rm -rf gradle.properties.orig          
+          #./gradlew :updateProjectVersion
+          updatedVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          # TODO put check that updatedVersion == nextVersion
+          git commit -am "[Release $releaseVersion] Update version"
+          git tag $releaseVersion
+          #git push
+          #git push origin $updatedVersion
+#      - id: send-slack-notification
+#        name: Send Slack message
+#        if: failure()
+#        uses: Gamesight/slack-workflow-status@v1.0.1
+#        with:
+#          repo_token: ${{ secrets.GITHUB_TOKEN }}
+#          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+#          channel: '#spring-security-ci'
+#          name: 'CI Notifier'
