@@ -222,6 +222,9 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
+		if (Message.class.isAssignableFrom(resolvableType.getRawClass())) {
+			resolvableType = resolvableType.getGeneric(0);
+		}
 		return resolvableType;
 	}
 
