@@ -82,7 +82,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 			}
 		}
 		else {
-			message = null; // optimization since we won't need any conversion to invoke
+			message = MessageBuilder.withPayload(msg).build();
 		}
 		logger.debug(() -> "Processing [" + message + "]");
 

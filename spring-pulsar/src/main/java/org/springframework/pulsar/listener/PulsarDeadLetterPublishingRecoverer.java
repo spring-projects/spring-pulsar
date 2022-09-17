@@ -68,7 +68,8 @@ public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageReco
 				this.pulsarTemplate.newMessage(message.getValue())
 						.withTopic(this.destinationResolver.apply(consumer, message))
 						.withMessageCustomizer(messageBuilder -> messageBuilder.property(EXCEPTION_THROWN_CAUSE,
-								exception.getCause().getMessage()))
+								exception.getCause() == null ? exception.getMessage()
+										: exception.getCause().getMessage()))
 						.sendAsync();
 			}
 			catch (PulsarClientException e) {

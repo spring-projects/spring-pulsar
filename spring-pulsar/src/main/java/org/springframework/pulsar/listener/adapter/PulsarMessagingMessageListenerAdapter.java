@@ -227,7 +227,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 					&& parameterizedType.getActualTypeArguments().length == 1) {
 
 				Type paramType = parameterizedType.getActualTypeArguments()[0];
-				this.isConsumerRecordList = paramType.equals(Messages.class);
+				this.isConsumerRecordList = paramType instanceof ParameterizedType
+						&& ((ParameterizedType) paramType).getRawType().equals(Message.class);
 				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
 						.getRawType().equals(org.springframework.messaging.Message.class);
 				this.isMessageList = paramType.equals(org.springframework.messaging.Message.class) || messageHasGeneric;
