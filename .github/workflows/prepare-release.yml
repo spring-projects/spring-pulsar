@@ -8,7 +8,7 @@ on:
         required: true
         type: string
 
-env:
+#env:
 #  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 #  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
 #  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
