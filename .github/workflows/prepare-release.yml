@@ -50,9 +50,6 @@ jobs:
         name: Update version and push
         if: steps.check-open-issues.outputs.is_open_issues == 'false'
         run: |
-#          export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
-#          export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
-#          export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
@@ -66,12 +63,3 @@ jobs:
           git tag $releaseVersion
           #git push
           #git push origin $updatedVersion
-#      - id: send-slack-notification
-#        name: Send Slack message
-#        if: failure()
-#        uses: Gamesight/slack-workflow-status@v1.0.1
-#        with:
-#          repo_token: ${{ secrets.GITHUB_TOKEN }}
-#          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-#          channel: '#spring-security-ci'
-#          name: 'CI Notifier'
