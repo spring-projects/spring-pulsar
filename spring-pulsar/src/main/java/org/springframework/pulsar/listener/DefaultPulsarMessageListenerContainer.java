@@ -394,17 +394,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		 */
 		private List<Message<T>> invokeBatchListenerErrorHandler(AtomicBoolean inRetryMode,
 				AtomicBoolean messagesPendingInBatch, List<Message<T>> messageList, Throwable exception) {
-			try {
-				Assert.isInstanceOf(PulsarBatchListenerFailedException.class, exception,
-						"Batch listener should throw PulsarBatchListenerFailedException on errors.");
-			}
-			catch (Exception e) {
-				// try in the cause if something downstream wrapped the original
-				// exception.
+
+			// Make sure either the exception or the exception cause is batch exception
+			if (!(exception instanceof PulsarBatchListenerFailedException)) {
 				exception = exception.getCause();
 				Assert.isInstanceOf(PulsarBatchListenerFailedException.class, exception,
 						"Batch listener should throw PulsarBatchListenerFailedException on errors.");
 			}
+
 			PulsarBatchListenerFailedException pulsarBatchListenerFailedException = (PulsarBatchListenerFailedException) exception;
 			Message<T> pulsarMessage = getPulsarMessageCausedTheException(pulsarBatchListenerFailedException);
 			final Message<T> theCurrentPulsarMessageTracked = this.pulsarConsumerErrorHandler.currentMessage();
