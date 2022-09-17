@@ -61,4 +61,5 @@ jobs:
           fi
           git commit -am "[Release $releaseVersion] Update version"
           git push origin $releaseBranch
+          gh pr create --title "[Release $releaseVersion] Update version" --body "Merge to initiate release."
 
