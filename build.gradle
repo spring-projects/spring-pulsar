@@ -1,6 +1,7 @@
 plugins {
 	id 'io.spring.nohttp'
 	id 'org.springframework.pulsar.root-project'
+	id 'org.springframework.pulsar.update-version'
 	id 'org.ajoberstar.grgit' version '4.0.1' apply false
 }
 

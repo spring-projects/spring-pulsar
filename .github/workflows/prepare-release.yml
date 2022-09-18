@@ -33,8 +33,8 @@ jobs:
       - id: check-open-issues
         name: Check for open issues
         run: |
-          echo "::set-output name=is_open_issues::false"
           echo "TODO actually check for open issues"
+          echo "::set-output name=is_open_issues::false"
       - id: validate-release-state
         name: Validate release state
         if: steps.check-open-issues.outputs.is_open_issues == 'true'
@@ -52,15 +52,7 @@ jobs:
           releaseVersion="${{ inputs.releaseVersion }}"
           releaseBranch="release-initiate/$releaseVersion"
           git checkout -b $releaseBranch
-          currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-          echo "Updating version from $currentVersion to $releaseVersion"
-          sed -i.orig "s/version=$currentVersion/version=$releaseVersion/" gradle.properties
-          rm -rf gradle.properties.orig          
-          updatedVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-          if [ "$updatedVersion" != "$releaseVersion" ]; then
-            echo "Version was updated to $updatedVersion but expected $releaseVersion"
-            exit 1
-          fi
+          ./gradlew :updateToReleaseVersion -PreleaseVersion=$releaseVersion          
           git commit -am "[Release $releaseVersion] Update version"
           git push origin $releaseBranch
           gh pr create --title "[Release $releaseVersion] Update version" --body "Merge to initiate release."

@@ -96,6 +96,10 @@ gradlePlugin {
 			id = "org.springframework.pulsar.spring-module"
 			implementationClass = "org.springframework.pulsar.gradle.SpringModulePlugin"
 		}
+		updateProjectVersion {
+			id = "org.springframework.pulsar.update-version"
+			implementationClass = "org.springframework.pulsar.gradle.versions.UpdateProjectVersionPlugin"
+		}
 		// groovy plugins
 		artifactoryPlugin {
 			id = "io.spring.convention.artfiactory"

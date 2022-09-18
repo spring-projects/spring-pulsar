@@ -11,19 +11,17 @@ on:
   workflow_dispatch:
 
 env:
-#  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-#  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-#  GRADLE_ENTERPRISE_SECRET_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
   COMMIT_OWNER: ${{ github.event.pusher.name }}
   COMMIT_SHA: ${{ github.sha }}
   ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
   ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
 jobs:
-  build:
+  build_and_deploy:
     if: github.repository == 'spring-projects-experimental/spring-pulsar'
     runs-on: ubuntu-latest
+    outputs:
+      project_version: ${{ steps.extract_version.outputs.project_version }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -41,10 +39,6 @@ jobs:
         env:
           GRADLE_USER_HOME: ~/.gradle
       - name: Run Gradle build
-#        env:
-#          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-#          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-#          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
         run: |
           ./gradlew clean build --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
       - name: Capture Test Results
@@ -55,15 +49,84 @@ jobs:
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
       - name: Deploy artifacts
-#        env:
-#          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-#          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-#          OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
-#          OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
-#          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-#          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-#          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-#          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-#          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
         run: |
           ./gradlew publishArtifact -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" --stacktrace
+      - id: extract_version
+          name: Extract current version
+          run: |
+            version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+            echo "::set-output name=project_version::$version"
+  perform_release:
+    name: Perform release
+    needs: [build_and_deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 90
+    if: ${{ !endsWith(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') }}
+    env:
+      REPO: ${{ github.repository }}
+      BRANCH: ${{ github.ref_name }}
+      TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.build_and_deploy.outputs.project_version }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Wait for Artifactory Artifacts
+        if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        run: |
+          echo "Wait for artifacts of $REPO@$VERSION to appear on Artifactory."
+          until curl -f -s https://repo.spring.io/artifactory/milestone/org/springframework/pulsar/spring-pulsar/$VERSION/ > /dev/null
+          do
+            sleep 30
+            echo "."
+          done
+          echo "Artifacts for $REPO@$VERSION have been released to Artifactory."
+      - name: Wait for Maven Central Artifacts
+        if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        run: |
+          echo "Wait for artifacts of $REPO@$VERSION to appear on Maven Central."
+          until curl -f -s https://repo1.maven.org/maven2/org/springframework/pulsar/spring-pulsar/$VERSION/ > /dev/null
+          do
+            sleep 30
+            echo "."
+          done
+          echo "Artifacts for $REPO@$VERSION have been released to Maven Central."
+      - name: Setup git config
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Tag Release
+        if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        run: |
+          echo "Tagging $REPO@$VERSION release."
+          git tag $VERSION
+          git push --tags origin
+      - name: Create Branch and Tag Release
+        if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        run: |
+          echo "Tagging $REPO@$VERSION and creating release branch."
+          git checkout -b $VERSION
+          git commit -am "[Release $VERSION] create release branch"
+          git push origin $VERSION
+          git tag $VERSION
+          git push --tags origin
+      - name: Create GitHub Release
+        uses: ./.github/workflows/github-release.yml
+        with:
+          releaseVersion: $VERSION
+        secrets:
+          GH_ACTIONS_REPO_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update to next Snapshot Version
+        run: |
+          echo "Updating $REPO@$VERSION to next snapshot version."
+          ./gradlew :updateToSnapshotVersion
+          git commit -am "[Release $VERSION] Next development version"
+          git push
