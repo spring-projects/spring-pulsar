@@ -1,0 +1,50 @@
+name: Github Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Version to release'
+        required: true
+        type: string
+
+jobs:
+  github-release:
+    if: github.repository == 'spring-projects-experimental/spring-pulsar'
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout-source
+        name: Checkout Source Code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install Tooling
+        run: |
+          curl -sSL https://github.com/cbroglie/mustache/releases/download/v1.2.2/mustache_1.2.2_linux_amd64.tar.gz | sudo tar -C /usr/local/bin/ --no-same-owner -xzv mustache
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          RELEASE_NOTES_ISSUES: ${{runner.temp}}/release_notes_issues.json
+          RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
+        run: |
+          releaseVersion="${{ inputs.releaseVersion }}"
+          
+          gh issue list \
+            --repo spring-projects-experimental/spring-pulsar \
+            --state all --json number,title,labels \
+            --search milestone:$releaseVersion \
+            --jq '{issues:map(select((.labels | length == 0) or (any(.labels[].name; startswith("automation/rlnotes")|not))) + {repo:"spring-projects-experimental/spring-pulsar"})}' \
+            > $RELEASE_NOTES_ISSUES
+
+          mustache $RELEASE_NOTES_ISSUES .github/rlnotes.mustache > $RELEASE_NOTES_FILE
+          
+          gh release create $releaseVersion \
+          --draft \
+          --title "Spring Pulsar $releaseVersion" \
+          --generate-notes \
+          --notes-file $RELEASE_NOTES_FILE  

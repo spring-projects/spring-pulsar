@@ -50,7 +50,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           releaseVersion="${{ inputs.releaseVersion }}"
-          releaseBranch="release/$releaseVersion"
+          releaseBranch="release-initiate/$releaseVersion"
           git checkout -b $releaseBranch
           currentVersion=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           echo "Updating version from $currentVersion to $releaseVersion"
