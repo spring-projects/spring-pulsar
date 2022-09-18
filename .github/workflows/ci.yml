@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '.github/**'
   schedule:
     - cron: '0 10 * * *' # Once per day at 10am UTC
   workflow_dispatch:
