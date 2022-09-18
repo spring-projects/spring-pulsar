@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '.github/**'      
   schedule:
     - cron: '0 10 * * *' # Once per day at 10am UTC
   workflow_dispatch:
@@ -50,10 +52,10 @@ jobs:
         run: |
           ./gradlew publishArtifact -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" --stacktrace
       - id: extract_version
-          name: Extract current version
-          run: |
-            version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-            echo "::set-output name=project_version::$version"
+        name: Extract current version
+        run: |
+          version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "::set-output name=project_version::$version"
   perform_release:
     name: Perform release
     needs: [build_and_deploy]
