@@ -43,6 +43,11 @@ public class PulsarTopicTests {
 		assertThat(topic.numberOfPartitions()).isEqualTo(0);
 	}
 
+	@Test
+	void fakeTestToVerifyReleasePipeline() {
+
+	}
+
 	@ParameterizedTest
 	@MethodSource("topicComponentsProvider")
 	void topicComponents(PulsarTopic topic, TopicDomain domain, String tenant, String namespace, String topicName) {
