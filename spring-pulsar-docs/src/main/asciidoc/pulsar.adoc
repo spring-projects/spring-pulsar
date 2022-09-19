@@ -827,6 +827,333 @@ template.setSchema(JSONSchema.of(Foo.class));
 
 TIP: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE. For KEY_VALUE schemata, only INLINE encoding is supported.
 
+==== Message Redelivery and Error Handling
+
+Now that we have seen both `PulsarListener` and the message listener container infrastructure, and its various functions, let us now try to understand message redelivery and error handling.
+Apache Pulsar provides various native strategies for message redelivery and error handling, and we are going to take a look at them first and see how we can leverage them through Spring for Apache Pulsar.
+
+===== Specifying Acknowledgment Timeout for Message Redelivery
+
+By default, Pulsar consumers will not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
+When using Spring for Apache Pulsar, we can enable this property by setting the Boot property `spring.pulsar.consumer.ack-timeout-millis`.
+If this property has a value above zero, then if Pulsar consumer does not acknowledge a message within that timeout period, then the message will be redelivered.
+
+You can also specify this property directly as a Pulsar consumer property on the `PulsarListener` itself as shown below:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "subscription-1", topics = "topic-1"
+                properties = {"ackTimeoutMillis=60000"})
+public void listen(String s) {
+    ...
+}
+----
+====
+
+When specifying `ackTimeoutMillis` as seen in the above `PulsarListener` method, then if the consumer does not send an acknowledgement within 60 seconds, the message will be redelivered by Pulsar to the consumer.
+
+If you want to specify some advanced backoff options for ack timeout with different delays, then you can do the following:
+
+====
+[source, java]
+----
+@EnablePulsar
+@Configuration
+static class AckTimeoutRedeliveryConfig {
+
+    @PulsarListener(subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
+            topics = "withAckTimeoutRedeliveryBackoff-test-topic",
+            ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff",
+            properties = { "ackTimeoutMillis=60000" })
+    void listen(String msg) {
+        // some long-running process that may cause an ack timeout
+    }
+
+    @Bean
+    public RedeliveryBackoff ackTimeoutRedeliveryBackoff() {
+        return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(10 * 1000).multiplier(2)
+                .build();
+    }
+
+}
+----
+====
+
+In the example above, we are specifying a bean for Pulsar's `RedeliveryBackoff` with a minimum delay of 1 second and a maximum delay of 10 seconds with a backoff multiplier of 2.
+After the initial ack timeout occurs, then the message redeliveries will be controlled through this backoff bean.
+We provide the backoff bean to the `PulsarListener` annotation by setting the `ackTimeoutRedeliveryBackoff` property to the actual bean name - `ackTimeoutRedeliveryBackoff` in this case.
+
+===== Specifying Negative Acknowledgment Redelivery
+
+When acknowledging negatively, Pulsar consumer allows you to specify how the application want the message to be re-delivered.
+The default is to redeliver the message in 1 minute, but you can change it by providing `spring.pulsar.consumer.negative-ack-redelivery-delay-micros`.
+You can also set it as a consumer property directly on `PulsarListener` as shown below:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "subscription-1", topics = "topic-1"
+                properties = {"negativeAckRedeliveryDelayMicros=10000"})
+public void listen(String s) {
+    ...
+}
+----
+====
+
+Here also, you can specify different delays and backoff mechanisms with a multiplier by providing a `RedeliveryBackoff` bean and provide the bean name as the `negativeAckRedeliveryBackoff` property on the PulsarProducer.
+Here is an example:
+
+====
+[source, java]
+----
+@EnablePulsar
+@Configuration
+static class NegativeAckRedeliveryConfig {
+
+    @PulsarListener(subscriptionName = "withNegRedeliveryBackoffSubscription",
+            topics = "withNegRedeliveryBackoff-test-topic", negativeAckRedeliveryBackoff = "redeliveryBackoff",
+            subscriptionType = SubscriptionType.Shared)
+    void listen(String msg) {
+        throw new RuntimeException("fail " + msg);
+    }
+
+    @Bean
+    public RedeliveryBackoff redeliveryBackoff() {
+        return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(10 * 1000).multiplier(2)
+                .build();
+    }
+
+}
+----
+====
+
+===== Using Dead Letter Topic from Apache Pulsar for Message Redelivery and Error Handling
+
+Apache Pulsar allows applications to use a dead letter topic on consumers with a `Shared` subscription type.
+For subscription types `Exclusive` and `Failover`, this feature is not available.
+The basic idea is that if a message is retried for a certain number of times, maybe due to an ack timeout or nack redelivery, and once the number of retries are exhausted, then the message can be sent to a special topic called DLQ.
+Let us see some details around this feature in action by inspecting some code snippets.
+
+====
+[source, java]
+----
+@EnablePulsar
+@Configuration
+static class DeadLetterPolicyConfig {
+
+    @PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
+            topics = "topic-with-dlp", deadLetterPolicy = "deadLetterPolicy",
+            subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
+    void listen(String msg) {
+        throw new RuntimeException("fail " + msg);
+    }
+
+    @PulsarListener(id = "dlqListener", topics = "my-dlq-topic")
+    void listenDlq(String msg) {
+        System.out.println("From DLQ: " + msg);
+    }
+
+    @Bean
+    DeadLetterPolicy deadLetterPolicy() {
+        return DeadLetterPolicy.builder().maxRedeliverCount(10).deadLetterTopic("my-dlq-topic").build();
+    }
+
+}
+----
+====
+
+Let us go through some details.
+First, we have a special bean for `DeadLetterPolicy` and it's named as `deadLetterPolicy` (it acn be any name as you wish).
+This bean specifies a number of things, such as the max delivery - 10 in this case, and the name of the dead letter topic - `my-dlq-topic`.
+If you don't specify a DLQ topic name, then it defaults to `<topicname>-<subscriptionname>-DLQ` in Pulsar.
+Next, we provide this bean name to `PulsarListener` using the property `deadLetterPolicy`.
+Note that the `PulsarListener` has a subscription type of `Shared`, as the DLQ feature only works with shared subscriptions.
+This code is primarily for demonstration purposes, so we provide an `ackTimeoutMillis` value of 1 millisecond.
+The idea is that the code throws the exception and if Pulsar does not receive an ack within 1 millisecond, it does a retry.
+If that cycle continues for 10 times, (as that is our max redelivery count in the `DeadLetterPolicy`), then Pulsar consumer publishes the messages to the DQL topic.
+We have another `PulsarListener` that is listening on the DLQ topic to receive data as it is published to the DLQ topic.
+
+**Special note on DLQ topics when using partitioned topics**: If the main topic is partitioned, then behind the scenes, each partition is treated as a separate topic by Pulsar.
+Pulsar appends `partition-<n>` where `n` stands for the partition number to the main topic name.
+The problem is that, if you do not specify a DLQ topic (as opposed to what we did above), then Pulsar will publish to a default topic name that has this ``partition-<n>` info in it - for ex: `topic-with-dlp-partition-0-deadLetterPolicySubscription-DLQ`.
+The easy way to solve this is to provide a DLQ topic name always.
+
+===== Native Error Handling in Spring for Apache Pulsar
+
+As we have noted above, the DLQ feature in Apache Pulsar only works for shared subscriptions.
+What does an application do if they need to use some similar feature for non-shared subscriptions?
+The main reason why Pulsar does not support DLQ on exclusive and failover subscriptions, is because those subscription types are order-guaranteed.
+By allowing redeliveries, DLQ etc. it effectively receives messages in out-of-order.
+But, what if some applications are okay with that, but more importantly needs this DLQ feature for non-shared subscriptions?
+For that, Spring for Apache Pulsar provides a `PulsarConsumerErrorHandler` which can be used across any subscription types in Pulsar -  `Exclusive`, `Failover`, `Shared`, `Key_Shared`.
+
+When using `PulsarConsumerErrorHandler` from Spring for Apache Pulsar, make sure not to set the ack timeout properties on the listener.
+
+Let us see some details by examining a few code snippets.
+
+====
+[source, java]
+----
+@EnablePulsar
+@Configuration
+static class PulsarConsumerErrorHandlerConfig {
+
+	@Bean
+    public PulsarConsumerErrorHandler<String> pulsarConsumerErrorHandler(
+            PulsarTemplate<String> pulsarTemplate) {
+        return new DefaultPulsarConsumerErrorHandler<>(
+                new PulsarDeadLetterPublishingRecoverer<>(pulsarTemplate, (c, m) -> "my-foo-dlt"), new FixedBackOff(100, 10));
+    }
+
+    @PulsarListener(id = "pulsarConsumerErrorHandler-id", subscriptionName = "pulsatConsumerErrorHandler-subscription",
+                    topics = "pulsarConsumerErrorHandler-topic",
+					pulsarConsumerErrorHandler = "pulsarConsumerErrorHandler")
+    void listen(String msg) {
+        throw new RuntimeException("fail " + msg);
+    }
+
+    @PulsarListener(id = "pceh-dltListener", topics = "my-foo-dlt")
+    void listenDlt(String msg) {
+        System.out.println("From DLT: " + msg);
+    }
+
+}
+----
+====
+
+Let us take a look at the `pulsarConsumerErrorHandler` bean provided.
+This creates a bean of type `PulsarConsumerErrorHandler` and uses the default implementation provided out of the box by Spring for Apache Pulsar - `DefaultPulsarConsumerErrorHandler`.
+`DefaultPulsarConsumerErrorHandler` has a constructor that takes a `PulsarMessageRecovererFactory` and a `org.springframework.util.backoff.Backoff`.
+`PulsarMessageRecovererFactory` is a functional interface with the following API:
+
+====
+[source, java]
+----
+@FunctionalInterface
+public interface PulsarMessageRecovererFactory<T> {
+
+	/**
+	 * Provides a message recoverer {@link PulsarMessageRecoverer}.
+	 * @param consumer Pulsar consumer
+	 * @return {@link PulsarMessageRecoverer}.
+	 */
+	PulsarMessageRecoverer<T> recovererForConsumer(Consumer<T> consumer);
+
+}
+
+----
+====
+
+The `recovererForConsumer` method takes a Pulsar consumer and returns a `PulsarMessageRecoverer` which is another functional interface.
+Here is the API of `PulsarMessageRecoverer`:
+
+====
+[source, java]
+----
+public interface PulsarMessageRecoverer<T> {
+
+	/**
+	 * Recover a failed message, for e.g. send the message to a DLT.
+	 * @param message Pulsar message
+	 * @param exception exception from failed message
+	 */
+	void recoverMessage(Message<T> message, Exception exception);
+
+}
+----
+====
+
+Spring for Apache Pulsar provides an implementation for `PulsarMessageRecovererFactory` called `PulsarDeadLetterPublishingRecoverer` that provides a default implementation that is capable of recovering the message by sending it to a DLT - (Dead Letter Topic).
+This is the implementation that we are providing to the constructor for `DefaultPulsarConsumerErrorHandler` above.
+As the second argument, we are providing a `FixedBackOff`.
+You can also provide the `ExponentialBackoff` from Spring for advanced backoff features.
+Then we provide this bean name for the `PulsarConsumerErrorHandler` as a property to the `PulsarListener`.
+The property is called `pulsarConsumerErrorHandler`.
+Each time the `PulsarListener` method fails for a message, it gets retried.
+The number of retries are controlled by the `Backoff` implementation values provided - in our example, we do 10 retries - 11 total tries all in all - the first one and then the 10 retries.
+Once all the retries are exhausted, the message is sent to the DLT topic.
+
+The `PulsarDeadLetterPublishingRecoverer` implementation we provide use a `PulsarTemplate` that is uses for publishing the message to the DLT.
+In most cases, the same auto-configured `PulsarTemplate` from Spring Boot is sufficient with the caveat for partitioned topics.
+When using partitioned topics and using custom message routing for the main topic, you must use a different `PulsarTemplate` that does not take the autoconfigured `PulsarProducerFactory` that is populated with a value of `custompartition` for `message-routing-mode`.
+Towards this extent, you can use a `PulsarConsumerErrorHandler` with the following blueprint.
+
+====
+[source, java]
+----
+@Bean
+public PulsarConsumerErrorHandler<Integer> pulsarConsumerErrorHandler(PulsarClient pulsarClient) {
+PulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, Map.of());
+    PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+
+    BiFunction<Consumer<?>, Message<?>, String> destinationResolver =
+            (c, m) -> "my-foo-dlt";
+
+    final PulsarDeadLetterPublishingRecoverer<Integer> pulsarDeadLetterPublishingRecoverer =
+            new PulsarDeadLetterPublishingRecoverer<>(pulsarTemplate, destinationResolver);
+
+    return new DefaultPulsarConsumerErrorHandler<>(pulsarDeadLetterPublishingRecoverer,
+            new FixedBackOff(100, 5));
+}
+----
+====
+
+Note that, we are providing a destination resolver to the `PulsarDeadLetterPublishingRecoverer` as the second constructor argument.
+If not provided, `PulsarDeadLetterPublishingRecoverer` will use `<subscription-name>-<topic-name>-DLT>` as the DLT topic name.
+When using this feature, it is recommended to use a properr destination name by setting the destination resolver rather than using the default.
+
+When using a single record message listener as we did above with `PulsarConsumerErrorHnadler` and if you are using manual acknowledgement, make sure not to negatively acknowledge the message when an exception is thrown.
+Rather, just simply rethrow the exception back to the container; otherwise, the container thinks that the message is handled separately and the error handling will not be triggered.
+
+Finally, we have a second `PulsarListener` above that is receiving messages from the DLT topic.
+
+In the examples provided in this section so far, we only saw how to use `PulsarConsumerErrorHandler` with a single record message listener.
+Next, we will look how can use this on batch listeners.
+
+**Batch listener with PulsarConsumerErrorHandler**
+
+First, let us look at a batch `PulsarListener` method.
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "batch-demo-5-sub", topics = "batch-demo-4", batch = true, concurrency = "3",
+            subscriptionType = SubscriptionType.Failover,
+            pulsarConsumerErrorHandler = "pulsarConsumerErrorHandler", ackMode = AckMode.MANUAL)
+public void listen(List<Message<Integer>> data, Consumer<Integer> consumer, Acknowledgment acknowledgment) {
+    for (Message<Integer> datum : data) {
+		if (datum.getValue() == 5) {
+            throw new PulsarBatchListenerFailedException("failed", datum);
+		}
+		acknowledgement.acknowledge(datum.getMessageId());
+	}
+}
+
+@Bean
+public PulsarConsumerErrorHandler<String> pulsarConsumerErrorHandler(
+        PulsarTemplate<String> pulsarTemplate) {
+    return new DefaultPulsarConsumerErrorHandler<>(
+            new PulsarDeadLetterPublishingRecoverer<>(pulsarTemplate, (c, m) -> "my-foo-dlt"), new FixedBackOff(100, 10));
+}
+
+@PulsarListener(subscriptionName = "my-dlt-subscription", topics = "my-foo-dlt")
+void dltReceiver(Message<Integer> message) {
+    System.out.println("DLT - RECEIVED: " + message.getValue());
+}
+
+----
+====
+
+Once again, we re providing the property `pulsarConsumerErrorHandler` with the `PulsarConsumerErrorHandler` bean name.
+When you are using a batch listener as above and want to use the `PulsarConsumerErrorHandler` from Spring for Apache Pulsar, then you need to use manual acknowledgment
+This way you can acknowledge all the successful individual messages.
+For the ones that fail, you must throw a `PulsarBatchListenerFailedException` with the message that it fails on.
+Without this exception, the framework will not know what to do with the failure.
+On retry, the container will send a new batch of messages, starting with the failed message to the listener.
+If it fails again, it is retried, until the retries are exhausted, at which point the message will be sent to the DLT.
+At that point, the message is acknowledged by the container and the listener will be handed over with the subsequent messages in the original batch.
+
 ==== Intercepting messages
 
 ===== Intercept messages on the Producer
