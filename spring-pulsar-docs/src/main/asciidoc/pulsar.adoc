@@ -245,8 +245,8 @@ Note that the properties used are direct Pulsar consumer properties.
 ==== Pulsar Message Listener Container
 
 Now that we saw the basic interactions on the consumer side through `PulsarListener`, let us now dive into the inner workings of how `PulsarListener` interacts with the underlying Pulsar consumer.
-Keep in mind that, for end-user applications, in most scenarios, we recommend using `PulsarListener` annotation directly for consuming from a Pulsar topic when using Spring for Apache Pulsar, as that model covers a wide swath of application use cases.
-However, it is important to understand how `PulsarListener` works internally and this section will go through those deatis.
+Keep in mind that, for end-user applications, in most scenarios, we recommend using `PulsarListener` annotation directly for consuming from a Pulsar topic when using Spring for Apache Pulsar, as that model covers a broad set of application use cases.
+However, it is important to understand how `PulsarListener` works internally and this section will go through those details.
 
 As briefly mentioned above, the message listener container is at the heart of message consumption when using Spring for Apache Pulsar.
 `PulsarListener` uses the message listener container infrastructure behind the scenes to create and manage the Pulsar consumer.
@@ -357,9 +357,10 @@ void listen(String message, Consumer<String> consumer) {
 
 In the above listener, it is assumed that the topic `my-topic` has 3 partitions.
 If it is a non-partitioned topic, then having concurrency set to `3`, will not do anything, you will simply get two idle consumers in addition to the main active one.
-If the topic is over partitioned, then messages will be load balanced across the consumers that the container creates.
+If the topic has more than 3 partitions, then messages will be load-balanced across the consumers that the container creates.
 If you run this `PulsarListener`, you will see that messages from different partitions will be consumed through different consumers as implied by the thread name and consumer names printouts in the example code above.
-When using the `Failover` subscription this way on partitioned topics, Pulsar guarantees message ordering.
+
+**Note: When using the `Failover` subscription this way on partitioned topics, Pulsar guarantees message ordering.**
 
 Here is another example of `PulsarListener`, but with `Shared` subscription and `concurrency` enabled.
 
@@ -375,7 +376,9 @@ void listen(String message) {
 ====
 
 In the example above, the `PulsarListener` creates 5 different consumers (once again, we are assuming that the topic has 5 partitions).
-Keep in mind that, in this version, there is no message ordering as `Shared` subscriptions do not guarantee any message ordering in Pulsar.
+
+**Keep in mind that, in this version, there is no message ordering as `Shared` subscriptions do not guarantee any message ordering in Pulsar**
+
 If you need message ordering and still want a shared subscription types, then you need to use the `Key_Shared` subscription type.
 
 ==== Consuming the Records
