@@ -38,19 +38,6 @@ jobs:
         uses: gradle/gradle-build-action@v2
         env:
           GRADLE_USER_HOME: ~/.gradle
-      - name: Run Gradle build
-        run: |
-          ./gradlew clean build --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
-      - name: Capture Test Results
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: '*/build/reports/tests/**/*.*'
-          retention-days: 3
-      - name: Deploy artifacts
-        run: |
-          ./gradlew publishArtifact -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" --stacktrace
       - id: extract_version
         name: Extract current version
         run: |
@@ -115,17 +102,17 @@ jobs:
       - name: Tag Release
         if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') || contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
-          echo "Tagging $REPO@$VERSION release."
-          git tag $VERSION
+          echo "Tagging $REPO/$VERSION release."
+          git tag v$VERSION
           git push --tags origin
       - name: Create Branch and Tag Release
         if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
-          echo "Tagging $REPO@$VERSION and creating release branch."
+          echo "Tagging $REPO/$VERSION and creating release branch."
           git checkout -b $VERSION
-          git commit -am "[Release $VERSION] create release branch"
+          # git commit -am "[Release $VERSION] create release branch"
           git push origin $VERSION
-          git tag $VERSION
+          git tag v$VERSION
           git push --tags origin
       - name: Install Tooling
         run: |
