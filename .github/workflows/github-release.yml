@@ -1,13 +1,17 @@
 name: Github Release
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       releaseVersion:
         description: 'Version to release'
         required: true
         type: string
-
+    secrets:
+      GH_ACTIONS_REPO_TOKEN:
+        required: true
+      GITHUB_TOKEN:
+        required: true
 jobs:
   github-release:
     if: github.repository == 'spring-projects-experimental/spring-pulsar'
