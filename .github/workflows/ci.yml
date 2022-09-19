@@ -106,7 +106,7 @@ jobs:
           git tag v$VERSION
           git push --tags origin
       - name: Create Branch and Tag Release
-        if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') && !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
           echo "Tagging $REPO/$VERSION and creating release branch."
           git checkout -b $VERSION
