@@ -102,13 +102,13 @@ jobs:
       - name: Tag Release
         if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') || contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
-          echo "Tagging $REPO/$VERSION release."
+          echo "Tagging $REPO@$VERSION release."
           git tag v$VERSION
           git push --tags origin
       - name: Create Branch and Tag Release
         if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') && !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
-          echo "Tagging $REPO/$VERSION and creating release branch."
+          echo "Tagging $REPO@$VERSION and creating release branch."
           git checkout -b $VERSION
           # git commit -am "[Release $VERSION] create release branch"
           git push origin $VERSION
@@ -123,8 +123,6 @@ jobs:
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
           GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
-          releaseVersion="${{ inputs.releaseVersion }}"
-          
           gh issue list \
             --repo spring-projects-experimental/spring-pulsar \
             --state all --json number,title,labels \
@@ -134,9 +132,9 @@ jobs:
 
           mustache $RELEASE_NOTES_ISSUES .github/rlnotes.mustache > $RELEASE_NOTES_FILE
           
-          gh release create $releaseVersion \
+          gh release create $VERSION \
           --draft \
-          --title "Spring Pulsar $releaseVersion" \
+          --title "Spring Pulsar $VERSION" \
           --generate-notes \
           --notes-file $RELEASE_NOTES_FILE
       - name: Update to next Snapshot Version
