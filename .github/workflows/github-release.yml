@@ -37,7 +37,7 @@ jobs:
           gh issue list \
             --repo spring-projects-experimental/spring-pulsar \
             --state all --json number,title,labels \
-            --search milestone:$releaseVersion \
+            --search label:aot-native \
             --jq '{issues:map(select((.labels | length == 0) or (any(.labels[].name; startswith("automation/rlnotes")|not))) + {repo:"spring-projects-experimental/spring-pulsar"})}' \
             > $RELEASE_NOTES_ISSUES
 

@@ -63,7 +63,7 @@ jobs:
     permissions:
       contents: write
     timeout-minutes: 90
-    if: ${{ !endsWith(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') }}
+    #if: ${{ endsWith(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') }}
     env:
       REPO: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}
@@ -78,6 +78,16 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Wait for Artifactory Snapshot Artifacts
+        if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') }}
+        run: |
+          echo "Wait for artifacts of $REPO@$VERSION to appear on Artifactory."
+          until curl -f -s https://repo.spring.io/artifactory/snapshot/org/springframework/pulsar/spring-pulsar/$VERSION/ > /dev/null
+          do
+            sleep 30
+            echo "."
+          done
+          echo "Artifacts for $REPO@$VERSION have been released to Artifactory."
       - name: Wait for Artifactory Artifacts
         if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
@@ -89,7 +99,7 @@ jobs:
           done
           echo "Artifacts for $REPO@$VERSION have been released to Artifactory."
       - name: Wait for Maven Central Artifacts
-        if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        if: ${{ !contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') && !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
           echo "Wait for artifacts of $REPO@$VERSION to appear on Maven Central."
           until curl -f -s https://repo1.maven.org/maven2/org/springframework/pulsar/spring-pulsar/$VERSION/ > /dev/null
@@ -103,7 +113,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Tag Release
-        if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        if: ${{ contains(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') || contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
           echo "Tagging $REPO@$VERSION release."
           git tag $VERSION
