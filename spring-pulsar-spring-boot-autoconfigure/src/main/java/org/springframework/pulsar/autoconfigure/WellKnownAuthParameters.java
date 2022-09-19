@@ -24,98 +24,70 @@ import java.util.Map;
  *
  * @author Alexander Preuß
  */
-public final class WellKnownAuthParameters {
+enum WellKnownAuthParameters {
+
+	TENANT_DOMAIN("tenantDomain"),
+
+	TENANT_SERVICE("tenantService"),
+
+	PROVIDER_DOMAIN("providerDomain"),
+
+	PRIVATE_KEY("privateKey"),
+
+	PRIVATE_KEY_PATH("privateKeyPath"),
+
+	KEY_ID("keyId"),
+
+	AUTO_PREFETCH_ENABLED("autoPrefetchEnabled"),
+
+	ATHENZ_CONF_PATH("athenzConfPath"),
+
+	PRINCIPAL_HEADER("principalHeader"),
+
+	ROLE_HEADER("roleHeader"),
+
+	ZTS_URL("ztsUrl"),
+
+	USER_ID("userId"),
+
+	PASSWORD("password"),
+
+	KEY_STORE_TYPE("keyStoreType"),
+
+	KEY_STORE_PATH("keyStorePath"),
+
+	KEY_STORE_PASSWORD("keyStorePassword"),
+
+	TYPE("type"),
+
+	ISSUER_URL("issuerUrl"),
+
+	AUDIENCE("audience"),
+
+	SCOPE("scope"),
+
+	SASL_JAAS_CLIENT_SECTION_NAME("saslJaasClientSectionName"),
+
+	SERVER_TYPE("serverType"),
+
+	TLS_CERT_FILE("tlsCertFile"),
+
+	TLS_KEY_FILE("tlsKeyFile"),
+
+	TOKEN("token");
 
 	private static final Map<String, String> lowerCaseToCamelCase = new HashMap<>();
 
-	private static final String TENANT_DOMAIN = "tenantDomain";
-
-	private static final String TENANT_SERVICE = "tenantService";
-
-	private static final String PROVIDER_DOMAIN = "providerDomain";
-
-	private static final String PRIVATE_KEY = "privateKey";
-
-	private static final String PRIVATE_KEY_PATH = "privateKeyPath";
-
-	private static final String KEY_ID = "keyId";
-
-	private static final String AUTO_PREFETCH_ENABLED = "autoPrefetchEnabled";
-
-	private static final String ATHENZ_CONF_PATH = "athenzConfPath";
-
-	private static final String PRINCIPAL_HEADER = "principalHeader";
-
-	private static final String ROLE_HEADER = "roleHeader";
-
-	private static final String ZTS_URL = "ztsUrl";
-
-	private static final String USER_ID = "userId";
-
-	private static final String PASSWORD = "password";
-
-	private static final String KEY_STORE_TYPE = "keyStoreType";
-
-	private static final String KEY_STORE_PATH = "keyStorePath";
-
-	private static final String KEY_STORE_PASSWORD = "keyStorePassword";
-
-	private static final String TYPE = "type";
-
-	private static final String ISSUER_URL = "issuerUrl";
-
-	private static final String AUDIENCE = "audience";
-
-	private static final String SCOPE = "scope";
-
-	private static final String SASL_JAAS_CLIENT_SECTION_NAME = "saslJaasClientSectionName";
-
-	private static final String SERVER_TYPE = "serverType";
-
-	private static final String TLS_CERT_FILE = "tlsCertFile";
-
-	private static final String TLS_KEY_FILE = "tlsKeyFile";
-
-	private static final String TOKEN = "token";
-
 	static {
-		// Athenz
-		addLowerCaseToCamelCaseMapping(TENANT_DOMAIN);
-		addLowerCaseToCamelCaseMapping(TENANT_SERVICE);
-		addLowerCaseToCamelCaseMapping(PROVIDER_DOMAIN);
-		addLowerCaseToCamelCaseMapping(PRIVATE_KEY);
-		addLowerCaseToCamelCaseMapping(PRIVATE_KEY_PATH);
-		addLowerCaseToCamelCaseMapping(KEY_ID);
-		addLowerCaseToCamelCaseMapping(AUTO_PREFETCH_ENABLED);
-		addLowerCaseToCamelCaseMapping(ATHENZ_CONF_PATH);
-		addLowerCaseToCamelCaseMapping(PRINCIPAL_HEADER);
-		addLowerCaseToCamelCaseMapping(ROLE_HEADER);
-		addLowerCaseToCamelCaseMapping(ZTS_URL);
-		// Basic
-		addLowerCaseToCamelCaseMapping(USER_ID);
-		addLowerCaseToCamelCaseMapping(PASSWORD);
-		// KeyStoreTls
-		addLowerCaseToCamelCaseMapping(KEY_STORE_TYPE);
-		addLowerCaseToCamelCaseMapping(KEY_STORE_PATH);
-		addLowerCaseToCamelCaseMapping(KEY_STORE_PASSWORD);
-		// OAuth2
-		addLowerCaseToCamelCaseMapping(TYPE);
-		addLowerCaseToCamelCaseMapping(ISSUER_URL);
-		addLowerCaseToCamelCaseMapping(PRIVATE_KEY);
-		addLowerCaseToCamelCaseMapping(AUDIENCE);
-		addLowerCaseToCamelCaseMapping(SCOPE);
-		// Sasl
-		addLowerCaseToCamelCaseMapping(SASL_JAAS_CLIENT_SECTION_NAME);
-		addLowerCaseToCamelCaseMapping(SERVER_TYPE);
-		// Tls
-		addLowerCaseToCamelCaseMapping(TLS_CERT_FILE);
-		addLowerCaseToCamelCaseMapping(TLS_KEY_FILE);
-		// Token
-		addLowerCaseToCamelCaseMapping(TOKEN);
+		for (WellKnownAuthParameters param : values()) {
+			lowerCaseToCamelCase.put(param.camelCaseKey.toLowerCase(), param.camelCaseKey);
+		}
 	}
 
-	private WellKnownAuthParameters() {
+	public final String camelCaseKey;
 
+	WellKnownAuthParameters(String camelCaseKey) {
+		this.camelCaseKey = camelCaseKey;
 	}
 
 	/**
@@ -127,10 +99,6 @@ public final class WellKnownAuthParameters {
 	 */
 	public static String getCamelCaseKey(String lowerCaseKey) {
 		return lowerCaseToCamelCase.getOrDefault(lowerCaseKey, lowerCaseKey);
-	}
-
-	private static void addLowerCaseToCamelCaseMapping(String camelCaseKey) {
-		lowerCaseToCamelCase.put(camelCaseKey.toLowerCase(), camelCaseKey);
 	}
 
 }
