@@ -50,7 +50,7 @@ jobs:
     permissions:
       contents: write
     timeout-minutes: 90
-    #if: ${{ endsWith(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') }}
+    #if: ${{ !endsWith(needs.build_and_deploy.outputs.project_version, '-SNAPSHOT') }}
     env:
       REPO: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}
@@ -121,6 +121,7 @@ jobs:
         env:
           RELEASE_NOTES_ISSUES: ${{runner.temp}}/release_notes_issues.json
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
           releaseVersion="${{ inputs.releaseVersion }}"
           
