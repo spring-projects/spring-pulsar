@@ -127,12 +127,30 @@ jobs:
           git push origin $VERSION
           git tag $VERSION
           git push --tags origin
-      - name: Create GitHub Release
-        uses: ./.github/workflows/github-release.yml
-        with:
-          releaseVersion: $VERSION
-        secrets:
-          GH_ACTIONS_REPO_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      - name: Install Tooling
+        run: |
+          curl -sSL https://github.com/cbroglie/mustache/releases/download/v1.2.2/mustache_1.2.2_linux_amd64.tar.gz | sudo tar -C /usr/local/bin/ --no-same-owner -xzv mustache
+      - name: Create Github Release
+        env:
+          RELEASE_NOTES_ISSUES: ${{runner.temp}}/release_notes_issues.json
+          RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
+        run: |
+          releaseVersion="${{ inputs.releaseVersion }}"
+          
+          gh issue list \
+            --repo spring-projects-experimental/spring-pulsar \
+            --state all --json number,title,labels \
+            --search label:aot-native \
+            --jq '{issues:map(select((.labels | length == 0) or (any(.labels[].name; startswith("automation/rlnotes")|not))) + {repo:"spring-projects-experimental/spring-pulsar"})}' \
+            > $RELEASE_NOTES_ISSUES
+
+          mustache $RELEASE_NOTES_ISSUES .github/rlnotes.mustache > $RELEASE_NOTES_FILE
+          
+          gh release create $releaseVersion \
+          --draft \
+          --title "Spring Pulsar $releaseVersion" \
+          --generate-notes \
+          --notes-file $RELEASE_NOTES_FILE
       - name: Update to next Snapshot Version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
