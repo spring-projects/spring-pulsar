@@ -10,8 +10,7 @@ on:
     secrets:
       GH_ACTIONS_REPO_TOKEN:
         required: true
-      GITHUB_TOKEN:
-        required: true
+
 jobs:
   github-release:
     if: github.repository == 'spring-projects-experimental/spring-pulsar'
@@ -32,7 +31,7 @@ jobs:
           curl -sSL https://github.com/cbroglie/mustache/releases/download/v1.2.2/mustache_1.2.2_linux_amd64.tar.gz | sudo tar -C /usr/local/bin/ --no-same-owner -xzv mustache
       - name: Create Release
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.GH_ACTIONS_REPO_TOKEN}}
           RELEASE_NOTES_ISSUES: ${{runner.temp}}/release_notes_issues.json
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
         run: |

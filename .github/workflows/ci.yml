@@ -133,7 +133,6 @@ jobs:
           releaseVersion: $VERSION
         secrets:
           GH_ACTIONS_REPO_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update to next Snapshot Version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
