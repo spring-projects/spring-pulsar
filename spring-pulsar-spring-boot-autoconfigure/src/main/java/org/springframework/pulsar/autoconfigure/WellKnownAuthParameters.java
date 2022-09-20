@@ -16,8 +16,10 @@
 
 package org.springframework.pulsar.autoconfigure;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility class to map Pulsar auth parameters to well-known keys.
@@ -76,18 +78,18 @@ enum WellKnownAuthParameters {
 
 	TOKEN("token");
 
-	private static final Map<String, String> lowerCaseToCamelCase = new HashMap<>();
+	private static final Map<String, String> LOWER_CASE_TO_CAMEL_CASE = Arrays.stream(values())
+			.map(WellKnownAuthParameters::getCamelCaseKey)
+			.collect(Collectors.toMap(Function.identity(), WellKnownAuthParameters::toCamelCaseKey));
 
-	static {
-		for (WellKnownAuthParameters param : values()) {
-			lowerCaseToCamelCase.put(param.camelCaseKey.toLowerCase(), param.camelCaseKey);
-		}
-	}
-
-	public final String camelCaseKey;
+	private final String camelCaseKey;
 
 	WellKnownAuthParameters(String camelCaseKey) {
 		this.camelCaseKey = camelCaseKey;
+	}
+
+	String getCamelCaseKey() {
+		return this.camelCaseKey;
 	}
 
 	/**
@@ -97,8 +99,8 @@ enum WellKnownAuthParameters {
 	 * @return the camel-cased auth parameter, or the lowerCaseKey if the parameter is not
 	 * found.
 	 */
-	public static String getCamelCaseKey(String lowerCaseKey) {
-		return lowerCaseToCamelCase.getOrDefault(lowerCaseKey, lowerCaseKey);
+	public static String toCamelCaseKey(String lowerCaseKey) {
+		return LOWER_CASE_TO_CAMEL_CASE.getOrDefault(lowerCaseKey, lowerCaseKey);
 	}
 
 }
