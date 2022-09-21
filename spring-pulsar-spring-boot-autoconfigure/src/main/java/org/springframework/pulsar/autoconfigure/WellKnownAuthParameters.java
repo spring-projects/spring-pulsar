@@ -80,7 +80,7 @@ enum WellKnownAuthParameters {
 
 	private static final Map<String, String> LOWER_CASE_TO_CAMEL_CASE = Arrays.stream(values())
 			.map(WellKnownAuthParameters::getCamelCaseKey)
-			.collect(Collectors.toMap(Function.identity(), WellKnownAuthParameters::toCamelCaseKey));
+			.collect(Collectors.toMap(String::toLowerCase, Function.identity()));
 
 	private final String camelCaseKey;
 
