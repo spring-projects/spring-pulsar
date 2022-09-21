@@ -43,8 +43,8 @@ final class AuthParameterUtils {
 	}
 
 	private static Map<String, String> convertWellKnownLowerCaseKeysToCamelCase(Map<String, String> params) {
-		return params.entrySet().stream().collect(Collectors
-				.toMap(entry -> WellKnownAuthParameters.getCamelCaseKey(entry.getKey()), Map.Entry::getValue));
+		return params.entrySet().stream().collect(
+				Collectors.toMap(entry -> WellKnownAuthParameters.toCamelCaseKey(entry.getKey()), Map.Entry::getValue));
 	}
 
 	private static Map<String, String> convertKebabCaseKeysToCamelCase(Map<String, String> params) {

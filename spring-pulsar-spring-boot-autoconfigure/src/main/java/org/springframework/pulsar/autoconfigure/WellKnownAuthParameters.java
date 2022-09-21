@@ -16,56 +16,80 @@
 
 package org.springframework.pulsar.autoconfigure;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility class to map Pulsar auth parameters to well-known keys.
  *
  * @author Alexander Preuß
  */
-public final class WellKnownAuthParameters {
+enum WellKnownAuthParameters {
 
-	private static final Map<String, String> lowerCaseToCamelCase = new HashMap<>();
+	TENANT_DOMAIN("tenantDomain"),
 
-	static {
-		// Athenz
-		lowerCaseToCamelCase.put("tenantdomain", "tenantDomain");
-		lowerCaseToCamelCase.put("tenantservice", "tenantService");
-		lowerCaseToCamelCase.put("providerdomain", "providerDomain");
-		lowerCaseToCamelCase.put("privatekey", "privateKey");
-		lowerCaseToCamelCase.put("privatekeypath", "privateKeyPath");
-		lowerCaseToCamelCase.put("keyid", "keyId");
-		lowerCaseToCamelCase.put("autoprefetchenabled", "autoPrefetchEnabled");
-		lowerCaseToCamelCase.put("athenzconfpath", "athenzConfPath");
-		lowerCaseToCamelCase.put("principalheader", "principalHeader");
-		lowerCaseToCamelCase.put("roleheader", "roleHeader");
-		lowerCaseToCamelCase.put("ztsurl", "ztsUrl");
-		// Basic
-		lowerCaseToCamelCase.put("userid", "userId");
-		lowerCaseToCamelCase.put("password", "password");
-		// KeyStoreTls
-		lowerCaseToCamelCase.put("keystoretype", "keyStoreType");
-		lowerCaseToCamelCase.put("keystorepath", "keyStorePath");
-		lowerCaseToCamelCase.put("keystorepassword", "keyStorePassword");
-		// OAuth2
-		lowerCaseToCamelCase.put("type", "type");
-		lowerCaseToCamelCase.put("issuerurl", "issuerUrl");
-		lowerCaseToCamelCase.put("privatekey", "privateKey");
-		lowerCaseToCamelCase.put("audience", "audience");
-		lowerCaseToCamelCase.put("scope", "scope");
-		// Sasl
-		lowerCaseToCamelCase.put("sasljaasclientsectionname", "saslJaasClientSectionName");
-		lowerCaseToCamelCase.put("servertype", "serverType");
-		// Tls
-		lowerCaseToCamelCase.put("tlscertfile", "tlsCertFile");
-		lowerCaseToCamelCase.put("tlskeyfile", "tlsKeyFile");
-		// Token
-		lowerCaseToCamelCase.put("token", "token");
+	TENANT_SERVICE("tenantService"),
+
+	PROVIDER_DOMAIN("providerDomain"),
+
+	PRIVATE_KEY("privateKey"),
+
+	PRIVATE_KEY_PATH("privateKeyPath"),
+
+	KEY_ID("keyId"),
+
+	AUTO_PREFETCH_ENABLED("autoPrefetchEnabled"),
+
+	ATHENZ_CONF_PATH("athenzConfPath"),
+
+	PRINCIPAL_HEADER("principalHeader"),
+
+	ROLE_HEADER("roleHeader"),
+
+	ZTS_URL("ztsUrl"),
+
+	USER_ID("userId"),
+
+	PASSWORD("password"),
+
+	KEY_STORE_TYPE("keyStoreType"),
+
+	KEY_STORE_PATH("keyStorePath"),
+
+	KEY_STORE_PASSWORD("keyStorePassword"),
+
+	TYPE("type"),
+
+	ISSUER_URL("issuerUrl"),
+
+	AUDIENCE("audience"),
+
+	SCOPE("scope"),
+
+	SASL_JAAS_CLIENT_SECTION_NAME("saslJaasClientSectionName"),
+
+	SERVER_TYPE("serverType"),
+
+	TLS_CERT_FILE("tlsCertFile"),
+
+	TLS_KEY_FILE("tlsKeyFile"),
+
+	TOKEN("token");
+
+	private static final Map<String, String> LOWER_CASE_TO_CAMEL_CASE = Arrays.stream(values())
+			.map(WellKnownAuthParameters::getCamelCaseKey)
+			.collect(Collectors.toMap(String::toLowerCase, Function.identity()));
+
+	private final String camelCaseKey;
+
+	WellKnownAuthParameters(String camelCaseKey) {
+		this.camelCaseKey = camelCaseKey;
 	}
 
-	private WellKnownAuthParameters() {
-
+	String getCamelCaseKey() {
+		return this.camelCaseKey;
 	}
 
 	/**
@@ -75,8 +99,8 @@ public final class WellKnownAuthParameters {
 	 * @return the camel-cased auth parameter, or the lowerCaseKey if the parameter is not
 	 * found.
 	 */
-	public static String getCamelCaseKey(String lowerCaseKey) {
-		return lowerCaseToCamelCase.getOrDefault(lowerCaseKey, lowerCaseKey);
+	public static String toCamelCaseKey(String lowerCaseKey) {
+		return LOWER_CASE_TO_CAMEL_CASE.getOrDefault(lowerCaseKey, lowerCaseKey);
 	}
 
 }
