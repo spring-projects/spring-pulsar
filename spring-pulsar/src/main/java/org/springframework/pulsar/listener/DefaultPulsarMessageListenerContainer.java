@@ -174,11 +174,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final AckMode ackMode = this.containerProperties.getAckMode();
 
-		private final boolean isSharedSubscription = this.containerProperties.getSubscriptionType()
-				.equals(SubscriptionType.Shared);
-
-		private final boolean isKeySharedSubscription = this.containerProperties.getSubscriptionType()
-				.equals(SubscriptionType.Key_Shared);
+		private final SubscriptionType subscriptionType = this.containerProperties.getSubscriptionType();
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Listener(MessageListener<?> messageListener) {
@@ -482,7 +478,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private boolean isSharedSubscriptionType() {
-			return this.isSharedSubscription || this.isKeySharedSubscription;
+			return this.subscriptionType.equals(SubscriptionType.Shared)
+					|| this.subscriptionType.equals(SubscriptionType.Key_Shared);
 		}
 
 		private void handleAcks(Messages<T> messages) {
