@@ -386,7 +386,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		/**
 		 * Special scenario for batch error handling round1: messages m1,m2,...m10 are
 		 * received batch listener throws error on m3 goes through error handle flow and
-		 * tracks m3 and sets messgeList to m3,m4..m10 round2: in retry mode, no new
+		 * tracks m3 and sets messageList to m3,m4..m10 round2: in retry mode, no new
 		 * messages received If at this point all messages are handled successfully then
 		 * the normal flow will clear the handler state out. However, if the handler
 		 * throws an error again it will be one of 2 things... m3 or a subsequent message
@@ -533,7 +533,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		@Override
 		public void acknowledge(MessageId messageId) {
-			handleAckByMessageId(this.consumer, messageId);
+			AbstractAcknowledgement.handleAckByMessageId(this.consumer, messageId);
 		}
 
 		private static void handleAckByMessageId(Consumer<?> consumer, MessageId messageId) {
