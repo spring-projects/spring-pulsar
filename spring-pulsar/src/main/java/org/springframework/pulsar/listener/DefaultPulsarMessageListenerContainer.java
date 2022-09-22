@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
@@ -45,6 +46,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -514,44 +516,34 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private void handleAck(Message<T> message) {
-			try {
-				this.consumer.acknowledge(message);
-			}
-			catch (PulsarClientException pce) {
-				this.consumer.negativeAcknowledge(message);
-			}
+			AbstractAcknowledgement.handleAckByMessageId(this.consumer, message.getMessageId());
 		}
 
 	}
 
-	private static final class ConsumerAcknowledgment implements Acknowledgement {
+	private static abstract class AbstractAcknowledgement implements Acknowledgement {
 
-		private final Consumer<?> consumer;
+		private static final LogAccessor logger = new LogAccessor(LogFactory.getLog(AbstractAcknowledgement.class));
 
-		private final Message<?> message;
+		protected final Consumer<?> consumer;
 
-		ConsumerAcknowledgment(Consumer<?> consumer, Message<?> message) {
+		AbstractAcknowledgement(Consumer<?> consumer) {
 			this.consumer = consumer;
-			this.message = message;
-		}
-
-		@Override
-		public void acknowledge() {
-			try {
-				this.consumer.acknowledge(this.message);
-			}
-			catch (PulsarClientException e) {
-				this.consumer.negativeAcknowledge(this.message);
-			}
 		}
 
 		@Override
 		public void acknowledge(MessageId messageId) {
+			handleAckByMessageId(this.consumer, messageId);
+		}
+
+		private static void handleAckByMessageId(Consumer<?> consumer, MessageId messageId) {
 			try {
-				this.consumer.acknowledge(messageId);
+				consumer.acknowledge(messageId);
 			}
-			catch (PulsarClientException e) {
-				this.consumer.negativeAcknowledge(messageId);
+			catch (PulsarClientException pce) {
+				AbstractAcknowledgement.logger.warn(pce,
+						() -> String.format("Acknowledgment failed for message: [%s]", messageId));
+				consumer.negativeAcknowledge(messageId);
 			}
 		}
 
@@ -562,14 +554,30 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			catch (PulsarClientException e) {
 				for (MessageId messageId : messageIds) {
-					try {
-						this.consumer.acknowledge(messageId);
-					}
-					catch (PulsarClientException ex) {
-						this.consumer.negativeAcknowledge(messageId);
-					}
+					handleAckByMessageId(this.consumer, messageId);
 				}
 			}
+		}
+
+		@Override
+		public void nack(MessageId messageId) {
+			this.consumer.negativeAcknowledge(messageId);
+		}
+
+	}
+
+	private static final class ConsumerAcknowledgment extends AbstractAcknowledgement {
+
+		private final Message<?> message;
+
+		ConsumerAcknowledgment(Consumer<?> consumer, Message<?> message) {
+			super(consumer);
+			this.message = message;
+		}
+
+		@Override
+		public void acknowledge() {
+			acknowledge(this.message.getMessageId());
 		}
 
 		@Override
@@ -577,19 +585,12 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			this.consumer.negativeAcknowledge(this.message);
 		}
 
-		@Override
-		public void nack(MessageId messageId) {
-			this.consumer.negativeAcknowledge(messageId);
-		}
-
 	}
 
-	private static final class ConsumerBatchAcknowledgment implements Acknowledgement {
-
-		private final Consumer<?> consumer;
+	private static final class ConsumerBatchAcknowledgment extends AbstractAcknowledgement {
 
 		ConsumerBatchAcknowledgment(Consumer<?> consumer) {
-			this.consumer = consumer;
+			super(consumer);
 		}
 
 		@Override
@@ -598,40 +599,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		@Override
-		public void acknowledge(MessageId messageId) {
-			try {
-				this.consumer.acknowledge(messageId);
-			}
-			catch (PulsarClientException e) {
-				this.consumer.negativeAcknowledge(messageId);
-			}
-		}
-
-		@Override
-		public void acknowledge(List<MessageId> messageIds) {
-			try {
-				this.consumer.acknowledge(messageIds);
-			}
-			catch (PulsarClientException e) {
-				for (MessageId messageId : messageIds) {
-					try {
-						this.consumer.acknowledge(messageId);
-					}
-					catch (PulsarClientException ex) {
-						this.consumer.negativeAcknowledge(messageId);
-					}
-				}
-			}
-		}
-
-		@Override
 		public void nack() {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void nack(MessageId messageId) {
-			this.consumer.negativeAcknowledge(messageId);
 		}
 
 	}
