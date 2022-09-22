@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
@@ -85,7 +86,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		doAnswer(invocation -> {
 			latch.countDown();
 			return invocation.callRealMethod();
-		}).when(containerConsumer).acknowledge(any(Message.class));
+		}).when(containerConsumer).acknowledge(any(MessageId.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-011");
@@ -166,7 +167,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		doAnswer(invocation -> {
 			ackCallCount.incrementAndGet();
 			return invocation.callRealMethod();
-		}).when(containerConsumer).acknowledge(any(Message.class));
+		}).when(containerConsumer).acknowledge(any(MessageId.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-013");
@@ -187,7 +188,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		final int ackCalls = ackCallCount.get();
 		if (ackCalls < 5) {
 			await().atMost(Duration.ofSeconds(10))
-					.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(Message.class)));
+					.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(MessageId.class)));
 			await().atMost(Duration.ofSeconds(10)).untilAsserted(
 					() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
 			if (ackCalls == 0) {
@@ -236,7 +237,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		doAnswer(invocation -> {
 			latch.countDown();
 			return invocation.callRealMethod();
-		}).when(containerConsumer).acknowledge(any(Message.class));
+		}).when(containerConsumer).acknowledge(any(MessageId.class));
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-014");
@@ -251,7 +252,7 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		// invocation.
 		assertThat(acksObjects.size()).isEqualTo(10);
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(10)).acknowledge(any(Message.class)));
+				.untilAsserted(() -> verify(containerConsumer, times(10)).acknowledge(any(MessageId.class)));
 
 		container.stop();
 		pulsarClient.close();
