@@ -172,11 +172,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final boolean isBatchListener = this.containerProperties.isBatchListener();
 
-		private final boolean isManualAck = this.containerProperties.getAckMode().equals(AckMode.MANUAL);
-
-		private final boolean isBatchAck = this.containerProperties.getAckMode().equals(AckMode.BATCH);
-
-		private final boolean isRecordAck = this.containerProperties.getAckMode().equals(AckMode.RECORD);
+		private final AckMode ackMode = this.containerProperties.getAckMode();
 
 		private final boolean isSharedSubscription = this.containerProperties.getSubscriptionType()
 				.equals(SubscriptionType.Shared);
@@ -305,12 +301,13 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						if (messageList != null && messageList.size() > 0) {
 							if (this.batchMessageListener instanceof PulsarBatchAcknowledgingMessageListener) {
 								this.batchMessageListener.received(this.consumer, messageList,
-										this.isManualAck ? new ConsumerBatchAcknowledgment(this.consumer) : null);
+										this.ackMode.equals(AckMode.MANUAL)
+												? new ConsumerBatchAcknowledgment(this.consumer) : null);
 							}
 							else {
 								this.batchMessageListener.received(this.consumer, messageList);
 							}
-							if (this.isBatchAck) {
+							if (this.ackMode.equals(AckMode.BATCH)) {
 								try {
 									if (isSharedSubscriptionType()) {
 										this.consumer.acknowledge(messages);
@@ -348,13 +345,13 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						do {
 							try {
 								if (this.listener instanceof PulsarAcknowledgingMessageListener) {
-									this.listener.received(this.consumer, message, this.isManualAck
+									this.listener.received(this.consumer, message, this.ackMode.equals(AckMode.MANUAL)
 											? new ConsumerAcknowledgment(this.consumer, message) : null);
 								}
 								else if (this.listener != null) {
 									this.listener.received(this.consumer, message);
 								}
-								if (this.isRecordAck) {
+								if (this.ackMode.equals(AckMode.RECORD)) {
 									handleAck(message);
 								}
 								inRetryMode.compareAndSet(true, false);
@@ -364,10 +361,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 									invokeRecordListenerErrorHandler(inRetryMode, message, e);
 								}
 								else {
-									if (this.isRecordAck) {
+									if (this.ackMode.equals(AckMode.RECORD)) {
 										this.consumer.negativeAcknowledge(message);
 									}
-									else if (this.isBatchAck) {
+									else if (this.ackMode.equals(AckMode.BATCH)) {
 										this.nackableMessages.add(message.getMessageId());
 									}
 									else {
@@ -381,7 +378,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						while (inRetryMode.get());
 					}
 					// All the records are processed at this point. Handle acks.
-					if (this.isBatchAck) {
+					if (this.ackMode.equals(AckMode.BATCH)) {
 						handleAcks(messages);
 					}
 				}
@@ -466,7 +463,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.pulsarConsumerErrorHandler.recoverMessage(this.consumer, message, e);
 				// retries exhausted - if record ackmode, acknowledge, otherwise normal
 				// batch ack at the end
-				if (this.isRecordAck) {
+				if (this.ackMode.equals(AckMode.RECORD)) {
 					handleAck(message);
 				}
 			}
