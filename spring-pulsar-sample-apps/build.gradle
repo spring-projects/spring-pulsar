@@ -17,6 +17,11 @@ springBoot {
 task bootRunApp1(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'build') {
 	group = 'application'
 	mainClass = 'app1.SpringPulsarBootApp'
+	jvmArgs = [
+			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
+			"--add-opens", "java.base/java.util=ALL-UNNAMED",
+			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
+	]
 	doFirst() {
 		classpath = sourceSets.main.runtimeClasspath
 	}
@@ -25,6 +30,11 @@ task bootRunApp1(type: org.springframework.boot.gradle.tasks.run.BootRun, depend
 task bootRunApp2(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'build') {
 	group = 'application'
 	mainClass = 'app2.FailoverConsumerApp'
+	jvmArgs = [
+			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
+			"--add-opens", "java.base/java.util=ALL-UNNAMED",
+			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
+	]
 	doFirst() {
 		classpath = sourceSets.main.runtimeClasspath
 	}
