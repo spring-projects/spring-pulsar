@@ -118,7 +118,7 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	@Override
 	public C createListenerContainer(PulsarListenerEndpoint endpoint) {
 		C instance = createContainerInstance(endpoint);
-		JavaUtils.INSTANCE.acceptIfNotNull(endpoint.getSubscriptionName(), instance::setBeanName);
+		JavaUtils.INSTANCE.acceptIfNotNull(endpoint.getId(), instance::setBeanName);
 		if (endpoint instanceof AbstractPulsarListenerEndpoint) {
 			configureEndpoint((AbstractPulsarListenerEndpoint<C>) endpoint);
 		}
@@ -171,6 +171,8 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		instanceProperties.setMaxNumMessages(this.containerProperties.getMaxNumMessages());
 		instanceProperties.setMaxNumBytes(this.containerProperties.getMaxNumBytes());
 		instanceProperties.setBatchTimeoutMillis(this.containerProperties.getBatchTimeoutMillis());
+		instanceProperties.setObservationEnabled(this.containerProperties.isObservationEnabled());
+		instanceProperties.setObservationConvention(this.containerProperties.getObservationConvention());
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
 				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)

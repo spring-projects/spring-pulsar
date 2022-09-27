@@ -45,17 +45,26 @@ import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
 import org.springframework.pulsar.event.ConsumerStartedEvent;
 import org.springframework.pulsar.event.ConsumerStartingEvent;
+import org.springframework.pulsar.observation.DefaultPulsarListenerObservationConvention;
+import org.springframework.pulsar.observation.PulsarListenerObservation;
+import org.springframework.pulsar.observation.PulsarMessageReceiverContext;
 import org.springframework.scheduling.SchedulingAwareRunnable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Default implementation for {@link PulsarMessageListenerContainer}.
@@ -97,7 +106,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			containerProperties.setConsumerTaskExecutor(consumerExecutor);
 		}
 
-		this.listenerConsumer = new Listener(messageListener);
+		ObservationRegistry observationRegistry = null;
+		ApplicationContext applicationContext = getApplicationContext();
+		if (applicationContext != null) {
+			ObjectProvider<ObservationRegistry> registry = applicationContext
+					.getBeanProvider(ObservationRegistry.class);
+			observationRegistry = registry.getIfUnique();
+		}
+
+		this.listenerConsumer = new Listener(messageListener, observationRegistry);
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
 		this.listenerConsumerFuture = consumerExecutor.submit(this.listenerConsumer);
@@ -162,6 +179,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final PulsarBatchMessageListener<T> batchMessageListener;
 
+		private final ObservationRegistry observationRegistry;
+
 		private Consumer<T> consumer;
 
 		private final Set<MessageId> nackableMessages = new HashSet<>();
@@ -179,7 +198,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		private final SubscriptionType subscriptionType = this.containerProperties.getSubscriptionType();
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		Listener(MessageListener<?> messageListener) {
+		Listener(MessageListener<?> messageListener, @Nullable ObservationRegistry observationRegistry) {
 			if (messageListener instanceof PulsarBatchMessageListener) {
 				this.batchMessageListener = (PulsarBatchMessageListener<T>) messageListener;
 				this.listener = null;
@@ -192,6 +211,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.listener = null;
 				this.batchMessageListener = null;
 			}
+			this.observationRegistry = observationRegistry;
 			this.pulsarConsumerErrorHandler = getPulsarConsumerErrorHandler();
 			try {
 				final PulsarContainerProperties pulsarContainerProperties = getPulsarContainerProperties();
@@ -341,37 +361,51 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				else {
 					for (Message<T> message : messages) {
 						do {
-							try {
-								if (this.listener instanceof PulsarAcknowledgingMessageListener) {
-									this.listener.received(this.consumer, message, this.ackMode.equals(AckMode.MANUAL)
-											? new ConsumerAcknowledgment(this.consumer, message) : null);
-								}
-								else if (this.listener != null) {
-									this.listener.received(this.consumer, message);
-								}
-								if (this.ackMode.equals(AckMode.RECORD)) {
-									handleAck(message);
-								}
-								inRetryMode.compareAndSet(true, false);
+							Observation observation;
+							if (!this.containerProperties.isObservationEnabled() || this.observationRegistry == null) {
+								observation = Observation.NOOP;
 							}
-							catch (Exception e) {
-								if (this.pulsarConsumerErrorHandler != null) {
-									invokeRecordListenerErrorHandler(inRetryMode, message, e);
-								}
-								else {
-									if (this.ackMode.equals(AckMode.RECORD)) {
-										this.consumer.negativeAcknowledge(message);
+							else {
+								observation = PulsarListenerObservation.LISTENER_OBSERVATION.observation(
+										this.containerProperties.getObservationConvention(),
+										DefaultPulsarListenerObservationConvention.INSTANCE,
+										new PulsarMessageReceiverContext(message, getBeanName()),
+										this.observationRegistry);
+							}
+							observation.observe(() -> {
+								try {
+									if (this.listener instanceof PulsarAcknowledgingMessageListener) {
+										this.listener.received(this.consumer, message,
+												this.ackMode.equals(AckMode.MANUAL)
+														? new ConsumerAcknowledgment(this.consumer, message) : null);
 									}
-									else if (this.ackMode.equals(AckMode.BATCH)) {
-										this.nackableMessages.add(message.getMessageId());
+									else if (this.listener != null) {
+										this.listener.received(this.consumer, message);
+									}
+									if (this.ackMode.equals(AckMode.RECORD)) {
+										handleAck(message);
+									}
+									inRetryMode.compareAndSet(true, false);
+								}
+								catch (Exception e) {
+									if (this.pulsarConsumerErrorHandler != null) {
+										invokeRecordListenerErrorHandler(inRetryMode, message, e);
 									}
 									else {
-										throw new IllegalStateException(String.format(
-												"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks",
-												message.getMessageId()), e);
+										if (this.ackMode.equals(AckMode.RECORD)) {
+											this.consumer.negativeAcknowledge(message);
+										}
+										else if (this.ackMode.equals(AckMode.BATCH)) {
+											this.nackableMessages.add(message.getMessageId());
+										}
+										else {
+											throw new IllegalStateException(String.format(
+													"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks",
+													message.getMessageId()), e);
+										}
 									}
 								}
-							}
+							});
 						}
 						while (inRetryMode.get());
 					}

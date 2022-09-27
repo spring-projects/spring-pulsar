@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.backoff.BackOff;
 
 /**
@@ -130,6 +131,24 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getPulsarConsumerErrorHandler()).isEqualTo(pulsarConsumerErrorHandler);
+	}
+
+	@Test
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	void observationConfigAppliedOnChildContainer() throws Exception {
+		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+
+		PulsarListenerObservationConvention customObservationConvention = mock(
+				PulsarListenerObservationConvention.class);
+		concurrentContainer.getContainerProperties().setObservationEnabled(true);
+		concurrentContainer.getContainerProperties().setObservationConvention(customObservationConvention);
+		concurrentContainer.start();
+
+		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		assertThat(childContainer.getContainerProperties().getObservationConvention())
+				.isSameAs(customObservationConvention);
+		assertThat(childContainer.getContainerProperties().isObservationEnabled()).isTrue();
 	}
 
 	@Test

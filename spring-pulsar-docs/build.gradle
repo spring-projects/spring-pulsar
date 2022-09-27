@@ -5,14 +5,21 @@ plugins {
 
 description = 'Spring Pulsar Docs'
 
+ext {
+	micrometerDocsVersion="1.0.0-SNAPSHOT"
+}
+
 configurations {
 	configurationProperties
+	observationDocs
 }
 
 dependencies {
 	api project (':spring-pulsar')
 	api 'org.springframework.boot:spring-boot-starter'
 	configurationProperties(project(path: ":spring-pulsar-spring-boot-autoconfigure", configuration: "configurationPropertiesMetadata"))
+	observationDocs "io.micrometer:micrometer-docs-generator-spans:$micrometerDocsVersion"
+	observationDocs "io.micrometer:micrometer-docs-generator-metrics:$micrometerDocsVersion"
 }
 
 task aggregatedJavadoc(type: Javadoc) {
@@ -53,6 +60,29 @@ task documentConfigurationProperties(type: org.springframework.pulsar.gradle.doc
 	outputDir = file("${buildDir}/docs/generated/")
 }
 
+def observationsInputDir = file("${rootDir}/spring-pulsar/src/main/java/org/springframework/pulsar/observation").absolutePath
+def observationsOutputDir = file("${buildDir}/docs/generated/observation/").absolutePath
+
+task generateObservabilityMetricsDocs(type: JavaExec) {
+	mainClass = 'io.micrometer.docs.metrics.DocsFromSources'
+	inputs.dir(observationsInputDir)
+	outputs.dir(observationsOutputDir)
+	classpath configurations.observationDocs
+	args observationsInputDir, '.*', observationsOutputDir
+}
+
+task generateObservabilitySpansDocs(type: JavaExec) {
+	mainClass = 'io.micrometer.docs.spans.DocsFromSources'
+	inputs.dir(observationsInputDir)
+	outputs.dir(observationsOutputDir)
+	classpath configurations.observationDocs
+	args observationsInputDir, '.*', observationsOutputDir
+}
+
+task generateObservabilityDocs {
+	dependsOn generateObservabilityMetricsDocs, generateObservabilitySpansDocs
+}
+
 tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 	asciidoctorj {
 		fatalWarnings = ['^((?!successfully validated).)*$']
@@ -81,7 +111,7 @@ task asciidoctorMultipage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 }
 
 syncDocumentationSourceForAsciidoctor {
-	dependsOn documentConfigurationProperties
+	dependsOn documentConfigurationProperties, generateObservabilityDocs
 	from("${buildDir}/docs/generated") {
 		into "asciidoc"
 	}
@@ -91,7 +121,7 @@ syncDocumentationSourceForAsciidoctor {
 }
 
 syncDocumentationSourceForAsciidoctorMultipage {
-	dependsOn documentConfigurationProperties
+	dependsOn documentConfigurationProperties, generateObservabilityDocs
 	from("${buildDir}/docs/generated") {
 		into "asciidoc"
 	}
@@ -101,7 +131,7 @@ syncDocumentationSourceForAsciidoctorMultipage {
 }
 
 syncDocumentationSourceForAsciidoctorPdf {
-	dependsOn documentConfigurationProperties
+	dependsOn documentConfigurationProperties, generateObservabilityDocs
 	from("${buildDir}/docs/generated") {
 		into "asciidoc"
 	}

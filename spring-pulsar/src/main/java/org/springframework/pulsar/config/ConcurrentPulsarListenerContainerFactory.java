@@ -73,7 +73,6 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		}
 
 		properties.setSchemaType(endpoint.getSchemaType());
-
 		return new ConcurrentPulsarMessageListenerContainer<T>(getPulsarConsumerFactory(), properties);
 	}
 

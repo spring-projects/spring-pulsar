@@ -1222,6 +1222,27 @@ PulsarTopic partitionedTopic {
 ----
 ====
 
+[[micrometer]]
+=== Observability
+
+[[observation]]
+==== Micrometer Observation
+The `PulsarTemplate` and `PulsarListener` are instrumented with the Micrometer observations API.
+When enabled, send and receive operations are traced and timed.
+
+To enable, set `observationEnabled` on each component.
+
+===== Custom tags
+The default implementation adds the `bean.name` tag for template observations and `listener.id` tag for listener observations.
+To add other tags to timers/traces, configure a custom `PulsarTemplateObservationConvention` or `PulsarListenerObservationConvention` to the template or listener container, respectively.
+
+TIP: You can either subclass `DefaultPulsarTemplateObservationConvention` or `DefaultPulsarListenerObservationConvention` or provide completely new implementations.
+
+include::observation/_metrics.adoc[leveloffset=+2]
+
+include::observation/_spans.adoc[leveloffset=+2]
+
+Refer to https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
 
 ==== Appendix
 The reference documentation has the following appendices:
