@@ -17,6 +17,8 @@ ext {
 	jaywayJsonPathVersion = '2.6.0'
 	junitJupiterVersion = '5.9.0'
 	log4jVersion = '2.18.0'
+	micrometerVersion = '1.10.0-SNAPSHOT'
+	micrometerTracingVersion = '1.0.0-SNAPSHOT'
 	mockitoVersion = '4.6.1'
 	protobufJavaVersion = '3.21.5'
 	pulsarTestcontainersVersion = '1.17.3'
@@ -35,6 +37,8 @@ dependencies {
 	api platform("org.junit:junit-bom:$junitJupiterVersion")
 	api platform("org.mockito:mockito-bom:$mockitoVersion")
 	api platform("org.springframework:spring-framework-bom:$springVersion")
+	api platform("io.micrometer:micrometer-bom:$micrometerVersion")
+	api platform("io.micrometer:micrometer-tracing-bom:$micrometerTracingVersion")
 
 	constraints {
 		api "com.github.ben-manes.caffeine:caffeine:$caffeineVersion"

@@ -29,7 +29,19 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
+import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
+import org.springframework.pulsar.observation.PulsarMessageSenderContext;
+import org.springframework.pulsar.observation.PulsarTemplateObservation;
+import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
+
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * A thread-safe template for executing high-level Pulsar operations.
@@ -39,7 +51,8 @@ import org.springframework.core.log.LogAccessor;
  * @author Chris Bono
  * @author Alexander Preuß
  */
-public class PulsarTemplate<T> implements PulsarOperations<T> {
+public class PulsarTemplate<T>
+		implements PulsarOperations<T>, ApplicationContextAware, BeanNameAware, SmartInitializingSingleton {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
@@ -47,7 +60,17 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 
 	private final List<ProducerInterceptor> interceptors;
 
+	private ApplicationContext applicationContext;
+
+	private String beanName;
+
 	private Schema<T> schema;
+
+	private boolean observationEnabled;
+
+	private PulsarTemplateObservationConvention observationConvention;
+
+	private ObservationRegistry observationRegistry;
 
 	/**
 	 * Construct a template instance.
@@ -92,12 +115,50 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 		return new SendMessageBuilderImpl<>(this, message);
 	}
 
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) {
+		this.applicationContext = applicationContext;
+	}
+
+	@Override
+	public void setBeanName(String beanName) {
+		this.beanName = beanName;
+	}
+
 	/**
-	 * Setter for schema.
+	 * Set the schema to use on this template.
 	 * @param schema provides the {@link Schema} used on this template
 	 */
 	public void setSchema(Schema<T> schema) {
 		this.schema = schema;
+	}
+
+	/**
+	 * Set to true to enable observation via Micrometer.
+	 * @param observationEnabled true to enable.
+	 */
+	public void setObservationEnabled(boolean observationEnabled) {
+		this.observationEnabled = observationEnabled;
+	}
+
+	/**
+	 * Set a custom observation convention.
+	 * @param observationConvention the convention.
+	 */
+	public void setObservationConvention(PulsarTemplateObservationConvention observationConvention) {
+		this.observationConvention = observationConvention;
+	}
+
+	@Override
+	public void afterSingletonsInstantiated() {
+		// TODO is this how we want to do this? What about SBAC?
+		// TODO when would AC be null? Should we assert or at least log the fact if it
+		// happens?
+		if (this.observationEnabled && this.observationRegistry == null && this.applicationContext != null) {
+			ObjectProvider<ObservationRegistry> registry = this.applicationContext
+					.getBeanProvider(ObservationRegistry.class);
+			this.observationRegistry = registry.getIfUnique();
+		}
 	}
 
 	private MessageId doSend(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
@@ -115,22 +176,49 @@ public class PulsarTemplate<T> implements PulsarOperations<T> {
 			ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
-		final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter, producerCustomizer);
-		TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
-		if (typedMessageBuilderCustomizer != null) {
-			typedMessageBuilderCustomizer.customize(messageBuilder);
+
+		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
+		Observation observation = newObservation(senderContext);
+		try {
+			observation.start();
+			final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter, producerCustomizer);
+			TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
+			if (typedMessageBuilderCustomizer != null) {
+				typedMessageBuilderCustomizer.customize(messageBuilder);
+			}
+			senderContext.properties().forEach(messageBuilder::property); // propagate
+																			// props to
+																			// message
+			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
+				if (ex == null) {
+					this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
+					observation.stop();
+				}
+				else {
+					this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
+					observation.error(ex);
+					observation.stop();
+				}
+				ProducerUtils.closeProducerAsync(producer, this.logger);
+			});
 		}
-		return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
-			if (ex == null) {
-				this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
-				// TODO success metrics
-			}
-			else {
-				this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
-				// TODO fail metrics
-			}
-			ProducerUtils.closeProducerAsync(producer, this.logger);
-		});
+		catch (RuntimeException ex) {
+			observation.error(ex);
+			observation.stop();
+			throw ex;
+		}
+	}
+
+	private Observation newObservation(PulsarMessageSenderContext senderContext) {
+		Observation observation;
+		if (!this.observationEnabled || this.observationRegistry == null) {
+			observation = Observation.NOOP;
+		}
+		else {
+			observation = PulsarTemplateObservation.TEMPLATE_OBSERVATION.observation(this.observationConvention,
+					DefaultPulsarTemplateObservationConvention.INSTANCE, senderContext, this.observationRegistry);
+		}
+		return observation;
 	}
 
 	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter,

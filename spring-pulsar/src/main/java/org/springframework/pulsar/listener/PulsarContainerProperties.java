@@ -24,6 +24,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.Assert;
 
 /**
@@ -63,6 +64,10 @@ public class PulsarContainerProperties {
 	private boolean batchListener;
 
 	private AckMode ackMode = AckMode.BATCH;
+
+	private boolean observationEnabled;
+
+	private PulsarListenerObservationConvention observationConvention;
 
 	private Properties pulsarConsumerProperties = new Properties();
 
@@ -138,6 +143,30 @@ public class PulsarContainerProperties {
 
 	public void setAckMode(AckMode ackMode) {
 		this.ackMode = ackMode;
+	}
+
+	public boolean isObservationEnabled() {
+		return this.observationEnabled;
+	}
+
+	/**
+	 * Set to true to enable observations.
+	 * @param observationEnabled true to enable.
+	 */
+	public void setObservationEnabled(boolean observationEnabled) {
+		this.observationEnabled = observationEnabled;
+	}
+
+	public PulsarListenerObservationConvention getObservationConvention() {
+		return this.observationConvention;
+	}
+
+	/**
+	 * Set a custom observation convention.
+	 * @param observationConvention the convention.
+	 */
+	public void setObservationConvention(PulsarListenerObservationConvention observationConvention) {
+		this.observationConvention = observationConvention;
 	}
 
 	public Duration getConsumerStartTimeout() {

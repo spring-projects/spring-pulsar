@@ -111,7 +111,7 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 	 */
 	@Nullable
 	public String getBeanName() {
-		return this.beanName;
+		return this.beanName; // the container factory sets this to the listener id
 	}
 
 	@Override
