@@ -43,7 +43,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
-public class PulsarAdministrationTests extends AbstractContainerBaseTests {
+public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 
 	private static final String NAMESPACE = "public/default";
 
@@ -73,12 +73,13 @@ public class PulsarAdministrationTests extends AbstractContainerBaseTests {
 
 		@Bean
 		PulsarAdmin pulsarAdminClient() throws PulsarClientException {
-			return PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build();
+			return PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()).build();
 		}
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()));
+			return new PulsarAdministration(
+					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
 		}
 
 	}

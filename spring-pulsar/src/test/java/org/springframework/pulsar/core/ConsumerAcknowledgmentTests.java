@@ -58,7 +58,7 @@ import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 /**
  * @author Soby Chacko
  */
-class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
+class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 
 	@Test
 	void testRecordAck() throws Exception {
@@ -67,7 +67,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		strings.add("cons-ack-tests-011");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "cons-ack-tests-sb-011");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -108,7 +109,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		strings.add("cons-ack-tests-012");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "cons-ack-tests-sb-012");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -144,7 +146,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		Map<String, Object> config = new HashMap<>();
 		config.put("topicNames", Collections.singleton("cons-ack-tests-013"));
 		config.put("subscriptionName", "cons-ack-tests-sb-013");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -212,7 +215,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		strings.add("cons-ack-tests-014");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "cons-ack-tests-sb-014");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -266,7 +270,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		strings.add("cons-ack-tests-015");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "cons-ack-tests-sb-015");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -314,7 +319,8 @@ class ConsumerAcknowledgmentTests extends AbstractContainerBaseTests {
 		strings.add("cons-ack-tests-016");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "cons-ack-tests-sb-016");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 

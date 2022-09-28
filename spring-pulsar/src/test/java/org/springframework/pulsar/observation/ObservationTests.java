@@ -43,13 +43,13 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
-import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTestContainerSupport;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
@@ -83,7 +83,7 @@ import io.micrometer.tracing.test.simple.SimpleTracer;
  */
 @SpringJUnitConfig
 @DirtiesContext
-public class ObservationTests extends AbstractContainerBaseTests {
+public class ObservationTests implements PulsarTestContainerSupport {
 
 	private static final String LISTENER_ID_TAG = "spring.pulsar.listener.id";
 
@@ -179,7 +179,7 @@ public class ObservationTests extends AbstractContainerBaseTests {
 
 		@Bean
 		public PulsarClientConfiguration pulsarClientConfiguration() {
-			return new PulsarClientConfiguration(Map.of("serviceUrl", getPulsarBrokerUrl()));
+			return new PulsarClientConfiguration(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
 		}
 
 		@Bean(name = "observationTestsTemplate")
@@ -223,7 +223,8 @@ public class ObservationTests extends AbstractContainerBaseTests {
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()));
+			return new PulsarAdministration(
+					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
 		}
 
 		@Bean

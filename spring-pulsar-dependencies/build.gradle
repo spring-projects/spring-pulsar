@@ -21,7 +21,7 @@ ext {
 	micrometerTracingVersion = '1.0.0-SNAPSHOT'
 	mockitoVersion = '4.6.1'
 	protobufJavaVersion = '3.21.5'
-	pulsarTestcontainersVersion = '1.17.3'
+	testcontainersVersion = '1.17.3'
 	pulsarVersion = '2.10.1'
 	reactorVersion = '2022.0.0-SNAPSHOT'
 	springBootVersion = '3.0.0-SNAPSHOT'
@@ -37,6 +37,7 @@ dependencies {
 	api platform("org.junit:junit-bom:$junitJupiterVersion")
 	api platform("org.mockito:mockito-bom:$mockitoVersion")
 	api platform("org.springframework:spring-framework-bom:$springVersion")
+	api platform("org.testcontainers:testcontainers-bom:$testcontainersVersion")
 	api platform("io.micrometer:micrometer-bom:$micrometerVersion")
 	api platform("io.micrometer:micrometer-tracing-bom:$micrometerTracingVersion")
 
@@ -58,6 +59,5 @@ dependencies {
 		api "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
 		api "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 		api "org.springframework.retry:spring-retry:$springRetryVersion"
-		api "org.testcontainers:pulsar:$pulsarTestcontainersVersion"
 	}
 }

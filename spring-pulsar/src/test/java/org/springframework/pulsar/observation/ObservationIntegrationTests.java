@@ -37,13 +37,13 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
-import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTestContainerSupport;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.tck.MeterRegistryAssert;
@@ -62,7 +62,7 @@ import io.micrometer.tracing.test.simple.SpansAssert;
  * @author Chris Bono
  * @see SampleTestRunner
  */
-public class ObservationIntegrationTests extends SampleTestRunner {
+public class ObservationIntegrationTests extends SampleTestRunner implements PulsarTestContainerSupport {
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -110,7 +110,7 @@ public class ObservationIntegrationTests extends SampleTestRunner {
 
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
-	static class ObservationIntegrationTestAppConfig extends AbstractContainerBaseTests {
+	static class ObservationIntegrationTestAppConfig {
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
@@ -124,7 +124,7 @@ public class ObservationIntegrationTests extends SampleTestRunner {
 
 		@Bean
 		public PulsarClientConfiguration pulsarClientConfiguration() {
-			return new PulsarClientConfiguration(Map.of("serviceUrl", getPulsarBrokerUrl()));
+			return new PulsarClientConfiguration(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
 		}
 
 		@Bean
@@ -150,7 +150,8 @@ public class ObservationIntegrationTests extends SampleTestRunner {
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()));
+			return new PulsarAdministration(
+					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
 		}
 
 		@Bean

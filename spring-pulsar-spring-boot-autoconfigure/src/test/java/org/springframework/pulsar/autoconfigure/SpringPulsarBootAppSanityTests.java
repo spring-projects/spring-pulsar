@@ -35,7 +35,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
  * @author Chris Bono
  */
 @SpringBootTest(classes = SpringPulsarBootTestApp.class)
-public class SpringPulsarBootAppSanityTests extends AbstractContainerBaseTests {
+class SpringPulsarBootAppSanityTests implements PulsarTestContainerSupport {
 
 	@Test
 	void appStartsWithAutoConfiguredSpringPulsarComponents(

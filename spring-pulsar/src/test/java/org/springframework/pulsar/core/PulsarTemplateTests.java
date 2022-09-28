@@ -59,12 +59,13 @@ import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
  * @author Chris Bono
  * @author Alexander Preuß
  */
-class PulsarTemplateTests extends AbstractContainerBaseTests {
+class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("interceptorInvocationTestProvider")
 	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws Exception {
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build()) {
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
 			PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client,
 					Collections.singletonMap("topicName", topic));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
@@ -86,7 +87,8 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 	@Test
 	void sendMessageWithSpecificSchemaTest() throws Exception {
 		String topic = "smt-specific-schema-topic";
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build()) {
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
 			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
 					.subscriptionName("test-specific-schema-subscription").subscribe()) {
 				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
@@ -123,11 +125,13 @@ class PulsarTemplateTests extends AbstractContainerBaseTests {
 		}
 
 		if (router != null) {
-			try (PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build()) {
+			try (PulsarAdmin admin = PulsarAdmin.builder()
+					.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()).build()) {
 				admin.topics().createPartitionedTopic("persistent://public/default/" + topic, 1);
 			}
 		}
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build()) {
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
 			try (Consumer<String> consumer = client.newConsumer(Schema.STRING).topic(topic)
 					.subscriptionName(subscription).subscribe()) {
 				Map<String, Object> producerConfig = testArgs.useSpecificTopic ? Collections.emptyMap()

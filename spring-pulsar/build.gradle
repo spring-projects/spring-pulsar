@@ -36,6 +36,7 @@ dependencies {
 	testImplementation 'org.hamcrest:hamcrest'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
 }
 
