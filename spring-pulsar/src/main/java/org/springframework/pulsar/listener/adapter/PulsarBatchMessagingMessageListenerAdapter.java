@@ -18,8 +18,10 @@ package org.springframework.pulsar.listener.adapter;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Messages;
@@ -68,58 +70,83 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 	@Override
 	public void received(Consumer<V> consumer, List<org.apache.pulsar.client.api.Message<V>> msg,
 			@Nullable Acknowledgement acknowledgement) {
-		Message<?> message;
-		if (!isConsumerRecordList()) {
-			if (isMessageList()) {
-				List<Message<?>> messages = new ArrayList<>(msg.size());
-				for (org.apache.pulsar.client.api.Message<V> record : msg) {
-					messages.add(toMessagingMessage(record, consumer));
+		Message<?> message = null;
+		Object theRecord = null;
+
+		if (isPulsarMessageList() && !isHeaderFound()) { // List<PulsarMessage>
+			theRecord = msg; // the incoming list as is.
+		}
+		else if (isPulsarMessageList() && isHeaderFound()) { // List<PulsarMessage>,
+																// @Header
+			List<Message<?>> messages = toSpringMessages(consumer, msg);
+			final Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
+			List<Object> list1 = new ArrayList<>(msg);
+			message = MessageBuilder.withPayload(list1).copyHeaders(aggregatedHeaders).build();
+		}
+		else if (isMessageList() && !isHeaderFound()) { // List<SpringMessage>
+			List<Message<?>> messages = toSpringMessages(consumer, msg);
+			message = MessageBuilder.withPayload(messages).build();
+		}
+		else if (isMessageList() && isHeaderFound()) { // List<SpringMessage>, @Header
+			List<Message<?>> messages = toSpringMessages(consumer, msg);
+			final Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
+			message = MessageBuilder.withPayload(messages).copyHeaders(aggregatedHeaders).build();
+		}
+		else if (this.isSimpleExtraction()) { // List<Object>
+			List<V> list = new ArrayList<>(msg.size());
+			msg.stream().iterator().forEachRemaining(vMessage -> list.add(vMessage.getValue()));
+			theRecord = list;
+		}
+		else if (isHeaderFound()) { // List<Object>, @Header
+			List<Message<?>> messages = toSpringMessages(consumer, msg);
+			final Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
+			List<V> list = new ArrayList<>(msg.size());
+			msg.stream().iterator().forEachRemaining(vMessage -> list.add(vMessage.getValue()));
+			message = MessageBuilder.withPayload(list).copyHeaders(aggregatedHeaders).build();
+		}
+
+		if (isConsumerRecords()) { // Messages<String>
+			theRecord = new Messages<V>() {
+
+				@Override
+				public Iterator<org.apache.pulsar.client.api.Message<V>> iterator() {
+					return msg.iterator();
 				}
-				message = MessageBuilder.withPayload(messages).build();
-			}
-			else {
-				message = toMessagingMessage(msg, consumer);
-			}
+
+				@Override
+				public int size() {
+					return msg.size();
+				}
+			};
 		}
-		else {
-			message = MessageBuilder.withPayload(msg).build();
-		}
-		logger.debug(() -> "Processing [" + message + "]");
-
-		// In order to avoid clash with target List payload type.
-		final Messages<V> messages = new Messages<>() {
-
-			@Override
-			public Iterator<org.apache.pulsar.client.api.Message<V>> iterator() {
-				return msg.iterator();
-			}
-
-			@Override
-			public int size() {
-				return msg.size();
-			}
-		};
-		invoke(messages, consumer, message, acknowledgement);
+		invoke(theRecord, consumer, message, acknowledgement);
 	}
 
-	protected void invoke(Object records, Consumer<V> consumer, final Message<?> messageArg,
-			Acknowledgement acknowledgement) {
+	private Map<String, List<Object>> withAggregatedHeaders(List<Message<?>> messages) {
+		final Map<String, List<Object>> aggregatedHeaders = new HashMap<>();
+		for (Message<?> message : messages) {
+			message.getHeaders().forEach((s, o) -> {
+				List<Object> objects = aggregatedHeaders.computeIfAbsent(s, k -> new ArrayList<>());
+				objects.add(o);
+			});
+		}
+		return aggregatedHeaders;
+	}
 
-		Message<?> message = messageArg;
+	private List<Message<?>> toSpringMessages(Consumer<V> consumer, List<org.apache.pulsar.client.api.Message<V>> msg) {
+		List<Message<?>> messages = new ArrayList<>(msg.size());
+		msg.stream().iterator().forEachRemaining(record -> messages.add(toMessagingMessage(record, consumer)));
+		return messages;
+	}
+
+	protected void invoke(Object records, Consumer<V> consumer, final Message<?> message,
+			Acknowledgement acknowledgement) {
 		try {
-			Object result = invokeHandler(records, message, consumer, acknowledgement);
-			// if (result != null) {
-			// handleResult(result, records, message);
-			// }
+			invokeHandler(records, message, consumer, acknowledgement);
 		}
 		catch (Exception e) {
 			throw e;
 		}
-	}
-
-	protected Message<?> toMessagingMessage(List<org.apache.pulsar.client.api.Message<V>> msg, Consumer<V> consumer) {
-
-		return getBatchMessageConverter().toMessage(msg, consumer, getType());
 	}
 
 }

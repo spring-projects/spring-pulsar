@@ -41,6 +41,7 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.core.SchemaUtils;
@@ -131,11 +132,13 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		MethodParameter messageParameter = null;
 		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						|| !methodParameter1.getParameterType().equals(Acknowledgement.class))
+						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
+						|| !methodParameter1.hasParameterAnnotation(Header.class))
 				.findFirst();
 		final long count = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						&& !methodParameter1.getParameterType().equals(Acknowledgement.class))
+						&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
+						&& !methodParameter1.hasParameterAnnotation(Header.class))
 				.count();
 		Assert.isTrue(count == 1, "More than 1 expected payload types found");
 		if (parameter.isPresent()) {
@@ -222,7 +225,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
-		if (Message.class.isAssignableFrom(resolvableType.getRawClass())) {
+		if (Message.class.isAssignableFrom(resolvableType.getRawClass())
+				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass())) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
 		return resolvableType;
@@ -230,7 +234,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	private boolean isContainerType(Class<?> rawClass) {
 		return rawClass.isAssignableFrom(List.class) || rawClass.isAssignableFrom(Message.class)
-				|| rawClass.isAssignableFrom(Messages.class);
+				|| rawClass.isAssignableFrom(Messages.class)
+				|| rawClass.isAssignableFrom(org.springframework.messaging.Message.class);
 	}
 
 	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {

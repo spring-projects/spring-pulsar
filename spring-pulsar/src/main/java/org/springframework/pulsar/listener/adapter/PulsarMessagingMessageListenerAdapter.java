@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.logging.LogFactory;
@@ -37,8 +36,10 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeConverter;
 import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.converter.SmartMessageConverter;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.pulsar.listener.Acknowledgement;
+import org.springframework.pulsar.support.DefaultPulsarMessageHeaderMapper;
 import org.springframework.pulsar.support.converter.PulsarMessagingMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
@@ -64,19 +65,22 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 	private HandlerAdapter handlerMethod;
 
-	private boolean conversionNeeded = true;
+	private boolean headerFound = false;
 
-	private boolean messageReturnType;
+	private boolean simpleExtraction = false;
 
-	private boolean isConsumerRecordList;
+	private boolean isPulsarMessageList;
 
-	private boolean isMessageList;
+	private boolean isSpringMessageList;
+
+	private boolean isSpringMessage;
 
 	private boolean isConsumerRecords;
 
 	private boolean converterSet;
 
-	private PulsarRecordMessageConverter<V> messageConverter = new PulsarMessagingMessageConverter<V>();
+	private PulsarRecordMessageConverter<V> messageConverter = new PulsarMessagingMessageConverter<V>(
+			new DefaultPulsarMessageHeaderMapper());
 
 	private Type fallbackType = Object.class;
 
@@ -112,16 +116,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		this.handlerMethod = handlerMethod;
 	}
 
-	protected boolean isConsumerRecordList() {
-		return this.isConsumerRecordList;
-	}
-
-	public boolean isConsumerRecords() {
-		return this.isConsumerRecords;
-	}
-
-	public boolean isConversionNeeded() {
-		return this.conversionNeeded;
+	protected boolean isPulsarMessageList() {
+		return this.isPulsarMessageList;
 	}
 
 	public void setBeanResolver(BeanResolver beanResolver) {
@@ -131,7 +127,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 	}
 
 	protected boolean isMessageList() {
-		return this.isMessageList;
+		return this.isSpringMessageList;
 	}
 
 	protected org.springframework.messaging.Message<?> toMessagingMessage(Message<V> record, Consumer<V> consumer) {
@@ -143,12 +139,6 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 		try {
 			return this.handlerMethod.invoke(message, data, consumer, acknowledgement);
-			// if (data instanceof List && !this.isConsumerRecordList) {
-			// return this.handlerMethod.invoke(message, consumer);
-			// }
-			// else {
-			// return this.handlerMethod.invoke(message, data, consumer);
-			// }
 		}
 		catch (Exception ex) {
 			throw new MessageConversionException("Cannot handle message", ex);
@@ -159,10 +149,32 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		if (method == null) {
 			return null;
 		}
-
 		Type genericParameterType = null;
-		int allowedBatchParameters = 1;
-		int notConvertibleParameters = 0;
+
+		boolean pulsarMessageFound = false;
+		boolean collectionFound = false;
+
+		for (int i = 0; i < method.getParameterCount(); i++) {
+			MethodParameter methodParameter = new MethodParameter(method, i);
+			Type parameterType = methodParameter.getGenericParameterType();
+
+			if (methodParameter.hasParameterAnnotation(Header.class)) {
+				this.headerFound = true;
+			}
+			else if (parameterIsType(parameterType, org.springframework.messaging.Message.class)) {
+				this.isSpringMessage = true;
+			}
+			else if (parameterIsType(parameterType, Message.class)) {
+				pulsarMessageFound = true;
+			}
+			else if (parameterIsType(parameterType, List.class) || parameterIsType(parameterType, Messages.class)) {
+				collectionFound = true;
+			}
+		}
+
+		if (!this.headerFound && !this.isSpringMessage && !pulsarMessageFound && !collectionFound) {
+			this.simpleExtraction = true;
+		}
 
 		for (int i = 0; i < method.getParameterCount(); i++) {
 			MethodParameter methodParameter = new MethodParameter(method, i);
@@ -173,10 +185,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 			 */
 			Type parameterType = methodParameter.getGenericParameterType();
 			boolean isNotConvertible = parameterIsType(parameterType, Message.class);
-			boolean isConsumer = parameterIsType(parameterType, Consumer.class);
-			if (isNotConvertible) {
-				notConvertibleParameters++;
-			}
+
 			if (!isNotConvertible && !isMessageWithNoTypeInfo(parameterType)
 					&& (methodParameter.getParameterAnnotations().length == 0
 							|| methodParameter.hasParameterAnnotation(Payload.class))) {
@@ -189,37 +198,13 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 					break;
 				}
 			}
-			else {
-				if (isConsumer) {
-					allowedBatchParameters++;
-				}
-				else {
-					if (parameterType instanceof ParameterizedType
-							&& ((ParameterizedType) parameterType).getRawType().equals(Consumer.class)) {
-						allowedBatchParameters++;
-					}
-				}
-			}
 		}
-
-		if (notConvertibleParameters == method.getParameterCount() && method.getReturnType().equals(void.class)) {
-			this.conversionNeeded = false;
-		}
-		boolean validParametersForBatch = method.getGenericParameterTypes().length <= allowedBatchParameters;
-
-		if (!validParametersForBatch) {
-			String stateMessage = "A parameter of type '%s' must be the only parameter "
-					+ "(except for an optional 'Acknowledgment' and/or 'Consumer' "
-					+ "and/or '@Header(KafkaHeaders.GROUP_ID) String groupId'";
-		}
-		this.messageReturnType = returnTypeMessageOrCollectionOf(method);
 		return genericParameterType;
 	}
 
 	private Type extractGenericParameterTypFromMethodParameter(MethodParameter methodParameter) {
 		Type genericParameterType = methodParameter.getGenericParameterType();
-		if (genericParameterType instanceof ParameterizedType) {
-			ParameterizedType parameterizedType = (ParameterizedType) genericParameterType;
+		if (genericParameterType instanceof ParameterizedType parameterizedType) {
 			if (parameterizedType.getRawType().equals(org.springframework.messaging.Message.class)) {
 				genericParameterType = ((ParameterizedType) genericParameterType).getActualTypeArguments()[0];
 			}
@@ -227,13 +212,18 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 					&& parameterizedType.getActualTypeArguments().length == 1) {
 
 				Type paramType = parameterizedType.getActualTypeArguments()[0];
-				this.isConsumerRecordList = paramType instanceof ParameterizedType
+				this.isPulsarMessageList = paramType instanceof ParameterizedType
 						&& ((ParameterizedType) paramType).getRawType().equals(Message.class);
 				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
 						.getRawType().equals(org.springframework.messaging.Message.class);
-				this.isMessageList = paramType.equals(org.springframework.messaging.Message.class) || messageHasGeneric;
+				this.isSpringMessageList = paramType.equals(org.springframework.messaging.Message.class)
+						|| messageHasGeneric;
 				if (messageHasGeneric) {
 					genericParameterType = ((ParameterizedType) paramType).getActualTypeArguments()[0];
+				}
+
+				if (!this.isSpringMessageList && !this.isPulsarMessageList && !isHeaderFound()) {
+					this.simpleExtraction = true;
 				}
 			}
 			else {
@@ -243,33 +233,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		return genericParameterType;
 	}
 
-	public static boolean returnTypeMessageOrCollectionOf(Method method) {
-		Type returnType = method.getGenericReturnType();
-		if (returnType.equals(org.springframework.messaging.Message.class)) {
-			return true;
-		}
-		if (returnType instanceof ParameterizedType) {
-			ParameterizedType prt = (ParameterizedType) returnType;
-			Type rawType = prt.getRawType();
-			if (rawType.equals(org.springframework.messaging.Message.class)) {
-				return true;
-			}
-			if (rawType.equals(Collection.class)) {
-				Type collectionType = prt.getActualTypeArguments()[0];
-				if (collectionType.equals(org.springframework.messaging.Message.class)) {
-					return true;
-				}
-				return collectionType instanceof ParameterizedType && ((ParameterizedType) collectionType).getRawType()
-						.equals(org.springframework.messaging.Message.class);
-			}
-		}
-		return false;
-
-	}
-
 	private boolean parameterIsType(Type parameterType, Type type) {
-		if (parameterType instanceof ParameterizedType) {
-			ParameterizedType parameterizedType = (ParameterizedType) parameterType;
+		if (parameterType instanceof ParameterizedType parameterizedType) {
 			Type rawType = parameterizedType.getRawType();
 			if (rawType.equals(type)) {
 				return true;
@@ -279,20 +244,29 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 	}
 
 	private boolean isMessageWithNoTypeInfo(Type parameterType) {
-		if (parameterType instanceof ParameterizedType) {
-			ParameterizedType parameterizedType = (ParameterizedType) parameterType;
+		if (parameterType instanceof ParameterizedType parameterizedType) {
 			Type rawType = parameterizedType.getRawType();
 			if (rawType.equals(org.springframework.messaging.Message.class)) {
 				return parameterizedType.getActualTypeArguments()[0] instanceof WildcardType;
 			}
 		}
-		return parameterType.equals(org.springframework.messaging.Message.class); // could
-																					// be
-																					// Message
-																					// without
-																					// a
-																					// generic
-																					// type
+		return parameterType.equals(org.springframework.messaging.Message.class);
+	}
+
+	public boolean isSimpleExtraction() {
+		return this.simpleExtraction;
+	}
+
+	public boolean isConsumerRecords() {
+		return this.isConsumerRecords;
+	}
+
+	public boolean isHeaderFound() {
+		return this.headerFound;
+	}
+
+	public boolean isSpringMessage() {
+		return this.isSpringMessage;
 	}
 
 }
