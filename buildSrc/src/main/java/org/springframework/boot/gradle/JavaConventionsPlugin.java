@@ -173,6 +173,11 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 				testLoggingContainer.setShowStackTraces(true);
 				testLoggingContainer.setExceptionFormat(TestExceptionFormat.FULL);
 			});
+			test.jvmArgs(
+					"--add-opens", "java.base/java.lang=ALL-UNNAMED",
+					"--add-opens", "java.base/java.util=ALL-UNNAMED",
+					"--add-opens", "java.base/sun.net=ALL-UNNAMED"
+					);
 			project.getTasks().withType(Checkstyle.class, test::mustRunAfter);
 			project.getTasks().withType(CheckFormat.class, test::mustRunAfter);
 		});
