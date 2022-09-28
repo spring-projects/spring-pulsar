@@ -48,7 +48,7 @@ import org.junit.jupiter.api.Test;
  * @author Chris Bono
  * @author Alexander Preuß
  */
-abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
+abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport {
 
 	protected final Schema<String> schema = Schema.STRING;
 
@@ -56,7 +56,7 @@ abstract class PulsarProducerFactoryTests extends AbstractContainerBaseTests {
 
 	@BeforeEach
 	void createPulsarClient() throws PulsarClientException {
-		pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 	}
 
 	@AfterEach

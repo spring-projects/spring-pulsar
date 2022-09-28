@@ -56,13 +56,13 @@ import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTestContainerSupport;
 import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -75,7 +75,7 @@ import org.springframework.util.backoff.FixedBackOff;
  */
 @SpringJUnitConfig
 @DirtiesContext
-public class PulsarListenerTests extends AbstractContainerBaseTests {
+public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 	static CountDownLatch latch = new CountDownLatch(1);
 	static CountDownLatch latch1 = new CountDownLatch(3);
@@ -105,7 +105,7 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 
 		@Bean
 		public PulsarClientConfiguration pulsarClientConfiguration() {
-			return new PulsarClientConfiguration(Map.of("serviceUrl", getPulsarBrokerUrl()));
+			return new PulsarClientConfiguration(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
 		}
 
 		@Bean
@@ -129,7 +129,8 @@ public class PulsarListenerTests extends AbstractContainerBaseTests {
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()));
+			return new PulsarAdministration(
+					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
 		}
 
 		@Bean

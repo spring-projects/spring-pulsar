@@ -43,17 +43,17 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.ConsumerTestUtils;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTestContainerSupport;
 
 /**
  * @author Soby Chacko
  * @author Alexander Preuß
  */
-class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTests {
+class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerSupport {
 
 	@Test
 	void basicDefaultConsumer() throws Exception {
@@ -62,7 +62,8 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		strings.add("dpmlct-012");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "dpmlct-sb-012");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(1);
@@ -92,7 +93,8 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "dpmlct-sb-013");
 		config.put("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(5);
@@ -125,7 +127,8 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 		strings.add("dpmlct-014");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "dpmlct-sb-014");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -164,7 +167,8 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 				.maxDelayMs(5 * 1000).build();
 		config.put("negativeAckRedeliveryBackoff", redeliveryBackoff);
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(10);
@@ -214,7 +218,8 @@ class DefaultPulsarMessageListenerContainerTests extends AbstractContainerBaseTe
 				.build();
 		config.put("deadLetterPolicy", deadLetterPolicy);
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 

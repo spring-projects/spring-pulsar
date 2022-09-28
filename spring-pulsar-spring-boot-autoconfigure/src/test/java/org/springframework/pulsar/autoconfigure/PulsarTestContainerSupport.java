@@ -18,24 +18,32 @@ package org.springframework.pulsar.autoconfigure;
 
 import java.util.Locale;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PulsarContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-abstract class AbstractContainerBaseTests {
+/**
+ * Provides a static {@link PulsarContainer} that can be shared across test classes.
+ *
+ * @author Chris Bono
+ */
+@Testcontainers(disabledWithoutDocker = true)
+public interface PulsarTestContainerSupport {
 
-	static final PulsarContainer PULSAR_CONTAINER;
+	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(
+			isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage());
 
-	static {
-		final DockerImageName PULSAR_IMAGE = isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage();
-		PULSAR_CONTAINER = new PulsarContainer(PULSAR_IMAGE);
+	@BeforeAll
+	static void startContainer() {
 		PULSAR_CONTAINER.start();
 	}
 
-	protected static String getPulsarBrokerUrl() {
+	static String getPulsarBrokerUrl() {
 		return PULSAR_CONTAINER.getPulsarBrokerUrl();
 	}
 
-	protected static String getHttpServiceUrl() {
+	static String getHttpServiceUrl() {
 		return PULSAR_CONTAINER.getHttpServiceUrl();
 	}
 

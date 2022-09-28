@@ -38,7 +38,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
  * @author Soby Chacko
  * @author Chris Bono
  */
-class PulsarListenerTests extends AbstractContainerBaseTests {
+class PulsarListenerTests implements PulsarTestContainerSupport {
 
 	static CountDownLatch latch1 = new CountDownLatch(1);
 	static CountDownLatch latch2 = new CountDownLatch(10);
@@ -49,7 +49,7 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + AbstractContainerBaseTests.getPulsarBrokerUrl())) {
+				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
@@ -64,7 +64,7 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + AbstractContainerBaseTests.getPulsarBrokerUrl())) {
+				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			for (int i = 0; i < 10; i++) {
@@ -77,7 +77,7 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 
 	@Configuration
 	@Import(PulsarAutoConfiguration.class)
-	public static class BasicListenerConfig {
+	static class BasicListenerConfig {
 
 		@PulsarListener(subscriptionName = "test-exclusive-sub-1", topics = "hello-pulsar-exclusive")
 		public void listen(String foo) {
@@ -88,7 +88,7 @@ class PulsarListenerTests extends AbstractContainerBaseTests {
 
 	@Configuration
 	@Import(PulsarAutoConfiguration.class)
-	public static class BatchListenerConfig {
+	static class BatchListenerConfig {
 
 		@PulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive", batch = true)
 		public void listen(List<String> foo) {

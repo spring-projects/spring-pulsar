@@ -41,18 +41,18 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.pulsar.core.AbstractContainerBaseTests;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarOperations;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTestContainerSupport;
 import org.springframework.pulsar.core.TypedMessageBuilderCustomizer;
 import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * @author Soby Chacko
  */
-public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBaseTests {
+public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContainerSupport {
 
 	@Test
 	@SuppressWarnings("unchecked")
@@ -61,7 +61,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-1"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-1");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -111,7 +112,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-2"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-2");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -159,7 +161,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-3"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-3");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -217,7 +220,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-4"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-4");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -288,7 +292,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-5"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-5");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -357,7 +362,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-6"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-6");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -426,7 +432,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-7"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-7");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 
@@ -494,7 +501,8 @@ public class DefaultPulsarConsumerErrorHandlerTests extends AbstractContainerBas
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-8"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-8");
 
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 

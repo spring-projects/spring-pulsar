@@ -42,11 +42,12 @@ import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 /**
  * @author Soby Chacko
  */
-class FailoverConsumerTests extends AbstractContainerBaseTests {
+class FailoverConsumerTests implements PulsarTestContainerSupport {
 
 	@Test
 	void testFailOverConsumersOnPartitionedTopic() throws Exception {
-		PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(getHttpServiceUrl()).build();
+		PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
+				.build();
 
 		String topicName = "persistent://public/default/my-part-topic-1";
 		int numPartitions = 3;
@@ -57,7 +58,8 @@ class FailoverConsumerTests extends AbstractContainerBaseTests {
 		topics.add("my-part-topic-1");
 		config.put("topicNames", topics);
 		config.put("subscriptionName", "my-part-subscription-1");
-		final PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(getPulsarBrokerUrl()).build();
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
 				pulsarClient, config);
 		CountDownLatch latch = new CountDownLatch(3);
