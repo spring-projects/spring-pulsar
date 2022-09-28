@@ -16,17 +16,17 @@
 
 package org.springframework.pulsar.support.converter;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.pulsar.client.api.Consumer;
 
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.converter.SmartMessageConverter;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.pulsar.support.PulsarMessageHeaderMapper;
 
 /**
  *
@@ -38,21 +38,22 @@ import org.springframework.messaging.support.MessageBuilder;
  */
 public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageConverter<V> {
 
+	private final PulsarMessageHeaderMapper pulsarMessageHeaderMapper;
+
 	private SmartMessageConverter messagingConverter;
+
+	public PulsarMessagingMessageConverter(PulsarMessageHeaderMapper pulsarMessageHeaderMapper) {
+		this.pulsarMessageHeaderMapper = pulsarMessageHeaderMapper;
+	}
 
 	@Override
 	public Message<?> toMessage(org.apache.pulsar.client.api.Message<V> record, Consumer<V> consumer, Type type) {
 
-		Message<?> message = MessageBuilder.createMessage(extractAndConvertValue(record, type),
-				new MessageHeaders(Collections.emptyMap()));
-		if (this.messagingConverter != null) {
-			Class<?> clazz = type instanceof Class ? (Class<?>) type : type instanceof ParameterizedType
-					? (Class<?>) ((ParameterizedType) type).getRawType() : Object.class;
-			Object payload = this.messagingConverter.fromMessage(message, clazz, type);
-			if (payload != null) {
-				message = new GenericMessage<>(payload, message.getHeaders());
-			}
-		}
+		final Map<String, Object> messageHeaders = new HashMap<>();
+		this.pulsarMessageHeaderMapper.toHeaders(record, messageHeaders);
+		Message<?> message = MessageBuilder.createMessage(extractAndConvertValue(record),
+				new MessageHeaders(messageHeaders));
+
 		return message;
 	}
 
@@ -77,7 +78,7 @@ public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageCo
 		this.messagingConverter = messagingConverter;
 	}
 
-	protected Object extractAndConvertValue(org.apache.pulsar.client.api.Message<V> record, Type type) {
+	protected Object extractAndConvertValue(org.apache.pulsar.client.api.Message<V> record) {
 		return record.getValue();
 	}
 

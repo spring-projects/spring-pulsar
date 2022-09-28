@@ -45,22 +45,21 @@ public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessag
 	@Override
 	public void received(Consumer<V> consumer, Message<V> record, @Nullable Acknowledgement acknowledgement) {
 		org.springframework.messaging.Message<?> message = null;
-		if (isConversionNeeded()) {
+		Object theRecord = record;
+		if (isHeaderFound() || isSpringMessage()) {
 			message = toMessagingMessage(record, consumer);
 		}
-		else {
-			// message = NULL_MESSAGE;
+		else if (isSimpleExtraction()) {
+			theRecord = record.getValue();
 		}
+
 		if (logger.isDebugEnabled()) {
 			this.logger.debug("Processing [" + message + "]");
 		}
 		try {
-			Object result = invokeHandler(record, message, consumer, acknowledgement);
-			if (result != null) {
-				// handleResult(result, record, message);
-			}
+			invokeHandler(theRecord, message, consumer, acknowledgement);
 		}
-		catch (Exception e) { // NOSONAR ex flow control
+		catch (Exception e) {
 			throw e;
 		}
 	}
