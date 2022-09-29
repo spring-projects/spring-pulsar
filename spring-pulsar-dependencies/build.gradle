@@ -7,57 +7,24 @@ javaPlatform {
 }
 
 ext {
-	assertjVersion = '3.23.1'
-	awaitilityVersion = '4.2.0'
-	caffeineVersion = '3.1.1'
 	googleJsr305Version = '3.0.2'
-	hamcrestVersion = '2.2'
-	hibernateValidationVersion = '7.0.4.Final'
-	jacksonBomVersion = '2.13.3'
-	jaywayJsonPathVersion = '2.6.0'
-	junitJupiterVersion = '5.9.0'
-	log4jVersion = '2.18.0'
 	micrometerVersion = '1.10.0-SNAPSHOT'
 	micrometerTracingVersion = '1.0.0-SNAPSHOT'
-	mockitoVersion = '4.6.1'
 	protobufJavaVersion = '3.21.5'
 	testcontainersVersion = '1.17.3'
 	pulsarVersion = '2.10.1'
-	reactorVersion = '2022.0.0-SNAPSHOT'
 	springBootVersion = '3.0.0-SNAPSHOT'
-	springRetryVersion = '1.3.3'
-	springVersion = '6.0.0-SNAPSHOT'
 }
 
 dependencies {
-
-	api platform("com.fasterxml.jackson:jackson-bom:$jacksonBomVersion")
-	api platform("io.projectreactor:reactor-bom:$reactorVersion")
-	api platform("org.apache.logging.log4j:log4j-bom:$log4jVersion")
-	api platform("org.junit:junit-bom:$junitJupiterVersion")
-	api platform("org.mockito:mockito-bom:$mockitoVersion")
-	api platform("org.springframework:spring-framework-bom:$springVersion")
+	api platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
 	api platform("org.testcontainers:testcontainers-bom:$testcontainersVersion")
+	// TODO remove micrometer entries once SB goes to MM snapshots as it specifies them in its bom
 	api platform("io.micrometer:micrometer-bom:$micrometerVersion")
 	api platform("io.micrometer:micrometer-tracing-bom:$micrometerTracingVersion")
-
 	constraints {
-		api "com.github.ben-manes.caffeine:caffeine:$caffeineVersion"
 		api "com.google.code.findbugs:jsr305:$googleJsr305Version"
 		api "com.google.protobuf:protobuf-java:$protobufJavaVersion"
-		api "com.jayway.jsonpath:json-path:$jaywayJsonPathVersion"
 		api "org.apache.pulsar:pulsar-client-all:$pulsarVersion"
-		api "org.assertj:assertj-core:$assertjVersion"
-		api "org.awaitility:awaitility:$awaitilityVersion"
-		api "org.hamcrest:hamcrest:$hamcrestVersion"
-		api "org.hibernate.validator:hibernate-validator:$hibernateValidationVersion"
-		api "org.springframework.boot:spring-boot-autoconfigure-processor:$springBootVersion"
-		api "org.springframework.boot:spring-boot-configuration-processor:$springBootVersion"
-		api "org.springframework.boot:spring-boot:$springBootVersion"
-		api "org.springframework.boot:spring-boot-autoconfigure:$springBootVersion"
-		api "org.springframework.boot:spring-boot-starter:$springBootVersion"
-		api "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
-		api "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-		api "org.springframework.retry:spring-retry:$springRetryVersion"
 	}
 }
