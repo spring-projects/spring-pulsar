@@ -216,7 +216,7 @@ public class PulsarTemplate<T>
 		}
 		else {
 			observation = PulsarTemplateObservation.TEMPLATE_OBSERVATION.observation(this.observationConvention,
-					DefaultPulsarTemplateObservationConvention.INSTANCE, senderContext, this.observationRegistry);
+					DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 		}
 		return observation;
 	}
