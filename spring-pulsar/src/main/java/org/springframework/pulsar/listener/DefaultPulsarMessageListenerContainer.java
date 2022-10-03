@@ -369,7 +369,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 								observation = PulsarListenerObservation.LISTENER_OBSERVATION.observation(
 										this.containerProperties.getObservationConvention(),
 										DefaultPulsarListenerObservationConvention.INSTANCE,
-										new PulsarMessageReceiverContext(message, getBeanName()),
+										() -> new PulsarMessageReceiverContext(message, getBeanName()),
 										this.observationRegistry);
 							}
 							observation.observe(() -> {
