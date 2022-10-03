@@ -193,7 +193,34 @@ public void listen3(Foo message) {
 Note the addition of a `schemaType` property on `PulsarListener`.
 That is because the library is not capable of inferring the schema type from the provided type `Foo`, we must tell the framework what schema to use.
 
-Here is an example of using `PulsarListener` to consume records in batches.
+Let us take a few more ways to consume single records using `PulsarListener` annotation.
+
+You can consume the Pulsar message directly as shown below:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "my-subscription", topics = "my-topic")
+public void listen3(org.apache.pulsar.client.api.Message<String> message) {
+    System.out.println(message.getValue());
+}
+----
+====
+
+If you want to consume the record using the Spring messaging envelope, you can do it like this:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "my-subscription-2", topics = "my-topic-2", schemaType = SchemaType.JSON)
+public void listen3(org.springframework.messaging.Message<String> message) {
+    System.out.println(message.getPayload());
+}
+----
+====
+
+Now let's see how we can consume records in batches.
+Here is an example of using `PulsarListener` to consume records in batches as POJO's.
 
 ====
 [source, java]
@@ -220,7 +247,20 @@ The following also should work in which we use the `Message` envelope provided b
 @PulsarListener(subscriptionName = "hello-batch-subscription", topics = "hello-batch", schemaType = SchemaType.JSON, batch = true)
 public void listen4(List<Message<Foo>> messages) {
     System.out.println("records received :" + messages.size());
-    messages.forEach((message) -> System.out.println("record : " + message));
+    messages.forEach((message) -> System.out.println("record : " + message.getValue()));
+}
+----
+====
+
+Here is another example of consuming batch records with the envelope of Spring messaging Message type.
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "hello-batch-subscription", topics = "hello-batch", schemaType = SchemaType.JSON, batch = true)
+public void listen4(List<org.springframework.messaging.Message<Foo>> messages) {
+    System.out.println("records received :" + messages.size());
+    messages.forEach((message) -> System.out.println("record : " + message.getPayload()));
 }
 ----
 ====
@@ -1218,6 +1258,116 @@ PulsarTopic simpleTopic {
 PulsarTopic partitionedTopic {
 	// This will create a partitioned topic with 3 partitions in the provided tenant and namespace
 	return PulsarTopic.builder("persistent://my-tenant/my-namespace/partitioned-topic", 3).build();
+}
+----
+====
+
+[[pulsar-headers]]
+==== Pulsar Headers
+
+In this section, we will see how we can use the message metadata that Pulsar provides in its Message as Pulsar headers in a Spring application.
+First, let's examine all the available Pulsar headers from the message metadata.
+
+.[.underline]#Aailable **Pulsar Message Metadata as Spring Headers**#
+[%collapsible]
+====
+https://github.com/spring-projects-experimental/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[Click here] to see the available Pulsar headers.
+====
+
+===== Accessing Pulsar Headers in Single Record based Consumer
+
+Here is an example of how you can access the various Pulsar Headers in an application that is using single record mode of consuming.
+
+====
+[source,java]
+----
+@PulsarListener(topics = "simpleListenerWithHeaders")
+void simpleListenerWithHeaders(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
+                @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
+                @Header("foo") String foo) {
+
+}
+----
+====
+
+In this example, we are consuming the data as `String`.
+In addition, we are also extracting the message meatadata as Spring headers using the `Header` annotation from the Spring Framework.
+We just randomly picked the headers for message id and raw data.
+You can also extract custom message properties set when publishing using the `Header` annotation as observed in the retrieval of the property `foo` in the above example code.
+
+Now let us try to receive this same data, but with the envelope of a Pulsar `Message`.
+
+====
+[source,java]
+----
+@PulsarListener(topics = "pulsarMessageListenerWithHeaders")
+void pulsarMessageListenerWithHeaders(org.apache.pulsar.client.api.Message<String> data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
+                @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
+                @Header("foo") String foo) {
+
+}
+----
+====
+
+In this case, the user can directly call the corresponding methods on the Pulsar Message for retrieving the metadata.
+However, as a convenience, you can also retrieve it using the `Header` annotation.
+
+Here is another example in which we use the Spring messaging `Message` envelope.
+
+====
+[source,java]
+----
+@PulsarListener(topics = "springMessagingMessageListenerWithHeaders")
+void springMessagingMessageListenerWithHeaders(org.springframework.messging.Message<String> data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
+                @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
+                @Header("foo") String foo) {
+
+}
+----
+====
+
+===== Accessing Pulsar Headers in Batch Record based Consumer
+
+In this section we will see how one can access the various Pulsar Headers in an application that is using a batch consumer.
+
+====
+[source,java]
+----
+@PulsarListener(topics = "simpleBatchListenerWithHeaders", batch = true)
+void simpleBatchListenerWithHeaders(List<String> data,
+					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
+					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
+
+}
+----
+====
+
+In this example, we are consuming the data as `List<String>`.
+When extracting the various headers, we do as as `List<>` as well.
+Spring Pulsar will ensure that the headers list corresponds to the data list.
+
+Here are two more examples of consuming in batch mode and extracting the headers using both Pulsar Message and Spring Message.
+
+====
+[source,java]
+----
+@PulsarListener(topics = "pulsarMessageBatchListenerWithHeaders", batch = true)
+void pulsarMessageBatchListenerWithHeaders(List<org.apache.pulsar.client.api.Message<String>> data,
+					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
+					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
+
+}
+----
+====
+
+====
+[source,java]
+----
+@PulsarListener(topics = "springMessagingMessageBatchListenerWithHeaders", batch = true)
+void springMessagingMessageBatchListenerWithHeaders(List<org.springframework.messaging.Message<String>> data,
+					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
+					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
+
 }
 ----
 ====

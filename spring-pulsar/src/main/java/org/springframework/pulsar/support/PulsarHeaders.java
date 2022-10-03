@@ -34,82 +34,82 @@ public abstract class PulsarHeaders {
 	public static final String PULSAR_MESSAGE = PREFIX + "message_";
 
 	/**
-	 * Prefix for the unique message id.
+	 * Unique message id.
 	 */
 	public static final String MESSAGE_ID = PULSAR_MESSAGE + "id";
 
 	/**
-	 * Prefix for the raw message data.
+	 * Raw message data.
 	 */
 	public static final String RAW_DATA = PULSAR_MESSAGE + "raw_data";
 
 	/**
-	 * Prefix for message size.
+	 * Message size.
 	 */
 	public static final String MESSAGE_SIZE = PULSAR_MESSAGE + "size";
 
 	/**
-	 * Prefix for message publish time.
+	 * Message publish time.
 	 */
 	public static final String PUBLISH_TIME = PULSAR_MESSAGE + "publish_time";
 
 	/**
-	 * Prefix for event time.
+	 * Event time.
 	 */
 	public static final String EVENT_TIME = PULSAR_MESSAGE + "event_time";
 
 	/**
-	 * Prefix for message sequence id.
+	 * Message sequence id.
 	 */
 	public static final String SEQUENCE_ID = PULSAR_MESSAGE + "sequence_id";
 
 	/**
-	 * prefix for the producer name.
+	 * Producer name.
 	 */
 	public static final String PRODUCER_NAME = PULSAR_MESSAGE + "producer_name";
 
 	/**
-	 * Prefix for the message key.
+	 * Message key if present.
 	 */
 	public static final String KEY = PULSAR_MESSAGE + "key";
 
 	/**
-	 * Prefix for the message key as bytes.
+	 * Message key as bytes if present.
 	 */
 	public static final String KEY_BYTES = PULSAR_MESSAGE + "key_bytes";
 
 	/**
-	 * Prefix for the order key.
+	 * Message ordering key.
 	 */
 	public static final String ORDERING_KEY = PULSAR_MESSAGE + "ordering_key";
 
 	/**
-	 * Prefix for the topic name.
+	 * Topic name.
 	 */
 	public static final String TOPIC_NAME = PULSAR_MESSAGE + "topic_name";
 
 	/**
-	 * Prefix for redelivery count.
+	 * Redelivery count.
 	 */
 	public static final String REDELIVERY_COUNT = PULSAR_MESSAGE + "redelivery_count";
 
 	/**
-	 * Prefix for schema version.
+	 * Schema version.
 	 */
 	public static final String SCHEMA_VERSION = PULSAR_MESSAGE + "schema_version";
 
 	/**
-	 * Prefix for the cluster replicated from.
+	 * Cluster where the message is replicated from.
 	 */
 	public static final String REPLICATED_FROM = PULSAR_MESSAGE + "replicated_from";
 
 	/**
-	 * Prefix for broker publish time.
+	 * Broker publish time.
 	 */
 	public static final String BROKER_PUBLISH_TIME = PULSAR_MESSAGE + "broker_publish_time";
 
 	/**
-	 * Prefix for index.
+	 * Message index if available.
 	 */
 	public static final String INDEX = PULSAR_MESSAGE + "index";
 

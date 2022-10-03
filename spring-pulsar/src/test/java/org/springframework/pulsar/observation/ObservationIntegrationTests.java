@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.junit.jupiter.api.Disabled;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +63,7 @@ import io.micrometer.tracing.test.simple.SpansAssert;
  * @author Chris Bono
  * @see SampleTestRunner
  */
+@Disabled
 public class ObservationIntegrationTests extends SampleTestRunner implements PulsarTestContainerSupport {
 
 	@SuppressWarnings("unchecked")
