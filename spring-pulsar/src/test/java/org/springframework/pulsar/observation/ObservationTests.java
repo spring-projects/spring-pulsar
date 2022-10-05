@@ -31,6 +31,7 @@ import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +84,7 @@ import io.micrometer.tracing.test.simple.SimpleTracer;
  */
 @SpringJUnitConfig
 @DirtiesContext
+@Disabled
 public class ObservationTests implements PulsarTestContainerSupport {
 
 	private static final String LISTENER_ID_TAG = "spring.pulsar.listener.id";
