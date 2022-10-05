@@ -39,22 +39,22 @@ public abstract class PulsarHeaders {
 	public static final String MESSAGE_ID = PULSAR_MESSAGE + "id";
 
 	/**
-	 * Raw message data.
+	 * Raw message data as bytes.
 	 */
 	public static final String RAW_DATA = PULSAR_MESSAGE + "raw_data";
 
 	/**
-	 * Message size.
+	 * Message size in bytes.
 	 */
 	public static final String MESSAGE_SIZE = PULSAR_MESSAGE + "size";
 
 	/**
-	 * Message publish time.
+	 * Message publish time (long).
 	 */
 	public static final String PUBLISH_TIME = PULSAR_MESSAGE + "publish_time";
 
 	/**
-	 * Event time.
+	 * Event time (long).
 	 */
 	public static final String EVENT_TIME = PULSAR_MESSAGE + "event_time";
 
@@ -104,7 +104,7 @@ public abstract class PulsarHeaders {
 	public static final String REPLICATED_FROM = PULSAR_MESSAGE + "replicated_from";
 
 	/**
-	 * Broker publish time.
+	 * Broker publish time (long).
 	 */
 	public static final String BROKER_PUBLISH_TIME = PULSAR_MESSAGE + "broker_publish_time";
 
