@@ -49,6 +49,11 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
+import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
+
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Autoconfiguration tests for {@link PulsarAutoConfiguration}.
@@ -226,6 +231,70 @@ class PulsarAutoConfigurationTests {
 							.extracting("configs", InstanceOfAssertFactories.map(String.class, Object.class))
 							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
 							.containsEntry("authParams", "{\"password\":\"topsecret\",\"userId\":\"username\"}")));
+		}
+
+	}
+
+	@Nested
+	class ObservationAutoConfigurationTests {
+
+		@Test
+		void templateObservationsEnabledByDefault() {
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
+					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
+							.extracting("observationRegistry").isSameAs(observationRegistry)));
+		}
+
+		@Test
+		void templateObservationsCanBeDisabled() {
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			contextRunner.withPropertyValues("spring.pulsar.template.observations-enabled=false")
+					.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
+					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
+							.extracting("observationRegistry").isNull()));
+		}
+
+		@Test
+		void templateObservationsWithCustomConvention() {
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			PulsarTemplateObservationConvention customConvention = mock(PulsarTemplateObservationConvention.class);
+			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
+					.withBean("customConvention", PulsarTemplateObservationConvention.class, () -> customConvention)
+					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
+							.extracting("observationConvention").isSameAs(customConvention)));
+		}
+
+		@Test
+		void listenerObservationsEnabledByDefault() {
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
+					.run((context -> assertThat(context).hasNotFailed()
+							.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("observationRegistry")
+							.isSameAs(observationRegistry)));
+		}
+
+		@Test
+		void listenerObservationsCanBeDisabled() {
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			contextRunner.withPropertyValues("spring.pulsar.listener.observations-enabled=false")
+					.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
+					.run((context -> assertThat(context).hasNotFailed()
+							.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("observationRegistry")
+							.isNull()));
+		}
+
+		@Test
+		void listenerObservationsWithCustomConvention() {
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			PulsarListenerObservationConvention customConvention = mock(PulsarListenerObservationConvention.class);
+			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
+					.withBean("customConvention", PulsarListenerObservationConvention.class, () -> customConvention)
+					.run((context -> assertThat(context).hasNotFailed()
+							.getBean(ConcurrentPulsarListenerContainerFactory.class)
+							.extracting(ConcurrentPulsarListenerContainerFactory<Object>::getContainerProperties)
+							.extracting(PulsarContainerProperties::getObservationConvention)
+							.isSameAs(customConvention)));
 		}
 
 	}

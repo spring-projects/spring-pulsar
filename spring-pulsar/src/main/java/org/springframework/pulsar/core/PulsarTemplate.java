@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
@@ -30,11 +29,8 @@ import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
@@ -51,26 +47,21 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Chris Bono
  * @author Alexander Preuß
  */
-public class PulsarTemplate<T>
-		implements PulsarOperations<T>, ApplicationContextAware, BeanNameAware, SmartInitializingSingleton {
+public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final PulsarProducerFactory<T> producerFactory;
 
 	private final List<ProducerInterceptor> interceptors;
 
-	private ApplicationContext applicationContext;
+	private final ObservationRegistry observationRegistry;
+
+	private final PulsarTemplateObservationConvention observationConvention;
 
 	private String beanName;
 
 	private Schema<T> schema;
-
-	private boolean observationEnabled;
-
-	private PulsarTemplateObservationConvention observationConvention;
-
-	private ObservationRegistry observationRegistry;
 
 	/**
 	 * Construct a template instance.
@@ -81,13 +72,31 @@ public class PulsarTemplate<T>
 	}
 
 	/**
-	 * Construct a template instance.
+	 * Construct a template instance with optional interceptors.
 	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 * @param interceptors the interceptors to add to the producer.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
+		this(producerFactory, interceptors, null, null);
+	}
+
+	/**
+	 * Construct a template instance with optional interceptors and observation
+	 * configuration.
+	 * @param producerFactory the factory used to create the backing Pulsar producers
+	 * @param interceptors the optional list of interceptors to add to the producer
+	 * @param observationRegistry the registry to record observations with or {@code null}
+	 * to not record observations
+	 * @param observationConvention the optional custom observation convention to use when
+	 * recording observations
+	 */
+	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, @Nullable List<ProducerInterceptor> interceptors,
+			@Nullable ObservationRegistry observationRegistry,
+			@Nullable PulsarTemplateObservationConvention observationConvention) {
 		this.producerFactory = producerFactory;
 		this.interceptors = interceptors;
+		this.observationRegistry = observationRegistry;
+		this.observationConvention = observationConvention;
 	}
 
 	@Override
@@ -116,11 +125,6 @@ public class PulsarTemplate<T>
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
-	}
-
-	@Override
 	public void setBeanName(String beanName) {
 		this.beanName = beanName;
 	}
@@ -131,34 +135,6 @@ public class PulsarTemplate<T>
 	 */
 	public void setSchema(Schema<T> schema) {
 		this.schema = schema;
-	}
-
-	/**
-	 * Set to true to enable observation via Micrometer.
-	 * @param observationEnabled true to enable.
-	 */
-	public void setObservationEnabled(boolean observationEnabled) {
-		this.observationEnabled = observationEnabled;
-	}
-
-	/**
-	 * Set a custom observation convention.
-	 * @param observationConvention the convention.
-	 */
-	public void setObservationConvention(PulsarTemplateObservationConvention observationConvention) {
-		this.observationConvention = observationConvention;
-	}
-
-	@Override
-	public void afterSingletonsInstantiated() {
-		// TODO is this how we want to do this? What about SBAC?
-		// TODO when would AC be null? Should we assert or at least log the fact if it
-		// happens?
-		if (this.observationEnabled && this.observationRegistry == null && this.applicationContext != null) {
-			ObjectProvider<ObservationRegistry> registry = this.applicationContext
-					.getBeanProvider(ObservationRegistry.class);
-			this.observationRegistry = registry.getIfUnique();
-		}
 	}
 
 	private MessageId doSend(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
@@ -186,9 +162,9 @@ public class PulsarTemplate<T>
 			if (typedMessageBuilderCustomizer != null) {
 				typedMessageBuilderCustomizer.customize(messageBuilder);
 			}
-			senderContext.properties().forEach(messageBuilder::property); // propagate
-																			// props to
-																			// message
+			// propagate props to message
+			senderContext.properties().forEach(messageBuilder::property);
+
 			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
 				if (ex == null) {
 					this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
@@ -210,15 +186,11 @@ public class PulsarTemplate<T>
 	}
 
 	private Observation newObservation(PulsarMessageSenderContext senderContext) {
-		Observation observation;
-		if (!this.observationEnabled || this.observationRegistry == null) {
-			observation = Observation.NOOP;
+		if (this.observationRegistry == null) {
+			return Observation.NOOP;
 		}
-		else {
-			observation = PulsarTemplateObservation.TEMPLATE_OBSERVATION.observation(this.observationConvention,
-					DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
-		}
-		return observation;
+		return PulsarTemplateObservation.TEMPLATE_OBSERVATION.observation(this.observationConvention,
+				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
 	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter,

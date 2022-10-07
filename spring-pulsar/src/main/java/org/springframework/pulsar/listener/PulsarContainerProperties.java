@@ -65,8 +65,6 @@ public class PulsarContainerProperties {
 
 	private AckMode ackMode = AckMode.BATCH;
 
-	private boolean observationEnabled;
-
 	private PulsarListenerObservationConvention observationConvention;
 
 	private Properties pulsarConsumerProperties = new Properties();
@@ -143,18 +141,6 @@ public class PulsarContainerProperties {
 
 	public void setAckMode(AckMode ackMode) {
 		this.ackMode = ackMode;
-	}
-
-	public boolean isObservationEnabled() {
-		return this.observationEnabled;
-	}
-
-	/**
-	 * Set to true to enable observations.
-	 * @param observationEnabled true to enable.
-	 */
-	public void setObservationEnabled(boolean observationEnabled) {
-		this.observationEnabled = observationEnabled;
 	}
 
 	public PulsarListenerObservationConvention getObservationConvention() {

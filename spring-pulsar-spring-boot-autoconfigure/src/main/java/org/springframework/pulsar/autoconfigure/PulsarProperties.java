@@ -62,6 +62,8 @@ public class PulsarProperties {
 
 	private final Producer producer = new Producer();
 
+	private final Template template = new Template();
+
 	private final Admin admin = new Admin();
 
 	public Consumer getConsumer() {
@@ -78,6 +80,10 @@ public class PulsarProperties {
 
 	public Producer getProducer() {
 		return this.producer;
+	}
+
+	public Template getTemplate() {
+		return this.template;
 	}
 
 	public Admin getAdministration() {
@@ -687,6 +693,24 @@ public class PulsarProperties {
 			map.from(this::getProducerAccessMode).to(properties.in("accessMode"));
 
 			return properties;
+		}
+
+	}
+
+	public static class Template {
+
+		/**
+		 * Whether to record observations for send operations when the Observations API is
+		 * available.
+		 */
+		private boolean observationsEnabled = true;
+
+		public boolean isObservationsEnabled() {
+			return this.observationsEnabled;
+		}
+
+		public void setObservationsEnabled(boolean observationsEnabled) {
+			this.observationsEnabled = observationsEnabled;
 		}
 
 	}
@@ -1339,6 +1363,12 @@ public class PulsarProperties {
 		 */
 		private int batchTimeoutMillis = 100;
 
+		/**
+		 * Whether to record observations for receive operations when the Observations API
+		 * is available.
+		 */
+		private boolean observationsEnabled = true;
+
 		public AckMode getAckMode() {
 			return this.ackMode;
 		}
@@ -1377,6 +1407,14 @@ public class PulsarProperties {
 
 		public void setBatchTimeoutMillis(int batchTimeoutMillis) {
 			this.batchTimeoutMillis = batchTimeoutMillis;
+		}
+
+		public boolean isObservationsEnabled() {
+			return this.observationsEnabled;
+		}
+
+		public void setObservationsEnabled(boolean observationsEnabled) {
+			this.observationsEnabled = observationsEnabled;
 		}
 
 	}

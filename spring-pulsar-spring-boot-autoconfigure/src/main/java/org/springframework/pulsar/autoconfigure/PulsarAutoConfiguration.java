@@ -37,6 +37,9 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
+
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
@@ -89,8 +92,13 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(PulsarTemplate.class)
 	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory,
-			ObjectProvider<ProducerInterceptor> interceptors) {
-		return new PulsarTemplate<>(pulsarProducerFactory, interceptors.orderedStream().toList());
+			ObjectProvider<ProducerInterceptor> interceptorsProvider,
+			ObjectProvider<ObservationRegistry> observationRegistryProvider,
+			ObjectProvider<PulsarTemplateObservationConvention> observationConventionProvider) {
+		return new PulsarTemplate<>(pulsarProducerFactory, interceptorsProvider.orderedStream().toList(),
+				this.properties.getTemplate().isObservationsEnabled() ? observationRegistryProvider.getIfUnique()
+						: null,
+				observationConventionProvider.getIfUnique());
 	}
 
 	@Bean
