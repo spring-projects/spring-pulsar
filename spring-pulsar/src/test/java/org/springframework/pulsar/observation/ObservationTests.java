@@ -51,6 +51,7 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
@@ -82,9 +83,9 @@ import io.micrometer.tracing.test.simple.SimpleTracer;
  *
  * @author Chris Bono
  */
+@Disabled
 @SpringJUnitConfig
 @DirtiesContext
-@Disabled
 public class ObservationTests implements PulsarTestContainerSupport {
 
 	private static final String LISTENER_ID_TAG = "spring.pulsar.listener.id";
@@ -170,57 +171,54 @@ public class ObservationTests implements PulsarTestContainerSupport {
 	static class ObservationTestAppConfig {
 
 		@Bean
-		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
+		PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
 			return new DefaultPulsarProducerFactory<>(pulsarClient, Collections.emptyMap());
 		}
 
 		@Bean
-		public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
+		PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
 			return new PulsarClientFactoryBean(pulsarClientConfiguration);
 		}
 
 		@Bean
-		public PulsarClientConfiguration pulsarClientConfiguration() {
+		PulsarClientConfiguration pulsarClientConfiguration() {
 			return new PulsarClientConfiguration(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
 		}
 
 		@Bean(name = "observationTestsTemplate")
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			PulsarTemplate<String> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setObservationEnabled(true);
-			template.setObservationConvention(new DefaultPulsarTemplateObservationConvention() {
-				@Override
-				public KeyValues getLowCardinalityKeyValues(PulsarMessageSenderContext context) {
-					return super.getLowCardinalityKeyValues(context).and(SENDER_EXTRA_TAG, context.getBeanName());
-				}
-			});
-			return template;
+		PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory,
+				ObservationRegistry observationRegistry) {
+			return new PulsarTemplate<>(pulsarProducerFactory, null, observationRegistry,
+					new DefaultPulsarTemplateObservationConvention() {
+						@Override
+						public KeyValues getLowCardinalityKeyValues(PulsarMessageSenderContext context) {
+							return super.getLowCardinalityKeyValues(context).and(SENDER_EXTRA_TAG,
+									context.getBeanName());
+						}
+					});
 		}
 
 		@Bean
-		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
+		PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
 			return new DefaultPulsarConsumerFactory<>(pulsarClient, Collections.emptyMap());
 		}
 
 		@Bean
 		PulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			final ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>();
-			pulsarListenerContainerFactory.setPulsarConsumerFactory(pulsarConsumerFactory);
-			pulsarListenerContainerFactory.getContainerProperties().setObservationEnabled(true);
-			pulsarListenerContainerFactory.getContainerProperties()
-					.setObservationConvention(new DefaultPulsarListenerObservationConvention() {
-						@Override
-						public KeyValues getLowCardinalityKeyValues(PulsarMessageReceiverContext context) {
-							// Only add the extra tag for the 1st listener
-							if (context.getListenerId().equals(OBS2_ID)) {
-								return super.getLowCardinalityKeyValues(context);
-							}
-							return super.getLowCardinalityKeyValues(context).and(RECEIVER_EXTRA_TAG,
-									context.getListenerId());
-						}
-					});
-			return pulsarListenerContainerFactory;
+				PulsarConsumerFactory<Object> pulsarConsumerFactory, ObservationRegistry observationRegistry) {
+			PulsarContainerProperties containerProperties = new PulsarContainerProperties();
+			containerProperties.setObservationConvention(new DefaultPulsarListenerObservationConvention() {
+				@Override
+				public KeyValues getLowCardinalityKeyValues(PulsarMessageReceiverContext context) {
+					// Only add the extra tag for the 1st listener
+					if (context.getListenerId().equals(OBS2_ID)) {
+						return super.getLowCardinalityKeyValues(context);
+					}
+					return super.getLowCardinalityKeyValues(context).and(RECEIVER_EXTRA_TAG, context.getListenerId());
+				}
+			});
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
+					new PulsarContainerProperties(), observationRegistry);
 		}
 
 		@Bean

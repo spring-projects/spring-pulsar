@@ -19,11 +19,14 @@ package org.springframework.pulsar.config;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.apache.pulsar.client.api.SubscriptionType;
-
+import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Concrete implementation for {@link PulsarListenerContainerFactory}.
@@ -38,6 +41,11 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 	private Integer concurrency;
 
+	public ConcurrentPulsarListenerContainerFactory(PulsarConsumerFactory<? super T> consumerFactory,
+			PulsarContainerProperties containerProperties, @Nullable ObservationRegistry observationRegistry) {
+		super(consumerFactory, containerProperties, observationRegistry);
+	}
+
 	/**
 	 * Specify the container concurrency.
 	 * @param concurrency the number of consumers to create.
@@ -48,42 +56,41 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 	@Override
 	protected ConcurrentPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
+
 		PulsarContainerProperties properties = new PulsarContainerProperties();
-		Collection<String> topics = endpoint.getTopics();
-		String topicPattern = endpoint.getTopicPattern();
 
-		if (!topics.isEmpty()) {
-			final String[] topics1 = topics.toArray(new String[0]);
-			properties.setTopics(topics1);
-		}
-		if (StringUtils.hasText(topicPattern)) {
-			properties.setTopicsPattern(topicPattern);
+		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
+			properties.setTopics(endpoint.getTopics().toArray(new String[0]));
 		}
 
-		final String subscriptionName = endpoint.getSubscriptionName();
-		if (StringUtils.hasText(subscriptionName)) {
+		if (StringUtils.hasText(endpoint.getTopicPattern())) {
+			properties.setTopicsPattern(endpoint.getTopicPattern());
+		}
+
+		if (StringUtils.hasText(endpoint.getSubscriptionName())) {
 			properties.setSubscriptionName(endpoint.getSubscriptionName());
 		}
+
 		if (endpoint.isBatchListener()) {
 			properties.setBatchListener(endpoint.isBatchListener());
 		}
-		final SubscriptionType subscriptionType = endpoint.getSubscriptionType();
-		if (subscriptionType != null) {
-			properties.setSubscriptionType(subscriptionType);
+
+		if (endpoint.getSubscriptionType() != null) {
+			properties.setSubscriptionType(endpoint.getSubscriptionType());
 		}
 
 		properties.setSchemaType(endpoint.getSchemaType());
-		return new ConcurrentPulsarMessageListenerContainer<T>(getPulsarConsumerFactory(), properties);
+
+		return new ConcurrentPulsarMessageListenerContainer<>(this.getConsumerFactory(), properties,
+				this.getObservationRegistry());
 	}
 
 	@Override
 	protected void initializeContainer(ConcurrentPulsarMessageListenerContainer<T> instance,
 			PulsarListenerEndpoint endpoint) {
-
 		super.initializeContainer(instance, endpoint);
-		Integer conc = endpoint.getConcurrency();
-		if (conc != null) {
-			instance.setConcurrency(conc);
+		if (endpoint.getConcurrency() != null) {
+			instance.setConcurrency(endpoint.getConcurrency());
 		}
 		else if (this.concurrency != null) {
 			instance.setConcurrency(this.concurrency);

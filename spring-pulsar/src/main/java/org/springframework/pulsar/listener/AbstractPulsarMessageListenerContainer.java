@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.listener;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
@@ -31,6 +30,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
 
+import io.micrometer.observation.ObservationRegistry;
+
 /**
  * Base implementation for the {@link PulsarMessageListenerContainer}.
  *
@@ -41,17 +42,19 @@ import org.springframework.util.Assert;
 public abstract class AbstractPulsarMessageListenerContainer<T> implements PulsarMessageListenerContainer,
 		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass())); // NOSONAR
+	protected final LogAccessor logger = new LogAccessor(this.getClass());
+
+	private final PulsarConsumerFactory<T> pulsarConsumerFactory;
+
+	private final PulsarContainerProperties pulsarContainerProperties;
+
+	private final ObservationRegistry observationRegistry;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	private String beanName;
 
 	private ApplicationContext applicationContext;
-
-	private final PulsarContainerProperties pulsarContainerProperties;
-
-	protected final PulsarConsumerFactory<T> pulsarConsumerFactory;
 
 	private boolean autoStartup = true;
 
@@ -71,10 +74,22 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
-			PulsarContainerProperties pulsarContainerProperties) {
-		this.pulsarContainerProperties = pulsarContainerProperties;
+			PulsarContainerProperties pulsarContainerProperties, @Nullable ObservationRegistry observationRegistry) {
 		this.pulsarConsumerFactory = (PulsarConsumerFactory<T>) pulsarConsumerFactory;
+		this.pulsarContainerProperties = pulsarContainerProperties;
+		this.observationRegistry = observationRegistry;
+	}
 
+	public PulsarConsumerFactory<T> getPulsarConsumerFactory() {
+		return this.pulsarConsumerFactory;
+	}
+
+	public PulsarContainerProperties getContainerProperties() {
+		return this.pulsarContainerProperties;
+	}
+
+	public ObservationRegistry getObservationRegistry() {
+		return this.observationRegistry;
 	}
 
 	@Override
@@ -129,14 +144,6 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 		this.pulsarContainerProperties.setMessageListener(messageListener);
 	}
 
-	public PulsarContainerProperties getPulsarContainerProperties() {
-		return this.pulsarContainerProperties;
-	}
-
-	public PulsarConsumerFactory<? super T> getPulsarConsumerFactory() {
-		return this.pulsarConsumerFactory;
-	}
-
 	@Override
 	public boolean isAutoStartup() {
 		return this.autoStartup;
@@ -154,10 +161,6 @@ public abstract class AbstractPulsarMessageListenerContainer<T> implements Pulsa
 	@Override
 	public int getPhase() {
 		return this.phase;
-	}
-
-	public PulsarContainerProperties getContainerProperties() {
-		return this.pulsarContainerProperties;
 	}
 
 	protected abstract void doStart();

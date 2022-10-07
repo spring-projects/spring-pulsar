@@ -16,16 +16,15 @@
 
 package org.springframework.pulsar.config;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.AckMode;
@@ -33,23 +32,26 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.support.JavaUtils;
 import org.springframework.pulsar.support.MessageConverter;
 
+import io.micrometer.observation.ObservationRegistry;
+
 /**
  * Base {@link PulsarListenerContainerFactory} implementation.
  *
  * @param <C> the {@link AbstractPulsarMessageListenerContainer} implementation type.
  * @param <T> Message payload type.
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractPulsarMessageListenerContainer<T>, T>
-		implements PulsarListenerContainerFactory<C>, ApplicationEventPublisherAware, InitializingBean,
-		ApplicationContextAware {
+		implements PulsarListenerContainerFactory<C>, ApplicationEventPublisherAware, ApplicationContextAware {
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass())); // NOSONAR
-																							// protected
+	protected final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private final PulsarContainerProperties containerProperties = new PulsarContainerProperties();
+	private final PulsarConsumerFactory<? super T> consumerFactory;
 
-	private PulsarConsumerFactory<? super T> consumerFactory;
+	private final PulsarContainerProperties containerProperties;
+
+	private final ObservationRegistry observationRegistry;
 
 	private Boolean autoStartup;
 
@@ -63,17 +65,28 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 
 	private ApplicationContext applicationContext;
 
+	protected AbstractPulsarListenerContainerFactory(PulsarConsumerFactory<? super T> consumerFactory,
+			PulsarContainerProperties containerProperties, @Nullable ObservationRegistry observationRegistry) {
+		this.consumerFactory = consumerFactory;
+		this.containerProperties = containerProperties;
+		this.observationRegistry = observationRegistry;
+	}
+
+	protected PulsarConsumerFactory<? super T> getConsumerFactory() {
+		return this.consumerFactory;
+	}
+
+	protected ObservationRegistry getObservationRegistry() {
+		return this.observationRegistry;
+	}
+
+	public PulsarContainerProperties getContainerProperties() {
+		return this.containerProperties;
+	}
+
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
-	}
-
-	public void setPulsarConsumerFactory(PulsarConsumerFactory<? super T> consumerFactory) {
-		this.consumerFactory = consumerFactory;
-	}
-
-	public PulsarConsumerFactory<? super T> getPulsarConsumerFactory() {
-		return this.consumerFactory;
 	}
 
 	public void setAutoStartup(Boolean autoStartup) {
@@ -92,10 +105,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		this.messageConverter = messageConverter;
 	}
 
-	public Boolean isBatchListener() {
-		return this.batchListener;
-	}
-
 	public void setBatchListener(Boolean batchListener) {
 		this.batchListener = batchListener;
 	}
@@ -103,15 +112,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
-	}
-
-	public PulsarContainerProperties getContainerProperties() {
-		return this.containerProperties;
-	}
-
-	@Override
-	public void afterPropertiesSet() {
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -138,7 +138,7 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	}
 
 	protected void initializeContainer(C instance, PulsarListenerEndpoint endpoint) {
-		PulsarContainerProperties instanceProperties = instance.getPulsarContainerProperties();
+		PulsarContainerProperties instanceProperties = instance.getContainerProperties();
 
 		if (instanceProperties.getSchemaType() == null) {
 			JavaUtils.INSTANCE.acceptIfNotNull(this.containerProperties.getSchemaType(),
@@ -171,7 +171,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		instanceProperties.setMaxNumMessages(this.containerProperties.getMaxNumMessages());
 		instanceProperties.setMaxNumBytes(this.containerProperties.getMaxNumBytes());
 		instanceProperties.setBatchTimeoutMillis(this.containerProperties.getBatchTimeoutMillis());
-		instanceProperties.setObservationEnabled(this.containerProperties.isObservationEnabled());
 		instanceProperties.setObservationConvention(this.containerProperties.getObservationConvention());
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)

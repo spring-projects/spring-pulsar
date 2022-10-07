@@ -45,6 +45,7 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.tck.MeterRegistryAssert;
@@ -130,10 +131,9 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 		}
 
 		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			PulsarTemplate<String> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setObservationEnabled(true);
-			return template;
+		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory,
+				ObservationRegistry observationRegistry) {
+			return new PulsarTemplate<>(pulsarProducerFactory, null, observationRegistry, null);
 		}
 
 		@Bean
@@ -143,11 +143,9 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		PulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			final ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>();
-			pulsarListenerContainerFactory.setPulsarConsumerFactory(pulsarConsumerFactory);
-			pulsarListenerContainerFactory.getContainerProperties().setObservationEnabled(true);
-			return pulsarListenerContainerFactory;
+				PulsarConsumerFactory<Object> pulsarConsumerFactory, ObservationRegistry observationRegistry) {
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
+					new PulsarContainerProperties(), observationRegistry);
 		}
 
 		@Bean

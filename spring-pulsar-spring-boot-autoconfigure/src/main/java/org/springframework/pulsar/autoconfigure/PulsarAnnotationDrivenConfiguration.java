@@ -27,6 +27,9 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
+
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Configuration for Pulsar annotation-driven support.
@@ -47,25 +50,25 @@ public class PulsarAnnotationDrivenConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(name = "pulsarListenerContainerFactory")
 	ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
-			ObjectProvider<PulsarConsumerFactory<Object>> pulsarConsumerFactory) {
-		ConcurrentPulsarListenerContainerFactory<Object> factory = new ConcurrentPulsarListenerContainerFactory<>();
+			ObjectProvider<PulsarConsumerFactory<Object>> consumerFactoryProvider,
+			ObjectProvider<ObservationRegistry> observationRegistryProvider,
+			ObjectProvider<PulsarListenerObservationConvention> observationConventionProvider) {
 
-		final PulsarConsumerFactory<Object> pulsarConsumerFactory1 = pulsarConsumerFactory.getIfAvailable();
-		factory.setPulsarConsumerFactory(pulsarConsumerFactory1);
-
-		final PulsarContainerProperties containerProperties = factory.getContainerProperties();
+		PulsarContainerProperties containerProperties = new PulsarContainerProperties();
 		containerProperties.setSubscriptionType(this.pulsarProperties.getConsumer().getSubscriptionType());
+		containerProperties.setObservationConvention(observationConventionProvider.getIfUnique());
 
 		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-		PulsarProperties.Listener properties = this.pulsarProperties.getListener();
+		PulsarProperties.Listener listenerProperties = this.pulsarProperties.getListener();
+		map.from(listenerProperties::getSchemaType).to(containerProperties::setSchemaType);
+		map.from(listenerProperties::getAckMode).to(containerProperties::setAckMode);
+		map.from(listenerProperties::getBatchTimeoutMillis).to(containerProperties::setBatchTimeoutMillis);
+		map.from(listenerProperties::getMaxNumBytes).to(containerProperties::setMaxNumBytes);
+		map.from(listenerProperties::getMaxNumMessages).to(containerProperties::setMaxNumMessages);
 
-		map.from(properties::getSchemaType).to(containerProperties::setSchemaType);
-		map.from(properties::getAckMode).to(containerProperties::setAckMode);
-		map.from(properties::getBatchTimeoutMillis).to(containerProperties::setBatchTimeoutMillis);
-		map.from(properties::getMaxNumBytes).to(containerProperties::setMaxNumBytes);
-		map.from(properties::getMaxNumMessages).to(containerProperties::setMaxNumMessages);
-
-		return factory;
+		return new ConcurrentPulsarListenerContainerFactory<>(consumerFactoryProvider.getIfAvailable(),
+				containerProperties, this.pulsarProperties.getListener().isObservationsEnabled()
+						? observationRegistryProvider.getIfUnique() : null);
 	}
 
 	@Configuration(proxyBeanMethods = false)

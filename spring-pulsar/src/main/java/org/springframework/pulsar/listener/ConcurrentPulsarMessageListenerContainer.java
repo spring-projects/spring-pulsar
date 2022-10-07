@@ -25,8 +25,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
+
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Creates a concurrent execution context of {@link DefaultPulsarMessageListenerContainer}
@@ -36,6 +39,7 @@ import org.springframework.util.Assert;
  * @param <T> the payload type.
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
@@ -46,8 +50,8 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	private final List<AsyncTaskExecutor> executors = new ArrayList<>();
 
 	public ConcurrentPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
-			PulsarContainerProperties pulsarContainerProperties) {
-		super(pulsarConsumerFactory, pulsarContainerProperties);
+			PulsarContainerProperties pulsarContainerProperties, @Nullable ObservationRegistry observationRegistry) {
+		super(pulsarConsumerFactory, pulsarContainerProperties, observationRegistry);
 	}
 
 	public int getConcurrency() {
@@ -68,8 +72,8 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	@Override
 	public void doStart() {
 		if (!isRunning()) {
-			PulsarContainerProperties containerProperties = getContainerProperties();
 
+			PulsarContainerProperties containerProperties = getContainerProperties();
 			if (containerProperties.getSubscriptionType() == SubscriptionType.Exclusive && this.concurrency > 1) {
 				throw new IllegalStateException("concurrency > 1 is not allowed on Exclusive subscription type");
 			}
@@ -79,7 +83,6 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 			for (int i = 0; i < this.concurrency; i++) {
 				DefaultPulsarMessageListenerContainer<T> container = constructContainer(containerProperties);
 				configureChildContainer(i, container);
-
 				container.start();
 				this.containers.add(container);
 			}
@@ -87,7 +90,8 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	}
 
 	private DefaultPulsarMessageListenerContainer<T> constructContainer(PulsarContainerProperties containerProperties) {
-		return new DefaultPulsarMessageListenerContainer<>(this.pulsarConsumerFactory, containerProperties);
+		return new DefaultPulsarMessageListenerContainer<>(this.getPulsarConsumerFactory(), containerProperties,
+				this.getObservationRegistry());
 	}
 
 	private void configureChildContainer(int index, DefaultPulsarMessageListenerContainer<T> container) {

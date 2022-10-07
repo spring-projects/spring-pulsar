@@ -146,7 +146,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		}
 
 		final ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
-		final PulsarContainerProperties pulsarContainerProperties = containerInstance.getPulsarContainerProperties();
+		final PulsarContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
 		final SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		if (schemaType != SchemaType.NONE) {
 			switch (schemaType) {

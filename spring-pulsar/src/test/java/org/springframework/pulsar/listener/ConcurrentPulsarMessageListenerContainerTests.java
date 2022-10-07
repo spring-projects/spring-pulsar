@@ -53,23 +53,21 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	@Test
 	@SuppressWarnings("unchecked")
 	void createConcurrentContainerFromFactoryAndVerifyBatchReceivePolicy() {
-		ConcurrentPulsarListenerContainerFactory<String> factory = new ConcurrentPulsarListenerContainerFactory<>();
-		final PulsarConsumerFactory<Object> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
-		factory.setPulsarConsumerFactory(pulsarConsumerFactory);
-
-		PulsarContainerProperties containerProperties = factory.getContainerProperties();
+		PulsarConsumerFactory<Object> consumerFactory = mock(PulsarConsumerFactory.class);
+		PulsarContainerProperties containerProperties = new PulsarContainerProperties();
 		containerProperties.setBatchTimeoutMillis(60_000);
 		containerProperties.setMaxNumMessages(120);
 		containerProperties.setMaxNumBytes(32000);
-
-		factory.setConcurrency(1);
-
+		ConcurrentPulsarListenerContainerFactory<String> containerFactory = new ConcurrentPulsarListenerContainerFactory<>(
+				consumerFactory, containerProperties, null);
+		containerFactory.setConcurrency(1);
 		PulsarListenerEndpoint pulsarListenerEndpoint = mock(PulsarListenerEndpoint.class);
 		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
 
-		final ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = factory
+		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = containerFactory
 				.createListenerContainer(pulsarListenerEndpoint);
-		final PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();
+
+		PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();
 		assertThat(pulsarContainerProperties.getBatchTimeoutMillis()).isEqualTo(60_000);
 		assertThat(pulsarContainerProperties.getMaxNumMessages()).isEqualTo(120);
 		assertThat(pulsarContainerProperties.getMaxNumBytes()).isEqualTo(32_000);
@@ -85,7 +83,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		concurrentContainer.start();
 
-		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getDeadLetterPolicy()).isEqualTo(deadLetterPolicy);
 	}
 
@@ -99,7 +97,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		concurrentContainer.start();
 
-		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getNegativeAckRedeliveryBackoff()).isEqualTo(redeliveryBackoff);
 	}
 
@@ -113,7 +111,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		concurrentContainer.start();
 
-		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getAckTimeoutkRedeliveryBackoff()).isEqualTo(redeliveryBackoff);
 	}
 
@@ -122,14 +120,13 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	void pulsarConsumerErrorHandlerAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-
 		PulsarConsumerErrorHandler<String> pulsarConsumerErrorHandler = new DefaultPulsarConsumerErrorHandler(
 				mock(PulsarMessageRecovererFactory.class), mock(BackOff.class));
 		concurrentContainer.setPulsarConsumerErrorHandler(pulsarConsumerErrorHandler);
 
 		concurrentContainer.start();
 
-		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getPulsarConsumerErrorHandler()).isEqualTo(pulsarConsumerErrorHandler);
 	}
 
@@ -138,17 +135,14 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	void observationConfigAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-
 		PulsarListenerObservationConvention customObservationConvention = mock(
 				PulsarListenerObservationConvention.class);
-		concurrentContainer.getContainerProperties().setObservationEnabled(true);
 		concurrentContainer.getContainerProperties().setObservationConvention(customObservationConvention);
 		concurrentContainer.start();
 
-		final DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
+		DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
 		assertThat(childContainer.getContainerProperties().getObservationConvention())
 				.isSameAs(customObservationConvention);
-		assertThat(childContainer.getContainerProperties().isObservationEnabled()).isTrue();
 	}
 
 	@Test
@@ -158,7 +152,6 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		PulsarConsumerFactory<String> pulsarConsumerFactory = env.consumerFactory();
 		Consumer<String> consumer = env.consumer();
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-
 		concurrentContainer.setConcurrency(3);
 
 		concurrentContainer.start();
@@ -182,12 +175,10 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	@SuppressWarnings("unchecked")
 	private PulsarListenerMockComponents setupListenerMockComponents(SubscriptionType subscriptionType)
 			throws Exception {
-		PulsarConsumerFactory<String> pulsarConsumerFactory = mock(PulsarConsumerFactory.class);
+		PulsarConsumerFactory<String> consumerFactory = mock(PulsarConsumerFactory.class);
 		Consumer<String> consumer = mock(Consumer.class);
-
-		when(pulsarConsumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
+		when(consumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
 				.thenReturn(consumer);
-
 		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -197,9 +188,9 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		});
 
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = new ConcurrentPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties);
+				consumerFactory, pulsarContainerProperties, null);
 
-		return new PulsarListenerMockComponents(pulsarConsumerFactory, consumer, concurrentContainer);
+		return new PulsarListenerMockComponents(consumerFactory, consumer, concurrentContainer);
 	}
 
 	private record PulsarListenerMockComponents(PulsarConsumerFactory<String> consumerFactory,
