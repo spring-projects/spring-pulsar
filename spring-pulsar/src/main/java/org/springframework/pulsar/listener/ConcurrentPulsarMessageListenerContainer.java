@@ -130,11 +130,6 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 		}
 	}
 
-	@Override
-	public boolean isRunning() {
-		return false;
-	}
-
 	public List<DefaultPulsarMessageListenerContainer<T>> getContainers() {
 		return this.containers;
 	}

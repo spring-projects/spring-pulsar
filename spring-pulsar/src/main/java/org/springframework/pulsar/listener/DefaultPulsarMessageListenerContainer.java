@@ -142,11 +142,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 	}
 
-	@Override
-	public void destroy() {
-
-	}
-
 	private void publishConsumerStartingEvent() {
 		this.startLatch.countDown();
 		ApplicationEventPublisher publisher = getApplicationEventPublisher();

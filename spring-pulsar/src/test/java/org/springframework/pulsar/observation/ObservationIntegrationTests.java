@@ -19,6 +19,7 @@ package org.springframework.pulsar.observation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
-import org.junit.jupiter.api.Disabled;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -64,7 +64,6 @@ import io.micrometer.tracing.test.simple.SpansAssert;
  * @author Chris Bono
  * @see SampleTestRunner
  */
-@Disabled
 public class ObservationIntegrationTests extends SampleTestRunner implements PulsarTestContainerSupport {
 
 	@SuppressWarnings("unchecked")
@@ -73,13 +72,35 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 		// template -> listener -> template -> listener
 		return (bb, meterRegistry) -> {
 			ObservationRegistry observationRegistry = getObservationRegistry();
-			try (AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext()) {
-				applicationContext.registerBean(ObservationRegistry.class, () -> observationRegistry);
-				applicationContext.register(ObservationIntegrationTestAppConfig.class);
-				applicationContext.refresh();
-				applicationContext.getBean(PulsarTemplate.class).send("obs1-topic", "hello");
-				CountDownLatch latch = applicationContext.getBean(ObservationIntegrationTestAppListeners.class).latch;
-				assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+			try (AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext()) {
+				appContext.registerBean(ObservationRegistry.class, () -> observationRegistry);
+				appContext.register(ObservationIntegrationTestAppConfig.class);
+				appContext.refresh();
+
+				ObservationIntegrationTestAppListeners listeners = appContext
+						.getBean(ObservationIntegrationTestAppListeners.class);
+				PulsarTemplate<String> template = appContext.getBean(PulsarTemplate.class);
+
+				String msg = "hello-" + System.currentTimeMillis();
+				listeners.expectMessage(msg);
+				template.send("obs1-topic", msg);
+
+				boolean listen1Completed = listeners.latchesByMessageListen1.get(msg).await(10, TimeUnit.SECONDS);
+				boolean listen2Completed = listeners.latchesByMessageListen2.get(msg).await(10, TimeUnit.SECONDS);
+				assertThat(listen1Completed).withFailMessage(
+						"Message %s not received in listen1 (latchesByMessageListen1 = %s and latchesByMessageListen2 = %s)",
+						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2).isTrue();
+				assertThat(listen2Completed).withFailMessage(
+						"Message %s not received in listen2 (latchesByMessageListen1 = %s and latchesByMessageListen2 = %s)",
+						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2).isTrue();
+
+				// Without this sleep, the 2nd tracingSetup run sometimes fails due to
+				// messages from 1st run being
+				// delivered during the 2nd run. The test runs share the same listener
+				// config, including the
+				// same subscription names. Seems like the listener in run2 is getting
+				// message from run1.
+				Thread.sleep(5000);
 			}
 
 			List<FinishedSpan> finishedSpans = bb.getFinishedSpans();
@@ -165,20 +186,30 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		private PulsarTemplate<String> template;
 
-		CountDownLatch latch = new CountDownLatch(1);
+		Map<String, CountDownLatch> latchesByMessageListen1 = new HashMap<>();
+
+		Map<String, CountDownLatch> latchesByMessageListen2 = new HashMap<>();
 
 		ObservationIntegrationTestAppListeners(PulsarTemplate<String> template) {
 			this.template = template;
 		}
 
+		void expectMessage(String message) {
+			latchesByMessageListen1.put(message, new CountDownLatch(1));
+			latchesByMessageListen2.put(message, new CountDownLatch(1));
+		}
+
 		@PulsarListener(id = "obs1-id", properties = { "subscriptionName=obs1-sub", "topicNames=obs1-topic" })
 		void listen1(String message) throws PulsarClientException {
+			assertThat(latchesByMessageListen1).containsKey(message);
+			latchesByMessageListen1.get(message).countDown();
 			this.template.send("obs2-topic", message);
 		}
 
 		@PulsarListener(id = "obs2-id", properties = { "subscriptionName=obs2-sub", "topicNames=obs2-topic" })
 		void listen2(String message) {
-			latch.countDown();
+			assertThat(latchesByMessageListen2).containsKey(message);
+			latchesByMessageListen2.get(message).countDown();
 		}
 
 	}
