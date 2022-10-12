@@ -1364,9 +1364,9 @@ If `micrometer-core` is on the classpath every stopped Observation leads to a ti
 Spring Boot also auto-configures Micrometer Tracing for you. This includes support for Brave OpenTelemetry, Zipkin and Wavefront. When using the Micrometer Observation API, finishing observations will lead to spans reported to Zipkin or Wavefront. Tracing can be controlled with properties under `management.tracing`. Zipkin can be configured with `management.zipkin.tracing` while Wavefront uses `management.wavefront`.
 
 ====== Example Configuration
-The following illustrates the steps to configure your Spring Boot app to use Zipkin with Brave. Note that the Spring Pulsar samples apps are configured the same way.
+The following illustrates the steps to configure your Spring Boot app to use Zipkin with Brave.
 
-Add these dependencies to your application (Maven or Gradle, respectively):
+**Step 1:** Add the required dependencies to your application [small]#(Maven or Gradle, respectively)#:
 
 [source,xml,indent=0,subs="verbatim,attributes",role="primary"]
 .Maven
@@ -1403,7 +1403,8 @@ dependencies {
 ----
 NOTE: The `'io.zipkin.reporter2:zipkin-sender-urlconnection'` dependency is only needed if your application does not have a configured WebClient or RestTemplate.
 
-.Add these properties to your application:
+**Step 2:** Add the required properties to your application:
+
 [source,yaml,indent=0,subs="verbatim"]
 ----
 management:
@@ -1411,14 +1412,15 @@ management:
   zipkin:
     tracing.endpoint: "http://localhost:9411/api/v2/spans"
 ----
-NOTE: The `tracing.endpoint` above expects Zipkin is running locally as described https://zipkin.io/pages/quickstart.html[here].
+The `tracing.endpoint` above expects Zipkin is running locally as described https://zipkin.io/pages/quickstart.html[here].
 
-At this point, your application should be recording traces when you send and receive Pulsar messages. You should be able to view them in the http://localhost:9411[Zipkin UI].
+At this point, your application should be recording traces when you send and receive Pulsar messages. You should be able to view them in the Zipkin UI [small]#(when running locally http://localhost:9411)#.
 
-The above configuration can also be seen on the  link:{github}/blob/main/spring-pulsar-sample-apps/README.adoc[Spring Pulsar Sample Apps].
+TIP: The above configuration can also be seen on the  link:{github}/blob/main/spring-pulsar-sample-apps/README.adoc[Spring Pulsar Sample Apps].
 
+The steps would be very similar to configure in any of the other supporting Tracing environments.
 
-==== Appendix
+=== Appendix
 The reference documentation has the following appendices:
 
 [horizontal]
