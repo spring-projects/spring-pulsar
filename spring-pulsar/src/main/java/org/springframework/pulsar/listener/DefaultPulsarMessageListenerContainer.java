@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -74,13 +74,17 @@ import io.micrometer.observation.ObservationRegistry;
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
-	private volatile Future<?> listenerConsumerFuture;
+	private volatile CompletableFuture<?> listenerConsumerFuture;
 
 	private volatile Listener listenerConsumer;
 
 	private volatile CountDownLatch startLatch = new CountDownLatch(1);
 
 	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
+
+	private volatile Thread listenerConsumerThread;
+
+	private volatile boolean receiveInProgress;
 
 	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
 			PulsarContainerProperties pulsarContainerProperties) {
@@ -113,7 +117,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.getObservationRegistry());
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
-		this.listenerConsumerFuture = consumerExecutor.submit(this.listenerConsumer);
+		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
 
 		try {
 			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(),
@@ -133,6 +137,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		setRunning(false);
 		this.logger.info("Pausing this consumer.");
 		this.listenerConsumer.consumer.pause();
+		if (this.receiveInProgress) {
+			this.listenerConsumerThread.interrupt();
+		}
+		try {
+			this.listenerConsumerThread.join();
+		}
+		catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 		try {
 			this.logger.info("Closing this consumer.");
 			this.listenerConsumer.consumer.close();
@@ -286,6 +299,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		@Override
 		public void run() {
+			DefaultPulsarMessageListenerContainer.this.listenerConsumerThread = Thread.currentThread();
 			publishConsumerStartingEvent();
 			publishConsumerStartedEvent();
 			AtomicBoolean inRetryMode = new AtomicBoolean(false);
@@ -296,71 +310,83 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				// Always receive messages in batch mode.
 				try {
 					if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
+						DefaultPulsarMessageListenerContainer.this.receiveInProgress = true;
 						messages = this.consumer.batchReceive();
+						DefaultPulsarMessageListenerContainer.this.receiveInProgress = false;
 					}
 				}
 				catch (PulsarClientException e) {
-					DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Error receiving messages.");
-				}
-				Assert.isTrue(messages != null, "Messages cannot be null.");
-				if (this.isBatchListener) {
-					if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
-						messageList = new ArrayList<>();
-						messages.forEach(messageList::add);
+					if (e.getCause() instanceof InterruptedException) {
+						DefaultPulsarMessageListenerContainer.this.logger.debug(e, () -> "Error receiving messages.");
 					}
-					try {
-						if (messageList != null && messageList.size() > 0) {
-							if (this.batchMessageListener instanceof PulsarBatchAcknowledgingMessageListener) {
-								this.batchMessageListener.received(this.consumer, messageList,
-										this.ackMode.equals(AckMode.MANUAL)
-												? new ConsumerBatchAcknowledgment(this.consumer) : null);
+					else {
+						DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Error receiving messages.");
+					}
+					messages = null;
+				}
+
+				if (messages != null) {
+					if (this.isBatchListener) {
+						if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
+							messageList = new ArrayList<>();
+							messages.forEach(messageList::add);
+						}
+						try {
+							if (messageList != null && messageList.size() > 0) {
+								if (this.batchMessageListener instanceof PulsarBatchAcknowledgingMessageListener) {
+									this.batchMessageListener.received(this.consumer, messageList,
+											this.ackMode.equals(AckMode.MANUAL)
+													? new ConsumerBatchAcknowledgment(this.consumer) : null);
+								}
+								else {
+									this.batchMessageListener.received(this.consumer, messageList);
+								}
+								if (this.ackMode.equals(AckMode.BATCH)) {
+									try {
+										if (isSharedSubscriptionType()) {
+											this.consumer.acknowledge(messages);
+										}
+										else {
+											final Stream<Message<T>> stream = StreamSupport
+													.stream(messages.spliterator(), true);
+											Message<T> last = stream.reduce((a, b) -> b).orElse(null);
+											this.consumer.acknowledgeCumulative(last);
+										}
+									}
+									catch (PulsarClientException pce) {
+										this.consumer.negativeAcknowledge(messages);
+									}
+								}
+								if (this.pulsarConsumerErrorHandler != null) {
+									pendingMessagesHandledSuccessfully(inRetryMode, messagesPendingInBatch);
+								}
+							}
+						}
+						catch (Exception e) {
+							if (this.pulsarConsumerErrorHandler != null) {
+								messageList = invokeBatchListenerErrorHandler(inRetryMode, messagesPendingInBatch,
+										messageList, e);
 							}
 							else {
-								this.batchMessageListener.received(this.consumer, messageList);
-							}
-							if (this.ackMode.equals(AckMode.BATCH)) {
-								try {
-									if (isSharedSubscriptionType()) {
-										this.consumer.acknowledge(messages);
-									}
-									else {
-										final Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(),
-												true);
-										Message<T> last = stream.reduce((a, b) -> b).orElse(null);
-										this.consumer.acknowledgeCumulative(last);
-									}
-								}
-								catch (PulsarClientException pce) {
-									this.consumer.negativeAcknowledge(messages);
-								}
-							}
-							if (this.pulsarConsumerErrorHandler != null) {
-								pendingMessagesHandledSuccessfully(inRetryMode, messagesPendingInBatch);
+								// the whole batch is negatively acknowledged in the event
+								// of
+								// an exception from the handler method.
+								this.consumer.negativeAcknowledge(messages);
 							}
 						}
 					}
-					catch (Exception e) {
-						if (this.pulsarConsumerErrorHandler != null) {
-							messageList = invokeBatchListenerErrorHandler(inRetryMode, messagesPendingInBatch,
-									messageList, e);
+					else {
+						for (Message<T> message : messages) {
+							do {
+								newObservation(message)
+										.observe(() -> this.dispatchMessageToListener(message, inRetryMode));
+							}
+							while (inRetryMode.get());
 						}
-						else {
-							// the whole batch is negatively acknowledged in the event of
-							// an exception from the handler method.
-							this.consumer.negativeAcknowledge(messages);
+						// All the records are processed at this point. Handle acks.
+						if (this.ackMode.equals(AckMode.BATCH)) {
+							handleAcks(messages);
 						}
-					}
-				}
-				else {
-					for (Message<T> message : messages) {
-						do {
-							newObservation(message).observe(() -> this.dispatchMessageToListener(message, inRetryMode));
-						}
-						while (inRetryMode.get());
-					}
-					// All the records are processed at this point. Handle acks.
-					if (this.ackMode.equals(AckMode.BATCH)) {
-						handleAcks(messages);
 					}
 				}
 			}
