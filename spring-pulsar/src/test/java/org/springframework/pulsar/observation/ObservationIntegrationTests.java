@@ -93,14 +93,6 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 				assertThat(listen2Completed).withFailMessage(
 						"Message %s not received in listen2 (latchesByMessageListen1 = %s and latchesByMessageListen2 = %s)",
 						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2).isTrue();
-
-				// Without this sleep, the 2nd tracingSetup run sometimes fails due to
-				// messages from 1st run being
-				// delivered during the 2nd run. The test runs share the same listener
-				// config, including the
-				// same subscription names. Seems like the listener in run2 is getting
-				// message from run1.
-				Thread.sleep(5000);
 			}
 
 			List<FinishedSpan> finishedSpans = bb.getFinishedSpans();

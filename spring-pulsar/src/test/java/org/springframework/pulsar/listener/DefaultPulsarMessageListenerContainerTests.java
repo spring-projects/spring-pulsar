@@ -262,6 +262,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		// Normal consumer should receive 5 msg + 1 re-delivery
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 		container.stop();
+		dlqContainer.stop();
 		pulsarClient.close();
 	}
 
