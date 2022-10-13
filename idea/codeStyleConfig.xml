@@ -37,7 +37,7 @@
 				<package name="" withSubpackages="true" static="false"/>
 				<emptyLine/>
 				<package name="org.springframework" withSubpackages="true"
-						 static="false"/>
+				         static="false"/>
 				<emptyLine/>
 				<package name="" withSubpackages="true" static="true"/>
 			</value>
@@ -53,16 +53,15 @@
 		</option>
 		<option name="IMPORT_LAYOUT_TABLE">
 			<value>
+				<package name="" withSubpackages="true" static="true"/>
+				<emptyLine/>
 				<package name="java" withSubpackages="true" static="false"/>
 				<emptyLine/>
 				<package name="javax" withSubpackages="true" static="false"/>
 				<emptyLine/>
-				<package name="" withSubpackages="true" static="false"/>
+				<package name="org" withSubpackages="true" static="false"/>
 				<emptyLine/>
-				<package name="org.springframework" withSubpackages="true"
-						 static="false"/>
-				<emptyLine/>
-				<package name="" withSubpackages="true" static="true"/>
+				<package name="org.springframework" withSubpackages="true" static="false"/>
 			</value>
 		</option>
 		<option name="ENABLE_JAVADOC_FORMATTING" value="false"/>
@@ -76,7 +75,7 @@
 			<value>
 				<package name="java.util" withSubpackages="false" static="false"/>
 				<package name="kotlinx.android.synthetic" withSubpackages="false"
-						 static="false"/>
+				         static="false"/>
 			</value>
 		</option>
 		<option name="NAME_COUNT_TO_USE_STAR_IMPORT" value="20"/>
