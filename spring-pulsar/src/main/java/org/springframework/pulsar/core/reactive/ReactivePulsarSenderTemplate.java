@@ -25,17 +25,9 @@ import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.MessageSpecBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 
-import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.SchemaUtils;
-import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
-import org.springframework.pulsar.observation.PulsarMessageSenderContext;
-import org.springframework.pulsar.observation.PulsarTemplateObservation;
-import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
 
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
 import reactor.core.publisher.Mono;
 
 /**
@@ -44,44 +36,21 @@ import reactor.core.publisher.Mono;
  * @param <T> the message payload type
  * @author Christophe Bornet
  */
-public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOperations<T>, BeanNameAware {
+public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOperations<T> {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory;
 
-	private final ObservationRegistry observationRegistry;
-
-	private final PulsarTemplateObservationConvention observationConvention;
-
-	private String beanName;
-
 	private Schema<T> schema;
-
-	/**
-	 * Construct a template instance.
-	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
-	 * reactive sender.
-	 */
-	public ReactivePulsarSenderTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
-		this(reactiveMessageSenderFactory, null, null);
-	}
 
 	/**
 	 * Construct a template instance with observation configuration.
 	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
 	 * reactive senders
-	 * @param observationRegistry the registry to record observations with or {@code null}
-	 * to not record observations
-	 * @param observationConvention the optional custom observation convention to use when
-	 * recording observations
 	 */
-	public ReactivePulsarSenderTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory,
-			@Nullable ObservationRegistry observationRegistry,
-			@Nullable PulsarTemplateObservationConvention observationConvention) {
+	public ReactivePulsarSenderTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
 		this.reactiveMessageSenderFactory = reactiveMessageSenderFactory;
-		this.observationRegistry = observationRegistry;
-		this.observationConvention = observationConvention;
 	}
 
 	@Override
@@ -95,13 +64,8 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 	}
 
 	@Override
-	public ReactiveSendMessageBuilderImpl<T> newMessage(T message) {
-		return new ReactiveSendMessageBuilderImpl<>(this, message);
-	}
-
-	@Override
-	public void setBeanName(String beanName) {
-		this.beanName = beanName;
+	public SendMessageBuilderImpl<T> newMessage(T message) {
+		return new SendMessageBuilderImpl<>(this, message);
 	}
 
 	/**
@@ -118,44 +82,19 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
 		this.logger.trace(() -> String.format("Sending reative msg to '%s' topic", topicName));
 
-		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
-		Observation observation = newObservation(senderContext);
-		try {
-			observation.start();
-			final ReactiveMessageSender<T> sender = createMessageSender(topic, message, messageRouter, customizer);
+		final ReactiveMessageSender<T> sender = createMessageSender(topic, message, messageRouter, customizer);
 
-			MessageSpecBuilder<T> messageSpecBuilder = MessageSpec.builder(message);
+		MessageSpecBuilder<T> messageSpecBuilder = MessageSpec.builder(message);
 
-			if (messageSpecBuilderCustomizer != null) {
-				messageSpecBuilderCustomizer.customize(messageSpecBuilder);
-			}
-
-			// propagate props to message
-			senderContext.properties().forEach(messageSpecBuilder::property);
-
-			MessageSpec<T> messageSpec = messageSpecBuilder.build();
-			return sender.sendMessage(Mono.just(messageSpec)).doOnError(ex -> {
-				this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
-				observation.error(ex);
-				observation.stop();
-			}).doOnSuccess(msgId -> {
-				this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
-				observation.stop();
-			});
+		if (messageSpecBuilderCustomizer != null) {
+			messageSpecBuilderCustomizer.customize(messageSpecBuilder);
 		}
-		catch (RuntimeException ex) {
-			observation.error(ex);
-			observation.stop();
-			throw ex;
-		}
-	}
 
-	private Observation newObservation(PulsarMessageSenderContext senderContext) {
-		if (this.observationRegistry == null) {
-			return Observation.NOOP;
-		}
-		return PulsarTemplateObservation.TEMPLATE_OBSERVATION.observation(this.observationConvention,
-				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
+		MessageSpec<T> messageSpec = messageSpecBuilder.build();
+		return sender.sendMessage(Mono.just(messageSpec))
+				.doOnError(
+						ex -> this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName)))
+				.doOnSuccess(msgId -> this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName)));
 	}
 
 	private ReactiveMessageSender<T> createMessageSender(String topic, T message, MessageRouter messageRouter,
@@ -165,7 +104,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 				customizer == null ? Collections.emptyList() : Collections.singletonList(customizer));
 	}
 
-	public static class ReactiveSendMessageBuilderImpl<T> implements ReactiveSendMessageBuilder<T> {
+	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
 
 		private final ReactivePulsarSenderTemplate<T> template;
 
@@ -179,32 +118,31 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 		private ReactiveMessageSenderBuilderCustomizer<T> senderCustomizer;
 
-		ReactiveSendMessageBuilderImpl(ReactivePulsarSenderTemplate<T> template, T message) {
+		SendMessageBuilderImpl(ReactivePulsarSenderTemplate<T> template, T message) {
 			this.template = template;
 			this.message = message;
 		}
 
 		@Override
-		public ReactiveSendMessageBuilderImpl<T> withTopic(String topic) {
+		public SendMessageBuilderImpl<T> withTopic(String topic) {
 			this.topic = topic;
 			return this;
 		}
 
 		@Override
-		public ReactiveSendMessageBuilderImpl<T> withMessageCustomizer(
-				MessageSpecBuilderCustomizer<T> messageCustomizer) {
+		public SendMessageBuilderImpl<T> withMessageCustomizer(MessageSpecBuilderCustomizer<T> messageCustomizer) {
 			this.messageCustomizer = messageCustomizer;
 			return this;
 		}
 
 		@Override
-		public ReactiveSendMessageBuilderImpl<T> withCustomRouter(MessageRouter messageRouter) {
+		public SendMessageBuilderImpl<T> withCustomRouter(MessageRouter messageRouter) {
 			this.messageRouter = messageRouter;
 			return this;
 		}
 
 		@Override
-		public ReactiveSendMessageBuilderImpl<T> withSenderCustomizer(
+		public SendMessageBuilderImpl<T> withSenderCustomizer(
 				ReactiveMessageSenderBuilderCustomizer<T> senderCustomizer) {
 			this.senderCustomizer = senderCustomizer;
 			return this;

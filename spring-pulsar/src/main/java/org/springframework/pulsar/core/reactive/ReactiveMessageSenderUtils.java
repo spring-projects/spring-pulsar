@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.core.reactive;
 
+import java.util.Optional;
+
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
 import org.springframework.util.StringUtils;
@@ -37,12 +39,8 @@ final class ReactiveMessageSenderUtils {
 		if (StringUtils.hasText(userSpecifiedTopic)) {
 			return userSpecifiedTopic;
 		}
-		else if (reactiveMessageSenderSpec != null && reactiveMessageSenderSpec.getTopicName() != null) {
-			return reactiveMessageSenderSpec.getTopicName();
-		}
-		else {
-			throw new IllegalArgumentException("Topic must be specified when no default topic is configured");
-		}
+		return Optional.ofNullable(reactiveMessageSenderSpec).map(ReactiveMessageSenderSpec::getTopicName).orElseThrow(
+				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
 	}
 
 }

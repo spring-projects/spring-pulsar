@@ -46,12 +46,12 @@ public interface ReactivePulsarSenderOperations<T> {
 	Mono<MessageId> send(String topic, T message);
 
 	/**
-	 * Create a {@link ReactiveSendMessageBuilder builder} for configuring and sending a
-	 * message reactively.
+	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message
+	 * reactively.
 	 * @param message the payload of the message
 	 * @return the builder to configure and send the message
 	 */
-	ReactiveSendMessageBuilder<T> newMessage(T message);
+	SendMessageBuilder<T> newMessage(T message);
 
 	/**
 	 * Builder that can be used to configure and send a message. Provides more options
@@ -59,28 +59,28 @@ public interface ReactivePulsarSenderOperations<T> {
 	 *
 	 * @param <T> the message payload type
 	 */
-	interface ReactiveSendMessageBuilder<T> {
+	interface SendMessageBuilder<T> {
 
 		/**
 		 * Specify the topic to send the message to.
 		 * @param topic the destination topic
 		 * @return the current builder with the destination topic specified
 		 */
-		ReactiveSendMessageBuilder<T> withTopic(String topic);
+		SendMessageBuilder<T> withTopic(String topic);
 
 		/**
 		 * Specifies the message customizer to use to further configure the message.
 		 * @param customizer the message customizer
 		 * @return the current builder with the message customizer specified
 		 */
-		ReactiveSendMessageBuilder<T> withMessageCustomizer(MessageSpecBuilderCustomizer<T> customizer);
+		SendMessageBuilder<T> withMessageCustomizer(MessageSpecBuilderCustomizer<T> customizer);
 
 		/**
 		 * Specifies the custom message router to use when sending the message.
 		 * @param messageRouter the custom message router
 		 * @return the current builder with the custom message router specified
 		 */
-		ReactiveSendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter);
+		SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter);
 
 		/**
 		 * Specifies the customizer to use to further configure the reactive sender
@@ -89,7 +89,7 @@ public interface ReactivePulsarSenderOperations<T> {
 		 * @return the current builder with the reactive sender builder customizer
 		 * specified
 		 */
-		ReactiveSendMessageBuilder<T> withSenderCustomizer(ReactiveMessageSenderBuilderCustomizer<T> customizer);
+		SendMessageBuilder<T> withSenderCustomizer(ReactiveMessageSenderBuilderCustomizer<T> customizer);
 
 		/**
 		 * Send the message in a reactive manner using the configured specification.

@@ -121,7 +121,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 							: pulsarTemplate.send(msgPayload);
 				}
 				else {
-					ReactivePulsarSenderTemplate.ReactiveSendMessageBuilderImpl<String> messageBuilder = pulsarTemplate
+					ReactivePulsarSenderTemplate.SendMessageBuilderImpl<String> messageBuilder = pulsarTemplate
 							.newMessage(msgPayload);
 					if (testArgs.useSpecificTopic) {
 						messageBuilder = messageBuilder.withTopic(topic);

@@ -16,7 +16,7 @@
 
 package org.springframework.pulsar.core.reactive;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -141,9 +141,8 @@ class DefaultReactiveMessageSenderFactoryTests {
 	void createProducerWithNoTopic() {
 		ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(pulsarClient,
 				null);
-		assertThatThrownBy(() -> senderFactory.createReactiveMessageSender(null, schema))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("Topic must be specified when no default topic is configured");
+		assertThatIllegalArgumentException().isThrownBy(() -> senderFactory.createReactiveMessageSender(null, schema))
+				.withMessageContaining("Topic must be specified when no default topic is configured");
 	}
 
 	protected void assertSenderHasTopicAndRouter(String topic, MessageRouter router) {

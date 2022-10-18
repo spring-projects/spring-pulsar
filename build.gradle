@@ -75,11 +75,5 @@ subprojects { subproject ->
 			}
 		}
 	}
-
-	repositories {
-		maven {
-			url 'https://repository.apache.org/content/repositories/snapshots'
-		}
-	}
 }
 

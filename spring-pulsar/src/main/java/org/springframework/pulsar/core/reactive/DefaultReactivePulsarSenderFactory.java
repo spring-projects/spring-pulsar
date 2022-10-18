@@ -18,7 +18,6 @@ package org.springframework.pulsar.core.reactive;
 
 import java.util.List;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
@@ -39,7 +38,7 @@ import org.springframework.util.CollectionUtils;
  */
 public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSenderFactory<T> {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final ReactivePulsarClient reactivePulsarClient;
 

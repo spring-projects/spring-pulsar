@@ -47,6 +47,10 @@ class RepositoryConventionPlugin implements Plugin<Project> {
 					}
 					url = 'https://repo.spring.io/snapshot/'
 				}
+				maven {
+					name = 'apache-snapshot'
+					url = 'https://repository.apache.org/content/repositories/snapshots'
+				}
 			}
 			if (isSnapshot || isMilestone) {
 				maven {
