@@ -361,8 +361,6 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarClient.close();
 	}
 
-	// *********************
-
 	@Test
 	void messagesAreProperlyAckdOnContainerStopBeforeExitingListenerThread() throws Exception {
 		Map<String, Object> config = new HashMap<>();
@@ -383,8 +381,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container1.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "duplicate-message-test");
+		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "duplicate-message-test");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
