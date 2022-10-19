@@ -28,5 +28,6 @@ dependencies {
 		api "com.google.protobuf:protobuf-java:$protobufJavaVersion"
 		api "org.apache.pulsar:pulsar-client-all:$pulsarVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-adapter:$pulsarClientReactiveVersion"
+		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine:$pulsarClientReactiveVersion"
 	}
 }
