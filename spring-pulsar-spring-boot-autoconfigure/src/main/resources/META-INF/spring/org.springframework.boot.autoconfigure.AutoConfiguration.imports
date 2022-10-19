@@ -1,1 +1,3 @@
 org.springframework.pulsar.autoconfigure.PulsarAutoConfiguration
+org.springframework.pulsar.autoconfigure.PulsarImperativeAutoConfiguration
+org.springframework.pulsar.autoconfigure.PulsarReactiveAutoConfiguration

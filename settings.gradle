@@ -22,9 +22,12 @@ settings.gradle.projectsLoaded {
 
 rootProject.name = 'spring-pulsar-dist'
 
+include 'spring-pulsar-common'
 include 'spring-pulsar'
+include 'spring-pulsar-reactive'
 include 'spring-pulsar-dependencies'
 include 'spring-pulsar-spring-boot-autoconfigure'
 include 'spring-pulsar-spring-boot-starter'
+include 'spring-pulsar-reactive-spring-boot-starter'
 include 'spring-pulsar-sample-apps'
 include 'spring-pulsar-docs'

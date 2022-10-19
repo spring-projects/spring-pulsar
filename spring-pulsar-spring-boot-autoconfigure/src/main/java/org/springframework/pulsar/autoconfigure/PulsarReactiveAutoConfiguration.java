@@ -16,15 +16,17 @@
 
 package org.springframework.pulsar.autoconfigure;
 
+import org.apache.pulsar.client.api.PulsarClient;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.pulsar.config.PulsarClientConfiguration;
-import org.springframework.pulsar.config.PulsarClientFactoryBean;
-import org.springframework.pulsar.core.PulsarAdministration;
+import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
+import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
+import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
 
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
@@ -33,33 +35,27 @@ import org.springframework.pulsar.core.PulsarAdministration;
  * @author Chris Bono
  * @author Alexander Preuß
  */
-@AutoConfiguration
-@ConditionalOnClass(PulsarAdministration.class)
+@AutoConfiguration(after = PulsarAutoConfiguration.class)
+@ConditionalOnClass(ReactivePulsarSenderTemplate.class)
 @EnableConfigurationProperties(PulsarProperties.class)
-public class PulsarAutoConfiguration {
+public class PulsarReactiveAutoConfiguration {
 
 	private final PulsarProperties properties;
 
-	public PulsarAutoConfiguration(PulsarProperties properties) {
+	public PulsarReactiveAutoConfiguration(PulsarProperties properties) {
 		this.properties = properties;
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarClientConfiguration.class)
-	public PulsarClientConfiguration pulsarClientConfiguration() {
-		return new PulsarClientConfiguration(this.properties.buildClientProperties());
+	@ConditionalOnMissingBean(ReactivePulsarSenderTemplate.class)
+	public ReactivePulsarSenderTemplate<?> pulsarReactiveSenderTemplate(
+			ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory) {
+		return new ReactivePulsarSenderTemplate(reactivePulsarSenderFactory);
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarClientFactoryBean.class)
-	public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
-		return new PulsarClientFactoryBean(pulsarClientConfiguration);
+	@ConditionalOnMissingBean(ReactivePulsarSenderFactory.class)
+	public ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory(PulsarClient pulsarClient) {
+		return new DefaultReactivePulsarSenderFactory(pulsarClient, null); //, this.properties.buildReactiveMessageSenderSpec());
 	}
-
-	@Bean
-	@ConditionalOnMissingBean(PulsarAdministration.class)
-	public PulsarAdministration pulsarAdministration() {
-		return new PulsarAdministration(this.properties.buildAdminProperties());
-	}
-
 }

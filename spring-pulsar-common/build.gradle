@@ -2,34 +2,21 @@ plugins {
 	id 'org.springframework.pulsar.spring-module'
 }
 
-description = 'Spring Pulsar Support'
+description = 'Spring Pulsar Common'
 
 dependencies {
-	api project(':spring-pulsar-common')
-	api 'com.github.ben-manes.caffeine:caffeine'
-	api 'com.google.protobuf:protobuf-java'
-	api 'io.micrometer:micrometer-observation'
+	api 'org.apache.pulsar:pulsar-client-all'
 	api 'org.springframework:spring-context'
-	api 'org.springframework:spring-messaging'
-	api 'org.springframework:spring-tx'
-	api ('org.springframework.retry:spring-retry') {
-		exclude group: 'org.springframework'
-	}
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.google.code.findbugs:jsr305'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
-	optional 'com.jayway.jsonpath:json-path'
-	optional 'io.projectreactor:reactor-core'
+
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testRuntimeOnly 'ch.qos.logback:logback-classic'
-	testImplementation 'io.micrometer:micrometer-observation-test'
-	testImplementation 'io.micrometer:micrometer-tracing-bridge-brave'
-	testImplementation 'io.micrometer:micrometer-tracing-test'
-	testImplementation 'io.micrometer:micrometer-tracing-integration-test'
 	testImplementation 'org.assertj:assertj-core'
 	testImplementation 'org.awaitility:awaitility'
 	testImplementation 'org.hamcrest:hamcrest'
