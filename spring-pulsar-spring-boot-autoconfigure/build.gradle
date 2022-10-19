@@ -9,7 +9,9 @@ dependencies {
 	annotationProcessor 'org.springframework.boot:spring-boot-autoconfigure-processor'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-	api project (':spring-pulsar')
+	optional project (':spring-pulsar')
+	optional project (':spring-pulsar-reactive')
+
 	api 'org.springframework.boot:spring-boot'
 	api 'org.springframework.boot:spring-boot-autoconfigure'
 	api 'org.springframework.boot:spring-boot-starter'
