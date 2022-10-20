@@ -66,7 +66,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
 				senderSpec.setTopicName(topic);
 				ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client,
-						senderSpec);
+						senderSpec, null);
 				ReactivePulsarSenderTemplate<Foo> pulsarTemplate = new ReactivePulsarSenderTemplate<>(producerFactory);
 				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
@@ -113,7 +113,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					senderSpec.setTopicName(topic);
 				}
 				ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
-						senderSpec);
+						senderSpec, null);
 				ReactivePulsarSenderTemplate<String> pulsarTemplate = new ReactivePulsarSenderTemplate<>(senderFactory);
 				Mono<MessageId> sendResponse;
 				if (testArgs.useSimpleApi) {

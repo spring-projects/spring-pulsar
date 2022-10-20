@@ -24,6 +24,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderBuilder;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
@@ -44,15 +45,21 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 
 	private final ReactiveMessageSenderSpec reactiveMessageSenderSpec;
 
+	private final ReactiveMessageSenderCache reactiveMessageSenderCache;
+
 	public DefaultReactivePulsarSenderFactory(PulsarClient pulsarClient,
-			ReactiveMessageSenderSpec reactiveMessageSenderSpec) {
-		this(AdaptedReactivePulsarClientFactory.create(pulsarClient), reactiveMessageSenderSpec);
+			ReactiveMessageSenderSpec reactiveMessageSenderSpec,
+			ReactiveMessageSenderCache reactiveMessageSenderCache) {
+		this(AdaptedReactivePulsarClientFactory.create(pulsarClient), reactiveMessageSenderSpec,
+				reactiveMessageSenderCache);
 	}
 
 	public DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient,
-			ReactiveMessageSenderSpec reactiveMessageSenderSpec) {
+			ReactiveMessageSenderSpec reactiveMessageSenderSpec,
+			ReactiveMessageSenderCache reactiveMessageSenderCache) {
 		this.reactivePulsarClient = reactivePulsarClient;
 		this.reactiveMessageSenderSpec = reactiveMessageSenderSpec;
+		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
 	}
 
 	@Override
@@ -81,6 +88,9 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 			sender.applySpec(this.reactiveMessageSenderSpec);
 		}
 		sender.topic(resolvedTopic);
+		if (this.reactiveMessageSenderCache != null) {
+			sender.cache(this.reactiveMessageSenderCache);
+		}
 		if (messageRouter != null) {
 			sender.messageRouter(messageRouter);
 		}
