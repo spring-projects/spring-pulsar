@@ -24,10 +24,12 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.MessageSpecBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
+import org.reactivestreams.Publisher;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.SchemaUtils;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -55,12 +57,22 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 	@Override
 	public Mono<MessageId> send(T message) {
-		return doSend(null, message, null, null, null);
+		return send(null, message);
 	}
 
 	@Override
 	public Mono<MessageId> send(String topic, T message) {
 		return doSend(topic, message, null, null, null);
+	}
+
+	@Override
+	public Flux<MessageId> send(Publisher<T> messages) {
+		return send(null, messages);
+	}
+
+	@Override
+	public Flux<MessageId> send(String topic, Publisher<T> messages) {
+		return doSendMany(topic, messages, null, null, null);
 	}
 
 	@Override
@@ -79,22 +91,44 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 	private Mono<MessageId> doSend(String topic, T message,
 			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer, MessageRouter messageRouter,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
+		return doSendMany(topic, Mono.just(message), messageSpecBuilderCustomizer, messageRouter, customizer).single();
+	}
+
+	private Flux<MessageId> doSendMany(String topic, Publisher<T> messages,
+			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer, MessageRouter messageRouter,
+			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
 		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
-		this.logger.trace(() -> String.format("Sending reative msg to '%s' topic", topicName));
+		this.logger.trace(() -> String.format("Sending reactive msg to '%s' topic", topicName));
 
-		final ReactiveMessageSender<T> sender = createMessageSender(topic, message, messageRouter, customizer);
+		if (this.schema != null) {
+			ReactiveMessageSender<T> sender = this.reactiveMessageSenderFactory.createReactiveMessageSender(topic,
+					this.schema, messageRouter,
+					customizer == null ? Collections.emptyList() : Collections.singletonList(customizer));
 
+			Flux<MessageSpec<T>> map = Flux.from(messages)
+					.map(message -> getMessageSpec(messageSpecBuilderCustomizer, message));
+			return sender.sendMessages(map).doOnError(
+					ex -> this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName)))
+					.doOnNext(msgId -> this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName)));
+		}
+		return Flux.from(messages).flatMap(message -> {
+			ReactiveMessageSender<T> sender = createMessageSender(topic, message, messageRouter, customizer);
+			MessageSpec<T> messageSpec = getMessageSpec(messageSpecBuilderCustomizer, message);
+			return sender.sendMessage(Mono.just(messageSpec)).doOnError(
+					ex -> this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName)))
+					.doOnSuccess(msgId -> this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName)));
+		});
+	}
+
+	private static <T> MessageSpec<T> getMessageSpec(MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
+			T message) {
 		MessageSpecBuilder<T> messageSpecBuilder = MessageSpec.builder(message);
 
 		if (messageSpecBuilderCustomizer != null) {
 			messageSpecBuilderCustomizer.customize(messageSpecBuilder);
 		}
 
-		MessageSpec<T> messageSpec = messageSpecBuilder.build();
-		return sender.sendMessage(Mono.just(messageSpec))
-				.doOnError(
-						ex -> this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName)))
-				.doOnSuccess(msgId -> this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName)));
+		return messageSpecBuilder.build();
 	}
 
 	private ReactiveMessageSender<T> createMessageSender(String topic, T message, MessageRouter messageRouter,
