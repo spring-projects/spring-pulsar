@@ -83,7 +83,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
 
-	private AtomicReference<Thread> listenerConsumerThread;
+	private final AtomicReference<Thread> listenerConsumerThread = new AtomicReference<>();
 
 	private final AtomicBoolean receiveInProgress = new AtomicBoolean();
 
@@ -138,7 +138,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		setRunning(false);
 		this.logger.info("Pausing this consumer.");
 		this.listenerConsumer.consumer.pause();
-		if (this.listenerConsumerThread != null) {
+		if (this.listenerConsumerThread.get() != null) {
 			// if there is a receive operation already in progress, we want to interrupt
 			// the listener thread.
 			if (this.receiveInProgress.get()) {
@@ -309,8 +309,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		@Override
 		public void run() {
-			DefaultPulsarMessageListenerContainer.this.listenerConsumerThread = new AtomicReference<>(
-					Thread.currentThread());
+			DefaultPulsarMessageListenerContainer.this.listenerConsumerThread.set(Thread.currentThread());
 			publishConsumerStartingEvent();
 			publishConsumerStartedEvent();
 			AtomicBoolean inRetryMode = new AtomicBoolean(false);
