@@ -38,7 +38,6 @@ import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -92,9 +91,9 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	protected Producer<T> doCreateProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors,
-			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
+	protected Producer<T> doCreateProducer(@Nullable String topic, Schema<T> schema,
+			@Nullable MessageRouter messageRouter, @Nullable List<ProducerInterceptor> producerInterceptors,
+			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter,
 				producerInterceptors);
@@ -102,9 +101,9 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 				st.interceptors, producerBuilderCustomizers));
 	}
 
-	private Producer<T> createCacheableProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors,
-			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
+	private Producer<T> createCacheableProducer(String topic, Schema<T> schema, @Nullable MessageRouter messageRouter,
+			@Nullable List<ProducerInterceptor> producerInterceptors,
+			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
 		try {
 			Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors,
 					producerBuilderCustomizers);
@@ -124,7 +123,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		factory.addAdvice(new MethodInterceptor() {
 			@Nullable
 			@Override
-			public Object invoke(@NonNull MethodInvocation invocation) throws Throwable {
+			public Object invoke(MethodInvocation invocation) throws Throwable {
 				if (invocation.getMethod().getName().equals("close")) {
 					closeCallback.accept((Producer<T>) invocation.getThis());
 					return null;
@@ -171,8 +170,10 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 		private final String topic;
 
+		@Nullable
 		private final MessageRouter router;
 
+		@Nullable
 		private final List<ProducerInterceptor> interceptors;
 
 		/**
