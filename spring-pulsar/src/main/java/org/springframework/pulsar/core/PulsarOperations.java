@@ -22,6 +22,8 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.PulsarClientException;
 
+import org.springframework.lang.Nullable;
+
 /**
  * The basic Pulsar operations contract.
  *
@@ -47,7 +49,7 @@ public interface PulsarOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(String topic, T message) throws PulsarClientException;
+	MessageId send(@Nullable String topic, T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a non-blocking manner.
@@ -65,7 +67,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException;
+	CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException;
 
 	/**
 	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message.

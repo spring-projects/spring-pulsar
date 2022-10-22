@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.apache.pulsar.client.api.Producer;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -37,7 +38,7 @@ final class ProducerUtils {
 		return String.format("(%s:%s)", producer.getProducerName(), producer.getTopic());
 	}
 
-	static <T> String resolveTopicName(String userSpecifiedTopic, PulsarProducerFactory<T> producerFactory) {
+	static <T> String resolveTopicName(@Nullable String userSpecifiedTopic, PulsarProducerFactory<T> producerFactory) {
 		if (StringUtils.hasText(userSpecifiedTopic)) {
 			return userSpecifiedTopic;
 		}

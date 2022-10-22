@@ -25,6 +25,8 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
+import org.springframework.lang.Nullable;
+
 /**
  * The strategy to create a {@link Producer} instance(s).
  *
@@ -82,9 +84,9 @@ public interface PulsarProducerFactory<T> {
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors,
-			List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException;
+	Producer<T> createProducer(@Nullable String topic, Schema<T> schema, @Nullable MessageRouter messageRouter,
+			@Nullable List<ProducerInterceptor> producerInterceptors,
+			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException;
 
 	/**
 	 * Return a map of configuration options to use when creating producers.
