@@ -18,7 +18,9 @@ package org.springframework.pulsar.core.reactive;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageRouter;
+import org.reactivestreams.Publisher;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -44,6 +46,24 @@ public interface ReactivePulsarSenderOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 */
 	Mono<MessageId> send(String topic, T message);
+
+	/**
+	 * Sends multiple messages to the default topic in a reactive manner.
+	 * @param messages the messages to send
+	 * @return the ids assigned by the broker to the published messages in the same order
+	 * as they were sent
+	 */
+	Flux<MessageId> send(Publisher<T> messages);
+
+	/**
+	 * Sends multiple messages to the specified topic in a reactive manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the
+	 * default topic
+	 * @param messages the messages to send
+	 * @return the ids assigned by the broker to the published messages in the same order
+	 * as they were sent
+	 */
+	Flux<MessageId> send(String topic, Publisher<T> messages);
 
 	/**
 	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message

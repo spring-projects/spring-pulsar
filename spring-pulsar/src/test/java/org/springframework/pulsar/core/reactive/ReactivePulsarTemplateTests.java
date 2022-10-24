@@ -26,6 +26,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -47,6 +49,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -57,7 +60,7 @@ import reactor.core.publisher.Mono;
 class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
-	void sendMessageWithSpecificSchemaTest() throws Exception {
+	void sendMessagesWithSpecificSchemaTest() throws Exception {
 		String topic = "smt-specific-schema-topic-reactive";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
@@ -69,10 +72,17 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 						senderSpec, null);
 				ReactivePulsarSenderTemplate<Foo> pulsarTemplate = new ReactivePulsarSenderTemplate<>(producerFactory);
 				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
-				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(foo).subscribe();
-				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
-						.isEqualTo(foo);
+
+				List<Foo> foos = new ArrayList<>();
+				for (int i = 0; i < 10; i++) {
+					foos.add(new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID()));
+				}
+				pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
+
+				for (int i = 0; i < 10; i++) {
+					assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3))
+							.extracting(Message::getValue).isEqualTo(foos.get(i));
+				}
 			}
 		}
 	}
@@ -116,6 +126,9 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 						senderSpec, null);
 				ReactivePulsarSenderTemplate<String> pulsarTemplate = new ReactivePulsarSenderTemplate<>(senderFactory);
 				Mono<MessageId> sendResponse;
+				if (testArgs.useTemplateSchema) {
+					pulsarTemplate.setSchema(Schema.STRING);
+				}
 				if (testArgs.useSimpleApi) {
 					sendResponse = testArgs.useSpecificTopic ? pulsarTemplate.send(topic, msgPayload)
 							: pulsarTemplate.send(msgPayload);
@@ -164,32 +177,36 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	private static Stream<Arguments> sendMessageTestProvider() {
 		return Stream.of(arguments("sendReactiveMessageToDefaultTopic", SendTestArgs.useSpecificTopic(false)),
 				arguments("sendReactiveMessageToDefaultTopicWithSimpleApi",
-						SendTestArgs.useSpecificTopic(false).useSimpleApi(true)),
+						SendTestArgs.useSpecificTopic(false).useSimpleApi()),
+				arguments("sendReactiveMessageToDefaultTopicWithSimpleApiAndTemplateSchema",
+						SendTestArgs.useSpecificTopic(false).useSimpleApi().useTemplateSchema()),
 				arguments("sendReactiveMessageToDefaultTopicWithRouter",
-						SendTestArgs.useSpecificTopic(false).useCustomRouter(true)),
+						SendTestArgs.useSpecificTopic(false).useCustomRouter()),
 				arguments("sendReactiveMessageToDefaultTopicWithMessageCustomizer",
-						SendTestArgs.useSpecificTopic(false).useMessageCustomizer(true)),
+						SendTestArgs.useSpecificTopic(false).useMessageCustomizer()),
 				arguments("sendReactiveMessageToDefaultTopicWithProducerCustomizer",
-						SendTestArgs.useSpecificTopic(false).useSenderCustomizer(true)),
+						SendTestArgs.useSpecificTopic(false).useSenderCustomizer()),
 				arguments("sendReactiveMessageToDefaultTopicWithAllOptions",
-						SendTestArgs.useSpecificTopic(false).useCustomRouter(true).useMessageCustomizer(true)
-								.useSenderCustomizer(true)),
+						SendTestArgs.useSpecificTopic(false).useCustomRouter().useMessageCustomizer()
+								.useSenderCustomizer()),
 				arguments("sendReactiveMessageToSpecificTopic", SendTestArgs.useSpecificTopic(true)),
 				arguments("sendReactiveMessageToSpecificTopicWithSimpleApi",
-						SendTestArgs.useSpecificTopic(true).useSimpleApi(true)),
+						SendTestArgs.useSpecificTopic(true).useSimpleApi()),
+				arguments("sendReactiveMessageToSpecificTopicWithSimpleApiAndTemplateSchema",
+						SendTestArgs.useSpecificTopic(true).useSimpleApi().useTemplateSchema()),
 				arguments("sendReactiveMessageToSpecificTopicWithRouter",
-						SendTestArgs.useSpecificTopic(true).useCustomRouter(true)),
+						SendTestArgs.useSpecificTopic(true).useCustomRouter()),
 				arguments("sendReactiveMessageToSpecificTopicWithMessageCustomizer",
-						SendTestArgs.useSpecificTopic(true).useMessageCustomizer(true)),
+						SendTestArgs.useSpecificTopic(true).useMessageCustomizer()),
 				arguments("sendReactiveMessageToSpecificTopicWithProducerCustomizer",
-						SendTestArgs.useSpecificTopic(true).useSenderCustomizer(true)),
+						SendTestArgs.useSpecificTopic(true).useSenderCustomizer()),
 				arguments("sendReactiveMessageToSpecificTopicWithAllOptions", SendTestArgs.useSpecificTopic(true)
-						.useCustomRouter(true).useMessageCustomizer(true).useSenderCustomizer(true)));
+						.useCustomRouter().useMessageCustomizer().useSenderCustomizer()));
 	}
 
 	static final class SendTestArgs {
 
-		private boolean useSpecificTopic;
+		private final boolean useSpecificTopic;
 
 		private boolean useCustomRouter;
 
@@ -199,6 +216,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		private boolean useSimpleApi;
 
+		private boolean useTemplateSchema;
+
 		private SendTestArgs(boolean useSpecificTopic) {
 			this.useSpecificTopic = useSpecificTopic;
 		}
@@ -207,23 +226,28 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			return new SendTestArgs(useSpecificTopic);
 		}
 
-		SendTestArgs useCustomRouter(boolean useCustomRouter) {
-			this.useCustomRouter = useCustomRouter;
+		SendTestArgs useCustomRouter() {
+			this.useCustomRouter = true;
 			return this;
 		}
 
-		SendTestArgs useMessageCustomizer(boolean useMessageCustomizer) {
-			this.useMessageCustomizer = useMessageCustomizer;
+		SendTestArgs useMessageCustomizer() {
+			this.useMessageCustomizer = true;
 			return this;
 		}
 
-		SendTestArgs useSenderCustomizer(boolean useSenderCustomizer) {
-			this.useSenderCustomizer = useSenderCustomizer;
+		SendTestArgs useSenderCustomizer() {
+			this.useSenderCustomizer = true;
 			return this;
 		}
 
-		SendTestArgs useSimpleApi(boolean useSimpleApi) {
-			this.useSimpleApi = useSimpleApi;
+		SendTestArgs useSimpleApi() {
+			this.useSimpleApi = true;
+			return this;
+		}
+
+		SendTestArgs useTemplateSchema() {
+			this.useTemplateSchema = true;
 			return this;
 		}
 
