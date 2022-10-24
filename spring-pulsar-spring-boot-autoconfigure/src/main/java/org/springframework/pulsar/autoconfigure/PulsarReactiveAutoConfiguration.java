@@ -17,45 +17,84 @@
 package org.springframework.pulsar.autoconfigure;
 
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
+import org.apache.pulsar.reactive.client.adapter.ProducerCacheProvider;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
+import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
+import org.apache.pulsar.reactive.client.producercache.CaffeineProducerCacheProvider;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
  *
- * @author Soby Chacko
  * @author Chris Bono
- * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 @AutoConfiguration(after = PulsarAutoConfiguration.class)
 @ConditionalOnClass(ReactivePulsarSenderTemplate.class)
-@EnableConfigurationProperties(PulsarProperties.class)
+@EnableConfigurationProperties(PulsarReactiveProperties.class)
 public class PulsarReactiveAutoConfiguration {
 
-	private final PulsarProperties properties;
+	private final PulsarReactiveProperties properties;
 
-	public PulsarReactiveAutoConfiguration(PulsarProperties properties) {
+	public PulsarReactiveAutoConfiguration(PulsarReactiveProperties properties) {
 		this.properties = properties;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(ReactivePulsarClient.class)
+	public ReactivePulsarClient pulsarReactivePulsarClient(PulsarClient pulsarClient) {
+		return AdaptedReactivePulsarClientFactory.create(pulsarClient);
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(ProducerCacheProvider.class)
+	@ConditionalOnClass(CaffeineProducerCacheProvider.class)
+	@ConditionalOnProperty(name = "spring.pulsar.reactive.sender.cache.enabled", havingValue = "true",
+			matchIfMissing = true)
+	public ProducerCacheProvider pulsarProducerCacheProvider() {
+		PulsarReactiveProperties.Cache cache = this.properties.getSender().getCache();
+		Caffeine<Object, Object> caffeine = Caffeine.newBuilder().expireAfterAccess(cache.getExpireAfterAccess())
+				.maximumSize(cache.getMaximumSize()).initialCapacity(cache.getInitialCapacity());
+		return new CaffeineProducerCacheProvider(caffeine);
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(ReactiveMessageSenderCache.class)
+	@ConditionalOnProperty(name = "spring.pulsar.reactive.sender.cache.enabled", havingValue = "true",
+			matchIfMissing = true)
+	public ReactiveMessageSenderCache pulsarReactiveMessageSenderCache(
+			ObjectProvider<ProducerCacheProvider> producerCacheProvider) {
+		return producerCacheProvider.stream().findFirst().map(AdaptedReactivePulsarClientFactory::createCache)
+				.orElseGet(AdaptedReactivePulsarClientFactory::createCache);
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(ReactivePulsarSenderFactory.class)
+	public ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory(ReactivePulsarClient pulsarReactivePulsarClient,
+			ObjectProvider<ReactiveMessageSenderCache> cache) {
+		return new DefaultReactivePulsarSenderFactory<>(pulsarReactivePulsarClient,
+				this.properties.buildReactiveMessageSenderSpec(), cache.getIfAvailable());
 	}
 
 	@Bean
 	@ConditionalOnMissingBean(ReactivePulsarSenderTemplate.class)
 	public ReactivePulsarSenderTemplate<?> pulsarReactiveSenderTemplate(
 			ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory) {
-		return new ReactivePulsarSenderTemplate(reactivePulsarSenderFactory);
+		return new ReactivePulsarSenderTemplate<>(reactivePulsarSenderFactory);
 	}
 
-	@Bean
-	@ConditionalOnMissingBean(ReactivePulsarSenderFactory.class)
-	public ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory(PulsarClient pulsarClient) {
-		return new DefaultReactivePulsarSenderFactory(pulsarClient, null); //, this.properties.buildReactiveMessageSenderSpec());
-	}
 }

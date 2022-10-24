@@ -10,7 +10,7 @@ dependencies {
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 	optional project (':spring-pulsar')
-	optional project (':spring-pulsar-reactive')
+	optional 'org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine'
 
 	api 'org.springframework.boot:spring-boot'
 	api 'org.springframework.boot:spring-boot-autoconfigure'

@@ -8,4 +8,5 @@ dependencies {
 	api project (':spring-pulsar')
 	api project (':spring-pulsar-spring-boot-autoconfigure')
 	api 'org.apache.pulsar:pulsar-client-reactive-adapter'
+	api 'org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine'
 }
