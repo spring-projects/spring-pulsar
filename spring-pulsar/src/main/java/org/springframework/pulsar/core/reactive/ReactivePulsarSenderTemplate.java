@@ -98,25 +98,30 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer, MessageRouter messageRouter,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
 		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
-		this.logger.trace(() -> String.format("Sending reactive msg to '%s' topic", topicName));
+		this.logger.trace(() -> String.format("Sending reactive messages to '%s' topic", topicName));
 
 		if (this.schema != null) {
-			ReactiveMessageSender<T> sender = this.reactiveMessageSenderFactory.createReactiveMessageSender(topic,
-					this.schema, messageRouter,
-					customizer == null ? Collections.emptyList() : Collections.singletonList(customizer));
-
-			Flux<MessageSpec<T>> map = Flux.from(messages)
-					.map(message -> getMessageSpec(messageSpecBuilderCustomizer, message));
-			return sender.sendMessages(map).doOnError(
-					ex -> this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName)))
-					.doOnNext(msgId -> this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName)));
+			/*
+			 * If the template has a schema, we can create the message sender right away
+			 * and use ReactiveMessageSender::sendMessages to send them as a stream.
+			 * Otherwise we need to wait to get a message to create it and we can't share
+			 * it between messages. So we create one each time and use
+			 * ReactiveMessageSender::sendMessage to send messages individually.
+			 */
+			ReactiveMessageSender<T> sender = createMessageSender(topic, null, messageRouter, customizer);
+			return Flux.from(messages).map(message -> getMessageSpec(messageSpecBuilderCustomizer, message))
+					.as(sender::sendMessages)
+					.doOnError(ex -> this.logger.error(ex,
+							() -> String.format("Failed to send messages to '%s' topic", topicName)))
+					.doOnNext(
+							msgId -> this.logger.trace(() -> String.format("Sent messages to '%s' topic", topicName)));
 		}
-		return Flux.from(messages).flatMap(message -> {
+		return Flux.from(messages).flatMapSequential(message -> {
 			ReactiveMessageSender<T> sender = createMessageSender(topic, message, messageRouter, customizer);
-			MessageSpec<T> messageSpec = getMessageSpec(messageSpecBuilderCustomizer, message);
-			return sender.sendMessage(Mono.just(messageSpec)).doOnError(
-					ex -> this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName)))
-					.doOnSuccess(msgId -> this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName)));
+			return Mono.just(getMessageSpec(messageSpecBuilderCustomizer, message)).as(sender::sendMessage).doOnError(
+					ex -> this.logger.error(ex, () -> String.format("Failed to send message to '%s' topic", topicName)))
+					.doOnSuccess(
+							msgId -> this.logger.trace(() -> String.format("Sent message to '%s' topic", topicName)));
 		});
 	}
 
