@@ -59,8 +59,8 @@ class PulsarReactiveAutoConfigurationTests {
 			.withConfiguration(AutoConfigurations.of(PulsarReactiveAutoConfiguration.class));
 
 	@Test
-	void autoConfigurationSkippedWhenReactivePulsarSenderTemplateNotOnClasspath() {
-		this.contextRunner.withClassLoader(new FilteredClassLoader(ReactivePulsarSenderTemplate.class)).run(
+	void autoConfigurationSkippedWhenReactivePulsarClientNotOnClasspath() {
+		this.contextRunner.withClassLoader(new FilteredClassLoader(ReactivePulsarClient.class)).run(
 				(context) -> assertThat(context).hasNotFailed().doesNotHaveBean(PulsarReactiveAutoConfiguration.class));
 	}
 
@@ -91,8 +91,7 @@ class PulsarReactiveAutoConfigurationTests {
 	@Test
 	void customProducerCacheProviderIsRespected() throws Exception {
 		try (ProducerCacheProvider provider = new ConcurrentHashMapProducerCacheProvider()) {
-			this.contextRunner
-					.withBean("customReactivePulsarSenderTemplate", ProducerCacheProvider.class, () -> provider)
+			this.contextRunner.withBean("customProducerCacheProvider", ProducerCacheProvider.class, () -> provider)
 					.run((context) -> assertThat(context).hasNotFailed().getBean(ProducerCacheProvider.class)
 							.isSameAs(provider));
 		}
@@ -102,7 +101,7 @@ class PulsarReactiveAutoConfigurationTests {
 	void customReactiveMessageSenderCacheIsRespected() throws Exception {
 		try (ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache()) {
 			this.contextRunner
-					.withBean("customReactivePulsarSenderTemplate", ReactiveMessageSenderCache.class, () -> cache)
+					.withBean("customReactiveMessageSenderCache", ReactiveMessageSenderCache.class, () -> cache)
 					.run((context) -> assertThat(context).hasNotFailed().getBean(ReactiveMessageSenderCache.class)
 							.isSameAs(cache));
 		}
@@ -113,7 +112,7 @@ class PulsarReactiveAutoConfigurationTests {
 		ReactivePulsarSenderFactory<String> factory = new DefaultReactivePulsarSenderFactory<>(
 				(ReactivePulsarClient) null, null, null);
 		this.contextRunner
-				.withBean("customReactivePulsarSenderTemplate", ReactivePulsarSenderFactory.class, () -> factory)
+				.withBean("customReactivePulsarSenderFactory", ReactivePulsarSenderFactory.class, () -> factory)
 				.run((context) -> assertThat(context).hasNotFailed().getBean(ReactivePulsarSenderFactory.class)
 						.isSameAs(factory));
 	}

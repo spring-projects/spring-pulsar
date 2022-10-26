@@ -70,12 +70,12 @@ public class PulsarReactiveProperties {
 		/**
 		 * Maximum number of pending messages for the producer.
 		 */
-		private int maxPendingMessages = 1000;
+		private Integer maxPendingMessages = 1000;
 
 		/**
 		 * Maximum number of pending messages across all the partitions.
 		 */
-		private int maxPendingMessagesAcrossPartitions = 50000;
+		private Integer maxPendingMessagesAcrossPartitions = 50000;
 
 		/**
 		 * Message routing mode for a partitioned producer.
@@ -101,17 +101,17 @@ public class PulsarReactiveProperties {
 		/**
 		 * Maximum number of messages to be batched.
 		 */
-		private int batchingMaxMessages = 1000;
+		private Integer batchingMaxMessages = 1000;
 
 		/**
 		 * Whether to automatically batch messages.
 		 */
-		private boolean batchingEnabled = true;
+		private Boolean batchingEnabled = true;
 
 		/**
 		 * Whether to split large-size messages into multiple chunks.
 		 */
-		private boolean chunkingEnabled = false;
+		private Boolean chunkingEnabled = false;
 
 		/**
 		 * Message compression type.
@@ -154,19 +154,19 @@ public class PulsarReactiveProperties {
 			this.sendTimeout = sendTimeout;
 		}
 
-		public int getMaxPendingMessages() {
+		public Integer getMaxPendingMessages() {
 			return this.maxPendingMessages;
 		}
 
-		public void setMaxPendingMessages(int maxPendingMessages) {
+		public void setMaxPendingMessages(Integer maxPendingMessages) {
 			this.maxPendingMessages = maxPendingMessages;
 		}
 
-		public int getMaxPendingMessagesAcrossPartitions() {
+		public Integer getMaxPendingMessagesAcrossPartitions() {
 			return this.maxPendingMessagesAcrossPartitions;
 		}
 
-		public void setMaxPendingMessagesAcrossPartitions(int maxPendingMessagesAcrossPartitions) {
+		public void setMaxPendingMessagesAcrossPartitions(Integer maxPendingMessagesAcrossPartitions) {
 			this.maxPendingMessagesAcrossPartitions = maxPendingMessagesAcrossPartitions;
 		}
 
@@ -202,27 +202,27 @@ public class PulsarReactiveProperties {
 			this.batchingMaxPublishDelay = batchingMaxPublishDelay;
 		}
 
-		public int getBatchingMaxMessages() {
+		public Integer getBatchingMaxMessages() {
 			return this.batchingMaxMessages;
 		}
 
-		public void setBatchingMaxMessages(int batchingMaxMessages) {
+		public void setBatchingMaxMessages(Integer batchingMaxMessages) {
 			this.batchingMaxMessages = batchingMaxMessages;
 		}
 
-		public boolean isBatchingEnabled() {
+		public Boolean getBatchingEnabled() {
 			return this.batchingEnabled;
 		}
 
-		public void setBatchingEnabled(boolean batchingEnabled) {
+		public void setBatchingEnabled(Boolean batchingEnabled) {
 			this.batchingEnabled = batchingEnabled;
 		}
 
-		public boolean isChunkingEnabled() {
+		public Boolean getChunkingEnabled() {
 			return this.chunkingEnabled;
 		}
 
-		public void setChunkingEnabled(boolean chunkingEnabled) {
+		public void setChunkingEnabled(Boolean chunkingEnabled) {
 			this.chunkingEnabled = chunkingEnabled;
 		}
 
@@ -269,8 +269,8 @@ public class PulsarReactiveProperties {
 			map.from(this::getCryptoFailureAction).to(spec::setCryptoFailureAction);
 			map.from(this::getBatchingMaxPublishDelay).to(spec::setBatchingMaxPublishDelay);
 			map.from(this::getBatchingMaxMessages).to(spec::setBatchingMaxMessages);
-			map.from(this::isBatchingEnabled).to(spec::setBatchingEnabled);
-			map.from(this::isChunkingEnabled).to(spec::setChunkingEnabled);
+			map.from(this::getBatchingEnabled).to(spec::setBatchingEnabled);
+			map.from(this::getChunkingEnabled).to(spec::setChunkingEnabled);
 			map.from(this::getCompressionType).to(spec::setCompressionType);
 			map.from(this::getInitialSubscriptionName).to(spec::setInitialSubscriptionName);
 			map.from(this::getProducerAccessMode).to(spec::setAccessMode);

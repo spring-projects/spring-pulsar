@@ -44,7 +44,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author Christophe Bornet
  */
 @AutoConfiguration(after = PulsarAutoConfiguration.class)
-@ConditionalOnClass(ReactivePulsarSenderTemplate.class)
+@ConditionalOnClass(ReactivePulsarClient.class)
 @EnableConfigurationProperties(PulsarReactiveProperties.class)
 public class PulsarReactiveAutoConfiguration {
 
@@ -55,13 +55,13 @@ public class PulsarReactiveAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(ReactivePulsarClient.class)
+	@ConditionalOnMissingBean
 	public ReactivePulsarClient pulsarReactivePulsarClient(PulsarClient pulsarClient) {
 		return AdaptedReactivePulsarClientFactory.create(pulsarClient);
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(ProducerCacheProvider.class)
+	@ConditionalOnMissingBean
 	@ConditionalOnClass(CaffeineProducerCacheProvider.class)
 	@ConditionalOnProperty(name = "spring.pulsar.reactive.sender.cache.enabled", havingValue = "true",
 			matchIfMissing = true)
@@ -73,7 +73,7 @@ public class PulsarReactiveAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(ReactiveMessageSenderCache.class)
+	@ConditionalOnMissingBean
 	@ConditionalOnProperty(name = "spring.pulsar.reactive.sender.cache.enabled", havingValue = "true",
 			matchIfMissing = true)
 	public ReactiveMessageSenderCache pulsarReactiveMessageSenderCache(
@@ -83,7 +83,7 @@ public class PulsarReactiveAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(ReactivePulsarSenderFactory.class)
+	@ConditionalOnMissingBean
 	public ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory(ReactivePulsarClient pulsarReactivePulsarClient,
 			ObjectProvider<ReactiveMessageSenderCache> cache) {
 		return new DefaultReactivePulsarSenderFactory<>(pulsarReactivePulsarClient,
@@ -91,7 +91,7 @@ public class PulsarReactiveAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(ReactivePulsarSenderTemplate.class)
+	@ConditionalOnMissingBean
 	public ReactivePulsarSenderTemplate<?> pulsarReactiveSenderTemplate(
 			ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory) {
 		return new ReactivePulsarSenderTemplate<>(reactivePulsarSenderFactory);
