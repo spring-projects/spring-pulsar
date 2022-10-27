@@ -44,7 +44,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author Christophe Bornet
  */
 @AutoConfiguration(after = PulsarAutoConfiguration.class)
-@ConditionalOnClass(ReactivePulsarClient.class)
+@ConditionalOnClass({ ReactivePulsarSenderTemplate.class, ReactivePulsarClient.class })
 @EnableConfigurationProperties(PulsarReactiveProperties.class)
 public class PulsarReactiveAutoConfiguration {
 
