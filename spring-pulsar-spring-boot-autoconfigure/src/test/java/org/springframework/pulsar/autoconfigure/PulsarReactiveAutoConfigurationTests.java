@@ -28,12 +28,13 @@ import org.apache.pulsar.reactive.client.adapter.ProducerCacheProvider;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
-import org.apache.pulsar.reactive.client.internal.adapter.ConcurrentHashMapProducerCacheProvider;
 import org.apache.pulsar.reactive.client.producercache.CaffeineProducerCacheProvider;
 import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -72,49 +73,13 @@ class PulsarReactiveAutoConfigurationTests {
 				.hasSingleBean(ReactivePulsarSenderFactory.class).getBean(ReactivePulsarSenderTemplate.class));
 	}
 
-	@Test
-	void customReactivePulsarSenderTemplateIsRespected() {
-		ReactivePulsarSenderTemplate<String> template = new ReactivePulsarSenderTemplate<>(null);
-		this.contextRunner
-				.withBean("customReactivePulsarSenderTemplate", ReactivePulsarSenderTemplate.class, () -> template)
-				.run((context) -> assertThat(context).hasNotFailed().getBean(ReactivePulsarSenderTemplate.class)
-						.isSameAs(template));
-	}
-
-	@Test
-	void customReactivePulsarClientIsRespected() {
-		ReactivePulsarClient client = AdaptedReactivePulsarClientFactory.create((PulsarClient) null);
-		this.contextRunner.withBean("customReactivePulsarClient", ReactivePulsarClient.class, () -> client).run(
-				(context) -> assertThat(context).hasNotFailed().getBean(ReactivePulsarClient.class).isSameAs(client));
-	}
-
-	@Test
-	void customProducerCacheProviderIsRespected() throws Exception {
-		try (ProducerCacheProvider provider = new ConcurrentHashMapProducerCacheProvider()) {
-			this.contextRunner.withBean("customProducerCacheProvider", ProducerCacheProvider.class, () -> provider)
-					.run((context) -> assertThat(context).hasNotFailed().getBean(ProducerCacheProvider.class)
-							.isSameAs(provider));
-		}
-	}
-
-	@Test
-	void customReactiveMessageSenderCacheIsRespected() throws Exception {
-		try (ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache()) {
-			this.contextRunner
-					.withBean("customReactiveMessageSenderCache", ReactiveMessageSenderCache.class, () -> cache)
-					.run((context) -> assertThat(context).hasNotFailed().getBean(ReactiveMessageSenderCache.class)
-							.isSameAs(cache));
-		}
-	}
-
-	@Test
-	void customReactivePulsarSenderFactoryIsRespected() {
-		ReactivePulsarSenderFactory<String> factory = new DefaultReactivePulsarSenderFactory<>(
-				(ReactivePulsarClient) null, null, null);
-		this.contextRunner
-				.withBean("customReactivePulsarSenderFactory", ReactivePulsarSenderFactory.class, () -> factory)
-				.run((context) -> assertThat(context).hasNotFailed().getBean(ReactivePulsarSenderFactory.class)
-						.isSameAs(factory));
+	@ParameterizedTest
+	@ValueSource(classes = { ReactivePulsarClient.class, ProducerCacheProvider.class, ReactiveMessageSenderCache.class,
+			ReactivePulsarSenderFactory.class, ReactivePulsarSenderTemplate.class })
+	<T> void customBeanIsRespected(Class<T> beanClass) {
+		T bean = mock(beanClass);
+		this.contextRunner.withBean(beanClass.getName(), beanClass, () -> bean)
+				.run((context) -> assertThat(context).hasNotFailed().getBean(beanClass).isSameAs(bean));
 	}
 
 	@Test
