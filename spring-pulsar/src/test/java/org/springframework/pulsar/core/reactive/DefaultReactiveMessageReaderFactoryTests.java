@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
  */
 class DefaultReactiveMessageReaderFactoryTests {
 
-	protected final Schema<String> schema = Schema.STRING;
+	private static final Schema<String> schema = Schema.STRING;
 
 	@Test
 	void createReaderWithDefaults() {
