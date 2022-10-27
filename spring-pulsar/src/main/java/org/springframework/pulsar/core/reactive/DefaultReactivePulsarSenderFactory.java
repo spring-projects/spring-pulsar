@@ -18,10 +18,11 @@ package org.springframework.pulsar.core.reactive;
 
 import java.util.List;
 
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
+import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageSenderSpec;
+import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
@@ -58,41 +59,31 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 			ReactiveMessageSenderSpec reactiveMessageSenderSpec,
 			ReactiveMessageSenderCache reactiveMessageSenderCache) {
 		this.reactivePulsarClient = reactivePulsarClient;
-		this.reactiveMessageSenderSpec = reactiveMessageSenderSpec;
+		this.reactiveMessageSenderSpec = new ImmutableReactiveMessageSenderSpec(
+				reactiveMessageSenderSpec != null ? reactiveMessageSenderSpec : new MutableReactiveMessageSenderSpec());
 		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
 	}
 
 	@Override
-	public ReactiveMessageSender<T> createReactiveMessageSender(String topic, Schema<T> schema) {
-		return doCreateReactiveMessageSender(topic, schema, null, null);
+	public ReactiveMessageSender<T> createSender(String topic, Schema<T> schema) {
+		return doCreateReactiveMessageSender(topic, schema, null);
 	}
 
 	@Override
-	public ReactiveMessageSender<T> createReactiveMessageSender(String topic, Schema<T> schema,
-			MessageRouter messageRouter) {
-		return doCreateReactiveMessageSender(topic, schema, messageRouter, null);
-	}
-
-	@Override
-	public ReactiveMessageSender<T> createReactiveMessageSender(String topic, Schema<T> schema,
-			MessageRouter messageRouter, List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
-		return doCreateReactiveMessageSender(topic, schema, messageRouter, customizers);
+	public ReactiveMessageSender<T> createSender(String topic, Schema<T> schema,
+			List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
+		return doCreateReactiveMessageSender(topic, schema, customizers);
 	}
 
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(String topic, Schema<T> schema,
-			MessageRouter messageRouter, List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
+			List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 		final String resolvedTopic = ReactiveMessageSenderUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating reactive message sender for '%s' topic", resolvedTopic));
 		final ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
-		if (this.reactiveMessageSenderSpec != null) {
-			sender.applySpec(this.reactiveMessageSenderSpec);
-		}
+		sender.applySpec(this.reactiveMessageSenderSpec);
 		sender.topic(resolvedTopic);
 		if (this.reactiveMessageSenderCache != null) {
 			sender.cache(this.reactiveMessageSenderCache);
-		}
-		if (messageRouter != null) {
-			sender.messageRouter(messageRouter);
 		}
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(sender));

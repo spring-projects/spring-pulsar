@@ -18,7 +18,6 @@ package org.springframework.pulsar.core.reactive;
 
 import java.util.List;
 
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
@@ -38,29 +37,18 @@ public interface ReactivePulsarSenderFactory<T> {
 	 * @param schema the schema of the messages to be sent
 	 * @return the reactive message sender
 	 */
-	ReactiveMessageSender<T> createReactiveMessageSender(String topic, Schema<T> schema);
+	ReactiveMessageSender<T> createSender(String topic, Schema<T> schema);
 
 	/**
 	 * Create a reactive message sender.
 	 * @param topic the topic the reactive message sender will send messages to or
 	 * {@code null} to use the default topic
 	 * @param schema the schema of the messages to be sent
-	 * @param messageRouter the optional message router to use
-	 * @return the reactive message sender
-	 */
-	ReactiveMessageSender<T> createReactiveMessageSender(String topic, Schema<T> schema, MessageRouter messageRouter);
-
-	/**
-	 * Create a reactive message sender.
-	 * @param topic the topic the reactive message sender will send messages to or
-	 * {@code null} to use the default topic
-	 * @param schema the schema of the messages to be sent
-	 * @param messageRouter the optional message router to use
 	 * @param customizers the optional list of customizers to apply to the reactive
 	 * message sender builder
 	 * @return the reactive message sender
 	 */
-	ReactiveMessageSender<T> createReactiveMessageSender(String topic, Schema<T> schema, MessageRouter messageRouter,
+	ReactiveMessageSender<T> createSender(String topic, Schema<T> schema,
 			List<ReactiveMessageSenderBuilderCustomizer<T>> customizers);
 
 	/**
