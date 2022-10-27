@@ -19,11 +19,6 @@ package org.springframework.pulsar.core.reactive;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,14 +27,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.TopicMetadata;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
@@ -94,11 +86,6 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		String topic = testName;
 		String subscription = topic + "-sub";
 		String msgPayload = topic + "-msg";
-		MessageRouter router = null;
-		if (testArgs.useCustomRouter) {
-			router = mock(MessageRouter.class);
-			when(router.choosePartition(any(Message.class), any(TopicMetadata.class))).thenReturn(0);
-		}
 		MessageSpecBuilderCustomizer<String> messageCustomizer = null;
 		if (testArgs.useMessageCustomizer) {
 			messageCustomizer = (mb) -> mb.key("foo-key");
@@ -106,13 +93,6 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		ReactiveMessageSenderBuilderCustomizer<String> senderCustomizer = null;
 		if (testArgs.useSenderCustomizer) {
 			senderCustomizer = (sb) -> sb.producerName("foo-producer");
-		}
-
-		if (router != null) {
-			try (PulsarAdmin admin = PulsarAdmin.builder()
-					.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()).build()) {
-				admin.topics().createPartitionedTopic("persistent://public/default/" + topic, 1);
-			}
 		}
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
@@ -142,9 +122,6 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					if (messageCustomizer != null) {
 						messageBuilder = messageBuilder.withMessageCustomizer(messageCustomizer);
 					}
-					if (router != null) {
-						messageBuilder = messageBuilder.withCustomRouter(router);
-					}
 					if (senderCustomizer != null) {
 						messageBuilder = messageBuilder.withSenderCustomizer(senderCustomizer);
 					}
@@ -158,10 +135,6 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				assertThat(msg.getData()).asString().isEqualTo(msgPayload);
 				if (messageCustomizer != null) {
 					assertThat(msg.getKey()).isEqualTo("foo-key");
-				}
-				if (router != null) {
-					verify(router).choosePartition(argThat((Message<String> m) -> m.getTopicName().equals(topic)),
-							any(TopicMetadata.class));
 				}
 				if (senderCustomizer != null) {
 					assertThat(msg.getProducerName()).isEqualTo("foo-producer");
@@ -180,35 +153,28 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 						SendTestArgs.useSpecificTopic(false).useSimpleApi()),
 				arguments("sendReactiveMessageToDefaultTopicWithSimpleApiAndTemplateSchema",
 						SendTestArgs.useSpecificTopic(false).useSimpleApi().useTemplateSchema()),
-				arguments("sendReactiveMessageToDefaultTopicWithRouter",
-						SendTestArgs.useSpecificTopic(false).useCustomRouter()),
 				arguments("sendReactiveMessageToDefaultTopicWithMessageCustomizer",
 						SendTestArgs.useSpecificTopic(false).useMessageCustomizer()),
 				arguments("sendReactiveMessageToDefaultTopicWithProducerCustomizer",
 						SendTestArgs.useSpecificTopic(false).useSenderCustomizer()),
 				arguments("sendReactiveMessageToDefaultTopicWithAllOptions",
-						SendTestArgs.useSpecificTopic(false).useCustomRouter().useMessageCustomizer()
-								.useSenderCustomizer()),
+						SendTestArgs.useSpecificTopic(false).useMessageCustomizer().useSenderCustomizer()),
 				arguments("sendReactiveMessageToSpecificTopic", SendTestArgs.useSpecificTopic(true)),
 				arguments("sendReactiveMessageToSpecificTopicWithSimpleApi",
 						SendTestArgs.useSpecificTopic(true).useSimpleApi()),
 				arguments("sendReactiveMessageToSpecificTopicWithSimpleApiAndTemplateSchema",
 						SendTestArgs.useSpecificTopic(true).useSimpleApi().useTemplateSchema()),
-				arguments("sendReactiveMessageToSpecificTopicWithRouter",
-						SendTestArgs.useSpecificTopic(true).useCustomRouter()),
 				arguments("sendReactiveMessageToSpecificTopicWithMessageCustomizer",
 						SendTestArgs.useSpecificTopic(true).useMessageCustomizer()),
 				arguments("sendReactiveMessageToSpecificTopicWithProducerCustomizer",
 						SendTestArgs.useSpecificTopic(true).useSenderCustomizer()),
-				arguments("sendReactiveMessageToSpecificTopicWithAllOptions", SendTestArgs.useSpecificTopic(true)
-						.useCustomRouter().useMessageCustomizer().useSenderCustomizer()));
+				arguments("sendReactiveMessageToSpecificTopicWithAllOptions",
+						SendTestArgs.useSpecificTopic(true).useMessageCustomizer().useSenderCustomizer()));
 	}
 
 	static final class SendTestArgs {
 
 		private final boolean useSpecificTopic;
-
-		private boolean useCustomRouter;
 
 		private boolean useMessageCustomizer;
 
@@ -224,11 +190,6 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		static SendTestArgs useSpecificTopic(boolean useSpecificTopic) {
 			return new SendTestArgs(useSpecificTopic);
-		}
-
-		SendTestArgs useCustomRouter() {
-			this.useCustomRouter = true;
-			return this;
 		}
 
 		SendTestArgs useMessageCustomizer() {

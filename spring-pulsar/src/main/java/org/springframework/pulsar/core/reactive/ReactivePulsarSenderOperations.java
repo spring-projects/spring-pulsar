@@ -17,7 +17,6 @@
 package org.springframework.pulsar.core.reactive;
 
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
@@ -94,13 +93,6 @@ public interface ReactivePulsarSenderOperations<T> {
 		 * @return the current builder with the message customizer specified
 		 */
 		SendMessageBuilder<T> withMessageCustomizer(MessageSpecBuilderCustomizer<T> customizer);
-
-		/**
-		 * Specifies the custom message router to use when sending the message.
-		 * @param messageRouter the custom message router
-		 * @return the current builder with the custom message router specified
-		 */
-		SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter);
 
 		/**
 		 * Specifies the customizer to use to further configure the reactive sender
