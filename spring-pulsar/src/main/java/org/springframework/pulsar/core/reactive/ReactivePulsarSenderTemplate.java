@@ -19,7 +19,6 @@ package org.springframework.pulsar.core.reactive;
 import java.util.Collections;
 
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.MessageSpecBuilder;
@@ -62,7 +61,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 	@Override
 	public Mono<MessageId> send(String topic, T message) {
-		return doSend(topic, message, null, null, null);
+		return doSend(topic, message, null, null);
 	}
 
 	@Override
@@ -72,7 +71,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 	@Override
 	public Flux<MessageId> send(String topic, Publisher<T> messages) {
-		return doSendMany(topic, messages, null, null, null);
+		return doSendMany(topic, messages, null, null);
 	}
 
 	@Override
@@ -89,13 +88,13 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 	}
 
 	private Mono<MessageId> doSend(String topic, T message,
-			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer, MessageRouter messageRouter,
+			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
-		return doSendMany(topic, Mono.just(message), messageSpecBuilderCustomizer, messageRouter, customizer).single();
+		return doSendMany(topic, Mono.just(message), messageSpecBuilderCustomizer, customizer).single();
 	}
 
 	private Flux<MessageId> doSendMany(String topic, Publisher<T> messages,
-			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer, MessageRouter messageRouter,
+			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
 		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
 		this.logger.trace(() -> String.format("Sending reactive messages to '%s' topic", topicName));
@@ -108,7 +107,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 			 * it between messages. So we create one each time and use
 			 * ReactiveMessageSender::sendMessage to send messages individually.
 			 */
-			ReactiveMessageSender<T> sender = createMessageSender(topic, null, messageRouter, customizer);
+			ReactiveMessageSender<T> sender = createMessageSender(topic, null, customizer);
 			return Flux.from(messages).map(message -> getMessageSpec(messageSpecBuilderCustomizer, message))
 					.as(sender::sendMessages)
 					.doOnError(ex -> this.logger.error(ex,
@@ -117,7 +116,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 							msgId -> this.logger.trace(() -> String.format("Sent messages to '%s' topic", topicName)));
 		}
 		return Flux.from(messages).flatMapSequential(message -> {
-			ReactiveMessageSender<T> sender = createMessageSender(topic, message, messageRouter, customizer);
+			ReactiveMessageSender<T> sender = createMessageSender(topic, message, customizer);
 			return Mono.just(getMessageSpec(messageSpecBuilderCustomizer, message)).as(sender::sendMessage).doOnError(
 					ex -> this.logger.error(ex, () -> String.format("Failed to send message to '%s' topic", topicName)))
 					.doOnSuccess(
@@ -136,10 +135,10 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 		return messageSpecBuilder.build();
 	}
 
-	private ReactiveMessageSender<T> createMessageSender(String topic, T message, MessageRouter messageRouter,
+	private ReactiveMessageSender<T> createMessageSender(String topic, T message,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
 		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
-		return this.reactiveMessageSenderFactory.createReactiveMessageSender(topic, schema, messageRouter,
+		return this.reactiveMessageSenderFactory.createSender(topic, schema,
 				customizer == null ? Collections.emptyList() : Collections.singletonList(customizer));
 	}
 
@@ -152,8 +151,6 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 		private String topic;
 
 		private MessageSpecBuilderCustomizer<T> messageCustomizer;
-
-		private MessageRouter messageRouter;
 
 		private ReactiveMessageSenderBuilderCustomizer<T> senderCustomizer;
 
@@ -175,12 +172,6 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 		}
 
 		@Override
-		public SendMessageBuilderImpl<T> withCustomRouter(MessageRouter messageRouter) {
-			this.messageRouter = messageRouter;
-			return this;
-		}
-
-		@Override
 		public SendMessageBuilderImpl<T> withSenderCustomizer(
 				ReactiveMessageSenderBuilderCustomizer<T> senderCustomizer) {
 			this.senderCustomizer = senderCustomizer;
@@ -189,8 +180,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 		@Override
 		public Mono<MessageId> send() {
-			return this.template.doSend(this.topic, this.message, this.messageCustomizer, this.messageRouter,
-					this.senderCustomizer);
+			return this.template.doSend(this.topic, this.message, this.messageCustomizer, this.senderCustomizer);
 		}
 
 	}

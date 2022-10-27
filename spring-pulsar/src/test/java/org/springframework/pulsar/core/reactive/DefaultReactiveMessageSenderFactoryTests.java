@@ -18,13 +18,11 @@ package org.springframework.pulsar.core.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
@@ -33,11 +31,10 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Test;
 
 /**
- * Common tests for {@link DefaultReactivePulsarSenderFactory}
+ * Tests for {@link DefaultReactivePulsarSenderFactory}
  *
  * @author Christophe Bornet
  */
@@ -47,14 +44,7 @@ class DefaultReactiveMessageSenderFactoryTests {
 
 	@Test
 	void createSenderWithSpecificTopic() {
-		testCreateSender(null, null, "topic1", null, null, "topic1", null);
-	}
-
-	@Test
-	void createSenderWithSpecificTopicAndMessageRouter() {
-		MessageRouter router = mock(MessageRouter.class);
-
-		testCreateSender(null, null, "topic1", router, null, "topic1", router);
+		testCreateSender(null, null, "topic1", null, "topic1");
 	}
 
 	@Test
@@ -62,59 +52,49 @@ class DefaultReactiveMessageSenderFactoryTests {
 		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
 		senderSpec.setTopicName("topic0");
 
-		testCreateSender(senderSpec, null, null, null, null, "topic0", null);
-	}
-
-	@Test
-	void createSenderWithDefaultTopicAndMessageRouter() {
-		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
-		senderSpec.setTopicName("topic0");
-		MessageRouter router = mock(MessageRouter.class);
-
-		testCreateSender(senderSpec, null, null, router, null, "topic0", router);
-
+		testCreateSender(senderSpec, null, null, null, "topic0");
 	}
 
 	@Test
 	void createSenderWithSingleSenderCustomizer() {
-		testCreateSender(null, null, "topic1", null, Collections.singletonList(builder -> builder.topic("topic1")),
-				"topic1", null);
+		testCreateSender(null, null, "topic1", Collections.singletonList(builder -> builder.topic("topic1")), "topic1");
 	}
 
 	@Test
 	void createSenderWithMultipleSenderCustomizer() {
 		ReactiveMessageSenderBuilderCustomizer<String> customizer1 = builder -> builder.topic("topic1");
-		MessageRouter router = mock(MessageRouter.class);
-		ReactiveMessageSenderBuilderCustomizer<String> customizer2 = builder -> builder.messageRouter(router);
+		ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache();
+		ReactiveMessageSenderBuilderCustomizer<String> customizer2 = builder -> builder.cache(cache);
 
-		testCreateSender(null, null, "topic0", null, Arrays.asList(customizer1, customizer2), "topic1", router);
+		ReactiveMessageSender<String> sender = testCreateSender(null, null, "topic0",
+				Arrays.asList(customizer1, customizer2), "topic1");
+		assertThat(sender).extracting("producerCache").isSameAs(cache);
 	}
 
 	@Test
 	void createSenderWithNoTopic() {
 		ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(
 				(PulsarClient) null, null, null);
-		assertThatIllegalArgumentException().isThrownBy(() -> senderFactory.createReactiveMessageSender(null, schema))
+		assertThatIllegalArgumentException().isThrownBy(() -> senderFactory.createSender(null, schema))
 				.withMessageContaining("Topic must be specified when no default topic is configured");
 	}
 
 	@Test
 	void createSenderWithCache() {
-		testCreateSender(null, AdaptedReactivePulsarClientFactory.createCache(), "topic1", null, null, "topic1", null);
+		ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache();
+		ReactiveMessageSender<String> sender = testCreateSender(null, cache, "topic1", null, "topic1");
+		assertThat(sender).extracting("producerCache").isSameAs(cache);
 	}
 
-	private void testCreateSender(ReactiveMessageSenderSpec spec, ReactiveMessageSenderCache cache, String topic,
-			MessageRouter router, List<ReactiveMessageSenderBuilderCustomizer<String>> customizers,
-			String expectedTopic, MessageRouter expectedRouter) {
+	private ReactiveMessageSender<String> testCreateSender(ReactiveMessageSenderSpec spec,
+			ReactiveMessageSenderCache cache, String topic,
+			List<ReactiveMessageSenderBuilderCustomizer<String>> customizers, String expectedTopic) {
 		ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(
 				(PulsarClient) null, spec, cache);
-		ReactiveMessageSender<String> sender = senderFactory.createReactiveMessageSender(topic, schema, router,
-				customizers);
-		ObjectAssert<ReactiveMessageSenderSpec> objectAssert = assertThat(sender).extracting("senderSpec")
-				.asInstanceOf(InstanceOfAssertFactories.type(ReactiveMessageSenderSpec.class));
-		objectAssert.extracting(ReactiveMessageSenderSpec::getTopicName).isEqualTo(expectedTopic);
-		objectAssert.extracting(ReactiveMessageSenderSpec::getMessageRouter).isSameAs(expectedRouter);
-		assertThat(sender).extracting("producerCache").isSameAs(cache);
+		ReactiveMessageSender<String> sender = senderFactory.createSender(topic, schema, customizers);
+		assertThat(sender).extracting("senderSpec", InstanceOfAssertFactories.type(ReactiveMessageSenderSpec.class))
+				.extracting(ReactiveMessageSenderSpec::getTopicName).isEqualTo(expectedTopic);
+		return sender;
 	}
 
 }
