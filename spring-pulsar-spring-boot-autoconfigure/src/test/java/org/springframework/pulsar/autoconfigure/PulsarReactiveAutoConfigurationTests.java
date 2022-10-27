@@ -66,6 +66,12 @@ class PulsarReactiveAutoConfigurationTests {
 	}
 
 	@Test
+	void autoConfigurationSkippedWhenReactivePulsarSenderTemplateNotOnClasspath() {
+		this.contextRunner.withClassLoader(new FilteredClassLoader(ReactivePulsarSenderTemplate.class)).run(
+				(context) -> assertThat(context).hasNotFailed().doesNotHaveBean(PulsarReactiveAutoConfiguration.class));
+	}
+
+	@Test
 	void defaultBeansAreAutoConfigured() {
 		this.contextRunner.run((context) -> assertThat(context).hasNotFailed()
 				.hasSingleBean(ReactivePulsarSenderTemplate.class).hasSingleBean(ReactivePulsarClient.class)
