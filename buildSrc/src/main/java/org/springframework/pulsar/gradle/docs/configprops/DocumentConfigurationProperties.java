@@ -77,6 +77,9 @@ public class DocumentConfigurationProperties extends DefaultTask {
 		snippets.add("application-properties.pulsar-reactive-sender", "Pulsar Reactive Sender Properties", (c) -> {
 			c.accept("spring.pulsar.reactive.sender");
 		});
+		snippets.add("application-properties.pulsar-reactive-reader", "Pulsar Reactive Reader Properties", (c) -> {
+			c.accept("spring.pulsar.reactive.reader");
+		});
 		snippets.writeTo(this.outputDir.toPath());
 	}
 }

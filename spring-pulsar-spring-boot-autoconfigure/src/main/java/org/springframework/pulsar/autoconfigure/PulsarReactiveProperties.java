@@ -17,13 +17,18 @@
 package org.springframework.pulsar.autoconfigure;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.apache.pulsar.client.api.CompressionType;
+import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.Range;
+import org.apache.pulsar.reactive.client.api.MutableReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,12 +47,22 @@ public class PulsarReactiveProperties {
 
 	private final Sender sender = new Sender();
 
+	private final Reader reader = new Reader();
+
 	public Sender getSender() {
 		return this.sender;
 	}
 
+	public Reader getReader() {
+		return this.reader;
+	}
+
 	public ReactiveMessageSenderSpec buildReactiveMessageSenderSpec() {
 		return this.sender.buildReactiveMessageSenderSpec();
+	}
+
+	public ReactiveMessageReaderSpec buildReactiveMessageReaderSpec() {
+		return this.reader.buildReactiveMessageReaderSpec();
 	}
 
 	public static class Sender {
@@ -274,6 +289,106 @@ public class PulsarReactiveProperties {
 			map.from(this::getCompressionType).to(spec::setCompressionType);
 			map.from(this::getInitialSubscriptionName).to(spec::setInitialSubscriptionName);
 			map.from(this::getProducerAccessMode).to(spec::setAccessMode);
+
+			return spec;
+		}
+
+	}
+
+	public static class Reader {
+
+		private String[] topicNames;
+
+		private String readerName;
+
+		private String subscriptionName;
+
+		private String generatedSubscriptionNamePrefix;
+
+		private Integer receiverQueueSize;
+
+		private Boolean readCompacted;
+
+		private Range[] keyHashRanges;
+
+		private ConsumerCryptoFailureAction cryptoFailureAction;
+
+		public String[] getTopicNames() {
+			return this.topicNames;
+		}
+
+		public void setTopicNames(String[] topicNames) {
+			this.topicNames = topicNames;
+		}
+
+		public String getReaderName() {
+			return this.readerName;
+		}
+
+		public void setReaderName(String readerName) {
+			this.readerName = readerName;
+		}
+
+		public String getSubscriptionName() {
+			return this.subscriptionName;
+		}
+
+		public void setSubscriptionName(String subscriptionName) {
+			this.subscriptionName = subscriptionName;
+		}
+
+		public String getGeneratedSubscriptionNamePrefix() {
+			return this.generatedSubscriptionNamePrefix;
+		}
+
+		public void setGeneratedSubscriptionNamePrefix(String generatedSubscriptionNamePrefix) {
+			this.generatedSubscriptionNamePrefix = generatedSubscriptionNamePrefix;
+		}
+
+		public Integer getReceiverQueueSize() {
+			return this.receiverQueueSize;
+		}
+
+		public void setReceiverQueueSize(Integer receiverQueueSize) {
+			this.receiverQueueSize = receiverQueueSize;
+		}
+
+		public Boolean getReadCompacted() {
+			return this.readCompacted;
+		}
+
+		public void setReadCompacted(Boolean readCompacted) {
+			this.readCompacted = readCompacted;
+		}
+
+		public Range[] getKeyHashRanges() {
+			return this.keyHashRanges;
+		}
+
+		public void setKeyHashRanges(Range[] keyHashRanges) {
+			this.keyHashRanges = keyHashRanges;
+		}
+
+		public ConsumerCryptoFailureAction getCryptoFailureAction() {
+			return this.cryptoFailureAction;
+		}
+
+		public void setCryptoFailureAction(ConsumerCryptoFailureAction cryptoFailureAction) {
+			this.cryptoFailureAction = cryptoFailureAction;
+		}
+
+		public ReactiveMessageReaderSpec buildReactiveMessageReaderSpec() {
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+
+			MutableReactiveMessageReaderSpec spec = new MutableReactiveMessageReaderSpec();
+
+			map.from(this::getTopicNames).as(List::of).to(spec::setTopicNames);
+			map.from(this::getReaderName).to(spec::setReaderName);
+			map.from(this::getSubscriptionName).to(spec::setSubscriptionName);
+			map.from(this::getGeneratedSubscriptionNamePrefix).to(spec::setGeneratedSubscriptionNamePrefix);
+			map.from(this::getReceiverQueueSize).to(spec::setReceiverQueueSize);
+			map.from(this::getReadCompacted).to(spec::setReadCompacted);
+			map.from(this::getKeyHashRanges).as(List::of).to(spec::setKeyHashRanges);
 
 			return spec;
 		}

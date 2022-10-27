@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.adapter.ProducerCacheProvider;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
@@ -43,7 +44,9 @@ import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
+import org.springframework.pulsar.core.reactive.DefaultReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
+import org.springframework.pulsar.core.reactive.ReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
 
@@ -81,7 +84,7 @@ class PulsarReactiveAutoConfigurationTests {
 
 	@ParameterizedTest
 	@ValueSource(classes = { ReactivePulsarClient.class, ProducerCacheProvider.class, ReactiveMessageSenderCache.class,
-			ReactivePulsarSenderFactory.class, ReactivePulsarSenderTemplate.class })
+			ReactivePulsarSenderFactory.class, ReactivePulsarReaderFactory.class, ReactivePulsarSenderTemplate.class })
 	<T> void customBeanIsRespected(Class<T> beanClass) {
 		T bean = mock(beanClass);
 		this.contextRunner.withBean(beanClass.getName(), beanClass, () -> bean)
@@ -120,6 +123,22 @@ class PulsarReactiveAutoConfigurationTests {
 								.isSameAs(cache);
 					}));
 		}
+	}
+
+	@Test
+	@SuppressWarnings("rawtypes")
+	void beansAreInjectedInReactivePulsarReaderFactory() {
+		ReactivePulsarClient client = mock(ReactivePulsarClient.class);
+		this.contextRunner.withPropertyValues("spring.pulsar.reactive.reader.reader-name=test-reader")
+				.withBean("customReactivePulsarClient", ReactivePulsarClient.class, () -> client).run((context -> {
+					AbstractObjectAssert<? extends AbstractObjectAssert<?, DefaultReactivePulsarReaderFactory>, DefaultReactivePulsarReaderFactory> senderFactory = assertThat(
+							context).hasNotFailed().getBean(DefaultReactivePulsarReaderFactory.class);
+					senderFactory
+							.extracting("readerSpec", InstanceOfAssertFactories.type(ReactiveMessageReaderSpec.class))
+							.extracting(ReactiveMessageReaderSpec::getReaderName).isEqualTo("test-reader");
+					senderFactory.extracting("reactivePulsarClient",
+							InstanceOfAssertFactories.type(ReactivePulsarClient.class)).isSameAs(client);
+				}));
 	}
 
 	@Test
