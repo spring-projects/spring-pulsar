@@ -71,7 +71,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 	@Override
 	public Flux<MessageId> send(String topic, Publisher<T> messages) {
-		return doSendMany(topic, messages, null, null);
+		return doSendMany(topic, Flux.from(messages));
 	}
 
 	@Override
@@ -90,38 +90,35 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 	private Mono<MessageId> doSend(String topic, T message,
 			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
-		return doSendMany(topic, Mono.just(message), messageSpecBuilderCustomizer, customizer).single();
+		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
+		this.logger.trace(() -> String.format("Sending reactive message to '%s' topic", topicName));
+		ReactiveMessageSender<T> sender = createMessageSender(topic, message, customizer);
+		return sender.sendOne(getMessageSpec(messageSpecBuilderCustomizer, message)).doOnError(
+				ex -> this.logger.error(ex, () -> String.format("Failed to send message to '%s' topic", topicName)))
+				.doOnSuccess(msgId -> this.logger.trace(() -> String.format("Sent message to '%s' topic", topicName)));
+
 	}
 
-	private Flux<MessageId> doSendMany(String topic, Publisher<T> messages,
-			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
-			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
+	private Flux<MessageId> doSendMany(String topic, Flux<T> messages) {
 		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
 		this.logger.trace(() -> String.format("Sending reactive messages to '%s' topic", topicName));
 
 		if (this.schema != null) {
 			/*
 			 * If the template has a schema, we can create the message sender right away
-			 * and use ReactiveMessageSender::sendMessages to send them as a stream.
-			 * Otherwise we need to wait to get a message to create it and we can't share
-			 * it between messages. So we create one each time and use
-			 * ReactiveMessageSender::sendMessage to send messages individually.
+			 * and use ReactiveMessageSender::sendMany to send them as a stream. Otherwise
+			 * we need to wait to get a message to create it and we can't share it between
+			 * messages. So we create one each time and use ReactiveMessageSender::sendOne
+			 * to send messages individually.
 			 */
-			ReactiveMessageSender<T> sender = createMessageSender(topic, null, customizer);
-			return Flux.from(messages).map(message -> getMessageSpec(messageSpecBuilderCustomizer, message))
-					.as(sender::sendMessages)
+			ReactiveMessageSender<T> sender = createMessageSender(topic, null, null);
+			return messages.map(MessageSpec::of).as(sender::sendMany)
 					.doOnError(ex -> this.logger.error(ex,
 							() -> String.format("Failed to send messages to '%s' topic", topicName)))
 					.doOnNext(
 							msgId -> this.logger.trace(() -> String.format("Sent messages to '%s' topic", topicName)));
 		}
-		return Flux.from(messages).flatMapSequential(message -> {
-			ReactiveMessageSender<T> sender = createMessageSender(topic, message, customizer);
-			return Mono.just(getMessageSpec(messageSpecBuilderCustomizer, message)).as(sender::sendMessage).doOnError(
-					ex -> this.logger.error(ex, () -> String.format("Failed to send message to '%s' topic", topicName)))
-					.doOnSuccess(
-							msgId -> this.logger.trace(() -> String.format("Sent message to '%s' topic", topicName)));
-		});
+		return messages.flatMapSequential(message -> doSend(topic, message, null, null));
 	}
 
 	private static <T> MessageSpec<T> getMessageSpec(MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
