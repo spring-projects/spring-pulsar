@@ -17,17 +17,34 @@
 package org.springframework.pulsar.autoconfigure;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.CompressionType;
+import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.HashingScheme;
+import org.apache.pulsar.client.api.KeySharedMode;
+import org.apache.pulsar.client.api.KeySharedPolicy;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.RegexSubscriptionMode;
+import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageConsumerSpec;
+import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageSenderSpec;
+import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
+
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Configuration properties for Spring for the Apache Pulsar reactive client.
@@ -42,12 +59,22 @@ public class PulsarReactiveProperties {
 
 	private final Sender sender = new Sender();
 
+	private final Consumer consumer = new Consumer();
+
 	public Sender getSender() {
 		return this.sender;
 	}
 
+	public Consumer getConsumer() {
+		return this.consumer;
+	}
+
 	public ReactiveMessageSenderSpec buildReactiveMessageSenderSpec() {
 		return this.sender.buildReactiveMessageSenderSpec();
+	}
+
+	public ReactiveMessageConsumerSpec buildReactiveMessageConsumerSpec() {
+		return this.consumer.buildReactiveMessageConsumerSpec();
 	}
 
 	public static class Sender {
@@ -63,7 +90,7 @@ public class PulsarReactiveProperties {
 		private String producerName;
 
 		/**
-		 * Time before a message has to be acknowledged by the broker in milliseconds.
+		 * Time before a message has to be acknowledged by the broker.
 		 */
 		private Duration sendTimeout = Duration.ofSeconds(30);
 
@@ -94,7 +121,7 @@ public class PulsarReactiveProperties {
 		private ProducerCryptoFailureAction cryptoFailureAction = ProducerCryptoFailureAction.FAIL;
 
 		/**
-		 * Time period within which the messages sent will be batched in milliseconds.
+		 * Time period within which the messages sent will be batched.
 		 */
 		private Duration batchingMaxPublishDelay = Duration.ofMillis(1);
 
@@ -275,8 +302,491 @@ public class PulsarReactiveProperties {
 			map.from(this::getInitialSubscriptionName).to(spec::setInitialSubscriptionName);
 			map.from(this::getProducerAccessMode).to(spec::setAccessMode);
 
-			return spec;
+			return new ImmutableReactiveMessageSenderSpec(spec);
 		}
+
+	}
+
+	public static class Consumer {
+
+		/**
+		 * Comma-separated list of topics the consumer subscribes to.
+		 */
+		private String[] topics;
+
+		/**
+		 * Pattern for topics the consumer subscribes to.
+		 */
+		private Pattern topicsPattern;
+
+		/**
+		 * Subscription name for the consumer.
+		 */
+		private String subscriptionName;
+
+		/**
+		 * Subscription type to be used when subscribing to a topic.
+		 */
+		private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
+
+		/*
+		 * KeyShared mode of KeyShared subscription.
+		 */
+		private KeySharedMode keySharedMode;
+
+		/**
+		 * Map of properties to add to the subscription.
+		 */
+		private SortedMap<String, String> subscriptionProperties = new TreeMap<>();
+
+		/**
+		 * Number of messages that can be accumulated before the consumer calls "receive".
+		 */
+		private Integer receiverQueueSize = 1000;
+
+		/**
+		 * Time to group acknowledgements before sending them to the broker.
+		 */
+		private Duration acknowledgementsGroupTime = Duration.ofMillis(100);
+
+		/**
+		 * When set to true, ignores the acknowledge operation completion and makes it
+		 * asynchronous from the message consuming processing to improve performance by
+		 * allowing the acknowledges and message processing to interleave. Defaults to
+		 * true.
+		 */
+		private Boolean acknowledgeAsynchronously = true;
+
+		/**
+		 * Type of acknowledge scheduler.
+		 */
+		private SchedulerType acknowledgeSchedulerType;
+
+		/**
+		 * Delay before re-delivering messages that have failed to be processed.
+		 */
+		private Duration negativeAckRedeliveryDelay = Duration.ofMinutes(1);
+
+		/**
+		 * Configuration for the dead letter queue.
+		 */
+		private DeadLetterPolicy deadLetterPolicy;
+
+		/**
+		 * Whether the retry letter topic is enabled.
+		 */
+		private Boolean retryLetterTopicEnable;
+
+		/**
+		 * Maximum number of messages that a consumer can be pushed at once from a broker
+		 * across all partitions.
+		 */
+		private Integer maxTotalReceiverQueueSizeAcrossPartitions = 50000;
+
+		/**
+		 * Consumer name to identify a particular consumer from the topic stats.
+		 */
+		private String consumerName;
+
+		/**
+		 * Timeout for unacked messages to be redelivered.
+		 */
+		private Duration ackTimeout = Duration.ZERO;
+
+		/**
+		 * Precision for the ack timeout messages tracker.
+		 */
+		private Duration ackTimeoutTickTime = Duration.ofSeconds(1);
+
+		/**
+		 * Priority level for shared subscription consumers.
+		 */
+		private Integer priorityLevel = 0;
+
+		/**
+		 * Action the consumer will take in case of decryption failure.
+		 */
+		private ConsumerCryptoFailureAction cryptoFailureAction = ConsumerCryptoFailureAction.FAIL;
+
+		/**
+		 * Map of properties to add to the consumer.
+		 */
+		private SortedMap<String, String> properties = new TreeMap<>();
+
+		/**
+		 * Whether to read messages from the compacted topic rather than the full message
+		 * backlog.
+		 */
+		private Boolean readCompacted = false;
+
+		/**
+		 * Whether batch index acknowledgement is enabled.
+		 */
+		private Boolean batchIndexAckEnabled = false;
+
+		/**
+		 * Position where to initialize a newly created subscription.
+		 */
+		private SubscriptionInitialPosition subscriptionInitialPosition = SubscriptionInitialPosition.Latest;
+
+		/**
+		 * Auto-discovery period for topics when topic pattern is used.
+		 */
+		private Duration topicsPatternAutoDiscoveryPeriod = Duration.ofMinutes(1);
+
+		/**
+		 * Determines which topics the consumer should be subscribed to when using pattern
+		 * subscriptions.
+		 */
+		private RegexSubscriptionMode topicsPatternSubscriptionMode = RegexSubscriptionMode.PersistentOnly;
+
+		/**
+		 * Whether the consumer auto-subscribes for partition increase. This is only for
+		 * partitioned consumers.
+		 */
+		private Boolean autoUpdatePartitions = true;
+
+		private Duration autoUpdatePartitionsInterval;
+
+		/**
+		 * Whether to replicate subscription state.
+		 */
+		private Boolean replicateSubscriptionState = false;
+
+		/**
+		 * Whether to automatically drop outstanding un-acked messages if the queue is
+		 * full.
+		 */
+		private Boolean autoAckOldestChunkedMessageOnQueueFull = true;
+
+		/**
+		 * Maximum number of chunked messages to be kept in memory.
+		 */
+		private Integer maxPendingChunkedMessage = 10;
+
+		/**
+		 * Time to expire incomplete chunks if the consumer won't be able to receive all
+		 * chunks before in milliseconds.
+		 */
+		private Duration expireTimeOfIncompleteChunkedMessage = Duration.ofMinutes(1);
+
+		public String[] getTopics() {
+			return this.topics;
+		}
+
+		public void setTopics(String[] topics) {
+			this.topics = topics;
+		}
+
+		public Pattern getTopicsPattern() {
+			return this.topicsPattern;
+		}
+
+		public void setTopicsPattern(Pattern topicsPattern) {
+			this.topicsPattern = topicsPattern;
+		}
+
+		public String getSubscriptionName() {
+			return this.subscriptionName;
+		}
+
+		public void setSubscriptionName(String subscriptionName) {
+			this.subscriptionName = subscriptionName;
+		}
+
+		public SubscriptionType getSubscriptionType() {
+			return this.subscriptionType;
+		}
+
+		public void setSubscriptionType(SubscriptionType subscriptionType) {
+			this.subscriptionType = subscriptionType;
+		}
+
+		public KeySharedMode getKeySharedMode() {
+			return this.keySharedMode;
+		}
+
+		public void setKeySharedMode(KeySharedMode keySharedMode) {
+			this.keySharedMode = keySharedMode;
+		}
+
+		public SortedMap<String, String> getSubscriptionProperties() {
+			return this.subscriptionProperties;
+		}
+
+		public void setSubscriptionProperties(SortedMap<String, String> subscriptionProperties) {
+			this.subscriptionProperties = subscriptionProperties;
+		}
+
+		public Integer getReceiverQueueSize() {
+			return this.receiverQueueSize;
+		}
+
+		public void setReceiverQueueSize(Integer receiverQueueSize) {
+			this.receiverQueueSize = receiverQueueSize;
+		}
+
+		public Duration getAcknowledgementsGroupTime() {
+			return this.acknowledgementsGroupTime;
+		}
+
+		public void setAcknowledgementsGroupTime(Duration acknowledgementsGroupTime) {
+			this.acknowledgementsGroupTime = acknowledgementsGroupTime;
+		}
+
+		public Boolean getAcknowledgeAsynchronously() {
+			return this.acknowledgeAsynchronously;
+		}
+
+		public void setAcknowledgeAsynchronously(Boolean acknowledgeAsynchronously) {
+			this.acknowledgeAsynchronously = acknowledgeAsynchronously;
+		}
+
+		public SchedulerType getAcknowledgeSchedulerType() {
+			return this.acknowledgeSchedulerType;
+		}
+
+		public void setAcknowledgeSchedulerType(SchedulerType acknowledgeSchedulerType) {
+			this.acknowledgeSchedulerType = acknowledgeSchedulerType;
+		}
+
+		public Duration getNegativeAckRedeliveryDelay() {
+			return this.negativeAckRedeliveryDelay;
+		}
+
+		public void setNegativeAckRedeliveryDelay(Duration negativeAckRedeliveryDelay) {
+			this.negativeAckRedeliveryDelay = negativeAckRedeliveryDelay;
+		}
+
+		public DeadLetterPolicy getDeadLetterPolicy() {
+			return this.deadLetterPolicy;
+		}
+
+		public void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy) {
+			this.deadLetterPolicy = deadLetterPolicy;
+		}
+
+		public Boolean getRetryLetterTopicEnable() {
+			return this.retryLetterTopicEnable;
+		}
+
+		public void setRetryLetterTopicEnable(Boolean retryLetterTopicEnable) {
+			this.retryLetterTopicEnable = retryLetterTopicEnable;
+		}
+
+		public Integer getMaxTotalReceiverQueueSizeAcrossPartitions() {
+			return this.maxTotalReceiverQueueSizeAcrossPartitions;
+		}
+
+		public void setMaxTotalReceiverQueueSizeAcrossPartitions(Integer maxTotalReceiverQueueSizeAcrossPartitions) {
+			this.maxTotalReceiverQueueSizeAcrossPartitions = maxTotalReceiverQueueSizeAcrossPartitions;
+		}
+
+		public String getConsumerName() {
+			return this.consumerName;
+		}
+
+		public void setConsumerName(String consumerName) {
+			this.consumerName = consumerName;
+		}
+
+		public Duration getAckTimeout() {
+			return this.ackTimeout;
+		}
+
+		public void setAckTimeout(Duration ackTimeout) {
+			this.ackTimeout = ackTimeout;
+		}
+
+		public Duration getAckTimeoutTickTime() {
+			return this.ackTimeoutTickTime;
+		}
+
+		public void setAckTimeoutTickTime(Duration ackTimeoutTickTime) {
+			this.ackTimeoutTickTime = ackTimeoutTickTime;
+		}
+
+		public Integer getPriorityLevel() {
+			return this.priorityLevel;
+		}
+
+		public void setPriorityLevel(Integer priorityLevel) {
+			this.priorityLevel = priorityLevel;
+		}
+
+		public ConsumerCryptoFailureAction getCryptoFailureAction() {
+			return this.cryptoFailureAction;
+		}
+
+		public void setCryptoFailureAction(ConsumerCryptoFailureAction cryptoFailureAction) {
+			this.cryptoFailureAction = cryptoFailureAction;
+		}
+
+		public SortedMap<String, String> getProperties() {
+			return this.properties;
+		}
+
+		public void setProperties(SortedMap<String, String> properties) {
+			this.properties = properties;
+		}
+
+		public Boolean getReadCompacted() {
+			return this.readCompacted;
+		}
+
+		public void setReadCompacted(Boolean readCompacted) {
+			this.readCompacted = readCompacted;
+		}
+
+		public Boolean getBatchIndexAckEnabled() {
+			return this.batchIndexAckEnabled;
+		}
+
+		public void setBatchIndexAckEnabled(Boolean batchIndexAckEnabled) {
+			this.batchIndexAckEnabled = batchIndexAckEnabled;
+		}
+
+		public SubscriptionInitialPosition getSubscriptionInitialPosition() {
+			return this.subscriptionInitialPosition;
+		}
+
+		public void setSubscriptionInitialPosition(SubscriptionInitialPosition subscriptionInitialPosition) {
+			this.subscriptionInitialPosition = subscriptionInitialPosition;
+		}
+
+		public Duration getTopicsPatternAutoDiscoveryPeriod() {
+			return this.topicsPatternAutoDiscoveryPeriod;
+		}
+
+		public void setTopicsPatternAutoDiscoveryPeriod(Duration topicsPatternAutoDiscoveryPeriod) {
+			this.topicsPatternAutoDiscoveryPeriod = topicsPatternAutoDiscoveryPeriod;
+		}
+
+		public RegexSubscriptionMode getTopicsPatternSubscriptionMode() {
+			return this.topicsPatternSubscriptionMode;
+		}
+
+		public void setTopicsPatternSubscriptionMode(RegexSubscriptionMode topicsPatternSubscriptionMode) {
+			this.topicsPatternSubscriptionMode = topicsPatternSubscriptionMode;
+		}
+
+		public Boolean getAutoUpdatePartitions() {
+			return this.autoUpdatePartitions;
+		}
+
+		public void setAutoUpdatePartitions(Boolean autoUpdatePartitions) {
+			this.autoUpdatePartitions = autoUpdatePartitions;
+		}
+
+		public Duration getAutoUpdatePartitionsInterval() {
+			return this.autoUpdatePartitionsInterval;
+		}
+
+		public void setAutoUpdatePartitionsInterval(Duration autoUpdatePartitionsInterval) {
+			this.autoUpdatePartitionsInterval = autoUpdatePartitionsInterval;
+		}
+
+		public Boolean getReplicateSubscriptionState() {
+			return this.replicateSubscriptionState;
+		}
+
+		public void setReplicateSubscriptionState(Boolean replicateSubscriptionState) {
+			this.replicateSubscriptionState = replicateSubscriptionState;
+		}
+
+		public Boolean getAutoAckOldestChunkedMessageOnQueueFull() {
+			return this.autoAckOldestChunkedMessageOnQueueFull;
+		}
+
+		public void setAutoAckOldestChunkedMessageOnQueueFull(Boolean autoAckOldestChunkedMessageOnQueueFull) {
+			this.autoAckOldestChunkedMessageOnQueueFull = autoAckOldestChunkedMessageOnQueueFull;
+		}
+
+		public Integer getMaxPendingChunkedMessage() {
+			return this.maxPendingChunkedMessage;
+		}
+
+		public void setMaxPendingChunkedMessage(Integer maxPendingChunkedMessage) {
+			this.maxPendingChunkedMessage = maxPendingChunkedMessage;
+		}
+
+		public Duration getExpireTimeOfIncompleteChunkedMessage() {
+			return this.expireTimeOfIncompleteChunkedMessage;
+		}
+
+		public void setExpireTimeOfIncompleteChunkedMessage(Duration expireTimeOfIncompleteChunkedMessage) {
+			this.expireTimeOfIncompleteChunkedMessage = expireTimeOfIncompleteChunkedMessage;
+		}
+
+		public ReactiveMessageConsumerSpec buildReactiveMessageConsumerSpec() {
+
+			MutableReactiveMessageConsumerSpec spec = new MutableReactiveMessageConsumerSpec();
+
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+
+			map.from(this::getTopics).as(List::of).to(spec::setTopicNames);
+			map.from(this::getTopicsPattern).to(spec::setTopicsPattern);
+			map.from(this::getSubscriptionName).to(spec::setSubscriptionName);
+			map.from(this::getSubscriptionType).to(spec::setSubscriptionType);
+			map.from(this::getKeySharedMode).as((mode) -> switch (mode) {
+				case STICKY -> KeySharedPolicy.stickyHashRange();
+				case AUTO_SPLIT -> KeySharedPolicy.autoSplitHashRange();
+			}).to(spec::setKeySharedPolicy);
+			map.from(this::getSubscriptionProperties).to(spec::setSubscriptionProperties);
+			map.from(this::getReceiverQueueSize).to(spec::setReceiverQueueSize);
+			map.from(this::getAcknowledgementsGroupTime).to(spec::setAcknowledgementsGroupTime);
+			map.from(this::getAcknowledgeAsynchronously).to(spec::setAcknowledgeAsynchronously);
+			map.from(this::getAcknowledgeSchedulerType).as((scheduler) -> switch (scheduler) {
+				case boundedElastic -> Schedulers.boundedElastic();
+				case parallel -> Schedulers.parallel();
+				case single -> Schedulers.single();
+				case immediate -> Schedulers.immediate();
+			}).to(spec::setAcknowledgeScheduler);
+			map.from(this::getNegativeAckRedeliveryDelay).to(spec::setNegativeAckRedeliveryDelay);
+			map.from(this::getDeadLetterPolicy).to(spec::setDeadLetterPolicy);
+			map.from(this::getRetryLetterTopicEnable).to(spec::setRetryLetterTopicEnable);
+			map.from(this::getMaxTotalReceiverQueueSizeAcrossPartitions)
+					.to(spec::setMaxTotalReceiverQueueSizeAcrossPartitions);
+			map.from(this::getConsumerName).to(spec::setConsumerName);
+			map.from(this::getAckTimeout).to(spec::setAckTimeout);
+			map.from(this::getAckTimeoutTickTime).to(spec::setAckTimeoutTickTime);
+			map.from(this::getPriorityLevel).to(spec::setPriorityLevel);
+			map.from(this::getCryptoFailureAction).to(spec::setCryptoFailureAction);
+			map.from(this::getProperties).to(spec::setProperties);
+			map.from(this::getReadCompacted).to(spec::setReadCompacted);
+			map.from(this::getBatchIndexAckEnabled).to(spec::setBatchIndexAckEnabled);
+			map.from(this::getTopicsPatternAutoDiscoveryPeriod).to(spec::setTopicsPatternAutoDiscoveryPeriod);
+			map.from(this::getTopicsPatternSubscriptionMode).to(spec::setTopicsPatternSubscriptionMode);
+			map.from(this::getAutoUpdatePartitions).to(spec::setAutoUpdatePartitions);
+			map.from(this::getAutoUpdatePartitionsInterval).to(spec::setAutoUpdatePartitionsInterval);
+			map.from(this::getReplicateSubscriptionState).to(spec::setReplicateSubscriptionState);
+			map.from(this::getAutoAckOldestChunkedMessageOnQueueFull)
+					.to(spec::setAutoAckOldestChunkedMessageOnQueueFull);
+			map.from(this::getMaxPendingChunkedMessage).to(spec::setMaxPendingChunkedMessage);
+			map.from(this::getExpireTimeOfIncompleteChunkedMessage).to(spec::setExpireTimeOfIncompleteChunkedMessage);
+			return new ImmutableReactiveMessageConsumerSpec(spec);
+		}
+
+	}
+
+	public enum SchedulerType {
+
+		/**
+		 * Reactor's {@link reactor.core.scheduler.BoundedElasticScheduler}.
+		 */
+		boundedElastic,
+		/**
+		 * Reactor's Reactor's {@link reactor.core.scheduler.ParallelScheduler}.
+		 */
+		parallel,
+		/**
+		 * Reactor's Reactor's {@link reactor.core.scheduler.SingleScheduler}.
+		 */
+		single,
+		/**
+		 * Reactor's {@link reactor.core.scheduler.ImmediateScheduler}.
+		 */
+		immediate
 
 	}
 

@@ -31,7 +31,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
+import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
 
@@ -88,6 +90,14 @@ public class PulsarReactiveAutoConfiguration {
 			ObjectProvider<ReactiveMessageSenderCache> cache) {
 		return new DefaultReactivePulsarSenderFactory<>(pulsarReactivePulsarClient,
 				this.properties.buildReactiveMessageSenderSpec(), cache.getIfAvailable());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public ReactivePulsarConsumerFactory<?> reactivePulsarConsumerFactory(
+			ReactivePulsarClient pulsarReactivePulsarClient) {
+		return new DefaultReactivePulsarConsumerFactory<>(pulsarReactivePulsarClient,
+				this.properties.buildReactiveMessageConsumerSpec());
 	}
 
 	@Bean
