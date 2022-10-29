@@ -3,7 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.0.0-SNAPSHOT'
 }
 
-description = 'Spring Pulsar Sample Applications'
+description = 'Spring Pulsar Sample Applications (Custom Routing)'
 
 dependencies {
 	api project(':spring-pulsar-spring-boot-starter')
@@ -16,34 +16,12 @@ dependencies {
 	implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
 }
 
-springBoot {
-	mainClass = 'app1.SpringPulsarBootApp' // default app to run
-}
-
-task bootRunApp1(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'build') {
-	group = 'application'
-	mainClass = 'app1.SpringPulsarBootApp'
+bootRun {
 	jvmArgs = [
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
 			"--add-opens", "java.base/java.util=ALL-UNNAMED",
 			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
 	]
-	doFirst() {
-		classpath = sourceSets.main.runtimeClasspath
-	}
-}
-
-task bootRunApp2(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'build') {
-	group = 'application'
-	mainClass = 'app2.FailoverConsumerApp'
-	jvmArgs = [
-			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
-			"--add-opens", "java.base/java.util=ALL-UNNAMED",
-			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
-	]
-	doFirst() {
-		classpath = sourceSets.main.runtimeClasspath
-	}
 }
 
 project.afterEvaluate {
