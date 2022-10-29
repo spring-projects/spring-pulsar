@@ -23,18 +23,18 @@ TIP: The included link:../tools/pulsar/docker/README.adoc#_start_pulsar[Pulsar t
 ****
 
 === Steps
-Make sure the above pre-requisites are satisfied and that you are in the `spring-pulsar-sample-apps` directory and follow the steps below.
 
-=== App1
-To start the link:./src/main/java/app1/SpringPulsarBootApp.java[SpringPulsarBootApp] run the following command:
+Make sure the above pre-requisites are satisfied.
+
+===== IDE
+To run the app in your IDE just choose `Run/Debug` on the desired sample application class.
+
+===== Command Line
+To run the app on the command line open a terminal and navigate to the desired sample application directory (underneath `spring-pulsar-sample-apps`) and execute the following command:
+
 [source,bash]
 ----
-../gradlew bootRunApp1
+../../gradlew bootRun
 ----
 
-=== App2
-To start the link:./src/main/java/app2/FailoverConsumerApp.java[FailoverConsumerApp] run the following command:
-[source,bash]
-----
-../gradlew bootRunApp2
-----
+TIP: When running on the command line the `add-opens` JVM args are automatically configured which prevents annoying exceptions at runtime.
