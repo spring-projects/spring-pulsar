@@ -11,4 +11,5 @@
 	<suppress files="(DeserializationException|ConversionException)" checks="MutableException"/>
 	<suppress files="[\\/]kafka.jdocs[\\/]" checks="Regexp*"/>
 	<suppress files="[\\/]kafka.kdocs[\\/]" checks="Regexp*"/>
+	<suppress files="ReactiveSpringPulsarBootApp" checks="HideUtilityClassConstructor"/>
 </suppressions>
