@@ -27,44 +27,79 @@ import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link DefaultReactivePulsarConsumerFactory}
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 class DefaultReactiveMessageConsumerFactoryTests {
 
 	private static final Schema<String> SCHEMA = Schema.STRING;
 
-	@Test
-	void createConsumer() {
-		MutableReactiveMessageConsumerSpec spec = new MutableReactiveMessageConsumerSpec();
-		spec.setConsumerName("test-consumer");
-		DefaultReactivePulsarConsumerFactory<String> consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
-				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), spec);
+	@Nested
+	class FactoryCreatedWithoutSpec {
 
-		ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA);
+		private DefaultReactivePulsarConsumerFactory<String> consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
+				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
 
-		assertThat(consumer)
-				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
-				.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("test-consumer");
+		@Test
+		void createConsumer() {
+			ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA);
+
+			assertThat(consumer)
+					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+					.isNotNull();
+		}
+
+		@Test
+		void createConsumerWithCustomizer() {
+			ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA,
+					Collections.singletonList(builder -> builder.consumerName("new-test-consumer")));
+
+			assertThat(consumer)
+					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+					.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("new-test-consumer");
+		}
+
 	}
 
-	@Test
-	void createConsumerWithCustomizer() {
-		MutableReactiveMessageConsumerSpec spec = new MutableReactiveMessageConsumerSpec();
-		spec.setConsumerName("test-consumer");
-		DefaultReactivePulsarConsumerFactory<String> consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
-				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), spec);
+	@Nested
+	class FactoryCreatedWithSpec {
 
-		ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA,
-				Collections.singletonList(builder -> builder.consumerName("new-test-consumer")));
+		private DefaultReactivePulsarConsumerFactory<String> consumerFactory;
 
-		assertThat(consumer)
-				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
-				.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("new-test-consumer");
+		@BeforeEach
+		void createConsumerFactory() {
+			MutableReactiveMessageConsumerSpec spec = new MutableReactiveMessageConsumerSpec();
+			spec.setConsumerName("test-consumer");
+			consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
+					AdaptedReactivePulsarClientFactory.create((PulsarClient) null), spec);
+		}
+
+		@Test
+		void createConsumer() {
+			ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA);
+
+			assertThat(consumer)
+					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+					.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("test-consumer");
+		}
+
+		@Test
+		void createConsumerWithCustomizer() {
+			ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA,
+					Collections.singletonList(builder -> builder.consumerName("new-test-consumer")));
+
+			assertThat(consumer)
+					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+					.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("new-test-consumer");
+		}
+
 	}
 
 }
