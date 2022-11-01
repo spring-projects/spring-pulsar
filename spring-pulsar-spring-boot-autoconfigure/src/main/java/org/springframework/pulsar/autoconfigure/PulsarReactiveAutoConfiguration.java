@@ -32,8 +32,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
+import org.springframework.pulsar.core.reactive.DefaultReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.core.reactive.ReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
 
@@ -98,6 +100,13 @@ public class PulsarReactiveAutoConfiguration {
 			ReactivePulsarClient pulsarReactivePulsarClient) {
 		return new DefaultReactivePulsarConsumerFactory<>(pulsarReactivePulsarClient,
 				this.properties.buildReactiveMessageConsumerSpec());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public ReactivePulsarReaderFactory<?> reactivePulsarReaderFactory(ReactivePulsarClient pulsarReactivePulsarClient) {
+		return new DefaultReactivePulsarReaderFactory<>(pulsarReactivePulsarClient,
+				this.properties.buildReactiveMessageReaderSpec());
 	}
 
 	@Bean
