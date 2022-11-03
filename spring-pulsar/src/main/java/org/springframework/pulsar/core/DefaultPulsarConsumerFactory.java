@@ -46,17 +46,19 @@ import org.springframework.util.CollectionUtils;
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
 
-	private final Map<String, Object> consumerConfig = new HashMap<>();
+	private final Map<String, Object> consumerConfig;
 
 	private final List<Consumer<T>> consumers = new ArrayList<>();
 
 	private final PulsarClient pulsarClient;
 
+	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient) {
+		this(pulsarClient, Collections.emptyMap());
+	}
+
 	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient, Map<String, Object> consumerConfig) {
 		this.pulsarClient = pulsarClient;
-		if (!CollectionUtils.isEmpty(consumerConfig)) {
-			this.consumerConfig.putAll(consumerConfig);
-		}
+		this.consumerConfig = Collections.unmodifiableMap(consumerConfig);
 	}
 
 	@Override
@@ -73,8 +75,8 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
 			@Nullable Map<String, String> properties, @Nullable List<ConsumerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
-		final ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
-		final Map<String, Object> config = new HashMap<>(this.consumerConfig);
+		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
+		Map<String, Object> config = new HashMap<>(this.consumerConfig);
 
 		if (topics != null) {
 			config.put("topicNames", new HashSet<>(topics));
@@ -97,13 +99,13 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		}
 
 		if (config.containsKey("negativeAckRedeliveryBackoff")) {
-			final RedeliveryBackoff negativeAckRedeliveryBackoff = (RedeliveryBackoff) config
+			RedeliveryBackoff negativeAckRedeliveryBackoff = (RedeliveryBackoff) config
 					.get("negativeAckRedeliveryBackoff");
 			consumerBuilder.negativeAckRedeliveryBackoff(negativeAckRedeliveryBackoff);
 		}
 
 		if (config.containsKey("ackTimeoutRedeliveryBackoff")) {
-			final RedeliveryBackoff ackTimeoutRedeliveryBackoff = (RedeliveryBackoff) config
+			RedeliveryBackoff ackTimeoutRedeliveryBackoff = (RedeliveryBackoff) config
 					.get("ackTimeoutRedeliveryBackoff");
 			consumerBuilder.ackTimeoutRedeliveryBackoff(ackTimeoutRedeliveryBackoff);
 		}

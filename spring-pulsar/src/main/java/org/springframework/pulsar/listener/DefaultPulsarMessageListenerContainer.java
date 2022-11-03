@@ -249,11 +249,16 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Map<String, Object> propertiesToConsumer = extractDirectConsumerProperties();
 				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
 
-				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
+				BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
 						.maxNumMessages(containerProperties.getMaxNumMessages())
 						.maxNumBytes(containerProperties.getMaxNumBytes())
 						.timeout(containerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS).build();
 
+				/*
+				 * topicNames and properties must not be added through the builder
+				 * customizer as ConsumerBuilder::topics and ConsumerBuilder::properties
+				 * don't replace but add to the existing topics/properties.
+				 */
 				Set<String> topicNames = (Set<String>) propertiesToConsumer.remove("topicNames");
 				Map<String, String> properties = (Map<String, String>) propertiesToConsumer.remove("properties");
 
@@ -271,8 +276,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		/*
-		 * Method to work around the issue that ConsumerBuilder::loadConf sets JsonIgnored
-		 * fields of ConsumerConfigurationData to null. To be removed once
+		 * Method to work around the issue that ConsumerBuilder::loadConf crashes if a
+		 * deadLetterPolicy was set on the builder. To be removed once
 		 * https://github.com/apache/pulsar/issues/11646 is fixed.
 		 */
 		@SuppressWarnings("unchecked")

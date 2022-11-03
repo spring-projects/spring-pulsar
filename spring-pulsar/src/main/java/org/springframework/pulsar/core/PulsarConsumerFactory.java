@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
@@ -46,7 +47,7 @@ public interface PulsarConsumerFactory<T> {
 	/**
 	 * Create a consumer.
 	 * @param schema the schema of the messages to be sent
-	 * @param topics the topics the consumer will subscribe to builder
+	 * @param topics the topics the consumer will subscribe to
 	 * @return the consumer
 	 * @throws PulsarClientException if any error occurs
 	 */
@@ -55,10 +56,14 @@ public interface PulsarConsumerFactory<T> {
 	/**
 	 * Create a consumer.
 	 * @param schema the schema of the messages to be sent
-	 * @param topics the topics the consumer will subscribe to or {@code null} to use the
-	 * default topics
-	 * @param properties the properties to attach to the consumer or {@code null} to use
-	 * the default properties
+	 * @param topics the topics the consumer will subscribe to overriding the default ones
+	 * or {@code null} to use the default topics. Beware that using
+	 * {@link ConsumerBuilder#topic} or {@link ConsumerBuilder#topics} will add to the
+	 * default topics, not override them.
+	 * @param properties the properties to set to the consumer overriding the default ones
+	 * or {@code null} to use the default properties. Beware that using
+	 * {@link ConsumerBuilder#property} or {@link ConsumerBuilder#properties} will add to
+	 * the default properties, not override them.
 	 * @param customizers the optional list of customizers to apply to the consumer
 	 * builder
 	 * @return the consumer
