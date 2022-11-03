@@ -20,15 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
-import java.util.Map;
 
-import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Messages;
@@ -157,7 +157,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		concurrentContainer.start();
 
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(pulsarConsumerFactory, times(3))
-				.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)));
+				.createConsumer(any(Schema.class), isNull(), isNull(), anyList()));
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(consumer, times(3)).batchReceive());
 	}
 
@@ -177,8 +177,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 			throws Exception {
 		PulsarConsumerFactory<String> consumerFactory = mock(PulsarConsumerFactory.class);
 		Consumer<String> consumer = mock(Consumer.class);
-		when(consumerFactory.createConsumer(any(Schema.class), any(BatchReceivePolicy.class), any(Map.class)))
-				.thenReturn(consumer);
+		when(consumerFactory.createConsumer(any(Schema.class), isNull(), isNull(), anyList())).thenReturn(consumer);
 		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
