@@ -998,7 +998,7 @@ class DeadLetterPolicyConfig {
 
     @PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
             topics = "topic-with-dlp", deadLetterPolicy = "deadLetterPolicy",
-            subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
+            subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1000" })
     void listen(String msg) {
         throw new RuntimeException("fail " + msg);
     }

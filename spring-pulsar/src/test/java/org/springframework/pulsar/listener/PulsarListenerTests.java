@@ -299,7 +299,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		void pulsarListenerWithAckTimeoutRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
 				throws Exception {
 			pulsarTemplate.send("withAckTimeoutRedeliveryBackoff-test-topic", "hello john doe");
-			assertThat(ackTimeoutRedeliveryBackoffLatch.await(15, TimeUnit.SECONDS)).isTrue();
+			assertThat(ackTimeoutRedeliveryBackoffLatch.await(60, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@EnablePulsar
@@ -310,7 +310,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
 					topics = "withAckTimeoutRedeliveryBackoff-test-topic",
 					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff",
-					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
+					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1000" })
 			void listen(String msg) {
 				ackTimeoutRedeliveryBackoffLatch.countDown();
 				throw new RuntimeException();
@@ -390,7 +390,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
 					topics = "dlpt-topic-1", deadLetterPolicy = "deadLetterPolicy",
-					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
+					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1000" })
 			void listen(String msg) {
 				latch.countDown();
 				throw new RuntimeException("fail " + msg);
