@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.autoconfigure;
 
+import java.time.Duration;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,6 +30,7 @@ import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
+import org.springframework.util.unit.DataSize;
 
 import io.micrometer.observation.ObservationRegistry;
 
@@ -62,8 +65,9 @@ public class PulsarAnnotationDrivenConfiguration {
 		PulsarProperties.Listener listenerProperties = this.pulsarProperties.getListener();
 		map.from(listenerProperties::getSchemaType).to(containerProperties::setSchemaType);
 		map.from(listenerProperties::getAckMode).to(containerProperties::setAckMode);
-		map.from(listenerProperties::getBatchTimeoutMillis).to(containerProperties::setBatchTimeoutMillis);
-		map.from(listenerProperties::getMaxNumBytes).to(containerProperties::setMaxNumBytes);
+		map.from(listenerProperties::getBatchTimeout).asInt(Duration::toMillis)
+				.to(containerProperties::setBatchTimeoutMillis);
+		map.from(listenerProperties::getMaxNumBytes).asInt(DataSize::toBytes).to(containerProperties::setMaxNumBytes);
 		map.from(listenerProperties::getMaxNumMessages).to(containerProperties::setMaxNumMessages);
 
 		return new ConcurrentPulsarListenerContainerFactory<>(consumerFactoryProvider.getIfAvailable(),
