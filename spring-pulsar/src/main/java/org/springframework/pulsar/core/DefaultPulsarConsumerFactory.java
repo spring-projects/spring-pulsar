@@ -27,10 +27,8 @@ import java.util.TreeMap;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
-import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
@@ -67,7 +65,8 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	}
 
 	@Override
-	public Consumer<T> createConsumer(Schema<T> schema, Collection<String> topics) throws PulsarClientException {
+	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics)
+			throws PulsarClientException {
 		return createConsumer(schema, topics, null, Collections.emptyList());
 	}
 
@@ -85,30 +84,9 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			config.put("properties", new TreeMap<>(properties));
 		}
 
-		// Remove deadLetterPolicy from the properties here and save it to re-apply after
-		// calling `loadConf` (https://github.com/apache/pulsar/issues/11646)
-		DeadLetterPolicy deadLetterPolicy = null;
-		if (config.containsKey("deadLetterPolicy")) {
-			deadLetterPolicy = (DeadLetterPolicy) config.remove("deadLetterPolicy");
-		}
-
-		consumerBuilder.loadConf(config);
-
-		if (deadLetterPolicy != null) {
-			consumerBuilder.deadLetterPolicy(deadLetterPolicy);
-		}
-
-		if (config.containsKey("negativeAckRedeliveryBackoff")) {
-			RedeliveryBackoff negativeAckRedeliveryBackoff = (RedeliveryBackoff) config
-					.get("negativeAckRedeliveryBackoff");
-			consumerBuilder.negativeAckRedeliveryBackoff(negativeAckRedeliveryBackoff);
-		}
-
-		if (config.containsKey("ackTimeoutRedeliveryBackoff")) {
-			RedeliveryBackoff ackTimeoutRedeliveryBackoff = (RedeliveryBackoff) config
-					.get("ackTimeoutRedeliveryBackoff");
-			consumerBuilder.ackTimeoutRedeliveryBackoff(ackTimeoutRedeliveryBackoff);
-		}
+		// Replace w/ consumerBuilder.loadConf after
+		// https://github.com/apache/pulsar/issues/11646
+		ConsumerBuilderConfigurationUtil.loadConf(consumerBuilder, config);
 
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));

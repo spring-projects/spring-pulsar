@@ -52,6 +52,7 @@ import org.springframework.pulsar.core.PulsarTestContainerSupport;
 /**
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerSupport {
 
@@ -209,7 +210,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	}
 
 	@Test
-	void deadLetterPolicy() throws Exception {
+	void deadLetterPolicyDefault() throws Exception {
 		Map<String, Object> config = new HashMap<>();
 		config.put("topicNames", Collections.singleton("dpmlct-016"));
 		config.put("subscriptionName", "dpmlct-sb-016");
@@ -245,6 +246,67 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		});
 		pulsarContainerProperties.setSchema(Schema.INT32);
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
+		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+
+		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-016");
+		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
+		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 1; i < 6; i++) {
+			pulsarTemplate.send(i);
+		}
+
+		// DLQ consumer should receive 1 msg
+		assertThat(dlqLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		// Normal consumer should receive 5 msg + 1 re-delivery
+		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		container.stop();
+		dlqContainer.stop();
+		pulsarClient.close();
+	}
+
+	@Test
+	void deadLetterPolicyCustom() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("topicNames", Collections.singleton("dpmlct-016"));
+		config.put("subscriptionName", "dpmlct-sb-016");
+		config.put("ackTimeoutMillis", 1);
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(5).deadLetterTopic("dlq-topic")
+				.build();
+		config.put("deadLetterPolicy", deadLetterPolicy);
+
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
+
+		CountDownLatch dlqLatch = new CountDownLatch(1);
+		CountDownLatch latch = new CountDownLatch(6);
+
+		PulsarContainerProperties dlqContainerProperties = new PulsarContainerProperties();
+		dlqContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
+		dlqContainerProperties.setSchema(Schema.INT32);
+		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
+		dlqContainerProperties.setTopics(new String[] { "dlq-topic" });
+		DefaultPulsarMessageListenerContainer<Integer> dlqContainer = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, dlqContainerProperties);
+		dlqContainer.start();
+
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<Integer>) (consumer, msg) -> {
+			latch.countDown();
+			if (msg.getValue() == 5) {
+				throw new RuntimeException("fail");
+			}
+		});
+		pulsarContainerProperties.setSchema(Schema.INT32);
+		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
+		pulsarContainerProperties.getPulsarConsumerProperties().put("deadLetterPolicy",
+				DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlq-topic").build());
+
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
