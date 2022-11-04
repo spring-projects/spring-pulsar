@@ -33,6 +33,7 @@ import org.springframework.lang.Nullable;
  * @param <T> payload type for the consumer.
  * @author Soby Chacko
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public interface PulsarConsumerFactory<T> {
 
@@ -47,11 +48,12 @@ public interface PulsarConsumerFactory<T> {
 	/**
 	 * Create a consumer.
 	 * @param schema the schema of the messages to be sent
-	 * @param topics the topics the consumer will subscribe to
+	 * @param topics the topics the consumer will subscribe to overriding the default ones
+	 * or {@code null} to use the default topics
 	 * @return the consumer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Consumer<T> createConsumer(Schema<T> schema, Collection<String> topics) throws PulsarClientException;
+	Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics) throws PulsarClientException;
 
 	/**
 	 * Create a consumer.
@@ -60,10 +62,11 @@ public interface PulsarConsumerFactory<T> {
 	 * or {@code null} to use the default topics. Beware that using
 	 * {@link ConsumerBuilder#topic} or {@link ConsumerBuilder#topics} will add to the
 	 * default topics, not override them.
-	 * @param properties the properties to set to the consumer overriding the default ones
-	 * or {@code null} to use the default properties. Beware that using
-	 * {@link ConsumerBuilder#property} or {@link ConsumerBuilder#properties} will add to
-	 * the default properties, not override them.
+	 * @param properties the metadata properties to attach to the consumer, replacing the
+	 * default metadata properties, or {@code null} to use the default metadata
+	 * properties. Beware that using {@link ConsumerBuilder#property} or
+	 * {@link ConsumerBuilder#properties} will add to the default metadata properties, not
+	 * replace them.
 	 * @param customizers the optional list of customizers to apply to the consumer
 	 * builder
 	 * @return the consumer

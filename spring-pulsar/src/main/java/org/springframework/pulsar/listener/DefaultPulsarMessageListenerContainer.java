@@ -37,24 +37,14 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
-import org.apache.pulsar.client.api.ConsumerBuilder;
-import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
-import org.apache.pulsar.client.api.ConsumerEventListener;
-import org.apache.pulsar.client.api.CryptoKeyReader;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
-import org.apache.pulsar.client.api.KeySharedPolicy;
 import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.MessageCrypto;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageListener;
-import org.apache.pulsar.client.api.MessagePayloadProcessor;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
-import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.SubscriptionInitialPosition;
-import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -62,6 +52,7 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.ConsumerBuilderConfigurationUtil;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
@@ -263,7 +254,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Map<String, String> properties = (Map<String, String>) propertiesToConsumer.remove("properties");
 
 				ConsumerBuilderCustomizer<T> customizer = builder -> {
-					loadConf(builder, propertiesToConsumer);
+					// Replace w/ consumerBuilder.loadConf after
+					// https://github.com/apache/pulsar/issues/11646
+					ConsumerBuilderConfigurationUtil.loadConf(builder, propertiesToConsumer);
 					builder.batchReceivePolicy(batchReceivePolicy);
 				};
 				this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
@@ -272,155 +265,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			catch (PulsarClientException e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
-			}
-		}
-
-		/*
-		 * Method to work around the issue that ConsumerBuilder::loadConf crashes if a
-		 * deadLetterPolicy was set on the builder. To be removed once
-		 * https://github.com/apache/pulsar/issues/11646 is fixed.
-		 */
-		@SuppressWarnings("unchecked")
-		private static <T> void loadConf(ConsumerBuilder<T> builder, Map<String, Object> properties) {
-			if (properties.containsKey("topicsPattern")) {
-				builder.topicsPattern(properties.get("topicsPattern").toString());
-			}
-			if (properties.containsKey("subscriptionName")) {
-				builder.subscriptionName(properties.get("subscriptionName").toString());
-			}
-			if (properties.containsKey("subscriptionType")) {
-				builder.subscriptionType(SubscriptionType.valueOf(properties.get("subscriptionType").toString()));
-			}
-			if (properties.containsKey("subscriptionMode")) {
-				builder.subscriptionMode(SubscriptionMode.valueOf(properties.get("subscriptionMode").toString()));
-			}
-			if (properties.containsKey("subscriptionProperties")) {
-				builder.subscriptionProperties((Map<String, String>) properties.get("subscriptionProperties"));
-			}
-			if (properties.containsKey("messageListener")) {
-				builder.messageListener((MessageListener<T>) properties.get("messageListener"));
-			}
-			if (properties.containsKey("consumerEventListener")) {
-				builder.consumerEventListener((ConsumerEventListener) properties.get("consumerEventListener"));
-			}
-			if (properties.containsKey("negativeAckRedeliveryBackoff")) {
-				builder.negativeAckRedeliveryBackoff(
-						(RedeliveryBackoff) properties.get("negativeAckRedeliveryBackoff"));
-			}
-			if (properties.containsKey("ackTimeoutRedeliveryBackoff")) {
-				builder.ackTimeoutRedeliveryBackoff((RedeliveryBackoff) properties.get("ackTimeoutRedeliveryBackoff"));
-			}
-			if (properties.containsKey("receiverQueueSize")) {
-				builder.receiverQueueSize(Integer.parseInt(properties.get("receiverQueueSize").toString()));
-			}
-			if (properties.containsKey("acknowledgementsGroupTimeMicros")) {
-				builder.acknowledgmentGroupTime(
-						Long.parseLong(properties.get("acknowledgementsGroupTimeMicros").toString()),
-						TimeUnit.MICROSECONDS);
-			}
-			if (properties.containsKey("negativeAckRedeliveryDelayMicros")) {
-				builder.negativeAckRedeliveryDelay(
-						Long.parseLong(properties.get("negativeAckRedeliveryDelayMicros").toString()),
-						TimeUnit.MICROSECONDS);
-			}
-			if (properties.containsKey("maxTotalReceiverQueueSizeAcrossPartitions")) {
-				builder.maxTotalReceiverQueueSizeAcrossPartitions(
-						Integer.parseInt(properties.get("maxTotalReceiverQueueSizeAcrossPartitions").toString()));
-			}
-			if (properties.containsKey("consumerName")) {
-				builder.consumerName(properties.get("consumerName").toString());
-			}
-			if (properties.containsKey("ackTimeoutMillis")) {
-				builder.ackTimeout(Long.parseLong(properties.get("ackTimeoutMillis").toString()),
-						TimeUnit.MILLISECONDS);
-			}
-			if (properties.containsKey("tickDurationMillis")) {
-				builder.ackTimeoutTickTime(Long.parseLong(properties.get("tickDurationMillis").toString()),
-						TimeUnit.MILLISECONDS);
-			}
-			if (properties.containsKey("priorityLevel")) {
-				builder.priorityLevel(Integer.parseInt(properties.get("priorityLevel").toString()));
-			}
-			if (properties.containsKey("maxPendingChunkedMessage")) {
-				builder.maxPendingChunkedMessage(
-						Integer.parseInt(properties.get("maxPendingChunkedMessage").toString()));
-			}
-			if (properties.containsKey("autoAckOldestChunkedMessageOnQueueFull")) {
-				builder.autoAckOldestChunkedMessageOnQueueFull(
-						Boolean.parseBoolean(properties.get("autoAckOldestChunkedMessageOnQueueFull").toString()));
-			}
-			if (properties.containsKey("expireTimeOfIncompleteChunkedMessageMillis")) {
-				builder.expireTimeOfIncompleteChunkedMessage(
-						Long.parseLong(properties.get("expireTimeOfIncompleteChunkedMessageMillis").toString()),
-						TimeUnit.MILLISECONDS);
-			}
-			if (properties.containsKey("cryptoKeyReader")) {
-				builder.cryptoKeyReader((CryptoKeyReader) properties.get("cryptoKeyReader"));
-			}
-			if (properties.containsKey("messageCrypto")) {
-				builder.messageCrypto((MessageCrypto) properties.get("messageCrypto"));
-			}
-			if (properties.containsKey("cryptoFailureAction")) {
-				builder.cryptoFailureAction(
-						ConsumerCryptoFailureAction.valueOf(properties.get("cryptoFailureAction").toString()));
-			}
-			if (properties.containsKey("readCompacted")) {
-				builder.readCompacted(Boolean.parseBoolean(properties.get("readCompacted").toString()));
-			}
-			if (properties.containsKey("subscriptionInitialPosition")) {
-				builder.subscriptionInitialPosition(
-						SubscriptionInitialPosition.valueOf(properties.get("subscriptionInitialPosition").toString()));
-			}
-			if (properties.containsKey("patternAutoDiscoveryPeriod")) {
-				builder.patternAutoDiscoveryPeriod(
-						Integer.parseInt(properties.get("patternAutoDiscoveryPeriod").toString()), TimeUnit.SECONDS);
-			}
-			if (properties.containsKey("regexSubscriptionMode")) {
-				builder.subscriptionTopicsMode(
-						RegexSubscriptionMode.valueOf(properties.get("regexSubscriptionMode").toString()));
-			}
-			if (properties.containsKey("deadLetterPolicy")) {
-				builder.deadLetterPolicy((DeadLetterPolicy) properties.get("deadLetterPolicy"));
-			}
-			if (properties.containsKey("retryEnable")) {
-				builder.enableRetry(Boolean.parseBoolean(properties.get("retryEnable").toString()));
-			}
-			if (properties.containsKey("batchReceivePolicy")) {
-				builder.batchReceivePolicy((BatchReceivePolicy) properties.get("batchReceivePolicy"));
-			}
-			if (properties.containsKey("autoUpdatePartitions")) {
-				builder.autoUpdatePartitions(Boolean.parseBoolean(properties.get("autoUpdatePartitions").toString()));
-			}
-			if (properties.containsKey("autoUpdatePartitionsIntervalSeconds")) {
-				builder.autoUpdatePartitionsInterval(
-						Integer.parseInt(properties.get("autoUpdatePartitionsIntervalSeconds").toString()),
-						TimeUnit.SECONDS);
-			}
-			if (properties.containsKey("replicateSubscriptionState")) {
-				builder.replicateSubscriptionState(
-						Boolean.parseBoolean(properties.get("replicateSubscriptionState").toString()));
-			}
-			if (properties.containsKey("resetIncludeHead")) {
-				builder.startMessageIdInclusive();
-			}
-			if (properties.containsKey("keySharedPolicy")) {
-				builder.keySharedPolicy((KeySharedPolicy) properties.get("keySharedPolicy"));
-			}
-			if (properties.containsKey("batchIndexAckEnabled")) {
-				builder.enableBatchIndexAcknowledgment(
-						Boolean.parseBoolean(properties.get("batchIndexAckEnabled").toString()));
-			}
-			if (properties.containsKey("ackReceiptEnabled")) {
-				builder.isAckReceiptEnabled(Boolean.parseBoolean(properties.get("ackReceiptEnabled").toString()));
-			}
-			if (properties.containsKey("poolMessages")) {
-				builder.poolMessages(Boolean.parseBoolean(properties.get("poolMessages").toString()));
-			}
-			if (properties.containsKey("payloadProcessor")) {
-				builder.messagePayloadProcessor((MessagePayloadProcessor) properties.get("payloadProcessor"));
-			}
-			if (properties.containsKey("startPaused")) {
-				builder.startPaused(Boolean.parseBoolean(properties.get("startPaused").toString()));
 			}
 		}
 
