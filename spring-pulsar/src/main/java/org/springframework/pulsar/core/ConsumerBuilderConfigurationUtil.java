@@ -29,9 +29,8 @@ import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
  * Utility methods to help load configuration into a {@link ConsumerBuilder}.
  * <p>
  * The main purpose is to work around the underlying
- * <a href="https://github.com/apache/pulsar/issues/11646">Pulsar issue</a> where
- * {@code ConsumerBuilder::loadConf} sets {@code @JsonIgnore} fields to null and crashes
- * if a {@code deadLetterPolicy} was set on the builder.
+ * <a href="https://github.com/apache/pulsar/pull/18344">Pulsar issue</a> where
+ * {@link ConsumerBuilder#loadConf} sets {@code @JsonIgnore} fields to null.
  * <p>
  * Should be removed once the above issue is fixed.
  *
@@ -58,10 +57,22 @@ public final class ConsumerBuilderConfigurationUtil {
 		builder.loadConf(propertiesCopy);
 
 		// Manually set fields marked as @JsonIgnore in ConsumerConfigurationData
+		applyValueToBuilderAfterLoadConf(builderConf::getMessageListener, builder::messageListener, propertiesCopy,
+				"messageListener");
+		applyValueToBuilderAfterLoadConf(builderConf::getConsumerEventListener, builder::consumerEventListener,
+				propertiesCopy, "consumerEventListener");
 		applyValueToBuilderAfterLoadConf(builderConf::getNegativeAckRedeliveryBackoff,
 				builder::negativeAckRedeliveryBackoff, propertiesCopy, "negativeAckRedeliveryBackoff");
 		applyValueToBuilderAfterLoadConf(builderConf::getAckTimeoutRedeliveryBackoff,
 				builder::ackTimeoutRedeliveryBackoff, propertiesCopy, "ackTimeoutRedeliveryBackoff");
+		applyValueToBuilderAfterLoadConf(builderConf::getCryptoKeyReader, builder::cryptoKeyReader, propertiesCopy,
+				"cryptoKeyReader");
+		applyValueToBuilderAfterLoadConf(builderConf::getMessageCrypto, builder::messageCrypto, propertiesCopy,
+				"messageCrypto");
+		applyValueToBuilderAfterLoadConf(builderConf::getBatchReceivePolicy, builder::batchReceivePolicy,
+				propertiesCopy, "batchReceivePolicy");
+		applyValueToBuilderAfterLoadConf(builderConf::getPayloadProcessor, builder::messagePayloadProcessor,
+				propertiesCopy, "payloadProcessor");
 	}
 
 	@SuppressWarnings("unchecked")
