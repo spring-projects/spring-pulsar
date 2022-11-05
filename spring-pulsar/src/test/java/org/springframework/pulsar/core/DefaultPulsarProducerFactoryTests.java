@@ -38,9 +38,9 @@ class DefaultPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	void createProducerMultipleCalls() throws PulsarClientException {
 		Map<String, Object> producerConfig = Collections.emptyMap();
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, producerConfig);
-		try (Producer<String> producer1 = producerFactory.createProducer("topic1", schema)) {
-			try (Producer<String> producer2 = producerFactory.createProducer("topic1", schema)) {
-				try (Producer<String> producer3 = producerFactory.createProducer("topic1", schema)) {
+		try (Producer<String> producer1 = producerFactory.createProducer(schema, "topic1")) {
+			try (Producer<String> producer2 = producerFactory.createProducer(schema, "topic1")) {
+				try (Producer<String> producer3 = producerFactory.createProducer(schema, "topic1")) {
 					assertThat(producer1).isNotSameAs(producer2).isNotSameAs(producer3);
 				}
 			}

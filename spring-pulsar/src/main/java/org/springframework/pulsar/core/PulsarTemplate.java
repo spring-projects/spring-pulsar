@@ -16,12 +16,12 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
@@ -46,6 +46,7 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
@@ -141,12 +142,11 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		this.schema = schema;
 	}
 
-	private MessageId doSend(@Nullable String topic, T message,
+	private MessageId doSend(@Nullable String topic, T message, @Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			@Nullable MessageRouter messageRouter, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
-			throws PulsarClientException {
+			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		try {
-			return doSendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter, producerCustomizer).get();
+			return doSendAsync(topic, message, encryptionKeys, typedMessageBuilderCustomizer, producerCustomizer).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
@@ -154,9 +154,9 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	}
 
 	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, T message,
+			@Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			@Nullable MessageRouter messageRouter, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
-			throws PulsarClientException {
+			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 
@@ -164,7 +164,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		Observation observation = newObservation(senderContext);
 		try {
 			observation.start();
-			final Producer<T> producer = prepareProducerForSend(topic, message, messageRouter, producerCustomizer);
+			final Producer<T> producer = prepareProducerForSend(topic, message, encryptionKeys, producerCustomizer);
 			TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
 			if (typedMessageBuilderCustomizer != null) {
 				typedMessageBuilderCustomizer.customize(messageBuilder);
@@ -200,11 +200,18 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
-	private Producer<T> prepareProducerForSend(@Nullable String topic, T message, @Nullable MessageRouter messageRouter,
-			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
+	private Producer<T> prepareProducerForSend(@Nullable String topic, T message,
+			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
+			throws PulsarClientException {
 		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
-		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors,
-				producerCustomizer == null ? Collections.emptyList() : Collections.singletonList(producerCustomizer));
+		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
+		if (this.interceptors != null) {
+			customizers.add(builder -> builder.intercept(this.interceptors.toArray(new ProducerInterceptor[0])));
+		}
+		if (producerCustomizer != null) {
+			customizers.add(producerCustomizer);
+		}
+		return this.producerFactory.createProducer(schema, topic, encryptionKeys, customizers);
 	}
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
@@ -217,10 +224,10 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		private String topic;
 
 		@Nullable
-		private TypedMessageBuilderCustomizer<T> messageCustomizer;
+		private Collection<String> encryptionKeys;
 
 		@Nullable
-		private MessageRouter messageRouter;
+		private TypedMessageBuilderCustomizer<T> messageCustomizer;
 
 		@Nullable
 		private ProducerBuilderCustomizer<T> producerCustomizer;
@@ -237,14 +244,14 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		}
 
 		@Override
-		public SendMessageBuilder<T> withMessageCustomizer(TypedMessageBuilderCustomizer<T> messageCustomizer) {
-			this.messageCustomizer = messageCustomizer;
+		public SendMessageBuilder<T> withEncryptionKeys(Collection<String> encryptionKeys) {
+			this.encryptionKeys = encryptionKeys;
 			return this;
 		}
 
 		@Override
-		public SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter) {
-			this.messageRouter = messageRouter;
+		public SendMessageBuilder<T> withMessageCustomizer(TypedMessageBuilderCustomizer<T> messageCustomizer) {
+			this.messageCustomizer = messageCustomizer;
 			return this;
 		}
 
@@ -256,13 +263,13 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 		@Override
 		public MessageId send() throws PulsarClientException {
-			return this.template.doSend(this.topic, this.message, this.messageCustomizer, this.messageRouter,
+			return this.template.doSend(this.topic, this.message, this.encryptionKeys, this.messageCustomizer,
 					this.producerCustomizer);
 		}
 
 		@Override
 		public CompletableFuture<MessageId> sendAsync() throws PulsarClientException {
-			return this.template.doSendAsync(this.topic, this.message, this.messageCustomizer, this.messageRouter,
+			return this.template.doSendAsync(this.topic, this.message, this.encryptionKeys, this.messageCustomizer,
 					this.producerCustomizer);
 		}
 

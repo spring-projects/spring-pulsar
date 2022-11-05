@@ -16,10 +16,10 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.PulsarClientException;
 
 import org.springframework.lang.Nullable;
@@ -92,18 +92,18 @@ public interface PulsarOperations<T> {
 		SendMessageBuilder<T> withTopic(String topic);
 
 		/**
+		 * Specify the encryption keys to use.
+		 * @param encryptionKeys the encryption keys
+		 * @return the current builder with the encryption keys specified
+		 */
+		SendMessageBuilder<T> withEncryptionKeys(Collection<String> encryptionKeys);
+
+		/**
 		 * Specifies the message customizer to use to further configure the message.
 		 * @param messageCustomizer the message customizer
 		 * @return the current builder with the message customizer specified
 		 */
 		SendMessageBuilder<T> withMessageCustomizer(TypedMessageBuilderCustomizer<T> messageCustomizer);
-
-		/**
-		 * Specifies the custom message router to use when sending the message.
-		 * @param messageRouter the custom message router
-		 * @return the current builder with the custom message router specified
-		 */
-		SendMessageBuilder<T> withCustomRouter(MessageRouter messageRouter);
 
 		/**
 		 * Specifies the customizer to use to further configure the producer builder.

@@ -24,17 +24,14 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
-import org.apache.pulsar.client.impl.ProducerInterceptors;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
@@ -47,6 +44,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport {
 
@@ -69,17 +67,8 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	@Test
 	void createProducerWithSpecificTopic() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		try (Producer<String> producer = producerFactory.createProducer("topic1", schema)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic1", schema, null, null);
-		}
-	}
-
-	@Test
-	void createProducerWithSpecificTopicAndMessageRouter() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		MessageRouter router = mock(MessageRouter.class);
-		try (Producer<String> producer = producerFactory.createProducer("topic1", schema, router)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic1", schema, router, null);
+		try (Producer<String> producer = producerFactory.createProducer(schema, "topic1")) {
+			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic1", schema, Collections.emptySet());
 		}
 	}
 
@@ -87,28 +76,27 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	void createProducerWithDefaultTopic() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
 				Collections.singletonMap("topicName", "topic0"));
-		try (Producer<String> producer = producerFactory.createProducer(null, schema)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null, null);
+		try (Producer<String> producer = producerFactory.createProducer(schema, null)) {
+			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic0", schema, Collections.emptySet());
 		}
 	}
 
 	@Test
-	void createProducerWithDefaultTopicAndMessageRouter() throws PulsarClientException {
+	void createProducerWithDefaultEncryptionKeys() throws PulsarClientException {
+		Set<String> encryptionKeys = Set.of("key");
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
-				Collections.singletonMap("topicName", "topic0"));
-		MessageRouter router = mock(MessageRouter.class);
-		try (Producer<String> producer = producerFactory.createProducer(null, schema, router)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, router, null);
+				Collections.singletonMap("encryptionKeys", encryptionKeys));
+		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0")) {
+			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic0", schema, encryptionKeys);
 		}
 	}
 
 	@Test
-	void createProducerWithDefaultTopicAndInterceptor() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
-				Collections.singletonMap("topicName", "topic0"));
-		List<ProducerInterceptor> interceptors = Collections.singletonList(mock(ProducerInterceptor.class));
-		try (Producer<String> producer = producerFactory.createProducer(null, schema, null, interceptors)) {
-			assertProducerHasTopicSchemaAndRouter(producer, "topic0", schema, null, interceptors);
+	void createProducerWithSpecificEncryptionKeys() throws PulsarClientException {
+		Set<String> encryptionKeys = Set.of("key");
+		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
+		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0", encryptionKeys, null)) {
+			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic0", schema, encryptionKeys);
 		}
 	}
 
@@ -117,7 +105,7 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	void createProducerWithSingleProducerCustomizer() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 		ProducerBuilderCustomizer<String> producerCustomizer = mock(ProducerBuilderCustomizer.class);
-		try (Producer<String> producer = producerFactory.createProducer("topic0", schema, null, null,
+		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0", null,
 				Collections.singletonList(producerCustomizer))) {
 			verify(producerCustomizer).customize(any(ProducerBuilder.class));
 		}
@@ -129,7 +117,7 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 		ProducerBuilderCustomizer<String> producerCustomizer1 = mock(ProducerBuilderCustomizer.class);
 		ProducerBuilderCustomizer<String> producerCustomizer2 = mock(ProducerBuilderCustomizer.class);
-		try (Producer<String> producer = producerFactory.createProducer("topic0", schema, null, null,
+		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0", null,
 				Arrays.asList(producerCustomizer1, producerCustomizer2))) {
 			verify(producerCustomizer1).customize(any(ProducerBuilder.class));
 			verify(producerCustomizer2).customize(any(ProducerBuilder.class));
@@ -139,27 +127,18 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	@Test
 	void createProducerWithNoTopic() {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		assertThatThrownBy(() -> producerFactory.createProducer(null, schema))
+		assertThatThrownBy(() -> producerFactory.createProducer(schema, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("Topic must be specified when no default topic is configured");
 	}
 
-	protected void assertProducerHasTopicSchemaAndRouter(Producer<String> producer, String topic, Schema<String> schema,
-			MessageRouter router, List<ProducerInterceptor> producerInterceptors) {
+	protected void assertProducerHasTopicSchemaAndEncryptionKeys(Producer<String> producer, String topic,
+			Schema<String> schema, Set<String> encryptionKeys) {
 		assertThat(producer.getTopic()).isEqualTo(topic);
 		assertThat(producer).hasFieldOrPropertyWithValue("schema", schema);
 		assertThat(producer).extracting("conf")
 				.asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
-				.extracting(ProducerConfigurationData::getCustomMessageRouter).isSameAs(router);
-		if (producerInterceptors == null) {
-			assertThat(producer).extracting("interceptors").isNull();
-		}
-		else {
-			assertThat(producer).extracting("interceptors")
-					.asInstanceOf(InstanceOfAssertFactories.type(ProducerInterceptors.class)).extracting("interceptors")
-					.asInstanceOf(InstanceOfAssertFactories.type(List.class)).isEqualTo(producerInterceptors);
-		}
-
+				.extracting(ProducerConfigurationData::getEncryptionKeys).isEqualTo(encryptionKeys);
 	}
 
 	/**
