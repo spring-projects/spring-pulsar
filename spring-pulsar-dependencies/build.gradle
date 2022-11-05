@@ -12,7 +12,7 @@ ext {
 	micrometerTracingVersion = '1.0.0'
 	protobufJavaVersion = '3.21.5'
 	testcontainersVersion = '1.17.3'
-	pulsarVersion = '2.10.1'
+	pulsarVersion = '2.10.2'
 	pulsarClientReactiveVersion = '0.1.0-SNAPSHOT'
 	springBootVersion = '3.0.0-RC1'
 }

@@ -22,8 +22,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.pulsar.client.api.ConsumerBuilder;
-import org.apache.pulsar.client.api.DeadLetterPolicy;
-import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.impl.ConsumerBuilderImpl;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 
@@ -31,9 +29,8 @@ import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
  * Utility methods to help load configuration into a {@link ConsumerBuilder}.
  * <p>
  * The main purpose is to work around the underlying
- * <a href="https://github.com/apache/pulsar/issues/11646">Pulsar issue</a> where
- * {@code ConsumerBuilder::loadConf} sets {@code @JsonIgnore} fields to null and crashes
- * if a {@code deadLetterPolicy} was set on the builder.
+ * <a href="https://github.com/apache/pulsar/pull/18344">Pulsar issue</a> where
+ * {@link ConsumerBuilder#loadConf} sets {@code @JsonIgnore} fields to null.
  * <p>
  * Should be removed once the above issue is fixed.
  *
@@ -46,52 +43,53 @@ public final class ConsumerBuilderConfigurationUtil {
 
 	/**
 	 * Configures the specified properties onto the specified builder in a manner that
-	 * avoids <a href="https://github.com/apache/pulsar/issues/11646">Pulsar issue</a>.
+	 * loads non-serializable properties. See
+	 * <a href="https://github.com/apache/pulsar/pull/18344">Pulsar PR</a>.
 	 * @param builder the builder
 	 * @param properties the properties to set on the builder
 	 * @param <T> the payload type
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> void loadConf(ConsumerBuilder<T> builder, Map<String, Object> properties) {
 
 		ConsumerConfigurationData<T> builderConf = ((ConsumerBuilderImpl<T>) builder).getConf();
 		Map<String, Object> propertiesCopy = new HashMap<>(properties);
+		propertiesCopy.remove("messageListener");
+		propertiesCopy.remove("consumerEventListener");
+		propertiesCopy.remove("negativeAckRedeliveryBackoff");
+		propertiesCopy.remove("ackTimeoutRedeliveryBackoff");
+		propertiesCopy.remove("cryptoKeyReader");
+		propertiesCopy.remove("messageCrypto");
+		propertiesCopy.remove("batchReceivePolicy");
+		propertiesCopy.remove("payloadProcessor");
 
-		// Remove and remember problem fields from input props and builder
-		DeadLetterPolicy deadLetterPolicy = getValueToApplyToBuilderAfterLoadConf(builderConf::getDeadLetterPolicy,
-				builderConf::setDeadLetterPolicy, propertiesCopy, "deadLetterPolicy");
-		RedeliveryBackoff nackRedeliveryBackoff = getValueToApplyToBuilderAfterLoadConf(
-				builderConf::getNegativeAckRedeliveryBackoff, builderConf::setNegativeAckRedeliveryBackoff,
-				propertiesCopy, "negativeAckRedeliveryBackoff");
-		RedeliveryBackoff ackRedeliveryBackoff = getValueToApplyToBuilderAfterLoadConf(
-				builderConf::getAckTimeoutRedeliveryBackoff, builderConf::setAckTimeoutRedeliveryBackoff,
-				propertiesCopy, "ackTimeoutRedeliveryBackoff");
-
-		// DLP stripped from props - now safe to call builder.loadConf
 		builder.loadConf(propertiesCopy);
 
 		// Manually set fields marked as @JsonIgnore in ConsumerConfigurationData
-		if (deadLetterPolicy != null) {
-			builder.deadLetterPolicy(deadLetterPolicy);
-		}
-		if (nackRedeliveryBackoff != null) {
-			builder.negativeAckRedeliveryBackoff(nackRedeliveryBackoff);
-		}
-		if (ackRedeliveryBackoff != null) {
-			builder.ackTimeoutRedeliveryBackoff(ackRedeliveryBackoff);
-		}
+		applyValueToBuilderAfterLoadConf(builderConf::getMessageListener, builder::messageListener, properties,
+				"messageListener");
+		applyValueToBuilderAfterLoadConf(builderConf::getConsumerEventListener, builder::consumerEventListener,
+				properties, "consumerEventListener");
+		applyValueToBuilderAfterLoadConf(builderConf::getNegativeAckRedeliveryBackoff,
+				builder::negativeAckRedeliveryBackoff, properties, "negativeAckRedeliveryBackoff");
+		applyValueToBuilderAfterLoadConf(builderConf::getAckTimeoutRedeliveryBackoff,
+				builder::ackTimeoutRedeliveryBackoff, properties, "ackTimeoutRedeliveryBackoff");
+		applyValueToBuilderAfterLoadConf(builderConf::getCryptoKeyReader, builder::cryptoKeyReader, properties,
+				"cryptoKeyReader");
+		applyValueToBuilderAfterLoadConf(builderConf::getMessageCrypto, builder::messageCrypto, properties,
+				"messageCrypto");
+		applyValueToBuilderAfterLoadConf(builderConf::getBatchReceivePolicy, builder::batchReceivePolicy, properties,
+				"batchReceivePolicy");
+		applyValueToBuilderAfterLoadConf(builderConf::getPayloadProcessor, builder::messagePayloadProcessor, properties,
+				"payloadProcessor");
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getValueToApplyToBuilderAfterLoadConf(Supplier<T> builderGetter, Consumer<T> builderSetter,
-			Map<String, Object> properties, String propertyName) {
-		T value = (T) properties.getOrDefault(propertyName, builderGetter.get());
-
-		if ("deadLetterPolicy".equals(propertyName)) {
-			builderSetter.accept(null);
-			properties.remove(propertyName);
+	private static <T> void applyValueToBuilderAfterLoadConf(Supplier<T> confGetter, Consumer<T> builderSetter,
+			Map<String, Object> properties, String key) {
+		T value = (T) properties.getOrDefault(key, confGetter.get());
+		if (value != null) {
+			builderSetter.accept(value);
 		}
-		return value;
 	}
 
 }
