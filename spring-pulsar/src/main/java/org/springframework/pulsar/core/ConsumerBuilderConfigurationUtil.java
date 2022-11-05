@@ -22,8 +22,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.pulsar.client.api.ConsumerBuilder;
-import org.apache.pulsar.client.api.DeadLetterPolicy;
-import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.impl.ConsumerBuilderImpl;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 
@@ -46,52 +44,34 @@ public final class ConsumerBuilderConfigurationUtil {
 
 	/**
 	 * Configures the specified properties onto the specified builder in a manner that
-	 * avoids <a href="https://github.com/apache/pulsar/issues/11646">Pulsar issue</a>.
+	 * loads non-serializable properties. See
+	 * <a href="https://github.com/apache/pulsar/pull/18344">Pulsar PR</a>.
 	 * @param builder the builder
 	 * @param properties the properties to set on the builder
 	 * @param <T> the payload type
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> void loadConf(ConsumerBuilder<T> builder, Map<String, Object> properties) {
 
 		ConsumerConfigurationData<T> builderConf = ((ConsumerBuilderImpl<T>) builder).getConf();
 		Map<String, Object> propertiesCopy = new HashMap<>(properties);
 
-		// Remove and remember problem fields from input props and builder
-		DeadLetterPolicy deadLetterPolicy = getValueToApplyToBuilderAfterLoadConf(builderConf::getDeadLetterPolicy,
-				builderConf::setDeadLetterPolicy, propertiesCopy, "deadLetterPolicy");
-		RedeliveryBackoff nackRedeliveryBackoff = getValueToApplyToBuilderAfterLoadConf(
-				builderConf::getNegativeAckRedeliveryBackoff, builderConf::setNegativeAckRedeliveryBackoff,
-				propertiesCopy, "negativeAckRedeliveryBackoff");
-		RedeliveryBackoff ackRedeliveryBackoff = getValueToApplyToBuilderAfterLoadConf(
-				builderConf::getAckTimeoutRedeliveryBackoff, builderConf::setAckTimeoutRedeliveryBackoff,
-				propertiesCopy, "ackTimeoutRedeliveryBackoff");
-
-		// DLP stripped from props - now safe to call builder.loadConf
 		builder.loadConf(propertiesCopy);
 
 		// Manually set fields marked as @JsonIgnore in ConsumerConfigurationData
-		if (deadLetterPolicy != null) {
-			builder.deadLetterPolicy(deadLetterPolicy);
-		}
-		if (nackRedeliveryBackoff != null) {
-			builder.negativeAckRedeliveryBackoff(nackRedeliveryBackoff);
-		}
-		if (ackRedeliveryBackoff != null) {
-			builder.ackTimeoutRedeliveryBackoff(ackRedeliveryBackoff);
-		}
+		applyValueToBuilderAfterLoadConf(builderConf::getNegativeAckRedeliveryBackoff,
+				builder::negativeAckRedeliveryBackoff, propertiesCopy, "negativeAckRedeliveryBackoff");
+		applyValueToBuilderAfterLoadConf(builderConf::getAckTimeoutRedeliveryBackoff,
+				builder::ackTimeoutRedeliveryBackoff, propertiesCopy, "ackTimeoutRedeliveryBackoff");
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getValueToApplyToBuilderAfterLoadConf(Supplier<T> builderGetter, Consumer<T> builderSetter,
+	private static <T> void applyValueToBuilderAfterLoadConf(Supplier<T> confGetter, Consumer<T> builderSetter,
 			Map<String, Object> properties, String propertyName) {
-		T value = (T) properties.getOrDefault(propertyName, builderGetter.get());
+		T value = (T) properties.getOrDefault(propertyName, confGetter.get());
 
-		if ("deadLetterPolicy".equals(propertyName)) {
-			builderSetter.accept(null);
-			properties.remove(propertyName);
+		if (value != null) {
+			builderSetter.accept(value);
 		}
-		return value;
 	}
 
 }

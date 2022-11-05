@@ -254,8 +254,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Map<String, String> properties = (Map<String, String>) propertiesToConsumer.remove("properties");
 
 				ConsumerBuilderCustomizer<T> customizer = builder -> {
-					// Replace w/ consumerBuilder.loadConf after
-					// https://github.com/apache/pulsar/issues/11646
 					ConsumerBuilderConfigurationUtil.loadConf(builder, propertiesToConsumer);
 					builder.batchReceivePolicy(batchReceivePolicy);
 				};

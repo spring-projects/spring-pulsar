@@ -84,8 +84,6 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			config.put("properties", new TreeMap<>(properties));
 		}
 
-		// Replace w/ consumerBuilder.loadConf after
-		// https://github.com/apache/pulsar/issues/11646
 		ConsumerBuilderConfigurationUtil.loadConf(consumerBuilder, config);
 
 		if (!CollectionUtils.isEmpty(customizers)) {
