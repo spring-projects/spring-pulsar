@@ -16,14 +16,14 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 import org.springframework.lang.Nullable;
 
@@ -34,59 +34,44 @@ import org.springframework.lang.Nullable;
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 public interface PulsarProducerFactory<T> {
 
 	/**
 	 * Create a producer.
-	 * @param topic the topic the producer will send messages to or {@code null} to use
-	 * the default topic
 	 * @param schema the schema of the messages to be sent
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(String topic, Schema<T> schema) throws PulsarClientException;
+	Producer<T> createProducer(Schema<T> schema) throws PulsarClientException;
 
 	/**
 	 * Create a producer.
+	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param schema the schema of the messages to be sent
-	 * @param messageRouter the optional message router to use
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter)
-			throws PulsarClientException;
+	Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException;
 
 	/**
 	 * Create a producer.
+	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param schema the schema of the messages to be sent
-	 * @param messageRouter the optional message router to use
-	 * @param producerInterceptors the optional producer interceptors to use
+	 * @param encryptionKeys the encryption keys used by the producer, replacing the
+	 * default encryption keys or {@code null} to use the default encryption keys. Beware
+	 * that {@link ProducerBuilder} only has {@link ProducerBuilder#addEncryptionKey} and
+	 * doesn't have methods to replace the encryption keys.
+	 * @param customizers the optional list of customizers to apply to the producer
+	 * builder
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	Producer<T> createProducer(String topic, Schema<T> schema, MessageRouter messageRouter,
-			List<ProducerInterceptor> producerInterceptors) throws PulsarClientException;
-
-	/**
-	 * Create a producer.
-	 * @param topic the topic the producer will send messages to or {@code null} to use
-	 * the default topic
-	 * @param schema the schema of the messages to be sent
-	 * @param messageRouter the optional message router to use
-	 * @param producerInterceptors the optional producer interceptors to use
-	 * @param producerBuilderCustomizers the optional list of customizers to apply to the
-	 * producer builder
-	 * @return the producer
-	 * @throws PulsarClientException if any error occurs
-	 */
-	Producer<T> createProducer(@Nullable String topic, Schema<T> schema, @Nullable MessageRouter messageRouter,
-			@Nullable List<ProducerInterceptor> producerInterceptors,
-			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException;
+	Producer<T> createProducer(Schema<T> schema, @Nullable String topic, @Nullable Collection<String> encryptionKeys,
+			@Nullable List<ProducerBuilderCustomizer<T>> customizers) throws PulsarClientException;
 
 	/**
 	 * Return a map of configuration options to use when creating producers.

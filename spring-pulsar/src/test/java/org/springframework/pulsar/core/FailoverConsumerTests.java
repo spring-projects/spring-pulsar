@@ -84,9 +84,12 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 				pulsarClient, prodConfig);
 		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
-		pulsarTemplate.newMessage("hello john doe").withCustomRouter(new FooRouter()).sendAsync();
-		pulsarTemplate.newMessage("hello alice doe").withCustomRouter(new BarRouter()).sendAsync();
-		pulsarTemplate.newMessage("hello buzz doe").withCustomRouter(new BuzzRouter()).sendAsync();
+		pulsarTemplate.newMessage("hello john doe")
+				.withProducerCustomizer(builder -> builder.messageRouter(new FooRouter())).sendAsync();
+		pulsarTemplate.newMessage("hello alice doe")
+				.withProducerCustomizer(builder -> builder.messageRouter(new BarRouter())).sendAsync();
+		pulsarTemplate.newMessage("hello buzz doe")
+				.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter())).sendAsync();
 
 		final boolean await = latch.await(10, TimeUnit.SECONDS);
 		assertThat(await).isTrue();

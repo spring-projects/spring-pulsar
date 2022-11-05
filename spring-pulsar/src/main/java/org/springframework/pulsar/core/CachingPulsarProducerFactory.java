@@ -17,21 +17,22 @@
 package org.springframework.pulsar.core;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.logging.LogFactory;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.common.protocol.schema.SchemaHash;
 
 import org.springframework.aop.framework.AopProxyUtils;
@@ -60,6 +61,7 @@ import com.github.benmanes.caffeine.cache.Scheduler;
  * @param <T> producer type.
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T> implements DisposableBean {
 
@@ -91,22 +93,19 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	}
 
 	@Override
-	protected Producer<T> doCreateProducer(@Nullable String topic, Schema<T> schema,
-			@Nullable MessageRouter messageRouter, @Nullable List<ProducerInterceptor> producerInterceptors,
-			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
+	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this);
-		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName, messageRouter,
-				producerInterceptors);
-		return this.producerCache.get(producerCacheKey, (st) -> createCacheableProducer(st.topic, st.schema, st.router,
-				st.interceptors, producerBuilderCustomizers));
+		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName,
+				encryptionKeys == null ? null : new HashSet<>(encryptionKeys), customizers);
+		return this.producerCache.get(producerCacheKey,
+				(st) -> createCacheableProducer(st.schema, st.topic, st.encryptionKeys, customizers));
 	}
 
-	private Producer<T> createCacheableProducer(String topic, Schema<T> schema, @Nullable MessageRouter messageRouter,
-			@Nullable List<ProducerInterceptor> producerInterceptors,
-			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) {
+	private Producer<T> createCacheableProducer(Schema<T> schema, String topic,
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		try {
-			Producer<T> producer = super.doCreateProducer(topic, schema, messageRouter, producerInterceptors,
-					producerBuilderCustomizers);
+			Producer<T> producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
 			return wrapProducerWithCloseCallback(producer,
 					(p) -> this.logger
 							.trace(() -> String.format("Client closed producer %s but will skip actual closing",
@@ -171,28 +170,28 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		private final String topic;
 
 		@Nullable
-		private final MessageRouter router;
+		private final Set<String> encryptionKeys;
 
 		@Nullable
-		private final List<ProducerInterceptor> interceptors;
+		private final List<ProducerBuilderCustomizer<T>> customizers;
 
 		/**
 		 * Constructs an instance.
 		 * @param schema the schema the producer is configured to use
 		 * @param topic the topic the producer is configured to send to
-		 * @param router the custom message router the producer is configured to use
-		 * @param interceptors the list of producer interceptors the producer is
-		 * configured to use
+		 * @param encryptionKeys the encryption keys used by the producer
+		 * @param customizers the list of producer customizers the producer is configured
+		 * to use
 		 */
-		ProducerCacheKey(Schema<T> schema, String topic, @Nullable MessageRouter router,
-				@Nullable List<ProducerInterceptor> interceptors) {
+		ProducerCacheKey(Schema<T> schema, String topic, @Nullable Set<String> encryptionKeys,
+				@Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 			Assert.notNull(schema, () -> "'schema' must be non-null");
 			Assert.notNull(topic, () -> "'topic' must be non-null");
 			this.schema = schema;
 			this.schemaHash = SchemaHash.of(this.schema);
 			this.topic = topic;
-			this.router = router;
-			this.interceptors = interceptors;
+			this.encryptionKeys = encryptionKeys;
+			this.customizers = customizers;
 		}
 
 		@Override
@@ -205,13 +204,14 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			}
 			ProducerCacheKey<?> that = (ProducerCacheKey<?>) o;
 			return this.topic.equals(that.topic) && this.schemaHash.equals(that.schemaHash)
-					&& Objects.equals(this.router, that.router) && Objects.equals(this.interceptors, that.interceptors);
+					&& Objects.equals(this.encryptionKeys, that.encryptionKeys)
+					&& Objects.equals(this.customizers, that.customizers);
 		}
 
 		@Override
 		public int hashCode() {
-			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.router)
-					+ Objects.hashCode(this.interceptors);
+			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.encryptionKeys)
+					+ Objects.hashCode(this.customizers);
 		}
 
 	}

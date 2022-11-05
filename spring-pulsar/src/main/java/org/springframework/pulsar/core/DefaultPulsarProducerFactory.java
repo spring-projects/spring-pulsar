@@ -16,18 +16,21 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.BatcherBuilder;
+import org.apache.pulsar.client.api.CryptoKeyReader;
 import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
@@ -40,76 +43,70 @@ import org.springframework.util.CollectionUtils;
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T> {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
 
-	private final Map<String, Object> producerConfig = new HashMap<>();
+	private final Map<String, Object> producerConfig;
 
 	private final PulsarClient pulsarClient;
 
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> config) {
 		this.pulsarClient = pulsarClient;
-		if (!CollectionUtils.isEmpty(config)) {
-			this.producerConfig.putAll(config);
-		}
+		this.producerConfig = Collections.unmodifiableMap(config);
 	}
 
 	@Override
-	public Producer<T> createProducer(@Nullable String topic, Schema<T> schema) throws PulsarClientException {
-		return doCreateProducer(topic, schema, null, null, null);
+	public Producer<T> createProducer(Schema<T> schema) throws PulsarClientException {
+		return doCreateProducer(schema, null, null, null);
 	}
 
 	@Override
-	public Producer<T> createProducer(@Nullable String topic, Schema<T> schema, @Nullable MessageRouter messageRouter)
+	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException {
+		return doCreateProducer(schema, topic, null, null);
+	}
+
+	@Override
+	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
-		return doCreateProducer(topic, schema, messageRouter, null, null);
-	}
-
-	@Override
-	public Producer<T> createProducer(@Nullable String topic, Schema<T> schema, @Nullable MessageRouter messageRouter,
-			@Nullable List<ProducerInterceptor> producerInterceptors) throws PulsarClientException {
-		return doCreateProducer(topic, schema, messageRouter, producerInterceptors, null);
-	}
-
-	@Override
-	public Producer<T> createProducer(@Nullable String topic, Schema<T> schema, @Nullable MessageRouter messageRouter,
-			@Nullable List<ProducerInterceptor> producerInterceptors,
-			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException {
-		return doCreateProducer(topic, schema, messageRouter, producerInterceptors, producerBuilderCustomizers);
+		return doCreateProducer(schema, topic, encryptionKeys, customizers);
 	}
 
 	/**
 	 * Create the actual producer.
+	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param schema the schema of the messages to be sent
-	 * @param messageRouter the optional message router to use
-	 * @param producerInterceptors the optional producer interceptors to use
-	 * @param producerBuilderCustomizers the optional list of customizers to apply to the
-	 * producer builder
+	 * @param encryptionKeys the encryption keys used by the producer, replacing the
+	 * default encryption keys or {@code null} to use the default encryption keys. Beware
+	 * that {@link ProducerBuilder} only has {@link ProducerBuilder#addEncryptionKey} and
+	 * doesn't have methods to replace the encryption keys.
+	 * @param customizers the optional list of customizers to apply to the producer
+	 * builder
 	 * @return the created producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	protected Producer<T> doCreateProducer(@Nullable String topic, Schema<T> schema,
-			@Nullable MessageRouter messageRouter, @Nullable List<ProducerInterceptor> producerInterceptors,
-			@Nullable List<ProducerBuilderCustomizer<T>> producerBuilderCustomizers) throws PulsarClientException {
-		final String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
+	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
+			throws PulsarClientException {
+		String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
-		final ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
-		if (!CollectionUtils.isEmpty(this.producerConfig)) {
-			producerBuilder.loadConf(this.producerConfig);
+		ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
+
+		Map<String, Object> config = new HashMap<>(this.producerConfig);
+
+		// Replace default keys - workaround as they can't be replaced through the builder
+		if (encryptionKeys != null) {
+			config.put("encryptionKeys", encryptionKeys);
 		}
+		loadConf(producerBuilder, config);
 		producerBuilder.topic(resolvedTopic);
-		if (messageRouter != null) {
-			producerBuilder.messageRouter(messageRouter);
-		}
-		if (!CollectionUtils.isEmpty(producerInterceptors)) {
-			producerBuilder.intercept(producerInterceptors.toArray(new ProducerInterceptor[0]));
-		}
-		if (!CollectionUtils.isEmpty(producerBuilderCustomizers)) {
-			producerBuilderCustomizers.forEach((c) -> c.customize(producerBuilder));
+
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers.forEach((c) -> c.customize(producerBuilder));
 		}
 		return producerBuilder.create();
 	}
@@ -117,6 +114,26 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Map<String, Object> getProducerConfig() {
 		return this.producerConfig;
+	}
+
+	private static <T> void loadConf(ProducerBuilder<T> producerBuilder, Map<String, Object> config) {
+		producerBuilder.loadConf(config);
+
+		// Set fields that are not loaded by loadConf
+		if (config.containsKey("encryptionKeys")) {
+			@SuppressWarnings("unchecked")
+			Collection<String> keys = (Collection<String>) config.get("encryptionKeys");
+			keys.forEach(producerBuilder::addEncryptionKey);
+		}
+		if (config.containsKey("customMessageRouter")) {
+			producerBuilder.messageRouter((MessageRouter) config.get("customMessageRouter"));
+		}
+		if (config.containsKey("batcherBuilder")) {
+			producerBuilder.batcherBuilder((BatcherBuilder) config.get("batcherBuilder"));
+		}
+		if (config.containsKey("cryptoKeyReader")) {
+			producerBuilder.cryptoKeyReader((CryptoKeyReader) config.get("cryptoKeyReader"));
+		}
 	}
 
 }
