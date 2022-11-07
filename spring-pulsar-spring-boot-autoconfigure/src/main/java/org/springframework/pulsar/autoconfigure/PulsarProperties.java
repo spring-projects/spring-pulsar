@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.CompressionType;
@@ -41,6 +40,7 @@ import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.util.unit.DataSize;
 
 /**
  * Configuration properties for Spring for Apache Pulsar.
@@ -50,6 +50,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 @ConfigurationProperties(prefix = "spring.pulsar")
 public class PulsarProperties {
@@ -111,12 +112,12 @@ public class PulsarProperties {
 		/**
 		 * Comma-separated list of topics the consumer subscribes to.
 		 */
-		private String[] topics;
+		private Set<String> topics;
 
 		/**
 		 * Pattern for topics the consumer subscribes to.
 		 */
-		private String topicsPattern;
+		private Pattern topicsPattern;
 
 		/**
 		 * Subscription name for the consumer.
@@ -131,25 +132,23 @@ public class PulsarProperties {
 		/**
 		 * Number of messages that can be accumulated before the consumer calls "receive".
 		 */
-		private int receiverQueueSize = 1000;
+		private Integer receiverQueueSize = 1000;
 
 		/**
-		 * Time to group acknowledgements before sending them to the broker in
-		 * microseconds.
+		 * Time to group acknowledgements before sending them to the broker.
 		 */
-		private long acknowledgementsGroupTimeMicros = TimeUnit.MILLISECONDS.toMicros(100);
+		private Duration acknowledgementsGroupTime = Duration.ofMillis(100);
 
 		/**
-		 * Delay before re-delivering messages that have failed to be processed in
-		 * microseconds.
+		 * Delay before re-delivering messages that have failed to be processed.
 		 */
-		private long negativeAckRedeliveryDelayMicros = TimeUnit.MINUTES.toMicros(1);
+		private Duration negativeAckRedeliveryDelay = Duration.ofMinutes(1);
 
 		/**
 		 * Maximum number of messages that a consumer can be pushed at once from a broker
 		 * across all partitions.
 		 */
-		private int maxTotalReceiverQueueSizeAcrossPartitions = 50000;
+		private Integer maxTotalReceiverQueueSizeAcrossPartitions = 50000;
 
 		/**
 		 * Consumer name to identify a particular consumer from the topic stats.
@@ -159,17 +158,17 @@ public class PulsarProperties {
 		/**
 		 * Timeout for unacked messages to be redelivered.
 		 */
-		private long ackTimeoutMillis = 0;
+		private Duration ackTimeout = Duration.ZERO;
 
 		/**
-		 * Precision for the ack timeout messages tracker in milliseconds.
+		 * Precision for the ack timeout messages tracker.
 		 */
-		private long tickDurationMillis = 1000;
+		private Duration tickDuration = Duration.ofSeconds(1);
 
 		/**
 		 * Priority level for shared subscription consumers.
 		 */
-		private int priorityLevel = 0;
+		private Integer priorityLevel = 0;
 
 		/**
 		 * Action the consumer will take in case of decryption failure.
@@ -185,7 +184,7 @@ public class PulsarProperties {
 		 * Whether to read messages from the compacted topic rather than the full message
 		 * backlog.
 		 */
-		private boolean readCompacted = false;
+		private Boolean readCompacted = false;
 
 		/**
 		 * Position where to initialize a newly created subscription.
@@ -195,7 +194,7 @@ public class PulsarProperties {
 		/**
 		 * Auto-discovery period for topics when topic pattern is used in minutes.
 		 */
-		private int patternAutoDiscoveryPeriod = 1;
+		private Integer patternAutoDiscoveryPeriod = 1;
 
 		/**
 		 * Determines which topics the consumer should be subscribed to when using pattern
@@ -207,43 +206,43 @@ public class PulsarProperties {
 		 * Whether the consumer auto-subscribes for partition increase. This is only for
 		 * partitioned consumers.
 		 */
-		private boolean autoUpdatePartitions = true;
+		private Boolean autoUpdatePartitions = true;
 
 		/**
 		 * Whether to replicate subscription state.
 		 */
-		private boolean replicateSubscriptionState = false;
+		private Boolean replicateSubscriptionState = false;
 
 		/**
 		 * Whether to automatically drop outstanding un-acked messages if the queue is
 		 * full.
 		 */
-		private boolean autoAckOldestChunkedMessageOnQueueFull = true;
+		private Boolean autoAckOldestChunkedMessageOnQueueFull = true;
 
 		/**
 		 * Maximum number of chunked messages to be kept in memory.
 		 */
-		private int maxPendingChunkedMessage = 10;
+		private Integer maxPendingChunkedMessage = 10;
 
 		/**
 		 * Time to expire incomplete chunks if the consumer won't be able to receive all
-		 * chunks before in milliseconds.
+		 * chunks before.
 		 */
-		private long expireTimeOfIncompleteChunkedMessageMillis = 60000;
+		private Duration expireTimeOfIncompleteChunkedMessage = Duration.ofMinutes(1);
 
-		public String[] getTopics() {
+		public Set<String> getTopics() {
 			return this.topics;
 		}
 
-		public void setTopics(String[] topics) {
+		public void setTopics(Set<String> topics) {
 			this.topics = topics;
 		}
 
-		public String getTopicsPattern() {
+		public Pattern getTopicsPattern() {
 			return this.topicsPattern;
 		}
 
-		public void setTopicsPattern(String topicsPattern) {
+		public void setTopicsPattern(Pattern topicsPattern) {
 			this.topicsPattern = topicsPattern;
 		}
 
@@ -263,35 +262,35 @@ public class PulsarProperties {
 			this.subscriptionType = subscriptionType;
 		}
 
-		public int getReceiverQueueSize() {
+		public Integer getReceiverQueueSize() {
 			return this.receiverQueueSize;
 		}
 
-		public void setReceiverQueueSize(int receiverQueueSize) {
+		public void setReceiverQueueSize(Integer receiverQueueSize) {
 			this.receiverQueueSize = receiverQueueSize;
 		}
 
-		public long getAcknowledgementsGroupTimeMicros() {
-			return this.acknowledgementsGroupTimeMicros;
+		public Duration getAcknowledgementsGroupTime() {
+			return this.acknowledgementsGroupTime;
 		}
 
-		public void setAcknowledgementsGroupTimeMicros(long acknowledgementsGroupTimeMicros) {
-			this.acknowledgementsGroupTimeMicros = acknowledgementsGroupTimeMicros;
+		public void setAcknowledgementsGroupTime(Duration acknowledgementsGroupTime) {
+			this.acknowledgementsGroupTime = acknowledgementsGroupTime;
 		}
 
-		public long getNegativeAckRedeliveryDelayMicros() {
-			return this.negativeAckRedeliveryDelayMicros;
+		public Duration getNegativeAckRedeliveryDelay() {
+			return this.negativeAckRedeliveryDelay;
 		}
 
-		public void setNegativeAckRedeliveryDelayMicros(long negativeAckRedeliveryDelayMicros) {
-			this.negativeAckRedeliveryDelayMicros = negativeAckRedeliveryDelayMicros;
+		public void setNegativeAckRedeliveryDelay(Duration negativeAckRedeliveryDelay) {
+			this.negativeAckRedeliveryDelay = negativeAckRedeliveryDelay;
 		}
 
-		public int getMaxTotalReceiverQueueSizeAcrossPartitions() {
+		public Integer getMaxTotalReceiverQueueSizeAcrossPartitions() {
 			return this.maxTotalReceiverQueueSizeAcrossPartitions;
 		}
 
-		public void setMaxTotalReceiverQueueSizeAcrossPartitions(int maxTotalReceiverQueueSizeAcrossPartitions) {
+		public void setMaxTotalReceiverQueueSizeAcrossPartitions(Integer maxTotalReceiverQueueSizeAcrossPartitions) {
 			this.maxTotalReceiverQueueSizeAcrossPartitions = maxTotalReceiverQueueSizeAcrossPartitions;
 		}
 
@@ -303,27 +302,27 @@ public class PulsarProperties {
 			this.consumerName = consumerName;
 		}
 
-		public long getAckTimeoutMillis() {
-			return this.ackTimeoutMillis;
+		public Duration getAckTimeout() {
+			return this.ackTimeout;
 		}
 
-		public void setAckTimeoutMillis(long ackTimeoutMillis) {
-			this.ackTimeoutMillis = ackTimeoutMillis;
+		public void setAckTimeout(Duration ackTimeout) {
+			this.ackTimeout = ackTimeout;
 		}
 
-		public long getTickDurationMillis() {
-			return this.tickDurationMillis;
+		public Duration getTickDuration() {
+			return this.tickDuration;
 		}
 
-		public void setTickDurationMillis(long tickDurationMillis) {
-			this.tickDurationMillis = tickDurationMillis;
+		public void setTickDuration(Duration tickDuration) {
+			this.tickDuration = tickDuration;
 		}
 
-		public int getPriorityLevel() {
+		public Integer getPriorityLevel() {
 			return this.priorityLevel;
 		}
 
-		public void setPriorityLevel(int priorityLevel) {
+		public void setPriorityLevel(Integer priorityLevel) {
 			this.priorityLevel = priorityLevel;
 		}
 
@@ -343,11 +342,11 @@ public class PulsarProperties {
 			this.properties = properties;
 		}
 
-		public boolean isReadCompacted() {
+		public Boolean isReadCompacted() {
 			return this.readCompacted;
 		}
 
-		public void setReadCompacted(boolean readCompacted) {
+		public void setReadCompacted(Boolean readCompacted) {
 			this.readCompacted = readCompacted;
 		}
 
@@ -359,11 +358,11 @@ public class PulsarProperties {
 			this.subscriptionInitialPosition = subscriptionInitialPosition;
 		}
 
-		public int getPatternAutoDiscoveryPeriod() {
+		public Integer getPatternAutoDiscoveryPeriod() {
 			return this.patternAutoDiscoveryPeriod;
 		}
 
-		public void setPatternAutoDiscoveryPeriod(int patternAutoDiscoveryPeriod) {
+		public void setPatternAutoDiscoveryPeriod(Integer patternAutoDiscoveryPeriod) {
 			this.patternAutoDiscoveryPeriod = patternAutoDiscoveryPeriod;
 		}
 
@@ -375,44 +374,44 @@ public class PulsarProperties {
 			this.regexSubscriptionMode = regexSubscriptionMode;
 		}
 
-		public boolean isAutoUpdatePartitions() {
+		public Boolean isAutoUpdatePartitions() {
 			return this.autoUpdatePartitions;
 		}
 
-		public void setAutoUpdatePartitions(boolean autoUpdatePartitions) {
+		public void setAutoUpdatePartitions(Boolean autoUpdatePartitions) {
 			this.autoUpdatePartitions = autoUpdatePartitions;
 		}
 
-		public boolean isReplicateSubscriptionState() {
+		public Boolean isReplicateSubscriptionState() {
 			return this.replicateSubscriptionState;
 		}
 
-		public void setReplicateSubscriptionState(boolean replicateSubscriptionState) {
+		public void setReplicateSubscriptionState(Boolean replicateSubscriptionState) {
 			this.replicateSubscriptionState = replicateSubscriptionState;
 		}
 
-		public boolean isAutoAckOldestChunkedMessageOnQueueFull() {
+		public Boolean isAutoAckOldestChunkedMessageOnQueueFull() {
 			return this.autoAckOldestChunkedMessageOnQueueFull;
 		}
 
-		public void setAutoAckOldestChunkedMessageOnQueueFull(boolean autoAckOldestChunkedMessageOnQueueFull) {
+		public void setAutoAckOldestChunkedMessageOnQueueFull(Boolean autoAckOldestChunkedMessageOnQueueFull) {
 			this.autoAckOldestChunkedMessageOnQueueFull = autoAckOldestChunkedMessageOnQueueFull;
 		}
 
-		public int getMaxPendingChunkedMessage() {
+		public Integer getMaxPendingChunkedMessage() {
 			return this.maxPendingChunkedMessage;
 		}
 
-		public void setMaxPendingChunkedMessage(int maxPendingChunkedMessage) {
+		public void setMaxPendingChunkedMessage(Integer maxPendingChunkedMessage) {
 			this.maxPendingChunkedMessage = maxPendingChunkedMessage;
 		}
 
-		public long getExpireTimeOfIncompleteChunkedMessageMillis() {
-			return this.expireTimeOfIncompleteChunkedMessageMillis;
+		public Duration getExpireTimeOfIncompleteChunkedMessage() {
+			return this.expireTimeOfIncompleteChunkedMessage;
 		}
 
-		public void setExpireTimeOfIncompleteChunkedMessageMillis(long expireTimeOfIncompleteChunkedMessageMillis) {
-			this.expireTimeOfIncompleteChunkedMessageMillis = expireTimeOfIncompleteChunkedMessageMillis;
+		public void setExpireTimeOfIncompleteChunkedMessage(Duration expireTimeOfIncompleteChunkedMessage) {
+			this.expireTimeOfIncompleteChunkedMessage = expireTimeOfIncompleteChunkedMessage;
 		}
 
 		public Map<String, Object> buildProperties() {
@@ -420,18 +419,20 @@ public class PulsarProperties {
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 
-			map.from(this::getTopics).as(Set::of).to(properties.in("topicNames"));
-			map.from(this::getTopicsPattern).as(Pattern::compile).to(properties.in("topicsPattern"));
+			map.from(this::getTopics).to(properties.in("topicNames"));
+			map.from(this::getTopicsPattern).to(properties.in("topicsPattern"));
 			map.from(this::getSubscriptionName).to(properties.in("subscriptionName"));
 			map.from(this::getSubscriptionType).to(properties.in("subscriptionType"));
 			map.from(this::getReceiverQueueSize).to(properties.in("receiverQueueSize"));
-			map.from(this::getAcknowledgementsGroupTimeMicros).to(properties.in("acknowledgementsGroupTimeMicros"));
-			map.from(this::getNegativeAckRedeliveryDelayMicros).to(properties.in("negativeAckRedeliveryDelayMicros"));
+			map.from(this::getAcknowledgementsGroupTime).as(it -> it.toNanos() / 1000)
+					.to(properties.in("acknowledgementsGroupTimeMicros"));
+			map.from(this::getNegativeAckRedeliveryDelay).as(it -> it.toNanos() / 1000)
+					.to(properties.in("negativeAckRedeliveryDelayMicros"));
 			map.from(this::getMaxTotalReceiverQueueSizeAcrossPartitions)
 					.to(properties.in("maxTotalReceiverQueueSizeAcrossPartitions"));
 			map.from(this::getConsumerName).to(properties.in("consumerName"));
-			map.from(this::getAckTimeoutMillis).to(properties.in("ackTimeoutMillis"));
-			map.from(this::getTickDurationMillis).to(properties.in("tickDurationMillis"));
+			map.from(this::getAckTimeout).as(Duration::toMillis).to(properties.in("ackTimeoutMillis"));
+			map.from(this::getTickDuration).as(Duration::toMillis).to(properties.in("tickDurationMillis"));
 			map.from(this::getPriorityLevel).to(properties.in("priorityLevel"));
 			map.from(this::getCryptoFailureAction).to(properties.in("cryptoFailureAction"));
 			map.from(this::getProperties).to(properties.in("properties"));
@@ -444,7 +445,7 @@ public class PulsarProperties {
 			map.from(this::isAutoAckOldestChunkedMessageOnQueueFull)
 					.to(properties.in("autoAckOldestChunkedMessageOnQueueFull"));
 			map.from(this::getMaxPendingChunkedMessage).to(properties.in("maxPendingChunkedMessage"));
-			map.from(this::getExpireTimeOfIncompleteChunkedMessageMillis)
+			map.from(this::getExpireTimeOfIncompleteChunkedMessage).as(Duration::toMillis)
 					.to(properties.in("expireTimeOfIncompleteChunkedMessageMillis"));
 			return properties;
 		}
@@ -464,25 +465,25 @@ public class PulsarProperties {
 		private String producerName;
 
 		/**
-		 * Time before a message has to be acknowledged by the broker in milliseconds.
+		 * Time before a message has to be acknowledged by the broker.
 		 */
-		private long sendTimeoutMs = 30000;
+		private Duration sendTimeout = Duration.ofSeconds(30);
 
 		/**
 		 * Whether the "send" and "sendAsync" methods should block if the outgoing message
 		 * queue is full.
 		 */
-		private boolean blockIfQueueFull = false;
+		private Boolean blockIfQueueFull = false;
 
 		/**
 		 * Maximum number of pending messages for the producer.
 		 */
-		private int maxPendingMessages = 1000;
+		private Integer maxPendingMessages = 1000;
 
 		/**
 		 * Maximum number of pending messages across all the partitions.
 		 */
-		private int maxPendingMessagesAcrossPartitions = 50000;
+		private Integer maxPendingMessagesAcrossPartitions = 50000;
 
 		/**
 		 * Message routing mode for a partitioned producer.
@@ -501,24 +502,24 @@ public class PulsarProperties {
 		private ProducerCryptoFailureAction cryptoFailureAction = ProducerCryptoFailureAction.FAIL;
 
 		/**
-		 * Time period within which the messages sent will be batched in milliseconds.
+		 * Time period within which the messages sent will be batched.
 		 */
-		private long batchingMaxPublishDelayMicros = TimeUnit.MILLISECONDS.toMicros(1);
+		private Duration batchingMaxPublishDelay = Duration.ofMillis(1);
 
 		/**
 		 * Maximum number of messages to be batched.
 		 */
-		private int batchingMaxMessages = 1000;
+		private Integer batchingMaxMessages = 1000;
 
 		/**
 		 * Whether to automatically batch messages.
 		 */
-		private boolean batchingEnabled = true;
+		private Boolean batchingEnabled = true;
 
 		/**
 		 * Whether to split large-size messages into multiple chunks.
 		 */
-		private boolean chunkingEnabled = false;
+		private Boolean chunkingEnabled = false;
 
 		/**
 		 * Message compression type.
@@ -553,35 +554,35 @@ public class PulsarProperties {
 			this.producerName = producerName;
 		}
 
-		public long getSendTimeoutMs() {
-			return this.sendTimeoutMs;
+		public Duration getSendTimeout() {
+			return this.sendTimeout;
 		}
 
-		public void setSendTimeoutMs(long sendTimeoutMs) {
-			this.sendTimeoutMs = sendTimeoutMs;
+		public void setSendTimeout(Duration sendTimeout) {
+			this.sendTimeout = sendTimeout;
 		}
 
-		public boolean isBlockIfQueueFull() {
+		public Boolean isBlockIfQueueFull() {
 			return this.blockIfQueueFull;
 		}
 
-		public void setBlockIfQueueFull(boolean blockIfQueueFull) {
+		public void setBlockIfQueueFull(Boolean blockIfQueueFull) {
 			this.blockIfQueueFull = blockIfQueueFull;
 		}
 
-		public int getMaxPendingMessages() {
+		public Integer getMaxPendingMessages() {
 			return this.maxPendingMessages;
 		}
 
-		public void setMaxPendingMessages(int maxPendingMessages) {
+		public void setMaxPendingMessages(Integer maxPendingMessages) {
 			this.maxPendingMessages = maxPendingMessages;
 		}
 
-		public int getMaxPendingMessagesAcrossPartitions() {
+		public Integer getMaxPendingMessagesAcrossPartitions() {
 			return this.maxPendingMessagesAcrossPartitions;
 		}
 
-		public void setMaxPendingMessagesAcrossPartitions(int maxPendingMessagesAcrossPartitions) {
+		public void setMaxPendingMessagesAcrossPartitions(Integer maxPendingMessagesAcrossPartitions) {
 			this.maxPendingMessagesAcrossPartitions = maxPendingMessagesAcrossPartitions;
 		}
 
@@ -609,35 +610,35 @@ public class PulsarProperties {
 			this.cryptoFailureAction = cryptoFailureAction;
 		}
 
-		public long getBatchingMaxPublishDelayMicros() {
-			return this.batchingMaxPublishDelayMicros;
+		public Duration getBatchingMaxPublishDelay() {
+			return this.batchingMaxPublishDelay;
 		}
 
-		public void setBatchingMaxPublishDelayMicros(long batchingMaxPublishDelayMicros) {
-			this.batchingMaxPublishDelayMicros = batchingMaxPublishDelayMicros;
+		public void setBatchingMaxPublishDelay(Duration batchingMaxPublishDelay) {
+			this.batchingMaxPublishDelay = batchingMaxPublishDelay;
 		}
 
-		public int getBatchingMaxMessages() {
+		public Integer getBatchingMaxMessages() {
 			return this.batchingMaxMessages;
 		}
 
-		public void setBatchingMaxMessages(int batchingMaxMessages) {
+		public void setBatchingMaxMessages(Integer batchingMaxMessages) {
 			this.batchingMaxMessages = batchingMaxMessages;
 		}
 
-		public boolean isBatchingEnabled() {
+		public Boolean isBatchingEnabled() {
 			return this.batchingEnabled;
 		}
 
-		public void setBatchingEnabled(boolean batchingEnabled) {
+		public void setBatchingEnabled(Boolean batchingEnabled) {
 			this.batchingEnabled = batchingEnabled;
 		}
 
-		public boolean isChunkingEnabled() {
+		public Boolean isChunkingEnabled() {
 			return this.chunkingEnabled;
 		}
 
-		public void setChunkingEnabled(boolean chunkingEnabled) {
+		public void setChunkingEnabled(Boolean chunkingEnabled) {
 			this.chunkingEnabled = chunkingEnabled;
 		}
 
@@ -676,7 +677,7 @@ public class PulsarProperties {
 
 			map.from(this::getTopicName).to(properties.in("topicName"));
 			map.from(this::getProducerName).to(properties.in("producerName"));
-			map.from(this::getSendTimeoutMs).to(properties.in("sendTimeoutMs"));
+			map.from(this::getSendTimeout).as(Duration::toMillis).to(properties.in("sendTimeoutMs"));
 			map.from(this::isBlockIfQueueFull).to(properties.in("blockIfQueueFull"));
 			map.from(this::getMaxPendingMessages).to(properties.in("maxPendingMessages"));
 			map.from(this::getMaxPendingMessagesAcrossPartitions)
@@ -684,7 +685,8 @@ public class PulsarProperties {
 			map.from(this::getMessageRoutingMode).to(properties.in("messageRoutingMode"));
 			map.from(this::getHashingScheme).to(properties.in("hashingScheme"));
 			map.from(this::getCryptoFailureAction).to(properties.in("cryptoFailureAction"));
-			map.from(this::getBatchingMaxPublishDelayMicros).to(properties.in("batchingMaxPublishDelayMicros"));
+			map.from(this::getBatchingMaxPublishDelay).as(it -> it.toNanos() / 1000)
+					.to(properties.in("batchingMaxPublishDelayMicros"));
 			map.from(this::getBatchingMaxMessages).to(properties.in("batchingMaxMessages"));
 			map.from(this::isBatchingEnabled).to(properties.in("batchingEnabled"));
 			map.from(this::isChunkingEnabled).to(properties.in("chunkingEnabled"));
@@ -703,13 +705,13 @@ public class PulsarProperties {
 		 * Whether to record observations for send operations when the Observations API is
 		 * available.
 		 */
-		private boolean observationsEnabled = true;
+		private Boolean observationsEnabled = true;
 
-		public boolean isObservationsEnabled() {
+		public Boolean isObservationsEnabled() {
 			return this.observationsEnabled;
 		}
 
-		public void setObservationsEnabled(boolean observationsEnabled) {
+		public void setObservationsEnabled(Boolean observationsEnabled) {
 			this.observationsEnabled = observationsEnabled;
 		}
 
@@ -782,49 +784,48 @@ public class PulsarProperties {
 		private Map<String, String> authentication;
 
 		/**
-		 * Client operation timeout in milliseconds.
+		 * Client operation timeout.
 		 */
-		private long operationTimeoutMs = 30000L;
+		private Duration operationTimeout = Duration.ofSeconds(30);
 
 		/**
-		 * Client lookup timeout in milliseconds.
+		 * Client lookup timeout.
 		 */
-		private long lookupTimeoutMs = -1;
+		private Duration lookupTimeout = Duration.ofMillis(-1);
 
 		/**
 		 * Number of threads to be used for handling connections to brokers.
 		 */
-		private int numIoThreads = 1;
+		private Integer numIoThreads = 1;
 
 		/**
-		 * Number of threads to be used for message listeners.
-		 *
-		 * The listener thread pool is shared across all the consumers and readers that
-		 * are using a "listener" model to get messages. For a given consumer, the
-		 * listener will always be invoked from the same thread, to ensure ordering.
+		 * Number of threads to be used for message listeners. The listener thread pool is
+		 * shared across all the consumers and readers that are using a "listener" model
+		 * to get messages. For a given consumer, the listener will always be invoked from
+		 * the same thread, to ensure ordering.
 		 */
-		private int numListenerThreads = 1;
+		private Integer numListenerThreads = 1;
 
 		/**
 		 * Maximum number of connections that the client will open to a single broker.
 		 */
-		private int numConnectionsPerBroker = 1;
+		private Integer numConnectionsPerBroker = 1;
 
 		/**
 		 * Whether to use TCP no-delay flag on the connection, to disable Nagle algorithm.
 		 */
-		private boolean useTcpNoDelay = true;
+		private Boolean useTcpNoDelay = true;
 
 		/**
 		 * Whether to use TLS encryption on the connection.
 		 */
-		private boolean useTls = false;
+		private Boolean useTls = false;
 
 		/**
 		 * Whether the hostname is validated when the proxy creates a TLS connection with
 		 * brokers.
 		 */
-		private boolean tlsHostnameVerificationEnable = false;
+		private Boolean tlsHostnameVerificationEnable = false;
 
 		/**
 		 * Path to the trusted TLS certificate file.
@@ -834,12 +835,12 @@ public class PulsarProperties {
 		/**
 		 * Whether the client accepts untrusted TLS certificates from the broker.
 		 */
-		private boolean tlsAllowInsecureConnection = false;
+		private Boolean tlsAllowInsecureConnection = false;
 
 		/**
 		 * Enable KeyStore instead of PEM type configuration if TLS is enabled.
 		 */
-		private boolean useKeyStoreTls = false;
+		private Boolean useKeyStoreTls = false;
 
 		/**
 		 * Name of the security provider used for SSL connections.
@@ -867,79 +868,78 @@ public class PulsarProperties {
 		 * the security settings for a network connection using TLS or SSL network
 		 * protocol. By default, all the available cipher suites are supported.
 		 */
-		private String[] tlsCiphers;
+		private Set<String> tlsCiphers;
 
 		/**
 		 * Comma-separated list of SSL protocols used to generate the SSLContext. Allowed
 		 * values in recent JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
 		 */
-		private String[] tlsProtocols;
+		private Set<String> tlsProtocols;
 
 		/**
-		 * Interval between each stat info in seconds.
+		 * Interval between each stat info.
 		 */
-		private long statsIntervalSeconds = 60;
+		private Duration statsInterval = Duration.ofSeconds(60);
 
 		/**
 		 * Number of concurrent lookup-requests allowed to send on each broker-connection
 		 * to prevent overload on broker.
 		 */
-		private int maxConcurrentLookupRequest = 5000;
+		private Integer maxConcurrentLookupRequest = 5000;
 
 		/**
 		 * Number of max lookup-requests allowed on each broker-connection to prevent
 		 * overload on broker.
 		 */
-		private int maxLookupRequest = 50000;
+		private Integer maxLookupRequest = 50000;
 
 		/**
 		 * Maximum number of times a lookup-request to a broker will be redirected.
 		 */
-		private int maxLookupRedirects = 20;
+		private Integer maxLookupRedirects = 20;
 
 		/**
 		 * Maximum number of broker-rejected requests in a certain timeframe, after which
 		 * the current connection is closed and a new connection is created by the client.
 		 */
-		private int maxNumberOfRejectedRequestPerConnection = 50;
+		private Integer maxNumberOfRejectedRequestPerConnection = 50;
 
 		/**
-		 * Keep alive interval for broker-client connection in seconds.
+		 * Keep alive interval for broker-client connection.
 		 */
-		private int keepAliveIntervalSeconds = 30;
+		private Duration keepAliveInterval = Duration.ofSeconds(30);
 
 		/**
-		 * Duration to wait for a connection to a broker to be established in
-		 * milliseconds.
+		 * Duration to wait for a connection to a broker to be established.
 		 */
-		private int connectionTimeoutMs = 10000;
+		private Duration connectionTimeout = Duration.ofSeconds(10);
 
 		/**
-		 * Initial backoff interval in nanoseconds.
+		 * Initial backoff interval.
 		 */
-		private long initialBackoffIntervalNanos = TimeUnit.MILLISECONDS.toNanos(100);
+		private Duration initialBackoffInterval = Duration.ofMillis(100);
 
 		/**
-		 * Maximum backoff interval in nanoseconds.
+		 * Maximum backoff interval.
 		 */
-		private long maxBackoffIntervalNanos = TimeUnit.SECONDS.toNanos(30);
+		private Duration maxBackoffInterval = Duration.ofSeconds(30);
 
 		/**
 		 * Enables spin-waiting on executors and IO threads in order to reduce latency
 		 * during context switches.
 		 */
-		private boolean enableBusyWait = false;
+		private Boolean enableBusyWait = false;
 
 		/**
 		 * Limit of direct memory that will be allocated by the client.
 		 */
-		private long memoryLimitBytes = 64 * 1024 * 1024;
+		private DataSize memoryLimit = DataSize.ofMegabytes(64);
 
 		/**
 		 * Enables transactions. To use this, start the transactionCoordinatorClient with
 		 * the pulsar client.
 		 */
-		private boolean enableTransaction = false;
+		private Boolean enableTransaction = false;
 
 		/**
 		 * DNS lookup bind address.
@@ -949,7 +949,7 @@ public class PulsarProperties {
 		/**
 		 * DNS lookup bind port.
 		 */
-		private int dnsLookupBindPort = 0;
+		private Integer dnsLookupBindPort = 0;
 
 		/**
 		 * SOCKS5 proxy address.
@@ -1006,67 +1006,67 @@ public class PulsarProperties {
 			this.authentication = authentication;
 		}
 
-		public long getOperationTimeoutMs() {
-			return this.operationTimeoutMs;
+		public Duration getOperationTimeout() {
+			return this.operationTimeout;
 		}
 
-		public void setOperationTimeoutMs(long operationTimeoutMs) {
-			this.operationTimeoutMs = operationTimeoutMs;
+		public void setOperationTimeout(Duration operationTimeout) {
+			this.operationTimeout = operationTimeout;
 		}
 
-		public long getLookupTimeoutMs() {
-			return this.lookupTimeoutMs;
+		public Duration getLookupTimeout() {
+			return this.lookupTimeout;
 		}
 
-		public void setLookupTimeoutMs(long lookupTimeoutMs) {
-			this.lookupTimeoutMs = lookupTimeoutMs;
+		public void setLookupTimeout(Duration lookupTimeout) {
+			this.lookupTimeout = lookupTimeout;
 		}
 
-		public int getNumIoThreads() {
+		public Integer getNumIoThreads() {
 			return this.numIoThreads;
 		}
 
-		public void setNumIoThreads(int numIoThreads) {
+		public void setNumIoThreads(Integer numIoThreads) {
 			this.numIoThreads = numIoThreads;
 		}
 
-		public int getNumListenerThreads() {
+		public Integer getNumListenerThreads() {
 			return this.numListenerThreads;
 		}
 
-		public void setNumListenerThreads(int numListenerThreads) {
+		public void setNumListenerThreads(Integer numListenerThreads) {
 			this.numListenerThreads = numListenerThreads;
 		}
 
-		public int getNumConnectionsPerBroker() {
+		public Integer getNumConnectionsPerBroker() {
 			return this.numConnectionsPerBroker;
 		}
 
-		public void setNumConnectionsPerBroker(int numConnectionsPerBroker) {
+		public void setNumConnectionsPerBroker(Integer numConnectionsPerBroker) {
 			this.numConnectionsPerBroker = numConnectionsPerBroker;
 		}
 
-		public boolean isUseTcpNoDelay() {
+		public Boolean isUseTcpNoDelay() {
 			return this.useTcpNoDelay;
 		}
 
-		public void setUseTcpNoDelay(boolean useTcpNoDelay) {
+		public void setUseTcpNoDelay(Boolean useTcpNoDelay) {
 			this.useTcpNoDelay = useTcpNoDelay;
 		}
 
-		public boolean isUseTls() {
+		public Boolean isUseTls() {
 			return this.useTls;
 		}
 
-		public void setUseTls(boolean useTls) {
+		public void setUseTls(Boolean useTls) {
 			this.useTls = useTls;
 		}
 
-		public boolean isTlsHostnameVerificationEnable() {
+		public Boolean isTlsHostnameVerificationEnable() {
 			return this.tlsHostnameVerificationEnable;
 		}
 
-		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
+		public void setTlsHostnameVerificationEnable(Boolean tlsHostnameVerificationEnable) {
 			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
 		}
 
@@ -1078,19 +1078,19 @@ public class PulsarProperties {
 			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
 		}
 
-		public boolean isTlsAllowInsecureConnection() {
+		public Boolean isTlsAllowInsecureConnection() {
 			return this.tlsAllowInsecureConnection;
 		}
 
-		public void setTlsAllowInsecureConnection(boolean tlsAllowInsecureConnection) {
+		public void setTlsAllowInsecureConnection(Boolean tlsAllowInsecureConnection) {
 			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
 		}
 
-		public boolean isUseKeyStoreTls() {
+		public Boolean isUseKeyStoreTls() {
 			return this.useKeyStoreTls;
 		}
 
-		public void setUseKeyStoreTls(boolean useKeyStoreTls) {
+		public void setUseKeyStoreTls(Boolean useKeyStoreTls) {
 			this.useKeyStoreTls = useKeyStoreTls;
 		}
 
@@ -1126,115 +1126,115 @@ public class PulsarProperties {
 			this.tlsTrustStorePassword = tlsTrustStorePassword;
 		}
 
-		public String[] getTlsCiphers() {
+		public Set<String> getTlsCiphers() {
 			return this.tlsCiphers;
 		}
 
-		public void setTlsCiphers(String[] tlsCiphers) {
+		public void setTlsCiphers(Set<String> tlsCiphers) {
 			this.tlsCiphers = tlsCiphers;
 		}
 
-		public String[] getTlsProtocols() {
+		public Set<String> getTlsProtocols() {
 			return this.tlsProtocols;
 		}
 
-		public void setTlsProtocols(String[] tlsProtocols) {
+		public void setTlsProtocols(Set<String> tlsProtocols) {
 			this.tlsProtocols = tlsProtocols;
 		}
 
-		public long getStatsIntervalSeconds() {
-			return this.statsIntervalSeconds;
+		public Duration getStatsInterval() {
+			return this.statsInterval;
 		}
 
-		public void setStatsIntervalSeconds(long statsIntervalSeconds) {
-			this.statsIntervalSeconds = statsIntervalSeconds;
+		public void setStatsInterval(Duration statsInterval) {
+			this.statsInterval = statsInterval;
 		}
 
-		public int getMaxConcurrentLookupRequest() {
+		public Integer getMaxConcurrentLookupRequest() {
 			return this.maxConcurrentLookupRequest;
 		}
 
-		public void setMaxConcurrentLookupRequest(int maxConcurrentLookupRequest) {
+		public void setMaxConcurrentLookupRequest(Integer maxConcurrentLookupRequest) {
 			this.maxConcurrentLookupRequest = maxConcurrentLookupRequest;
 		}
 
-		public int getMaxLookupRequest() {
+		public Integer getMaxLookupRequest() {
 			return this.maxLookupRequest;
 		}
 
-		public void setMaxLookupRequest(int maxLookupRequest) {
+		public void setMaxLookupRequest(Integer maxLookupRequest) {
 			this.maxLookupRequest = maxLookupRequest;
 		}
 
-		public int getMaxLookupRedirects() {
+		public Integer getMaxLookupRedirects() {
 			return this.maxLookupRedirects;
 		}
 
-		public void setMaxLookupRedirects(int maxLookupRedirects) {
+		public void setMaxLookupRedirects(Integer maxLookupRedirects) {
 			this.maxLookupRedirects = maxLookupRedirects;
 		}
 
-		public int getMaxNumberOfRejectedRequestPerConnection() {
+		public Integer getMaxNumberOfRejectedRequestPerConnection() {
 			return this.maxNumberOfRejectedRequestPerConnection;
 		}
 
-		public void setMaxNumberOfRejectedRequestPerConnection(int maxNumberOfRejectedRequestPerConnection) {
+		public void setMaxNumberOfRejectedRequestPerConnection(Integer maxNumberOfRejectedRequestPerConnection) {
 			this.maxNumberOfRejectedRequestPerConnection = maxNumberOfRejectedRequestPerConnection;
 		}
 
-		public int getKeepAliveIntervalSeconds() {
-			return this.keepAliveIntervalSeconds;
+		public Duration getKeepAliveInterval() {
+			return this.keepAliveInterval;
 		}
 
-		public void setKeepAliveIntervalSeconds(int keepAliveIntervalSeconds) {
-			this.keepAliveIntervalSeconds = keepAliveIntervalSeconds;
+		public void setKeepAliveInterval(Duration keepAliveInterval) {
+			this.keepAliveInterval = keepAliveInterval;
 		}
 
-		public int getConnectionTimeoutMs() {
-			return this.connectionTimeoutMs;
+		public Duration getConnectionTimeout() {
+			return this.connectionTimeout;
 		}
 
-		public void setConnectionTimeoutMs(int connectionTimeoutMs) {
-			this.connectionTimeoutMs = connectionTimeoutMs;
+		public void setConnectionTimeout(Duration connectionTimeout) {
+			this.connectionTimeout = connectionTimeout;
 		}
 
-		public long getInitialBackoffIntervalNanos() {
-			return this.initialBackoffIntervalNanos;
+		public Duration getInitialBackoffInterval() {
+			return this.initialBackoffInterval;
 		}
 
-		public void setInitialBackoffIntervalNanos(long initialBackoffIntervalNanos) {
-			this.initialBackoffIntervalNanos = initialBackoffIntervalNanos;
+		public void setInitialBackoffInterval(Duration initialBackoffInterval) {
+			this.initialBackoffInterval = initialBackoffInterval;
 		}
 
-		public long getMaxBackoffIntervalNanos() {
-			return this.maxBackoffIntervalNanos;
+		public Duration getMaxBackoffInterval() {
+			return this.maxBackoffInterval;
 		}
 
-		public void setMaxBackoffIntervalNanos(long maxBackoffIntervalNanos) {
-			this.maxBackoffIntervalNanos = maxBackoffIntervalNanos;
+		public void setMaxBackoffInterval(Duration maxBackoffInterval) {
+			this.maxBackoffInterval = maxBackoffInterval;
 		}
 
-		public boolean isEnableBusyWait() {
+		public Boolean isEnableBusyWait() {
 			return this.enableBusyWait;
 		}
 
-		public void setEnableBusyWait(boolean enableBusyWait) {
+		public void setEnableBusyWait(Boolean enableBusyWait) {
 			this.enableBusyWait = enableBusyWait;
 		}
 
-		public long getMemoryLimitBytes() {
-			return this.memoryLimitBytes;
+		public DataSize getMemoryLimit() {
+			return this.memoryLimit;
 		}
 
-		public void setMemoryLimitBytes(long memoryLimitBytes) {
-			this.memoryLimitBytes = memoryLimitBytes;
+		public void setMemoryLimit(DataSize memoryLimit) {
+			this.memoryLimit = memoryLimit;
 		}
 
-		public boolean isEnableTransaction() {
+		public Boolean isEnableTransaction() {
 			return this.enableTransaction;
 		}
 
-		public void setEnableTransaction(boolean enableTransaction) {
+		public void setEnableTransaction(Boolean enableTransaction) {
 			this.enableTransaction = enableTransaction;
 		}
 
@@ -1246,11 +1246,11 @@ public class PulsarProperties {
 			this.dnsLookupBindAddress = dnsLookupBindAddress;
 		}
 
-		public int getDnsLookupBindPort() {
+		public Integer getDnsLookupBindPort() {
 			return this.dnsLookupBindPort;
 		}
 
-		public void setDnsLookupBindPort(int dnsLookupBindPort) {
+		public void setDnsLookupBindPort(Integer dnsLookupBindPort) {
 			this.dnsLookupBindPort = dnsLookupBindPort;
 		}
 
@@ -1292,10 +1292,10 @@ public class PulsarProperties {
 			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication()))
+			map.from(this::getAuthentication).as(AuthParameterUtils::maybeConvertToEncodedParamString)
 					.to(properties.in("authParams"));
-			map.from(this::getOperationTimeoutMs).to(properties.in("operationTimeoutMs"));
-			map.from(this::getLookupTimeoutMs).to(properties.in("lookupTimeoutMs"));
+			map.from(this::getOperationTimeout).as(Duration::toMillis).to(properties.in("operationTimeoutMs"));
+			map.from(this::getLookupTimeout).as(Duration::toMillis).to(properties.in("lookupTimeoutMs"));
 			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
 			map.from(this::getNumListenerThreads).to(properties.in("numListenerThreads"));
 			map.from(this::getNumConnectionsPerBroker).to(properties.in("connectionsPerBroker"));
@@ -1311,18 +1311,19 @@ public class PulsarProperties {
 			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
 			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
 			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
-			map.from(this::getStatsIntervalSeconds).to(properties.in("statsIntervalSeconds"));
+			map.from(this::getStatsInterval).as(Duration::toSeconds).to(properties.in("statsIntervalSeconds"));
 			map.from(this::getMaxConcurrentLookupRequest).to(properties.in("concurrentLookupRequest"));
 			map.from(this::getMaxLookupRequest).to(properties.in("maxLookupRequest"));
 			map.from(this::getMaxLookupRedirects).to(properties.in("maxLookupRedirects"));
 			map.from(this::getMaxNumberOfRejectedRequestPerConnection)
 					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
-			map.from(this::getKeepAliveIntervalSeconds).to(properties.in("keepAliveIntervalSeconds"));
-			map.from(this::getConnectionTimeoutMs).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getInitialBackoffIntervalNanos).to(properties.in("initialBackoffIntervalNanos"));
-			map.from(this::getMaxBackoffIntervalNanos).to(properties.in("maxBackoffIntervalNanos"));
+			map.from(this::getKeepAliveInterval).as(Duration::toSeconds).to(properties.in("keepAliveIntervalSeconds"));
+			map.from(this::getConnectionTimeout).as(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
+			map.from(this::getInitialBackoffInterval).as(Duration::toNanos)
+					.to(properties.in("initialBackoffIntervalNanos"));
+			map.from(this::getMaxBackoffInterval).as(Duration::toNanos).to(properties.in("maxBackoffIntervalNanos"));
 			map.from(this::isEnableBusyWait).to(properties.in("enableBusyWait"));
-			map.from(this::getMemoryLimitBytes).to(properties.in("memoryLimitBytes"));
+			map.from(this::getMemoryLimit).as(DataSize::toBytes).to(properties.in("memoryLimitBytes"));
 			map.from(this::isEnableTransaction).to(properties.in("enableTransaction"));
 			map.from(this::getDnsLookupBindAddress).to(properties.in("dnsLookupBindAddress"));
 			map.from(this::getDnsLookupBindPort).to(properties.in("dnsLookupBindPort"));
@@ -1350,24 +1351,23 @@ public class PulsarProperties {
 		/**
 		 * Max number of messages in a single batch request.
 		 */
-		private int maxNumMessages = -1;
+		private Integer maxNumMessages = -1;
 
 		/**
-		 * Max number of bytes in a single batch request.
+		 * Max size in a single batch request.
 		 */
-		private int maxNumBytes = 10 * 1024 * 1024;
+		private DataSize maxNumBytes = DataSize.ofMegabytes(10);
 
 		/**
-		 * Number of milliseconds to wait for enough message to fill a batch request
-		 * before timing out.
+		 * Duration to wait for enough message to fill a batch request before timing out.
 		 */
-		private int batchTimeoutMillis = 100;
+		private Duration batchTimeout = Duration.ofMillis(100);
 
 		/**
 		 * Whether to record observations for receive operations when the Observations API
 		 * is available.
 		 */
-		private boolean observationsEnabled = true;
+		private Boolean observationsEnabled = true;
 
 		public AckMode getAckMode() {
 			return this.ackMode;
@@ -1385,35 +1385,35 @@ public class PulsarProperties {
 			this.schemaType = schemaType;
 		}
 
-		public int getMaxNumMessages() {
+		public Integer getMaxNumMessages() {
 			return this.maxNumMessages;
 		}
 
-		public void setMaxNumMessages(int maxNumMessages) {
+		public void setMaxNumMessages(Integer maxNumMessages) {
 			this.maxNumMessages = maxNumMessages;
 		}
 
-		public int getMaxNumBytes() {
+		public DataSize getMaxNumBytes() {
 			return this.maxNumBytes;
 		}
 
-		public void setMaxNumBytes(int maxNumBytes) {
+		public void setMaxNumBytes(DataSize maxNumBytes) {
 			this.maxNumBytes = maxNumBytes;
 		}
 
-		public int getBatchTimeoutMillis() {
-			return this.batchTimeoutMillis;
+		public Duration getBatchTimeout() {
+			return this.batchTimeout;
 		}
 
-		public void setBatchTimeoutMillis(int batchTimeoutMillis) {
-			this.batchTimeoutMillis = batchTimeoutMillis;
+		public void setBatchTimeout(Duration batchTimeout) {
+			this.batchTimeout = batchTimeout;
 		}
 
-		public boolean isObservationsEnabled() {
+		public Boolean isObservationsEnabled() {
 			return this.observationsEnabled;
 		}
 
-		public void setObservationsEnabled(boolean observationsEnabled) {
+		public void setObservationsEnabled(Boolean observationsEnabled) {
 			this.observationsEnabled = observationsEnabled;
 		}
 
@@ -1449,18 +1449,18 @@ public class PulsarProperties {
 		/**
 		 * Whether the client accepts untrusted TLS certificates from the broker.
 		 */
-		private boolean tlsAllowInsecureConnection = false;
+		private Boolean tlsAllowInsecureConnection = false;
 
 		/**
 		 * Whether the hostname is validated when the proxy creates a TLS connection with
 		 * brokers.
 		 */
-		private boolean tlsHostnameVerificationEnable = false;
+		private Boolean tlsHostnameVerificationEnable = false;
 
 		/**
 		 * Enable KeyStore instead of PEM type configuration if TLS is enabled.
 		 */
-		private boolean useKeyStoreTls = false;
+		private Boolean useKeyStoreTls = false;
 
 		/**
 		 * Name of the security provider used for SSL connections.
@@ -1483,18 +1483,18 @@ public class PulsarProperties {
 		private String tlsTrustStorePassword;
 
 		/**
-		 * Comma-separated list of cipher suites. This is a named combination of
-		 * authentication, encryption, MAC and key exchange algorithm used to negotiate
-		 * the security settings for a network connection using TLS or SSL network
-		 * protocol. By default, all the available cipher suites are supported.
+		 * List of cipher suites. This is a named combination of authentication,
+		 * encryption, MAC and key exchange algorithm used to negotiate the security
+		 * settings for a network connection using TLS or SSL network protocol. By
+		 * default, all the available cipher suites are supported.
 		 */
-		private String[] tlsCiphers;
+		private Set<String> tlsCiphers;
 
 		/**
-		 * Comma-separated list of SSL protocols used to generate the SSLContext. Allowed
-		 * values in recent JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
+		 * List of SSL protocols used to generate the SSLContext. Allowed values in recent
+		 * JVMs are TLS, TLSv1.3, TLSv1.2 and TLSv1.1.
 		 */
-		private String[] tlsProtocols;
+		private Set<String> tlsProtocols;
 
 		public String getServiceUrl() {
 			return this.serviceUrl;
@@ -1536,27 +1536,27 @@ public class PulsarProperties {
 			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
 		}
 
-		public boolean isTlsAllowInsecureConnection() {
+		public Boolean isTlsAllowInsecureConnection() {
 			return this.tlsAllowInsecureConnection;
 		}
 
-		public void setTlsAllowInsecureConnection(boolean tlsAllowInsecureConnection) {
+		public void setTlsAllowInsecureConnection(Boolean tlsAllowInsecureConnection) {
 			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
 		}
 
-		public boolean isTlsHostnameVerificationEnable() {
+		public Boolean isTlsHostnameVerificationEnable() {
 			return this.tlsHostnameVerificationEnable;
 		}
 
-		public void setTlsHostnameVerificationEnable(boolean tlsHostnameVerificationEnable) {
+		public void setTlsHostnameVerificationEnable(Boolean tlsHostnameVerificationEnable) {
 			this.tlsHostnameVerificationEnable = tlsHostnameVerificationEnable;
 		}
 
-		public boolean isUseKeyStoreTls() {
+		public Boolean isUseKeyStoreTls() {
 			return this.useKeyStoreTls;
 		}
 
-		public void setUseKeyStoreTls(boolean useKeyStoreTls) {
+		public void setUseKeyStoreTls(Boolean useKeyStoreTls) {
 			this.useKeyStoreTls = useKeyStoreTls;
 		}
 
@@ -1592,19 +1592,19 @@ public class PulsarProperties {
 			this.tlsTrustStorePassword = tlsTrustStorePassword;
 		}
 
-		public String[] getTlsCiphers() {
+		public Set<String> getTlsCiphers() {
 			return this.tlsCiphers;
 		}
 
-		public void setTlsCiphers(String[] tlsCiphers) {
+		public void setTlsCiphers(Set<String> tlsCiphers) {
 			this.tlsCiphers = tlsCiphers;
 		}
 
-		public String[] getTlsProtocols() {
+		public Set<String> getTlsProtocols() {
 			return this.tlsProtocols;
 		}
 
-		public void setTlsProtocols(String[] tlsProtocols) {
+		public void setTlsProtocols(Set<String> tlsProtocols) {
 			this.tlsProtocols = tlsProtocols;
 		}
 
@@ -1620,7 +1620,7 @@ public class PulsarProperties {
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication()))
+			map.from(this::getAuthentication).as(AuthParameterUtils::maybeConvertToEncodedParamString)
 					.to(properties.in("authParams"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));

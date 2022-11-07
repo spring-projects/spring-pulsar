@@ -7,6 +7,7 @@ description = 'Reactive Spring Pulsar Sample Application'
 
 dependencies {
 	api project(':spring-pulsar-reactive-spring-boot-starter')
+	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'com.google.code.findbugs:jsr305'
 }
 

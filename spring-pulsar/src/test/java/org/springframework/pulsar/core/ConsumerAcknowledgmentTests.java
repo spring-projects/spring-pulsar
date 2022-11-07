@@ -361,4 +361,61 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarClient.close();
 	}
 
+	@Test
+	void messagesAreProperlyAckdOnContainerStopBeforeExitingListenerThread() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("topicNames", Set.of("duplicate-message-test"));
+		config.put("subscriptionName", "duplicate-sub-1");
+		final PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, config);
+
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		final AtomicInteger counter1 = new AtomicInteger(0);
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			counter1.getAndIncrement();
+		});
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container1.start();
+
+		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "duplicate-message-test");
+		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+				pulsarClient, prodConfig);
+		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		pulsarTemplate.send("hello john doe");
+
+		while (counter1.get() == 0) {
+			// busy wait until counter1 is > 0
+		}
+		// When we stop, if any acks are in progress, that should all be
+		// taken care of before exiting the listener thread, so that the
+		// next consumer under the same subscription will not receive the
+		// unacked message.
+		container1.stop();
+
+		final AtomicInteger counter2 = new AtomicInteger(0);
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			counter2.getAndIncrement();
+		});
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container2.start();
+
+		pulsarTemplate.send("hello john doe");
+
+		while (counter2.get() == 0) {
+			// busy wait until counter2 > 0
+		}
+		// Asserting that both consumers are only receiving the expected data.
+		assertThat(counter1.get()).isEqualTo(1);
+		assertThat(counter2.get()).isEqualTo(1);
+
+		container2.stop();
+		pulsarClient.close();
+	}
+
 }

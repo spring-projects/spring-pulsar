@@ -6,10 +6,9 @@
 	<suppress files="package-info\.java" checks=".*"/>
 	<suppress files="[\\/]test[\\/]" checks="RequireThis"/>
 	<suppress files="[\\/]test[\\/]" checks="Javadoc*"/>
-	<suppress files="KafkaMatchersTests" checks="RegexpSinglelineJava"/>
 	<suppress files="Proto" checks=".*"/>
-	<suppress files="(DeserializationException|ConversionException)" checks="MutableException"/>
-	<suppress files="[\\/]kafka.jdocs[\\/]" checks="Regexp*"/>
-	<suppress files="[\\/]kafka.kdocs[\\/]" checks="Regexp*"/>
+	<suppress files="[\\/]spring-pulsar-docs[\\/]" checks="JavadocPackage|JavadocType|JavadocVariable|SpringDeprecatedCheck" />
+	<suppress files="[\\/]spring-pulsar-docs[\\/]" checks="SpringJavadoc" message="\@since" />
+	<suppress files="[\\/]spring-pulsar-docs[\\/].*jooq" checks="AvoidStaticImport" />
 	<suppress files="ReactiveSpringPulsarBootApp" checks="HideUtilityClassConstructor"/>
 </suppressions>

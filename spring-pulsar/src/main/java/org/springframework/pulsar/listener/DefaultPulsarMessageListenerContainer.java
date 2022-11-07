@@ -18,16 +18,18 @@ package org.springframework.pulsar.listener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -50,6 +52,8 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.ConsumerBuilderConfigurationUtil;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
 import org.springframework.pulsar.event.ConsumerStartedEvent;
@@ -71,16 +75,21 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Chris Bono
+ * @author Christophe Bornet
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
-	private volatile Future<?> listenerConsumerFuture;
+	private volatile CompletableFuture<?> listenerConsumerFuture;
 
 	private volatile Listener listenerConsumer;
 
 	private volatile CountDownLatch startLatch = new CountDownLatch(1);
 
 	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
+
+	private final AtomicReference<Thread> listenerConsumerThread = new AtomicReference<>();
+
+	private final AtomicBoolean receiveInProgress = new AtomicBoolean();
 
 	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
 			PulsarContainerProperties pulsarContainerProperties) {
@@ -113,7 +122,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.getObservationRegistry());
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
-		this.listenerConsumerFuture = consumerExecutor.submit(this.listenerConsumer);
+		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
 
 		try {
 			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(),
@@ -133,6 +142,24 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		setRunning(false);
 		this.logger.info("Pausing this consumer.");
 		this.listenerConsumer.consumer.pause();
+		if (this.listenerConsumerThread.get() != null) {
+			// if there is a receive operation already in progress, we want to interrupt
+			// the listener thread.
+			if (this.receiveInProgress.get()) {
+				// All the records received so far in the current batch receive will be
+				// re-delivered.
+				this.listenerConsumerThread.get().interrupt();
+			}
+			// if there is something other than receive operations are in progress,
+			// such as ack operations, wait for the listener thread to complete them.
+			try {
+				this.listenerConsumerThread.get().join();
+			}
+			catch (InterruptedException e) {
+				this.logger.error(e, () -> "Interrupting the main thread");
+				Thread.currentThread().interrupt();
+			}
+		}
 		try {
 			this.logger.info("Closing this consumer.");
 			this.listenerConsumer.consumer.close();
@@ -140,11 +167,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		catch (PulsarClientException e) {
 			this.logger.error(e, () -> "Error closing Pulsar Client.");
 		}
-	}
-
-	@Override
-	public void destroy() {
-
 	}
 
 	private void publishConsumerStartingEvent() {
@@ -218,12 +240,27 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Map<String, Object> propertiesToConsumer = extractDirectConsumerProperties();
 				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
 
-				final BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
+				BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
 						.maxNumMessages(containerProperties.getMaxNumMessages())
 						.maxNumBytes(containerProperties.getMaxNumBytes())
 						.timeout(containerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS).build();
+
+				/*
+				 * topicNames and properties must not be added through the builder
+				 * customizer as ConsumerBuilder::topics and ConsumerBuilder::properties
+				 * don't replace but add to the existing topics/properties.
+				 */
+				Set<String> topicNames = (Set<String>) propertiesToConsumer.remove("topicNames");
+				Map<String, String> properties = (Map<String, String>) propertiesToConsumer.remove("properties");
+
+				ConsumerBuilderCustomizer<T> customizer = builder -> {
+					// Replace w/ consumerBuilder.loadConf after
+					// https://github.com/apache/pulsar/issues/11646
+					ConsumerBuilderConfigurationUtil.loadConf(builder, propertiesToConsumer);
+					builder.batchReceivePolicy(batchReceivePolicy);
+				};
 				this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
-						batchReceivePolicy, propertiesToConsumer);
+						topicNames, properties, Collections.singletonList(customizer));
 				Assert.state(this.consumer != null, "Unable to create a consumer");
 			}
 			catch (PulsarClientException e) {
@@ -291,6 +328,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		@Override
 		public void run() {
+			DefaultPulsarMessageListenerContainer.this.listenerConsumerThread.set(Thread.currentThread());
 			publishConsumerStartingEvent();
 			publishConsumerStartedEvent();
 			AtomicBoolean inRetryMode = new AtomicBoolean(false);
@@ -301,13 +339,28 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				// Always receive messages in batch mode.
 				try {
 					if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
+						DefaultPulsarMessageListenerContainer.this.receiveInProgress.set(true);
 						messages = this.consumer.batchReceive();
 					}
 				}
 				catch (PulsarClientException e) {
-					DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Error receiving messages.");
+					if (e.getCause() instanceof InterruptedException) {
+						DefaultPulsarMessageListenerContainer.this.logger.debug(e,
+								() -> "Error receiving messages due to a thread interrupt call from upstream.");
+					}
+					else {
+						DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Error receiving messages.");
+					}
+					messages = null;
 				}
-				Assert.isTrue(messages != null, "Messages cannot be null.");
+				finally {
+					DefaultPulsarMessageListenerContainer.this.receiveInProgress.set(false);
+				}
+
+				if (messages == null) {
+					continue;
+				}
+
 				if (this.isBatchListener) {
 					if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
 						messageList = new ArrayList<>();
@@ -350,7 +403,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 									messageList, e);
 						}
 						else {
-							// the whole batch is negatively acknowledged in the event of
+							// the whole batch is negatively acknowledged in the event
+							// of
 							// an exception from the handler method.
 							this.consumer.negativeAcknowledge(messages);
 						}

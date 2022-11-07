@@ -889,7 +889,7 @@ Apache Pulsar provides various native strategies for message redelivery and erro
 ===== Specifying Acknowledgment Timeout for Message Redelivery
 
 By default, Pulsar consumers will not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
-When using Spring for Apache Pulsar, we can enable this property by setting the Boot property `spring.pulsar.consumer.ack-timeout-millis`.
+When using Spring for Apache Pulsar, we can enable this property by setting the Boot property `spring.pulsar.consumer.ack-timeout`.
 If this property has a value above zero, then if Pulsar consumer does not acknowledge a message within that timeout period, then the message will be redelivered.
 
 You can also specify this property directly as a Pulsar consumer property on the `PulsarListener` itself as shown below:
@@ -898,14 +898,14 @@ You can also specify this property directly as a Pulsar consumer property on the
 [source, java]
 ----
 @PulsarListener(subscriptionName = "subscription-1", topics = "topic-1"
-                properties = {"ackTimeoutMillis=60000"})
+                properties = {"ackTimeout=60s"})
 public void listen(String s) {
     ...
 }
 ----
 ====
 
-When specifying `ackTimeoutMillis` as seen in the above `PulsarListener` method, then if the consumer does not send an acknowledgement within 60 seconds, the message will be redelivered by Pulsar to the consumer.
+When specifying `ackTimeout` as seen in the above `PulsarListener` method, then if the consumer does not send an acknowledgement within 60 seconds, the message will be redelivered by Pulsar to the consumer.
 
 If you want to specify some advanced backoff options for ack timeout with different delays, then you can do the following:
 
@@ -919,7 +919,7 @@ class AckTimeoutRedeliveryConfig {
     @PulsarListener(subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
             topics = "withAckTimeoutRedeliveryBackoff-test-topic",
             ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff",
-            properties = { "ackTimeoutMillis=60000" })
+            properties = { "ackTimeout=60s" })
     void listen(String msg) {
         // some long-running process that may cause an ack timeout
     }
@@ -941,14 +941,14 @@ We provide the backoff bean to the `PulsarListener` annotation by setting the `a
 ===== Specifying Negative Acknowledgment Redelivery
 
 When acknowledging negatively, Pulsar consumer allows you to specify how the application want the message to be re-delivered.
-The default is to redeliver the message in 1 minute, but you can change it by providing `spring.pulsar.consumer.negative-ack-redelivery-delay-micros`.
+The default is to redeliver the message in 1 minute, but you can change it by providing `spring.pulsar.consumer.negative-ack-redelivery-delay`.
 You can also set it as a consumer property directly on `PulsarListener` as shown below:
 
 ====
 [source, java]
 ----
 @PulsarListener(subscriptionName = "subscription-1", topics = "topic-1"
-                properties = {"negativeAckRedeliveryDelayMicros=10000"})
+                properties = {"negativeAckRedeliveryDelay=10ms"})
 public void listen(String s) {
     ...
 }
@@ -998,7 +998,7 @@ class DeadLetterPolicyConfig {
 
     @PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
             topics = "topic-with-dlp", deadLetterPolicy = "deadLetterPolicy",
-            subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1" })
+            subscriptionType = SubscriptionType.Shared, properties = { "ackTimeout=1s" })
     void listen(String msg) {
         throw new RuntimeException("fail " + msg);
     }
@@ -1023,8 +1023,8 @@ This bean specifies a number of things, such as the max delivery - 10 in this ca
 If you don't specify a DLQ topic name, then it defaults to `<topicname>-<subscriptionname>-DLQ` in Pulsar.
 Next, we provide this bean name to `PulsarListener` using the property `deadLetterPolicy`.
 Note that the `PulsarListener` has a subscription type of `Shared`, as the DLQ feature only works with shared subscriptions.
-This code is primarily for demonstration purposes, so we provide an `ackTimeoutMillis` value of 1 millisecond.
-The idea is that the code throws the exception and if Pulsar does not receive an ack within 1 millisecond, it does a retry.
+This code is primarily for demonstration purposes, so we provide an `ackTimeout` value of 1 second.
+The idea is that the code throws the exception and if Pulsar does not receive an ack within 1 second, it does a retry.
 If that cycle continues for 10 times, (as that is our max redelivery count in the `DeadLetterPolicy`), then Pulsar consumer publishes the messages to the DQL topic.
 We have another `PulsarListener` that is listening on the DLQ topic to receive data as it is published to the DLQ topic.
 
@@ -1338,11 +1338,9 @@ Headers can also be extracted in the same manner when receiving payload as `List
 === Observability
 
 [[observation]]
-==== Micrometer Observation
+==== Micrometer Observations
 The `PulsarTemplate` and `PulsarListener` are instrumented with the Micrometer observations API.
-When enabled, send and receive operations are traced and timed.
-
-To enable, set `observationEnabled` on each component.
+When a Micrometer `ObservationRegistry` bean is provided, send and receive operations are traced and timed.
 
 ===== Custom tags
 The default implementation adds the `bean.name` tag for template observations and `listener.id` tag for listener observations.
@@ -1356,7 +1354,73 @@ include::observation/_spans.adoc[leveloffset=+2]
 
 Refer to https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
 
-==== Appendix
+===== Manual Configuration Without Spring Boot
+If you are not using Spring Boot then you will need to configure and provide an `ObservationRegistry` as well as Micrometer Tracing. Refer to https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
+
+===== Auto-Configuration With Spring Boot
+If you are using Spring Boot, the Spring Boot Actuator auto-configures an instance of `ObservationRegistry` for you.
+If `micrometer-core` is on the classpath every stopped Observation leads to a timer.
+
+Spring Boot also auto-configures Micrometer Tracing for you. This includes support for Brave OpenTelemetry, Zipkin and Wavefront. When using the Micrometer Observation API, finishing observations will lead to spans reported to Zipkin or Wavefront. Tracing can be controlled with properties under `management.tracing`. Zipkin can be configured with `management.zipkin.tracing` while Wavefront uses `management.wavefront`.
+
+====== Example Configuration
+The following illustrates the steps to configure your Spring Boot app to use Zipkin with Brave.
+
+**Step 1:** Add the required dependencies to your application [small]#(Maven or Gradle, respectively)#:
+
+[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
+.Maven
+----
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-tracing-bridge-brave</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.zipkin.reporter2</groupId>
+        <artifactId>zipkin-reporter-brave</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.zipkin.reporter2</groupId>
+        <artifactId>zipkin-sender-urlconnection</artifactId>
+    </dependency>
+</dependencies>
+----
+
+[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
+.Gradle
+----
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
+}
+----
+NOTE: The `'io.zipkin.reporter2:zipkin-sender-urlconnection'` dependency is only needed if your application does not have a configured WebClient or RestTemplate.
+
+**Step 2:** Add the required properties to your application:
+
+[source,yaml,indent=0,subs="verbatim"]
+----
+management:
+  tracing.enabled: true
+  zipkin:
+    tracing.endpoint: "http://localhost:9411/api/v2/spans"
+----
+The `tracing.endpoint` above expects Zipkin is running locally as described https://zipkin.io/pages/quickstart.html[here].
+
+At this point, your application should be recording traces when you send and receive Pulsar messages. You should be able to view them in the Zipkin UI [small]#(when running locally http://localhost:9411)#.
+
+TIP: The above configuration can also be seen on the  link:{github}/blob/main/spring-pulsar-sample-apps/README.adoc[Spring Pulsar Sample Apps].
+
+The steps would be very similar to configure in any of the other supporting Tracing environments.
+
+=== Appendix
 The reference documentation has the following appendices:
 
 [horizontal]

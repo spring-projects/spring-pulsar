@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.support.converter;
+package org.springframework.pulsar.core;
 
-import java.lang.reflect.Type;
-
-import org.apache.pulsar.client.api.Consumer;
-
-import org.springframework.messaging.Message;
-import org.springframework.pulsar.support.MessageConverter;
+import org.apache.pulsar.client.api.ConsumerBuilder;
 
 /**
- * Pulsar specific record converter strategy.
+ * The interface to customize a {@link ConsumerBuilder}.
  *
- * @param <T> message type
- * @author Soby Chacko
+ * @param <T> The message payload type
+ * @author Christophe Bornet
  */
-public interface PulsarRecordMessageConverter<T> extends MessageConverter {
+@FunctionalInterface
+public interface ConsumerBuilderCustomizer<T> {
 
-	Message<?> toMessage(org.apache.pulsar.client.api.Message<T> record, Consumer<T> consumer, Type payloadType);
-
-	T fromMessage(Message<?> message, String defaultTopic);
+	/**
+	 * Customizes a {@link ConsumerBuilder}.
+	 * @param consumerBuilder the builder to customize
+	 */
+	void customize(ConsumerBuilder<T> consumerBuilder);
 
 }

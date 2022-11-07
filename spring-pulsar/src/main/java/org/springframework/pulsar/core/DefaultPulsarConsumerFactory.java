@@ -17,19 +17,21 @@
 package org.springframework.pulsar.core;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
-import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -38,75 +40,58 @@ import org.springframework.util.CollectionUtils;
  * @param <T> underlying payload type for the consumer.
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
 
-	private final Map<String, Object> consumerConfig = new HashMap<>();
+	private final Map<String, Object> consumerConfig;
 
 	private final List<Consumer<T>> consumers = new ArrayList<>();
 
-	private PulsarClient pulsarClient;
+	private final PulsarClient pulsarClient;
+
+	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient) {
+		this(pulsarClient, Collections.emptyMap());
+	}
 
 	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient, Map<String, Object> consumerConfig) {
 		this.pulsarClient = pulsarClient;
-		if (!CollectionUtils.isEmpty(consumerConfig)) {
-			this.consumerConfig.putAll(consumerConfig);
-		}
+		this.consumerConfig = Collections.unmodifiableMap(consumerConfig);
 	}
 
 	@Override
-	public Consumer<T> createConsumer(Schema<T> schema, Map<String, Object> propertiesToOverride)
+	public Consumer<T> createConsumer(Schema<T> schema) throws PulsarClientException {
+		return createConsumer(schema, null, null, Collections.emptyList());
+	}
+
+	@Override
+	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics)
 			throws PulsarClientException {
-
-		final ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
-
-		final Map<String, Object> properties = new HashMap<>(this.consumerConfig);
-		properties.putAll(propertiesToOverride);
-
-		if (!CollectionUtils.isEmpty(properties)) {
-			consumerBuilder.loadConf(properties);
-		}
-		Consumer<T> consumer = consumerBuilder.subscribe();
-		this.consumers.add(consumer);
-		return consumer;
+		return createConsumer(schema, topics, null, Collections.emptyList());
 	}
 
 	@Override
-	public Consumer<T> createConsumer(Schema<T> schema, BatchReceivePolicy batchReceivePolicy,
-			Map<String, Object> propertiesToOverride) throws PulsarClientException {
+	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
+			@Nullable Map<String, String> properties, @Nullable List<ConsumerBuilderCustomizer<T>> customizers)
+			throws PulsarClientException {
+		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
+		Map<String, Object> config = new HashMap<>(this.consumerConfig);
 
-		final ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
-		final Map<String, Object> properties = new HashMap<>(this.consumerConfig);
-		properties.putAll(propertiesToOverride);
-
-		// Remove deadLetterPolicy from the properties here and save it to re-apply after
-		// calling `loadConf` (https://github.com/apache/pulsar/issues/11646)
-		DeadLetterPolicy deadLetterPolicy = null;
-		if (properties.containsKey("deadLetterPolicy")) {
-			deadLetterPolicy = (DeadLetterPolicy) properties.remove("deadLetterPolicy");
+		if (topics != null) {
+			config.put("topicNames", new HashSet<>(topics));
+		}
+		if (properties != null) {
+			config.put("properties", new TreeMap<>(properties));
 		}
 
-		if (!CollectionUtils.isEmpty(properties)) {
-			consumerBuilder.loadConf(properties);
+		// Replace w/ consumerBuilder.loadConf after
+		// https://github.com/apache/pulsar/issues/11646
+		ConsumerBuilderConfigurationUtil.loadConf(consumerBuilder, config);
+
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
 
-		if (deadLetterPolicy != null) {
-			consumerBuilder.deadLetterPolicy(deadLetterPolicy);
-		}
-
-		if (properties.containsKey("negativeAckRedeliveryBackoff")) {
-			final RedeliveryBackoff negativeAckRedeliveryBackoff = (RedeliveryBackoff) properties
-					.get("negativeAckRedeliveryBackoff");
-			consumerBuilder.negativeAckRedeliveryBackoff(negativeAckRedeliveryBackoff);
-		}
-
-		if (properties.containsKey("ackTimeoutRedeliveryBackoff")) {
-			final RedeliveryBackoff ackTimeoutRedeliveryBackoff = (RedeliveryBackoff) properties
-					.get("ackTimeoutRedeliveryBackoff");
-			consumerBuilder.ackTimeoutRedeliveryBackoff(ackTimeoutRedeliveryBackoff);
-		}
-
-		consumerBuilder.batchReceivePolicy(batchReceivePolicy);
 		Consumer<T> consumer = consumerBuilder.subscribe();
 		this.consumers.add(consumer);
 		return consumer;

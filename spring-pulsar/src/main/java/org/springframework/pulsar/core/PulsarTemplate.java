@@ -53,14 +53,18 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	private final PulsarProducerFactory<T> producerFactory;
 
+	@Nullable
 	private final List<ProducerInterceptor> interceptors;
 
+	@Nullable
 	private final ObservationRegistry observationRegistry;
 
+	@Nullable
 	private final PulsarTemplateObservationConvention observationConvention;
 
-	private String beanName;
+	private String beanName = "";
 
+	@Nullable
 	private Schema<T> schema;
 
 	/**
@@ -76,7 +80,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 * @param interceptors the interceptors to add to the producer.
 	 */
-	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
+	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, @Nullable List<ProducerInterceptor> interceptors) {
 		this(producerFactory, interceptors, null, null);
 	}
 
@@ -105,7 +109,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	}
 
 	@Override
-	public MessageId send(String topic, T message) throws PulsarClientException {
+	public MessageId send(@Nullable String topic, T message) throws PulsarClientException {
 		return doSend(topic, message, null, null, null);
 	}
 
@@ -115,7 +119,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(String topic, T message) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException {
 		return doSendAsync(topic, message, null, null, null);
 	}
 
@@ -137,8 +141,10 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		this.schema = schema;
 	}
 
-	private MessageId doSend(String topic, T message, TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			MessageRouter messageRouter, ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
+	private MessageId doSend(@Nullable String topic, T message,
+			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
+			@Nullable MessageRouter messageRouter, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
+			throws PulsarClientException {
 		try {
 			return doSendAsync(topic, message, typedMessageBuilderCustomizer, messageRouter, producerCustomizer).get();
 		}
@@ -147,9 +153,10 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		}
 	}
 
-	private CompletableFuture<MessageId> doSendAsync(String topic, T message,
-			TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer, MessageRouter messageRouter,
-			ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
+	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, T message,
+			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
+			@Nullable MessageRouter messageRouter, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
+			throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 
@@ -193,8 +200,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
-	private Producer<T> prepareProducerForSend(String topic, T message, MessageRouter messageRouter,
-			ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
+	private Producer<T> prepareProducerForSend(@Nullable String topic, T message, @Nullable MessageRouter messageRouter,
+			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		return this.producerFactory.createProducer(topic, schema, messageRouter, this.interceptors,
 				producerCustomizer == null ? Collections.emptyList() : Collections.singletonList(producerCustomizer));
@@ -206,12 +213,16 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 		private final T message;
 
+		@Nullable
 		private String topic;
 
+		@Nullable
 		private TypedMessageBuilderCustomizer<T> messageCustomizer;
 
+		@Nullable
 		private MessageRouter messageRouter;
 
+		@Nullable
 		private ProducerBuilderCustomizer<T> producerCustomizer;
 
 		SendMessageBuilderImpl(PulsarTemplate<T> template, T message) {

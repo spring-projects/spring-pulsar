@@ -31,7 +31,6 @@ import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,7 +82,6 @@ import io.micrometer.tracing.test.simple.SimpleTracer;
  *
  * @author Chris Bono
  */
-@Disabled
 @SpringJUnitConfig
 @DirtiesContext
 public class ObservationTests implements PulsarTestContainerSupport {
@@ -217,8 +215,8 @@ public class ObservationTests implements PulsarTestContainerSupport {
 					return super.getLowCardinalityKeyValues(context).and(RECEIVER_EXTRA_TAG, context.getListenerId());
 				}
 			});
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new PulsarContainerProperties(), observationRegistry);
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProperties,
+					observationRegistry);
 		}
 
 		@Bean
@@ -301,12 +299,12 @@ public class ObservationTests implements PulsarTestContainerSupport {
 			this.template = template;
 		}
 
-		@PulsarListener(id = "obs1-id", properties = { "subscriptionName=obs1-sub", "topicNames=obs1-topic" })
+		@PulsarListener(id = "obs1-id", properties = { "subscriptionName=obsTest-sub1", "topicNames=obs1-topic" })
 		void listen1(Message<String> message) throws PulsarClientException {
 			this.template.send("obs2-topic", message.getValue());
 		}
 
-		@PulsarListener(id = "obs2-id", properties = { "subscriptionName=obs2-sub", "topicNames=obs2-topic" })
+		@PulsarListener(id = "obs2-id", properties = { "subscriptionName=obsTest-sub2", "topicNames=obs2-topic" })
 		void listen2(Message<String> message) {
 			this.message = message;
 			this.latch.countDown();
