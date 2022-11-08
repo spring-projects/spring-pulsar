@@ -5,16 +5,14 @@ plugins {
 }
 
 repositories {
-	mavenCentral()
 	gradlePluginPortal()
+	mavenCentral()
+	maven { url 'https://repo.spring.io/plugins-release-local' }
 	maven { url 'https://repo.spring.io/release' }
 	maven { url 'https://repo.spring.io/milestone' }
 	if (version.endsWith('SNAPSHOT')) {
 		maven { url 'https://repo.spring.io/snapshot' }
 	}
-//
-//	maven { url 'https://repo.spring.io/plugins-release/' }
-//	maven { url 'https://plugins.gradle.org/m2/' }
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -33,19 +31,23 @@ configurations {
 	}
 }
 
+ext {
+	springBootVersion = '3.0.0-RC1'
+}
+
 dependencies {
 	implementation localGroovy()
 	implementation 'commons-codec:commons-codec'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'io.github.gradle-nexus:publish-plugin:1.1.0'
-	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:${javaFormatVersion}")
+	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34")
 	implementation 'io.spring.nohttp:nohttp-gradle:0.0.10'
 	implementation "org.apache.maven:maven-embedder:3.6.2"
 	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
 	implementation 'org.codehaus.groovy:groovy-all:2.5.17'
 	implementation 'org.jfrog.buildinfo:build-info-extractor-gradle:4.29.0'
 
-	implementation "org.gradle:test-retry-gradle-plugin:${testRetryVersion}"
+	implementation "org.gradle:test-retry-gradle-plugin:1.4.0"
 	implementation 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1'
 	implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
 	implementation 'org.springframework:spring-core'
