@@ -38,6 +38,7 @@ dependencies {
 	testImplementation 'org.springframework:spring-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
+	testImplementation 'io.projectreactor:reactor-test'
 }
 
 test {

@@ -215,8 +215,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		config.put("topicNames", Collections.singleton("dpmlct-016"));
 		config.put("subscriptionName", "dpmlct-sb-016");
 		config.put("ackTimeoutMillis", 1);
-		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlq-topic")
-				.build();
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(1)
+				.deadLetterTopic("dpmlct-016-dlq-topic").build();
 		config.put("deadLetterPolicy", deadLetterPolicy);
 
 		final PulsarClient pulsarClient = PulsarClient.builder()
@@ -232,7 +232,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
 		dlqContainerProperties.setSchema(Schema.INT32);
 		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
-		dlqContainerProperties.setTopics(new String[] { "dlq-topic" });
+		dlqContainerProperties.setTopics(new String[] { "dpmlct-016-dlq-topic" });
 		DefaultPulsarMessageListenerContainer<Integer> dlqContainer = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, dlqContainerProperties);
 		dlqContainer.start();
