@@ -38,6 +38,7 @@ import org.springframework.pulsar.observation.PulsarTemplateObservationConventio
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.springframework.util.CollectionUtils;
 
 /**
  * A thread-safe template for executing high-level Pulsar operations.
@@ -106,22 +107,22 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	@Override
 	public MessageId send(T message) throws PulsarClientException {
-		return doSend(null, message, null, null, null);
+		return doSend(null, null, message, null, null);
 	}
 
 	@Override
 	public MessageId send(@Nullable String topic, T message) throws PulsarClientException {
-		return doSend(topic, message, null, null, null);
+		return doSend(topic, null, message, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		return doSendAsync(null, message, null, null, null);
+		return doSendAsync(null, null, message, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException {
-		return doSendAsync(topic, message, null, null, null);
+		return doSendAsync(topic, null, message, null, null);
 	}
 
 	@Override
@@ -142,19 +143,19 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		this.schema = schema;
 	}
 
-	private MessageId doSend(@Nullable String topic, T message, @Nullable Collection<String> encryptionKeys,
+	private MessageId doSend(@Nullable String topic, @Nullable Collection<String> encryptionKeys, T message,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		try {
-			return doSendAsync(topic, message, encryptionKeys, typedMessageBuilderCustomizer, producerCustomizer).get();
+			return doSendAsync(topic, encryptionKeys, message, typedMessageBuilderCustomizer, producerCustomizer).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
 		}
 	}
 
-	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, T message,
-			@Nullable Collection<String> encryptionKeys,
+	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic,
+			@Nullable Collection<String> encryptionKeys, T message,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
@@ -205,8 +206,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 			throws PulsarClientException {
 		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
-		if (this.interceptors != null) {
-			customizers.add(builder -> builder.intercept(this.interceptors.toArray(new ProducerInterceptor[0])));
+		if (!CollectionUtils.isEmpty(this.interceptors)) {
+			customizers.add(builder -> this.interceptors.forEach(builder::intercept));
 		}
 		if (producerCustomizer != null) {
 			customizers.add(producerCustomizer);
@@ -263,13 +264,13 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 		@Override
 		public MessageId send() throws PulsarClientException {
-			return this.template.doSend(this.topic, this.message, this.encryptionKeys, this.messageCustomizer,
+			return this.template.doSend(this.topic, this.encryptionKeys, this.message, this.messageCustomizer,
 					this.producerCustomizer);
 		}
 
 		@Override
 		public CompletableFuture<MessageId> sendAsync() throws PulsarClientException {
-			return this.template.doSendAsync(this.topic, this.message, this.encryptionKeys, this.messageCustomizer,
+			return this.template.doSendAsync(this.topic, this.encryptionKeys, this.message, this.messageCustomizer,
 					this.producerCustomizer);
 		}
 

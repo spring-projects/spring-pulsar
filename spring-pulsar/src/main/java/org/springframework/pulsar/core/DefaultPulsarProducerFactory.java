@@ -80,14 +80,15 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param encryptionKeys the encryption keys used by the producer or {@code null} to
-	 * use the default encryption keys
+	 * @param encryptionKeys the encryption keys used by the producer, replacing the
+	 * default encryption keys or {@code null} to use the default encryption keys. Beware
+	 * that {@link ProducerBuilder} only has {@link ProducerBuilder#addEncryptionKey} and
+	 * doesn't have methods to replace the encryption keys.
 	 * @param customizers the optional list of customizers to apply to the producer
 	 * builder
 	 * @return the created producer
 	 * @throws PulsarClientException if any error occurs
 	 */
-	@SuppressWarnings("unchecked")
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
@@ -100,17 +101,30 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		if (encryptionKeys != null) {
 			config.put("encryptionKeys", encryptionKeys);
 		}
+		loadConf(producerBuilder, config);
+		producerBuilder.topic(resolvedTopic);
 
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers.forEach((c) -> c.customize(producerBuilder));
+		}
+		return producerBuilder.create();
+	}
+
+	@Override
+	public Map<String, Object> getProducerConfig() {
+		return this.producerConfig;
+	}
+
+	private static <T> void loadConf(ProducerBuilder<T> producerBuilder, Map<String, Object> config) {
 		producerBuilder.loadConf(config);
 
 		// Workaround because encryptionKeys are not loaded by loadConf and can't be
 		// replaced through the builder
 		if (config.containsKey("encryptionKeys")) {
+			@SuppressWarnings("unchecked")
 			Collection<String> keys = (Collection<String>) config.get("encryptionKeys");
 			keys.forEach(producerBuilder::addEncryptionKey);
 		}
-
-		producerBuilder.topic(resolvedTopic);
 
 		// Set non-serializable fields that not loaded by loadConf
 		if (config.containsKey("customMessageRouter")) {
@@ -122,16 +136,6 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		if (config.containsKey("cryptoKeyReader")) {
 			producerBuilder.cryptoKeyReader((CryptoKeyReader) config.get("cryptoKeyReader"));
 		}
-
-		if (!CollectionUtils.isEmpty(customizers)) {
-			customizers.forEach((c) -> c.customize(producerBuilder));
-		}
-		return producerBuilder.create();
-	}
-
-	@Override
-	public Map<String, Object> getProducerConfig() {
-		return this.producerConfig;
 	}
 
 }

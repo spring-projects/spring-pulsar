@@ -63,6 +63,29 @@ template.newMessage(msg)
 ----
 ====
 
+This other example shows how to use custom routing when publishing records to partitioned topics.
+Specify your custom `MessageRouter` implementation on the `Producer` builder such as:
+====
+[source, java]
+----
+template.newMessage(msg)
+        .withProducerCustomizer((pb) -> pb.messageRouter(messageRouter))
+        .send();
+----
+====
+
+TIP: Note that, when using a `MessageRouter`, the only valid setting for `spring.pulsar.producer.message-routing-mode` is `custom`.
+
+This other example shows how to add a `ProducerInterceptor` that will intercept and mutate messages received by the producer before being published to the brokers:
+====
+[source, java]
+----
+template.newMessage(msg)
+        .withProducerCustomizer((pb) -> pb.intercept(interceptor))
+        .send();
+----
+====
+
 ===== Schema
 If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
 However, if you use any complex types (such as `JSON`, `AVRO`, `PROTOBUF`, and others), you need to set the proper schema type on the `PulsarTemplate` before invoking any send operations, as the following example shows for JSON:

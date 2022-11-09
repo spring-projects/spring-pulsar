@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
@@ -47,9 +48,9 @@ public interface PulsarProducerFactory<T> {
 
 	/**
 	 * Create a producer.
+	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param schema the schema of the messages to be sent
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */
@@ -60,8 +61,10 @@ public interface PulsarProducerFactory<T> {
 	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param encryptionKeys the encryption keys used by the producer or {@code null} to
-	 * use the default encryption keys
+	 * @param encryptionKeys the encryption keys used by the producer, replacing the
+	 * default encryption keys or {@code null} to use the default encryption keys. Beware
+	 * that {@link ProducerBuilder} only has {@link ProducerBuilder#addEncryptionKey} and
+	 * doesn't have methods to replace the encryption keys.
 	 * @param customizers the optional list of customizers to apply to the producer
 	 * builder
 	 * @return the producer

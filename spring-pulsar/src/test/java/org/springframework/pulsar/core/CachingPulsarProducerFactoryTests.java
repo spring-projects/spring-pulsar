@@ -106,14 +106,13 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	void createProducerWithMatrixOfCacheKeys() throws PulsarClientException {
 		String topic1 = "topic1";
 		String topic2 = "topic2";
 		Schema<String> schema1 = new StringSchema();
 		Schema<String> schema2 = new StringSchema();
-		List<ProducerBuilderCustomizer<String>> customizers1 = List.of(mock(ProducerBuilderCustomizer.class));
-		List<ProducerBuilderCustomizer<String>> customizers2 = List.of(mock(ProducerBuilderCustomizer.class));
+		List<ProducerBuilderCustomizer<String>> customizers1 = List.of(p -> p.property("key", "value"));
+		List<ProducerBuilderCustomizer<String>> customizers2 = List.of(p -> p.property("key", "value"));
 		Set<String> encryptionKeys1 = Set.of("key1");
 		Set<String> encryptionKeys2 = Set.of("key2");
 
@@ -278,11 +277,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
 		static Stream<Arguments> equalsAndHashCodeTestProvider() {
 			Set<String> encryptionKeys1 = Set.of("key1");
-			List<ProducerBuilderCustomizer<String>> customizers1 = Collections
-					.singletonList(mock(ProducerBuilderCustomizer.class));
+			List<ProducerBuilderCustomizer<String>> customizers1 = List.of(p -> p.property("key", "value"));
 			ProducerCacheKey<String> key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
 					customizers1);
 			return Stream
@@ -324,7 +321,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
 													customizers1)),
 									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
-											Collections.singletonList(mock(ProducerBuilderCustomizer.class))),
+											List.of(p -> p.property("key", "value"))),
 									false),
 							arguments(
 									Named.of("differentNullInterceptor",

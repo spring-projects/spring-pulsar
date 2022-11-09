@@ -84,7 +84,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void sendMessageWithSpecificSchemaTest() throws Exception {
+	void sendMessageWithSpecificSchema() throws Exception {
 		String topic = "smt-specific-schema-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
@@ -104,7 +104,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void sendMessageWithEncryptionKeysTest() throws Exception {
+	void sendMessageWithEncryptionKeys() throws Exception {
 		String topic = "smt-encryption-keys-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
