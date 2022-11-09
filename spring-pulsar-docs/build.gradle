@@ -28,7 +28,9 @@ task aggregatedJavadoc(type: Javadoc) {
 	title = "${rootProject.description} ${version} API"
 
 	project.rootProject.gradle.projectsEvaluated {
-		Set<String> excludedProjects = ['spring-pulsar-sample-apps:sample-app1', 'spring-pulsar-sample-apps:sample-app2']
+		Set<String> excludedProjects = ['spring-pulsar-sample-apps:sample-app1',
+										'spring-pulsar-sample-apps:sample-app2',
+										'spring-pulsar-sample-apps:sample-reactive']
 		Set<Project> publishedProjects = rootProject.subprojects.findAll { it != project}
 			.findAll { it.plugins.hasPlugin(JavaPlugin) && it.plugins.hasPlugin(MavenPublishPlugin) }
 			.findAll { !excludedProjects.contains(it.name) }

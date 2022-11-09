@@ -7,6 +7,7 @@
 	<suppress files="[\\/]test[\\/]" checks="RequireThis"/>
 	<suppress files="[\\/]test[\\/]" checks="Javadoc*"/>
 	<suppress files="Proto" checks=".*"/>
+	<suppress files="ReactiveSpringPulsarBootApp" checks="HideUtilityClassConstructor"/>
 	<suppress files="[\\/]spring-pulsar-docs[\\/]" checks="JavadocPackage|JavadocType|JavadocVariable|SpringDeprecatedCheck" />
 	<suppress files="[\\/]spring-pulsar-docs[\\/]" checks="SpringJavadoc" message="\@since" />
 	<suppress files="[\\/]spring-pulsar-docs[\\/].*jooq" checks="AvoidStaticImport" />

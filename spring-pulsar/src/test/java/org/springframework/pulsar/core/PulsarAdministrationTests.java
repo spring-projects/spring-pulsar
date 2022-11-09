@@ -18,13 +18,19 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.impl.auth.AuthenticationBasic;
+import org.apache.pulsar.client.impl.conf.ClientConfigurationData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +46,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Tests for {@link PulsarAdministration}.
  *
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -66,6 +73,19 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 
 		}).toList();
 		assertThat(pulsarAdminClient.topics().getList(NAMESPACE)).containsAll(expectedTopics);
+	}
+
+	@Test
+	void constructorRespectsAuthenticationProps() {
+		Map<String, Object> props = new HashMap<>();
+		props.put("authPluginClassName", "org.apache.pulsar.client.impl.auth.AuthenticationBasic");
+		props.put("authParams", "{\"userId\":\"foo\", \"password\":\"bar\"}");
+		PulsarAdministration admin = new PulsarAdministration(props);
+
+		assertThat(admin).extracting("adminBuilder").asInstanceOf(type(PulsarAdminBuilder.class)).extracting("conf")
+				.asInstanceOf(type(ClientConfigurationData.class))
+				.extracting(ClientConfigurationData::getAuthentication).isInstanceOf(AuthenticationBasic.class)
+				.hasFieldOrPropertyWithValue("userId", "foo").hasFieldOrPropertyWithValue("password", "bar");
 	}
 
 	@Configuration(proxyBeanMethods = false)

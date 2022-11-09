@@ -51,6 +51,7 @@ import org.springframework.util.unit.DataSize;
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 @ConfigurationProperties(prefix = "spring.pulsar")
 public class PulsarProperties {
@@ -1609,9 +1610,9 @@ public class PulsarProperties {
 		}
 
 		public Map<String, Object> buildProperties() {
-			if (!StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
+			if (StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
 				throw new IllegalArgumentException(
-						"Cannot set both spring.pulsar.admin.authParams and spring.pulsar.admin.authentication.*");
+						"Cannot set both spring.pulsar.administration.authParams and spring.pulsar.administration.authentication.*");
 			}
 			PulsarProperties.Properties properties = new Properties();
 

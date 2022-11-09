@@ -29,6 +29,7 @@ import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.PulsarClientException.UnsupportedAuthenticationException;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -36,12 +37,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * An administration class that delegates to {@link PulsarAdmin} to create and manage
  * topics defined in the application context.
  *
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class PulsarAdministration
 		implements ApplicationContextAware, SmartInitializingSingleton, PulsarAdministrationOperations {
@@ -59,6 +62,19 @@ public class PulsarAdministration
 	 */
 	public PulsarAdministration(Map<String, Object> adminConfig) {
 		this.adminBuilder = PulsarAdmin.builder().loadConf(adminConfig);
+
+		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
+		// authentication from the config props
+		String authPluginClassName = (String) adminConfig.get("authPluginClassName");
+		String authParams = (String) adminConfig.get("authParams");
+		if (StringUtils.hasText(authPluginClassName) && StringUtils.hasText(authParams)) {
+			try {
+				this.adminBuilder.authentication(authPluginClassName, authParams);
+			}
+			catch (UnsupportedAuthenticationException ex) {
+				throw new RuntimeException("Unable to create admin auth: " + ex.getMessage(), ex);
+			}
+		}
 	}
 
 	/**

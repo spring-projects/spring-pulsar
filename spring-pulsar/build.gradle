@@ -18,6 +18,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.google.code.findbugs:jsr305'
+	optional 'org.apache.pulsar:pulsar-client-reactive-adapter'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'

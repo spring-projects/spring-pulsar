@@ -3,17 +3,11 @@ plugins {
 	id 'org.springframework.boot' version '3.0.0-RC1'
 }
 
-description = 'Spring Pulsar Sample Application (Send and Receive)'
+description = 'Reactive Spring Pulsar Sample Application'
 
 dependencies {
-	api project(':spring-pulsar-spring-boot-starter')
+	api project(':spring-pulsar-reactive-spring-boot-starter')
 	implementation 'com.google.code.findbugs:jsr305'
-
-	// observability
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-	implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
 }
 
 bootRun {
