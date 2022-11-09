@@ -16,54 +16,44 @@
 
 package org.springframework.pulsar.listener.reactive;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.common.schema.SchemaType;
 
 /**
  * Contains runtime properties for a reactive listener container.
  *
+ * @param <T> message type.
  * @author Christophe Bornet
  */
-public class ReactivePulsarContainerProperties {
+public class ReactivePulsarContainerProperties<T> {
 
-	private String[] topics;
+	private List<String> topics;
 
-	private String topicsPattern;
+	private Pattern topicsPattern;
 
 	private String subscriptionName;
 
 	private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
-	private Schema<?> schema;
+	private Schema<T> schema;
 
-	private SchemaType schemaType;
+	private ReactivePulsarMessageHandler messageHandler;
 
-	private Object messageHandler;
-
-	private long handlingTimeoutMillis = TimeUnit.MINUTES.toMillis(2);
+	private Duration handlingTimeout = Duration.ofMinutes(2);
 
 	private int concurrency = 0;
 
 	private int maxInFlight = 0;
 
-	public ReactivePulsarContainerProperties(String... topics) {
-		this.topics = topics.clone();
-		this.topicsPattern = null;
-	}
-
-	public ReactivePulsarContainerProperties(String topicPattern) {
-		this.topicsPattern = topicPattern;
-		this.topics = null;
-	}
-
-	public Object getMessageHandler() {
+	public ReactivePulsarMessageHandler getMessageHandler() {
 		return this.messageHandler;
 	}
 
-	public void setMessageHandler(Object messageHandler) {
+	public void setMessageHandler(ReactivePulsarMessageHandler messageHandler) {
 		this.messageHandler = messageHandler;
 	}
 
@@ -75,28 +65,32 @@ public class ReactivePulsarContainerProperties {
 		this.subscriptionType = subscriptionType;
 	}
 
-	public Schema<?> getSchema() {
+	public Schema<T> getSchema() {
 		return this.schema;
 	}
 
-	public void setSchema(Schema<?> schema) {
+	public void setSchema(Schema<T> schema) {
 		this.schema = schema;
 	}
 
-	public String[] getTopics() {
+	public List<String> getTopics() {
 		return this.topics;
 	}
 
-	public void setTopics(String[] topics) {
+	public void setTopics(List<String> topics) {
 		this.topics = topics;
 	}
 
-	public String getTopicsPattern() {
+	public Pattern getTopicsPattern() {
 		return this.topicsPattern;
 	}
 
-	public void setTopicsPattern(String topicsPattern) {
+	public void setTopicsPattern(Pattern topicsPattern) {
 		this.topicsPattern = topicsPattern;
+	}
+
+	public void setTopicsPattern(String topicsPattern) {
+		this.topicsPattern = Pattern.compile(topicsPattern);
 	}
 
 	public String getSubscriptionName() {
@@ -107,20 +101,12 @@ public class ReactivePulsarContainerProperties {
 		this.subscriptionName = subscriptionName;
 	}
 
-	public SchemaType getSchemaType() {
-		return this.schemaType;
+	public Duration getHandlingTimeout() {
+		return this.handlingTimeout;
 	}
 
-	public void setSchemaType(SchemaType schemaType) {
-		this.schemaType = schemaType;
-	}
-
-	public long getHandlingTimeoutMillis() {
-		return this.handlingTimeoutMillis;
-	}
-
-	public void setHandlingTimeoutMillis(long handlingTimeoutMillis) {
-		this.handlingTimeoutMillis = handlingTimeoutMillis;
+	public void setHandlingTimeout(Duration handlingTimeout) {
+		this.handlingTimeout = handlingTimeout;
 	}
 
 	public int getConcurrency() {

@@ -24,11 +24,12 @@ import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCu
  * Internal abstraction used by the framework representing a reactive message listener
  * container. Not meant to be implemented externally.
  *
+ * @param <T> message type.
  * @author Christophe Bornet
  */
-public interface ReactivePulsarMessageListenerContainer extends SmartLifecycle, DisposableBean {
+public interface ReactivePulsarMessageListenerContainer<T> extends SmartLifecycle, DisposableBean {
 
-	void setupMessageHandler(Object messageListener);
+	void setupMessageHandler(ReactivePulsarMessageHandler messageListener);
 
 	@Override
 	default void destroy() {
@@ -39,7 +40,7 @@ public interface ReactivePulsarMessageListenerContainer extends SmartLifecycle, 
 		// empty
 	}
 
-	default ReactivePulsarContainerProperties getContainerProperties() {
+	default ReactivePulsarContainerProperties<T> getContainerProperties() {
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");
 	}
 

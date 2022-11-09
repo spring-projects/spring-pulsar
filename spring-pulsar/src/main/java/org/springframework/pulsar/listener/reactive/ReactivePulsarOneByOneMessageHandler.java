@@ -17,27 +17,24 @@
 package org.springframework.pulsar.listener.reactive;
 
 import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.reactive.client.api.MessageResult;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder;
 import org.reactivestreams.Publisher;
 
-import reactor.core.publisher.Flux;
-
 /**
  * Message handler class with a {@link #received} method for use in
- * {@link ReactiveMessagePipelineBuilder#streamingMessageHandler}.
+ * {@link ReactiveMessagePipelineBuilder#messageHandler}.
  *
  * @param <T> message payload type
  * @author Christophe Bornet
  */
-public non-sealed interface ReactivePulsarStreamingHandler<T> extends ReactivePulsarMessageHandler {
+public non-sealed interface ReactivePulsarOneByOneMessageHandler<T> extends ReactivePulsarMessageHandler {
 
 	/**
-	 * Callback passed to {@link ReactiveMessagePipelineBuilder#streamingMessageHandler}
-	 * that will be applied to the flux of received message.
-	 * @param messages the messages received
+	 * Callback passed to {@link ReactiveMessagePipelineBuilder#messageHandler} that will
+	 * be called for each received message.
+	 * @param message the message received
 	 * @return a completed {@link Publisher} when the callback is done.
 	 */
-	Publisher<MessageResult<Void>> received(Flux<Message<T>> messages);
+	Publisher<Void> received(Message<T> message);
 
 }

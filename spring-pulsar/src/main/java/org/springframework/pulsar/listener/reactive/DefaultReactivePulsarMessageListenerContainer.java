@@ -16,13 +16,11 @@
 
 package org.springframework.pulsar.listener.reactive;
 
-import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipeline;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder;
@@ -31,7 +29,7 @@ import org.apache.pulsar.reactive.client.internal.api.ApiImplementationFactory;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
-import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Default implementation for {@link ReactivePulsarMessageListenerContainer}.
@@ -39,30 +37,27 @@ import org.springframework.util.Assert;
  * @param <T> message type.
  * @author Christophe Bornet
  */
-public class DefaultReactivePulsarMessageListenerContainer<T> implements ReactivePulsarMessageListenerContainer {
+public class DefaultReactivePulsarMessageListenerContainer<T> implements ReactivePulsarMessageListenerContainer<T> {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final ReactivePulsarConsumerFactory<T> pulsarConsumerFactory;
 
-	private final ReactivePulsarContainerProperties pulsarContainerProperties;
+	private final ReactivePulsarContainerProperties<T> pulsarContainerProperties;
 
 	private boolean autoStartup = true;
 
-	private int phase;
-
 	private final Object lifecycleMonitor = new Object();
 
-	private volatile boolean running = false;
+	private final AtomicBoolean running = new AtomicBoolean(false);
 
 	private ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer;
 
 	private ReactiveMessagePipeline pipeline;
 
-	@SuppressWarnings("unchecked")
-	public DefaultReactivePulsarMessageListenerContainer(ReactivePulsarConsumerFactory<? super T> pulsarConsumerFactory,
-			ReactivePulsarContainerProperties pulsarContainerProperties) {
-		this.pulsarConsumerFactory = (ReactivePulsarConsumerFactory<T>) pulsarConsumerFactory;
+	public DefaultReactivePulsarMessageListenerContainer(ReactivePulsarConsumerFactory<T> pulsarConsumerFactory,
+			ReactivePulsarContainerProperties<T> pulsarContainerProperties) {
+		this.pulsarConsumerFactory = pulsarConsumerFactory;
 		this.pulsarContainerProperties = pulsarContainerProperties;
 	}
 
@@ -70,21 +65,21 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 		return this.pulsarConsumerFactory;
 	}
 
-	public ReactivePulsarContainerProperties getContainerProperties() {
+	public ReactivePulsarContainerProperties<T> getContainerProperties() {
 		return this.pulsarContainerProperties;
 	}
 
 	@Override
 	public boolean isRunning() {
-		return this.running;
+		return this.running.get();
 	}
 
 	protected void setRunning(boolean running) {
-		this.running = running;
+		this.running.set(running);
 	}
 
 	@Override
-	public void setupMessageHandler(Object messageHandler) {
+	public void setupMessageHandler(ReactivePulsarMessageHandler messageHandler) {
 		this.pulsarContainerProperties.setMessageHandler(messageHandler);
 	}
 
@@ -98,24 +93,22 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 		this.autoStartup = autoStartup;
 	}
 
-	public void setPhase(int phase) {
-		this.phase = phase;
+	public ReactiveMessageConsumerBuilderCustomizer<T> getConsumerCustomizer() {
+		return this.consumerCustomizer;
 	}
 
 	@Override
-	public int getPhase() {
-		return this.phase;
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer consumerCustomizer) {
+		this.consumerCustomizer = consumerCustomizer;
 	}
 
 	@Override
 	public final void start() {
 		synchronized (this.lifecycleMonitor) {
 			if (!isRunning()) {
-				Assert.state(
-						this.pulsarContainerProperties.getMessageHandler() instanceof ReactivePulsarStreamingHandler<?>
-								|| this.pulsarContainerProperties
-										.getMessageHandler() instanceof ReactivePulsarMessageHandler<?>,
-						() -> "A ReactivePulsarMessageHandler or ReactivePulsarStreamingHandler implementation must be provided");
+				Objects.requireNonNull(this.pulsarContainerProperties.getMessageHandler(),
+						"A ReactivePulsarMessageHandler must be provided");
 				doStart();
 			}
 		}
@@ -130,38 +123,26 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 		}
 	}
 
-	public ReactiveMessageConsumerBuilderCustomizer<T> getConsumerCustomizer() {
-		return this.consumerCustomizer;
-	}
-
-	@Override
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer consumerCustomizer) {
-		this.consumerCustomizer = consumerCustomizer;
-	}
-
 	private void doStart() {
-		this.pipeline = startPipeline(this.pulsarContainerProperties);
 		setRunning(true);
+		this.pipeline = startPipeline(this.pulsarContainerProperties);
 	}
 
 	public void doStop() {
 		try {
-			this.logger.info("Closing this reactive pipeline.");
+			this.logger.info("Closing Pulsar Reactive pipeline.");
 			this.pipeline.close();
 		}
 		catch (Exception e) {
 			this.logger.error(e, () -> "Error closing Pulsar Reactive pipeline.");
 		}
-	}
-
-	@Override
-	public void destroy() {
-
+		finally {
+			setRunning(false);
+		}
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	private ReactiveMessagePipeline startPipeline(ReactivePulsarContainerProperties containerProperties) {
+	private ReactiveMessagePipeline startPipeline(ReactivePulsarContainerProperties<T> containerProperties) {
 		ReactiveMessageConsumerBuilderCustomizer<T> customizer = (builder) -> {
 			if (containerProperties.getSubscriptionType() != null) {
 				builder.subscriptionType(containerProperties.getSubscriptionType());
@@ -169,14 +150,11 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 			if (containerProperties.getSubscriptionName() != null) {
 				builder.subscriptionName(containerProperties.getSubscriptionName());
 			}
-			if (containerProperties.getTopics() != null) {
-				List<String> topicNames = Arrays.asList(containerProperties.getTopics());
-				if (!topicNames.isEmpty()) {
-					builder.topicNames(topicNames);
-				}
+			if (!CollectionUtils.isEmpty(containerProperties.getTopics())) {
+				builder.topicNames(containerProperties.getTopics());
 			}
 			if (containerProperties.getTopicsPattern() != null) {
-				builder.topicsPattern(Pattern.compile(containerProperties.getTopicsPattern()));
+				builder.topicsPattern(containerProperties.getTopicsPattern());
 			}
 		};
 
@@ -187,7 +165,7 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 		}
 
 		ReactiveMessageConsumer<T> consumer = getReactivePulsarConsumerFactory()
-				.createConsumer((Schema<T>) containerProperties.getSchema(), customizers);
+				.createConsumer(containerProperties.getSchema(), customizers);
 		ReactiveMessagePipelineBuilder<T> pipelineBuilder = ApiImplementationFactory
 				.createReactiveMessageHandlerPipelineBuilder(consumer);
 		Object messageHandler = containerProperties.getMessageHandler();
@@ -198,8 +176,8 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 		}
 		else {
 			ReactiveMessagePipelineBuilder.OneByOneMessagePipelineBuilder<T> messagePipelineBuilder = pipelineBuilder
-					.messageHandler(((ReactivePulsarMessageHandler<T>) messageHandler)::received)
-					.handlingTimeout(Duration.ofMillis(containerProperties.getHandlingTimeoutMillis()));
+					.messageHandler(((ReactivePulsarOneByOneMessageHandler<T>) messageHandler)::received)
+					.handlingTimeout(containerProperties.getHandlingTimeout());
 			if (containerProperties.getConcurrency() > 0) {
 				pipeline = messagePipelineBuilder.concurrent().concurrency(containerProperties.getConcurrency())
 						.maxInflight(containerProperties.getMaxInFlight()).build();

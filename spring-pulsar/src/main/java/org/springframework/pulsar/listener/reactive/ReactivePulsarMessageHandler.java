@@ -16,18 +16,11 @@
 
 package org.springframework.pulsar.listener.reactive;
 
-import org.apache.pulsar.client.api.Message;
-import org.reactivestreams.Publisher;
-
 /**
- * Message handler class with a {@link #received} method for use in
- * {@link org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder#messageHandler}.
+ * Reactive message handler used by {@link DefaultReactivePulsarMessageListenerContainer}.
  *
- * @param <T> message payload type
  * @author Christophe Bornet
  */
-public interface ReactivePulsarMessageHandler<T> {
-
-	Publisher<Void> received(Message<T> message);
+public sealed interface ReactivePulsarMessageHandler permits ReactivePulsarOneByOneMessageHandler, ReactivePulsarStreamingHandler {
 
 }
