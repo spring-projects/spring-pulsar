@@ -1,4 +1,4 @@
-To connect to a Pulsar cluster requiring authentication, you need to set the `authPluginClassName` and any parameters required by the authentication plugin. The parameters can be set as a single JSON encoded string or as map of parameter names to parameter values.
+To connect to a Pulsar cluster that requires authentication, you need to set the `authPluginClassName` and any parameters required by the authentication plugin. You can set the parameters as a single JSON-encoded string or as map of parameter names to parameter values. The following listings show both approaches:
 
 [source,yaml,indent=0,role="primary"]
 .[.small]#Map#
@@ -12,6 +12,7 @@ spring:
         private-key: file:///Users/some-key.json
         audience: urn:sn:acme:dev:my-instance
 ----
+
 .[.small]#JSON encoded string#
 [source,yaml,indent=0,role="secondary"]
 ----
@@ -22,9 +23,9 @@ spring:
       auth-params: "{\"privateKey\":\"file:///Users/some-key.json\",\"issuerUrl\":\"https://auth.server.cloud/", \"audience\":\"urn:sn:acme:dev:my-instance"}"
 ----
 
-TIP: Using a map is the recommended approach as it is less error-prone and easier to read
+TIP: Using a map is the recommended approach as it is less error-prone and easier to read.
 
-The following shows how to configure each of the supported authentication mechanisms.
+The following listings show how to configure each of the supported authentication mechanisms.
 
 [[Athenz]]
 .[.underline]#Click ##here## for **Athenz**#
@@ -131,4 +132,4 @@ spring:
 ====
 
 
-NOTE: [.small]#More information on each of the schemes and their required properties can be found in the official link:https://pulsar.apache.org/docs/security-overview#authentication-providers[Pulsar security] documentation.#
+NOTE: You can find more information on each of the schemes and their required properties in the official link:https://pulsar.apache.org/docs/security-overview#authentication-providers[Pulsar security] documentation.

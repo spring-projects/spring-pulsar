@@ -5,7 +5,7 @@
 :numbered:
 :icons: font
 :hide-uri-scheme:
-Soby Chacko; Chris Bono; Alexander Preuß
+Soby Chacko; Chris Bono; Alexander Preuß; Jay Bryant
 
 //ifdef::backend-html5[]
 //*{project-version}*
@@ -28,7 +28,7 @@ include::preface.adoc[]
 [[quick-intro]]
 == Introduction
 
-This first part of the reference documentation is a high-level quick-tour of Spring for Apache Pulsar.
+This first part of the reference documentation is a high-level quick tour of Spring for Apache Pulsar.
 
 include::quick-tour.adoc[]
 
