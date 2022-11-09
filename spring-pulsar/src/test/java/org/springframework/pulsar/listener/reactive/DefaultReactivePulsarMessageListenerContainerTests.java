@@ -314,12 +314,12 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
-		dlqConsumer.consumeOne(messageMono -> messageMono.map(message -> {
+		dlqConsumer.consumeOne(message -> {
 			if (message.getValue().endsWith("4")) {
 				dlqLatch.countDown();
 			}
-			return MessageResult.acknowledge(message.getMessageId());
-		})).subscribe();
+			return Mono.just(MessageResult.acknowledge(message.getMessageId()));
+		}).block();
 
 		assertThat(dlqLatch.await(10, TimeUnit.SECONDS)).isTrue();
 

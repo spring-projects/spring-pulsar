@@ -76,9 +76,7 @@ public class ReactiveSpringPulsarBootApp {
 			return args -> {
 				ReactiveMessageConsumer<Foo> messageConsumer = reactiveConsumerFactory
 						.createConsumer(Schema.JSON(Foo.class));
-				messageConsumer
-						.consumeMany((messageFlux) -> messageFlux.map(
-								(message) -> MessageResult.acknowledge(message.getMessageId(), message.getValue())))
+				messageConsumer.consumeMany((messageFlux) -> messageFlux.map(MessageResult::acknowledgeAndReturn))
 						.take(Duration.ofSeconds(10)).subscribe((msg) -> this.logger.info("Received: {}", msg));
 			};
 		}
