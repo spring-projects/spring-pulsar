@@ -121,7 +121,7 @@ public class PulsarBootHelloWorld {
 ----
 
 Let us quickly go through the higher-level details of this application.
-<<reference,Later in this documentation>>, we see these components in much more detail.
+<<index.adoc#reference,Later in this documentation>>, we see these components in much more detail.
 
 In the preceding sample, we heavily rely on Spring Boot auto-configuration.
 Spring Boot auto-configures several components for our application.

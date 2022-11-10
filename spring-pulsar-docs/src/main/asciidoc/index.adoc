@@ -10,11 +10,11 @@ Soby Chacko; Chris Bono; Alexander Preuß; Jay Bryant
 //ifdef::backend-html5[]
 //*{project-version}*
 //
-//NOTE: This documentation is also available as https://docs.spring.io/spring-kafka/docs/{project-version}/reference/pdf/spring-kafka-reference.pdf[PDF].
+//NOTE: This documentation is also available as https://docs.spring.io/spring-pulsar/docs/{project-version}/reference/pdf/spring-pulsar-reference.pdf[PDF].
 //endif::[]
 //
 //ifdef::backend-pdf[]
-//NOTE: This documentation is also available as https://docs.spring.io/spring-kafka/docs/{project-version}/reference/html/index.html[HTML].
+//NOTE: This documentation is also available as https://docs.spring.io/spring-pulsar/docs/{project-version}/reference/html/index.html[HTML].
 //endif::[]
 
 (C) 2022 VMware, Inc.

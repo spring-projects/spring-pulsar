@@ -1,5 +1,5 @@
 [appendix]
-[[appendix.application-properties]]
+[[application-properties]]
 = Application Properties
 
 You can specify various properties inside your `application.properties` file, inside your `application.yml` file, or as command line switches.
