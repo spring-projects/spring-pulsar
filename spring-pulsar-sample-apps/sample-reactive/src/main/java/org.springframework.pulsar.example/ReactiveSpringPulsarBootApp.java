@@ -38,7 +38,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
+import org.springframework.pulsar.core.reactive.ReactivePulsarTemplate;
 
 import reactor.core.publisher.Flux;
 
@@ -59,7 +59,7 @@ public class ReactiveSpringPulsarBootApp {
 		private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 		@Autowired
-		private ReactivePulsarSenderTemplate<Foo> reactivePulsarTemplate;
+		private ReactivePulsarTemplate<Foo> reactivePulsarTemplate;
 
 		// TODO remove this once the auto-config is available
 		@Bean
@@ -103,7 +103,7 @@ public class ReactiveSpringPulsarBootApp {
 		private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 		@Bean
-		ApplicationRunner sendSimple(ReactivePulsarSenderTemplate<String> reactivePulsarTemplate) {
+		ApplicationRunner sendSimple(ReactivePulsarTemplate<String> reactivePulsarTemplate) {
 			return args -> reactivePulsarTemplate
 					.send("sample-reactive-topic2", Flux.range(0, 10).map((i) -> "msg-from-sendSimple-" + i))
 					.subscribe();

@@ -45,7 +45,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Tests for {@link ReactivePulsarSenderTemplate}.
+ * Tests for {@link ReactivePulsarTemplate}.
  *
  * @author Christophe Bornet
  */
@@ -62,7 +62,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				senderSpec.setTopicName(topic);
 				ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client,
 						senderSpec, null);
-				ReactivePulsarSenderTemplate<Foo> pulsarTemplate = new ReactivePulsarSenderTemplate<>(producerFactory);
+				ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory);
 				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 
 				List<Foo> foos = new ArrayList<>();
@@ -104,7 +104,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				}
 				ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
 						senderSpec, null);
-				ReactivePulsarSenderTemplate<String> pulsarTemplate = new ReactivePulsarSenderTemplate<>(senderFactory);
+				ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 				Mono<MessageId> sendResponse;
 				if (testArgs.useTemplateSchema) {
 					pulsarTemplate.setSchema(Schema.STRING);
@@ -114,7 +114,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 							: pulsarTemplate.send(msgPayload);
 				}
 				else {
-					ReactivePulsarSenderTemplate.SendMessageBuilderImpl<String> messageBuilder = pulsarTemplate
+					ReactivePulsarTemplate.SendMessageBuilderImpl<String> messageBuilder = pulsarTemplate
 							.newMessage(msgPayload);
 					if (testArgs.useSpecificTopic) {
 						messageBuilder = messageBuilder.withTopic(topic);

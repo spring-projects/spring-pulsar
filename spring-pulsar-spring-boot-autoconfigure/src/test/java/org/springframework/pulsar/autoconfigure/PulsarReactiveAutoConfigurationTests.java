@@ -51,7 +51,7 @@ import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFacto
 import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
+import org.springframework.pulsar.core.reactive.ReactivePulsarTemplate;
 
 /**
  * Autoconfiguration tests for {@link PulsarReactiveAutoConfiguration}.
@@ -72,23 +72,23 @@ class PulsarReactiveAutoConfigurationTests {
 	}
 
 	@Test
-	void autoConfigurationSkippedWhenReactivePulsarSenderTemplateNotOnClasspath() {
-		this.contextRunner.withClassLoader(new FilteredClassLoader(ReactivePulsarSenderTemplate.class)).run(
+	void autoConfigurationSkippedWhenReactivePulsarTemplateNotOnClasspath() {
+		this.contextRunner.withClassLoader(new FilteredClassLoader(ReactivePulsarTemplate.class)).run(
 				(context) -> assertThat(context).hasNotFailed().doesNotHaveBean(PulsarReactiveAutoConfiguration.class));
 	}
 
 	@Test
 	void defaultBeansAreAutoConfigured() {
 		this.contextRunner.run((context) -> assertThat(context).hasNotFailed()
-				.hasSingleBean(ReactivePulsarSenderTemplate.class).hasSingleBean(ReactivePulsarClient.class)
+				.hasSingleBean(ReactivePulsarTemplate.class).hasSingleBean(ReactivePulsarClient.class)
 				.hasSingleBean(ProducerCacheProvider.class).hasSingleBean(ReactiveMessageSenderCache.class)
-				.hasSingleBean(ReactivePulsarSenderFactory.class).getBean(ReactivePulsarSenderTemplate.class));
+				.hasSingleBean(ReactivePulsarSenderFactory.class).getBean(ReactivePulsarTemplate.class));
 	}
 
 	@ParameterizedTest
 	@ValueSource(classes = { ReactivePulsarClient.class, ProducerCacheProvider.class, ReactiveMessageSenderCache.class,
 			ReactivePulsarSenderFactory.class, ReactivePulsarConsumerFactory.class, ReactivePulsarReaderFactory.class,
-			ReactivePulsarSenderTemplate.class })
+			ReactivePulsarTemplate.class })
 	<T> void customBeanIsRespected(Class<T> beanClass) {
 		T bean = mock(beanClass);
 		this.contextRunner.withBean(beanClass.getName(), beanClass, () -> bean)
@@ -100,7 +100,7 @@ class PulsarReactiveAutoConfigurationTests {
 		ReactivePulsarSenderFactory<?> senderFactory = mock(ReactivePulsarSenderFactory.class);
 		this.contextRunner
 				.withBean("customReactivePulsarSenderFactory", ReactivePulsarSenderFactory.class, () -> senderFactory)
-				.run((context -> assertThat(context).hasNotFailed().getBean(ReactivePulsarSenderTemplate.class)
+				.run((context -> assertThat(context).hasNotFailed().getBean(ReactivePulsarTemplate.class)
 						.extracting("reactiveMessageSenderFactory")
 						.asInstanceOf(InstanceOfAssertFactories.type(ReactivePulsarSenderFactory.class))
 						.isSameAs(senderFactory)));

@@ -37,7 +37,7 @@ import reactor.core.publisher.Mono;
  * @param <T> the message payload type
  * @author Christophe Bornet
  */
-public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOperations<T> {
+public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -50,7 +50,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
 	 * reactive senders
 	 */
-	public ReactivePulsarSenderTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
+	public ReactivePulsarTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
 		this.reactiveMessageSenderFactory = reactiveMessageSenderFactory;
 	}
 
@@ -141,7 +141,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
 
-		private final ReactivePulsarSenderTemplate<T> template;
+		private final ReactivePulsarTemplate<T> template;
 
 		private final T message;
 
@@ -151,7 +151,7 @@ public class ReactivePulsarSenderTemplate<T> implements ReactivePulsarSenderOper
 
 		private ReactiveMessageSenderBuilderCustomizer<T> senderCustomizer;
 
-		SendMessageBuilderImpl(ReactivePulsarSenderTemplate<T> template, T message) {
+		SendMessageBuilderImpl(ReactivePulsarTemplate<T> template, T message) {
 			this.template = template;
 			this.message = message;
 		}
