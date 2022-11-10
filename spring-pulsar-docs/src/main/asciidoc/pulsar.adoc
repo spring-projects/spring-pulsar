@@ -58,8 +58,8 @@ For example, the following code shows how to disable batching and enable chunkin
 [source, java]
 ----
 template.newMessage(msg)
-        .withProducerCustomizer((pb) -> pb.enableChunking(true).enableBatching(false))
-        .send();
+    .withProducerCustomizer((pb) -> pb.enableChunking(true).enableBatching(false))
+    .send();
 ----
 ====
 
@@ -69,8 +69,8 @@ Specify your custom `MessageRouter` implementation on the `Producer` builder suc
 [source, java]
 ----
 template.newMessage(msg)
-        .withProducerCustomizer((pb) -> pb.messageRouter(messageRouter))
-        .send();
+    .withProducerCustomizer((pb) -> pb.messageRouter(messageRouter))
+    .send();
 ----
 ====
 
@@ -81,8 +81,8 @@ This other example shows how to add a `ProducerInterceptor` that will intercept 
 [source, java]
 ----
 template.newMessage(msg)
-        .withProducerCustomizer((pb) -> pb.intercept(interceptor))
-        .send();
+    .withProducerCustomizer((pb) -> pb.intercept(interceptor))
+    .send();
 ----
 ====
 

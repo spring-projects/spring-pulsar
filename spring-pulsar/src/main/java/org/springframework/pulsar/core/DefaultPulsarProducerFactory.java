@@ -98,6 +98,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 		Map<String, Object> config = new HashMap<>(this.producerConfig);
 
+		// Replace default keys - workaround as they can't be replaced through the builder
 		if (encryptionKeys != null) {
 			config.put("encryptionKeys", encryptionKeys);
 		}
@@ -118,15 +119,12 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	private static <T> void loadConf(ProducerBuilder<T> producerBuilder, Map<String, Object> config) {
 		producerBuilder.loadConf(config);
 
-		// Workaround because encryptionKeys are not loaded by loadConf and can't be
-		// replaced through the builder
+		// Set fields that are not loaded by loadConf
 		if (config.containsKey("encryptionKeys")) {
 			@SuppressWarnings("unchecked")
 			Collection<String> keys = (Collection<String>) config.get("encryptionKeys");
 			keys.forEach(producerBuilder::addEncryptionKey);
 		}
-
-		// Set non-serializable fields that not loaded by loadConf
 		if (config.containsKey("customMessageRouter")) {
 			producerBuilder.messageRouter((MessageRouter) config.get("customMessageRouter"));
 		}

@@ -51,7 +51,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 
 /**
- * Tests for {@code PulsarTemplate}.
+ * Tests for {@link PulsarTemplate}.
  *
  * @author Soby Chacko
  * @author Chris Bono

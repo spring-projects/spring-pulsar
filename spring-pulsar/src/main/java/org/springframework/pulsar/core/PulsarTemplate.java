@@ -35,10 +35,10 @@ import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationCo
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
+import org.springframework.util.CollectionUtils;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import org.springframework.util.CollectionUtils;
 
 /**
  * A thread-safe template for executing high-level Pulsar operations.
