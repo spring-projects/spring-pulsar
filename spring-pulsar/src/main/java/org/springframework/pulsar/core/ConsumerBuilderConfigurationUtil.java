@@ -53,33 +53,40 @@ public final class ConsumerBuilderConfigurationUtil {
 
 		ConsumerConfigurationData<T> builderConf = ((ConsumerBuilderImpl<T>) builder).getConf();
 		Map<String, Object> propertiesCopy = new HashMap<>(properties);
+		propertiesCopy.remove("messageListener");
+		propertiesCopy.remove("consumerEventListener");
+		propertiesCopy.remove("negativeAckRedeliveryBackoff");
+		propertiesCopy.remove("ackTimeoutRedeliveryBackoff");
+		propertiesCopy.remove("cryptoKeyReader");
+		propertiesCopy.remove("messageCrypto");
+		propertiesCopy.remove("batchReceivePolicy");
+		propertiesCopy.remove("payloadProcessor");
 
 		builder.loadConf(propertiesCopy);
 
 		// Manually set fields marked as @JsonIgnore in ConsumerConfigurationData
-		applyValueToBuilderAfterLoadConf(builderConf::getMessageListener, builder::messageListener, propertiesCopy,
+		applyValueToBuilderAfterLoadConf(builderConf::getMessageListener, builder::messageListener, properties,
 				"messageListener");
 		applyValueToBuilderAfterLoadConf(builderConf::getConsumerEventListener, builder::consumerEventListener,
-				propertiesCopy, "consumerEventListener");
+				properties, "consumerEventListener");
 		applyValueToBuilderAfterLoadConf(builderConf::getNegativeAckRedeliveryBackoff,
-				builder::negativeAckRedeliveryBackoff, propertiesCopy, "negativeAckRedeliveryBackoff");
+				builder::negativeAckRedeliveryBackoff, properties, "negativeAckRedeliveryBackoff");
 		applyValueToBuilderAfterLoadConf(builderConf::getAckTimeoutRedeliveryBackoff,
-				builder::ackTimeoutRedeliveryBackoff, propertiesCopy, "ackTimeoutRedeliveryBackoff");
-		applyValueToBuilderAfterLoadConf(builderConf::getCryptoKeyReader, builder::cryptoKeyReader, propertiesCopy,
+				builder::ackTimeoutRedeliveryBackoff, properties, "ackTimeoutRedeliveryBackoff");
+		applyValueToBuilderAfterLoadConf(builderConf::getCryptoKeyReader, builder::cryptoKeyReader, properties,
 				"cryptoKeyReader");
-		applyValueToBuilderAfterLoadConf(builderConf::getMessageCrypto, builder::messageCrypto, propertiesCopy,
+		applyValueToBuilderAfterLoadConf(builderConf::getMessageCrypto, builder::messageCrypto, properties,
 				"messageCrypto");
-		applyValueToBuilderAfterLoadConf(builderConf::getBatchReceivePolicy, builder::batchReceivePolicy,
-				propertiesCopy, "batchReceivePolicy");
-		applyValueToBuilderAfterLoadConf(builderConf::getPayloadProcessor, builder::messagePayloadProcessor,
-				propertiesCopy, "payloadProcessor");
+		applyValueToBuilderAfterLoadConf(builderConf::getBatchReceivePolicy, builder::batchReceivePolicy, properties,
+				"batchReceivePolicy");
+		applyValueToBuilderAfterLoadConf(builderConf::getPayloadProcessor, builder::messagePayloadProcessor, properties,
+				"payloadProcessor");
 	}
 
 	@SuppressWarnings("unchecked")
 	private static <T> void applyValueToBuilderAfterLoadConf(Supplier<T> confGetter, Consumer<T> builderSetter,
-			Map<String, Object> properties, String propertyName) {
-		T value = (T) properties.getOrDefault(propertyName, confGetter.get());
-
+			Map<String, Object> properties, String key) {
+		T value = (T) properties.getOrDefault(key, confGetter.get());
 		if (value != null) {
 			builderSetter.accept(value);
 		}

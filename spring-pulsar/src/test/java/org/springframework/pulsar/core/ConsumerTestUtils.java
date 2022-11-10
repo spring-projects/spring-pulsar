@@ -46,7 +46,8 @@ public final class ConsumerTestUtils {
 	 * @return the spied container object
 	 */
 	@SuppressWarnings("unchecked")
-	public static Consumer<String> startContainerAndSpyOnConsumer(DefaultPulsarMessageListenerContainer<String> container)
+	public static Consumer<String> startContainerAndSpyOnConsumer(
+			DefaultPulsarMessageListenerContainer<String> container)
 			throws PulsarClientException, ExecutionException, InterruptedException, TimeoutException {
 		CompletableFuture<Consumer<String>> consumerFuture = new CompletableFuture<>();
 		doAnswer(invocation -> {
