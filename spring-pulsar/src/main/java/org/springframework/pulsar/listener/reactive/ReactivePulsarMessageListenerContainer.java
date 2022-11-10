@@ -27,7 +27,8 @@ import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCu
  * @param <T> message type.
  * @author Christophe Bornet
  */
-public interface ReactivePulsarMessageListenerContainer<T> extends SmartLifecycle, DisposableBean {
+public sealed interface ReactivePulsarMessageListenerContainer<T>
+		extends SmartLifecycle, DisposableBean permits DefaultReactivePulsarMessageListenerContainer {
 
 	void setupMessageHandler(ReactivePulsarMessageHandler messageListener);
 
@@ -44,7 +45,6 @@ public interface ReactivePulsarMessageListenerContainer<T> extends SmartLifecycl
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");
 	}
 
-	@SuppressWarnings("rawtypes")
-	void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer consumerCustomizer);
+	void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer);
 
 }

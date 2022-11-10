@@ -37,7 +37,8 @@ import org.springframework.util.CollectionUtils;
  * @param <T> message type.
  * @author Christophe Bornet
  */
-public class DefaultReactivePulsarMessageListenerContainer<T> implements ReactivePulsarMessageListenerContainer<T> {
+public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
+		implements ReactivePulsarMessageListenerContainer<T> {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -98,8 +99,7 @@ public class DefaultReactivePulsarMessageListenerContainer<T> implements Reactiv
 	}
 
 	@Override
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer consumerCustomizer) {
+	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer) {
 		this.consumerCustomizer = consumerCustomizer;
 	}
 
