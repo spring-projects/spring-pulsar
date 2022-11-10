@@ -28,7 +28,7 @@ import reactor.core.publisher.Mono;
  * @param <T> the message payload type
  * @author Christophe Bornet
  */
-public interface ReactivePulsarSenderOperations<T> {
+public interface ReactivePulsarOperations<T> {
 
 	/**
 	 * Sends a message to the default topic in a reactive manner.
@@ -74,7 +74,7 @@ public interface ReactivePulsarSenderOperations<T> {
 
 	/**
 	 * Builder that can be used to configure and send a message. Provides more options
-	 * than the send methods provided by {@link ReactivePulsarSenderOperations}.
+	 * than the send methods provided by {@link ReactivePulsarOperations}.
 	 *
 	 * @param <T> the message payload type
 	 */

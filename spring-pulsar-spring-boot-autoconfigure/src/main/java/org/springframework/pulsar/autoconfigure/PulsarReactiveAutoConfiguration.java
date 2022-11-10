@@ -37,7 +37,7 @@ import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFacto
 import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarSenderTemplate;
+import org.springframework.pulsar.core.reactive.ReactivePulsarTemplate;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -48,7 +48,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author Christophe Bornet
  */
 @AutoConfiguration(after = PulsarAutoConfiguration.class)
-@ConditionalOnClass({ ReactivePulsarSenderTemplate.class, ReactivePulsarClient.class })
+@ConditionalOnClass({ ReactivePulsarTemplate.class, ReactivePulsarClient.class })
 @EnableConfigurationProperties(PulsarReactiveProperties.class)
 public class PulsarReactiveAutoConfiguration {
 
@@ -111,9 +111,9 @@ public class PulsarReactiveAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public ReactivePulsarSenderTemplate<?> pulsarReactiveSenderTemplate(
+	public ReactivePulsarTemplate<?> pulsarReactiveTemplate(
 			ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory) {
-		return new ReactivePulsarSenderTemplate<>(reactivePulsarSenderFactory);
+		return new ReactivePulsarTemplate<>(reactivePulsarSenderFactory);
 	}
 
 }
