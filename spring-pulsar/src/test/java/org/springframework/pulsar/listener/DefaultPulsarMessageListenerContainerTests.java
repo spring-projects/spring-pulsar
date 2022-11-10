@@ -19,6 +19,7 @@ package org.springframework.pulsar.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -170,8 +171,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 		CountDownLatch latch = new CountDownLatch(10);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
@@ -184,9 +185,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
 
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-015");
 		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(

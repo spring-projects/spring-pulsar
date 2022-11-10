@@ -16,9 +16,19 @@
 
 package org.springframework.pulsar.core;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.PulsarClientException;
 
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
@@ -35,11 +45,19 @@ public final class ConsumerTestUtils {
 	 * @param container container to spy on
 	 * @return the spied container object
 	 */
-	public static Consumer<?> spyOnConsumer(DefaultPulsarMessageListenerContainer<String> container) {
-		Consumer<?> consumer = getPropertyValue(container, "listenerConsumer.consumer", Consumer.class);
-		consumer = spy(consumer);
-		new DirectFieldAccessor(getPropertyValue(container, "listenerConsumer")).setPropertyValue("consumer", consumer);
-		return consumer;
+	@SuppressWarnings("unchecked")
+	public static Consumer<String> startContainerAndSpyOnConsumer(DefaultPulsarMessageListenerContainer<String> container)
+			throws PulsarClientException, ExecutionException, InterruptedException, TimeoutException {
+		CompletableFuture<Consumer<String>> consumerFuture = new CompletableFuture<>();
+		doAnswer(invocation -> {
+			Consumer<String> consumer = spy((Consumer<String>) invocation.callRealMethod());
+			consumerFuture.complete(consumer);
+			return consumer;
+		}).when(container.getPulsarConsumerFactory()).createConsumer(any(), isNull(), isNull(), anyList());
+
+		container.start();
+		Thread.sleep(1000);
+		return consumerFuture.get(1, TimeUnit.SECONDS);
 	}
 
 	/**

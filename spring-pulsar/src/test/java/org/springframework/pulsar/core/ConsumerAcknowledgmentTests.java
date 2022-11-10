@@ -24,6 +24,7 @@ import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -69,8 +70,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		config.put("subscriptionName", "cons-ack-tests-sb-011");
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
@@ -79,8 +80,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarContainerProperties.setAckMode(AckMode.RECORD);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
@@ -111,8 +111,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		config.put("subscriptionName", "cons-ack-tests-sb-012");
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
@@ -121,8 +121,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-012");
@@ -148,8 +147,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		config.put("subscriptionName", "cons-ack-tests-sb-013");
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
@@ -163,8 +162,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		AtomicInteger ackCallCount = new AtomicInteger(0);
 		doAnswer(invocation -> {
@@ -217,8 +215,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		config.put("subscriptionName", "cons-ack-tests-sb-014");
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		final List<Acknowledgement> acksObjects = new ArrayList<>();
@@ -233,8 +231,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
@@ -272,8 +269,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		config.put("subscriptionName", "cons-ack-tests-sb-015");
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -291,8 +288,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-015");
@@ -321,8 +317,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		config.put("subscriptionName", "cons-ack-tests-sb-016");
 		final PulsarClient pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -340,8 +336,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-		final Consumer<?> containerConsumer = ConsumerTestUtils.spyOnConsumer(container);
+		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "cons-ack-tests-016");
