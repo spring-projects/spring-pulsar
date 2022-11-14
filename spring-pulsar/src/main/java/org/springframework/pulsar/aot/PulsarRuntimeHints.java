@@ -51,8 +51,10 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 	@Override
 	public void registerHints(RuntimeHints hints, @Nullable ClassLoader classLoader) {
 		ReflectionHints reflectionHints = hints.reflection();
-		// The following components need access to declared constructors, invoke declared methods
-		// and introspect all public methods. The components are a mix of JDK classes, core Pulsar classes,
+		// The following components need access to declared constructors, invoke declared
+		// methods
+		// and introspect all public methods. The components are a mix of JDK classes,
+		// core Pulsar classes,
 		// some other shaded components available through Pulsar client.
 		Stream.of(HashSet.class, TreeMap.class, Authentication.class, AuthenticationDataProvider.class,
 				SecretsSerializer.class, NioSocketChannel.class, AbstractByteBufAllocator.class,
@@ -63,14 +65,16 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 										MemberCategory.INVOKE_DECLARED_METHODS,
 										MemberCategory.INTROSPECT_PUBLIC_METHODS)));
 
-		// In addition to the above member category levels, these components need field and declared class level access.
+		// In addition to the above member category levels, these components need field
+		// and declared class level access.
 		Stream.of(ClientConfigurationData.class, ConsumerConfigurationData.class, ProducerConfigurationData.class)
 				.forEach(type -> reflectionHints.registerType(type,
 						builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 								MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
 								MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
 
-		// These are inaccessible interfaces/classes in a normal scenario, thus using the String version,
+		// These are inaccessible interfaces/classes in a normal scenario, thus using the
+		// String version,
 		// and we need field level access in them.
 		Stream.of(
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
@@ -88,10 +92,14 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 						MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS,
 						MemberCategory.INTROSPECT_PUBLIC_METHODS));
 
-		// Registering JDK dynamic proxies for these interfaces. Since the Connection interface is protected,
-		// wee need to use the string version of proxy registration. Although the other interfaces are public,
-		// due to ConnectionHandler$Connection being protected forces all of them to be registered using the
-		// string version of the API because all of them need to be registered through a single call.
+		// Registering JDK dynamic proxies for these interfaces. Since the Connection
+		// interface is protected,
+		// wee need to use the string version of proxy registration. Although the other
+		// interfaces are public,
+		// due to ConnectionHandler$Connection being protected forces all of them to be
+		// registered using the
+		// string version of the API because all of them need to be registered through a
+		// single call.
 		hints.proxies().registerJdkProxy(TypeReference.of("org.apache.pulsar.shade.io.netty.util.TimerTask"),
 				TypeReference.of("org.apache.pulsar.client.impl.ConnectionHandler$Connection"),
 				TypeReference.of("org.apache.pulsar.client.api.Producer"),
