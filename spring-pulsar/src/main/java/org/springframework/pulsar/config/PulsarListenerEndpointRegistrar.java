@@ -31,16 +31,20 @@ import org.springframework.util.Assert;
 import org.springframework.validation.Validator;
 
 /**
- * Helper bean for registering {@link PulsarListenerEndpoint} with a
- * {@link PulsarListenerEndpointRegistry}.
+ * Helper bean for registering {@link GenericPulsarListenerEndpoint} with a
+ * {@link GenericPulsarListenerEndpointRegistry}.
  *
  * @author Soby Chacko
+ * @author Christophe Bornet
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, InitializingBean {
+
+	private final Class<? extends GenericPulsarListenerContainerFactory> type;
 
 	private final List<PulsarListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
 
-	private PulsarListenerEndpointRegistry endpointRegistry;
+	private GenericPulsarListenerEndpointRegistry endpointRegistry;
 
 	private List<HandlerMethodArgumentResolver> customMethodArgumentResolvers = new ArrayList<>();
 
@@ -48,7 +52,7 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
-	private PulsarListenerContainerFactory<?> containerFactory;
+	private GenericPulsarListenerContainerFactory<?, ?> containerFactory;
 
 	private String containerFactoryBeanName;
 
@@ -56,12 +60,16 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 	private boolean startImmediately;
 
-	public void setEndpointRegistry(PulsarListenerEndpointRegistry endpointRegistry) {
+	public PulsarListenerEndpointRegistrar(Class<? extends GenericPulsarListenerContainerFactory> type) {
+		this.type = type;
+	}
+
+	public void setEndpointRegistry(GenericPulsarListenerEndpointRegistry endpointRegistry) {
 		this.endpointRegistry = endpointRegistry;
 	}
 
 	@Nullable
-	public PulsarListenerEndpointRegistry getEndpointRegistry() {
+	public GenericPulsarListenerEndpointRegistry getEndpointRegistry() {
 		return this.endpointRegistry;
 	}
 
@@ -83,7 +91,7 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		return this.messageHandlerMethodFactory;
 	}
 
-	public void setContainerFactory(PulsarListenerContainerFactory<?> containerFactory) {
+	public void setContainerFactory(GenericPulsarListenerContainerFactory<?, ?> containerFactory) {
 		this.containerFactory = containerFactory;
 	}
 
@@ -115,14 +123,15 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	protected void registerAllEndpoints() {
 		synchronized (this.endpointDescriptors) {
 			for (PulsarListenerEndpointDescriptor descriptor : this.endpointDescriptors) {
-				this.endpointRegistry.registerListenerContainer(descriptor.endpoint,
-						resolveContainerFactory(descriptor));
+				GenericPulsarListenerContainerFactory<?, ?> factory = resolveContainerFactory(descriptor);
+				this.endpointRegistry.registerListenerContainer(descriptor.endpoint, factory);
 			}
 			this.startImmediately = true; // trigger immediate startup
 		}
 	}
 
-	private PulsarListenerContainerFactory<?> resolveContainerFactory(PulsarListenerEndpointDescriptor descriptor) {
+	private GenericPulsarListenerContainerFactory<?, ?> resolveContainerFactory(
+			PulsarListenerEndpointDescriptor descriptor) {
 		if (descriptor.containerFactory != null) {
 			return descriptor.containerFactory;
 		}
@@ -131,19 +140,19 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		}
 		else if (this.containerFactoryBeanName != null) {
 			Assert.state(this.beanFactory != null, "BeanFactory must be set to obtain container factory by bean name");
-			this.containerFactory = this.beanFactory.getBean(this.containerFactoryBeanName,
-					PulsarListenerContainerFactory.class);
+			this.containerFactory = this.beanFactory.getBean(this.containerFactoryBeanName, this.type);
 			return this.containerFactory; // Consider changing this if live change of the
-											// factory is required
+			// factory is required
 		}
 		else {
 			throw new IllegalStateException(
-					"Could not resolve the " + PulsarListenerContainerFactory.class.getSimpleName() + " to use for ["
-							+ descriptor.endpoint + "] no factory was given and no default is set.");
+					"Could not resolve the " + GenericPulsarListenerContainerFactory.class.getSimpleName()
+							+ " to use for [" + descriptor.endpoint + "] no factory was given and no default is set.");
 		}
 	}
 
-	public void registerEndpoint(PulsarListenerEndpoint endpoint, @Nullable PulsarListenerContainerFactory<?> factory) {
+	public void registerEndpoint(GenericPulsarListenerEndpoint endpoint,
+			@Nullable GenericPulsarListenerContainerFactory<?, ?> factory) {
 		Assert.notNull(endpoint, "Endpoint must be set");
 		Assert.hasText(endpoint.getSubscriptionName(), "Endpoint id must be set");
 		// Factory may be null, we defer the resolution right before actually creating the
@@ -162,12 +171,12 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 	private static final class PulsarListenerEndpointDescriptor {
 
-		private final PulsarListenerEndpoint endpoint;
+		private final GenericPulsarListenerEndpoint endpoint;
 
-		private final PulsarListenerContainerFactory<?> containerFactory;
+		private final GenericPulsarListenerContainerFactory<?, ?> containerFactory;
 
-		private PulsarListenerEndpointDescriptor(PulsarListenerEndpoint endpoint,
-				@Nullable PulsarListenerContainerFactory<?> containerFactory) {
+		private PulsarListenerEndpointDescriptor(GenericPulsarListenerEndpoint endpoint,
+				@Nullable GenericPulsarListenerContainerFactory<?, ?> containerFactory) {
 
 			this.endpoint = endpoint;
 			this.containerFactory = containerFactory;

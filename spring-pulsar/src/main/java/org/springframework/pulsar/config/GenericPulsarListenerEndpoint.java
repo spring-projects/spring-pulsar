@@ -16,49 +16,21 @@
 
 package org.springframework.pulsar.config;
 
-import java.util.Collection;
-import java.util.Properties;
-
-import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.common.schema.SchemaType;
-
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.AckMode;
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
-import org.springframework.pulsar.support.MessageConverter;
 
 /**
  * Model for a Pulsar listener endpoint. Can be used against a
  * {@link org.springframework.pulsar.annotation.PulsarListenerConfigurer} to register
  * endpoints programmatically.
  *
- * @author Soby Chacko
- * @author Alexander Preuß
+ * @author Christophe Bornet
  */
-public interface PulsarListenerEndpoint extends GenericPulsarListenerEndpoint {
+public interface GenericPulsarListenerEndpoint {
 
 	@Nullable
-	SubscriptionType getSubscriptionType();
-
-	Collection<String> getTopics();
-
-	String getTopicPattern();
+	String getId();
 
 	@Nullable
-	Boolean getAutoStartup();
-
-	void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
-			@Nullable MessageConverter messageConverter);
-
-	boolean isBatchListener();
-
-	SchemaType getSchemaType();
-
-	Properties getConsumerProperties();
-
-	@Nullable
-	Integer getConcurrency();
-
-	AckMode getAckMode();
+	String getSubscriptionName();
 
 }

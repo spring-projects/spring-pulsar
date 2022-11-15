@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.config;
+package org.springframework.pulsar.config.reactive;
 
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.pulsar.config.GenericPulsarListenerEndpointRegistry;
+import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 
 /**
- * Creates the necessary {@link PulsarMessageListenerContainer} instances for the
- * registered {@linkplain PulsarListenerEndpoint endpoints}. Also manages the lifecycle of
- * the listener containers, in particular within the lifecycle of the application context.
+ * Creates the necessary {@link ReactivePulsarMessageListenerContainer} instances for the
+ * registered {@linkplain ReactivePulsarListenerEndpoint endpoints}. Also manages the
+ * lifecycle of the listener containers, in particular within the lifecycle of the
+ * application context.
  *
  * <p>
- * Contrary to {@link PulsarMessageListenerContainer}s created manually, listener
+ * Contrary to {@link ReactivePulsarMessageListenerContainer}s created manually, listener
  * containers managed by registry are not beans in the application context and are not
  * candidates for autowiring. Use {@link #getListenerContainers()} if you need to access
  * this registry's listener containers for management purposes. If you need to access to a
  * specific message listener container, use {@link #getListenerContainer(String)} with the
  * id of the endpoint.
  *
- * @author Soby Chacko
+ * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public class PulsarListenerEndpointRegistry
-		extends GenericPulsarListenerEndpointRegistry<PulsarMessageListenerContainer, PulsarListenerEndpoint> {
+public class ReactivePulsarListenerEndpointRegistry<T> extends
+		GenericPulsarListenerEndpointRegistry<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
 
-	public PulsarListenerEndpointRegistry() {
-		super(PulsarMessageListenerContainer.class);
+	public ReactivePulsarListenerEndpointRegistry() {
+		super(ReactivePulsarMessageListenerContainer.class);
 	}
 
 }

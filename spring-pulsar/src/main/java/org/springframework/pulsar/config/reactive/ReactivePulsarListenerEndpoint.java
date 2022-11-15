@@ -14,51 +14,44 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.config;
+package org.springframework.pulsar.config.reactive;
 
-import java.util.Collection;
-import java.util.Properties;
+import java.util.List;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.AckMode;
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.pulsar.config.GenericPulsarListenerEndpoint;
+import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 import org.springframework.pulsar.support.MessageConverter;
 
 /**
- * Model for a Pulsar listener endpoint. Can be used against a
+ * Model for a Pulsar reactive listener endpoint. Can be used against a
  * {@link org.springframework.pulsar.annotation.PulsarListenerConfigurer} to register
  * endpoints programmatically.
  *
- * @author Soby Chacko
- * @author Alexander Preuß
+ * @param <T> Message payload type.
+ * @author Christophe Bornet
  */
-public interface PulsarListenerEndpoint extends GenericPulsarListenerEndpoint {
+public interface ReactivePulsarListenerEndpoint<T> extends GenericPulsarListenerEndpoint {
 
 	@Nullable
 	SubscriptionType getSubscriptionType();
 
-	Collection<String> getTopics();
+	List<String> getTopics();
 
 	String getTopicPattern();
 
 	@Nullable
 	Boolean getAutoStartup();
 
-	void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
+	void setupListenerContainer(ReactivePulsarMessageListenerContainer<T> listenerContainer,
 			@Nullable MessageConverter messageConverter);
-
-	boolean isBatchListener();
 
 	SchemaType getSchemaType();
 
-	Properties getConsumerProperties();
-
 	@Nullable
 	Integer getConcurrency();
-
-	AckMode getAckMode();
 
 }

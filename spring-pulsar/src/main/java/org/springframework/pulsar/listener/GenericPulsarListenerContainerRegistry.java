@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.config;
+package org.springframework.pulsar.listener;
 
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import java.util.Collection;
+import java.util.Set;
+
+import org.springframework.lang.Nullable;
 
 /**
- * Factory for Pulsar message listener containers.
+ * A registry for containers.
  *
- * @param <C> message listener container type.
- * @author Soby Chacko
+ * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public interface PulsarListenerContainerFactory<C extends PulsarMessageListenerContainer>
-		extends GenericPulsarListenerContainerFactory<C, PulsarListenerEndpoint> {
+public interface GenericPulsarListenerContainerRegistry<T> {
+
+	@Nullable
+	T getListenerContainer(String id);
+
+	Set<String> getListenerContainerIds();
+
+	Collection<T> getListenerContainers();
+
+	Collection<T> getAllListenerContainers();
 
 }

@@ -16,16 +16,18 @@
 
 package org.springframework.pulsar.config;
 
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
-
 /**
  * Factory for Pulsar message listener containers.
  *
  * @param <C> message listener container type.
+ * @param <E> listener endpoint type.
  * @author Soby Chacko
  * @author Christophe Bornet
  */
-public interface PulsarListenerContainerFactory<C extends PulsarMessageListenerContainer>
-		extends GenericPulsarListenerContainerFactory<C, PulsarListenerEndpoint> {
+public interface GenericPulsarListenerContainerFactory<C, E extends GenericPulsarListenerEndpoint> {
+
+	C createListenerContainer(E endpoint);
+
+	C createContainer(String... topics);
 
 }

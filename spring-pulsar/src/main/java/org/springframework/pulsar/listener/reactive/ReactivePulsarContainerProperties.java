@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 /**
  * Contains runtime properties for a reactive listener container.
@@ -40,6 +41,8 @@ public class ReactivePulsarContainerProperties<T> {
 	private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
 	private Schema<T> schema;
+
+	private SchemaType schemaType;
 
 	private ReactivePulsarMessageHandler messageHandler;
 
@@ -71,6 +74,14 @@ public class ReactivePulsarContainerProperties<T> {
 
 	public void setSchema(Schema<T> schema) {
 		this.schema = schema;
+	}
+
+	public SchemaType getSchemaType() {
+		return this.schemaType;
+	}
+
+	public void setSchemaType(SchemaType schemaType) {
+		this.schemaType = schemaType;
 	}
 
 	public List<String> getTopics() {

@@ -26,35 +26,32 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.pulsar.config.PulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.listener.AckMode;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerEndpointRegistry;
 
 /**
  * Annotation that marks a method to be the target of a Pulsar message listener on the
  * specified topics.
  *
- * The {@link #containerFactory()} identifies the {@link PulsarListenerContainerFactory}
- * to use to build the Pulsar listener container. If not set, a <em>default</em> container
- * factory is assumed to be available with a bean name of
- * {@code pulsarListenerContainerFactory} unless an explicit default has been provided
- * through configuration.
+ * The {@link #containerFactory()} identifies the
+ * {@link ReactivePulsarListenerContainerFactory} to use to build the Pulsar listener
+ * container. If not set, a <em>default</em> container factory is assumed to be available
+ * with a bean name of {@code pulsarListenerContainerFactory} unless an explicit default
+ * has been provided through configuration.
  *
  * <p>
- * Processing of {@code @PulsarListener} annotations is performed by registering a
- * {@link PulsarListenerAnnotationBeanPostProcessor}. This can be done manually or, more
- * conveniently, through {@link EnablePulsar} annotation.
+ * Processing of {@code @ReactivePulsarListener} annotations is performed by registering a
+ * {@link ReactivePulsarListenerAnnotationBeanPostProcessor}. This can be done manually
+ * or, more conveniently, through {@link EnablePulsar} annotation.
  * </p>
  *
- * @author Soby Chacko
- * @author Chris Bono
- * @author Alexander Preuß
+ * @author Christophe Bornet
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @MessageMapping
 @Documented
-public @interface PulsarListener {
+public @interface ReactivePulsarListener {
 
 	/**
 	 * The unique identifier of the container for this listener.
@@ -63,7 +60,7 @@ public @interface PulsarListener {
 	 * <p>
 	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
 	 * @return the {@code id} for the container managing for this endpoint.
-	 * @see PulsarListenerEndpointRegistry#getListenerContainer(String)
+	 * @see ReactivePulsarListenerEndpointRegistry#getListenerContainer(String)
 	 */
 	String id() default "";
 
@@ -82,8 +79,8 @@ public @interface PulsarListener {
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
-	 * The bean name of the {@link PulsarListenerContainerFactory} to use to create the
-	 * message listener container responsible to serve this endpoint.
+	 * The bean name of the {@link ReactivePulsarListenerContainerFactory} to use to
+	 * create the message listener container responsible to serve this endpoint.
 	 * <p>
 	 * If not specified, the default container factory is used, if any. If a SpEL
 	 * expression is provided ({@code #{...}}), the expression can either evaluate to a
@@ -116,10 +113,10 @@ public @interface PulsarListener {
 	String autoStartup() default "";
 
 	/**
-	 * Activate batch consumption.
-	 * @return whether this listener is in batch mode or not.
+	 * Activate stream consumption.
+	 * @return whether this listener is a streaming one.
 	 */
-	boolean batch() default false;
+	boolean stream() default false;
 
 	/**
 	 * A pseudo bean name used in SpEL expressions within this annotation to reference the
@@ -129,31 +126,6 @@ public @interface PulsarListener {
 	 * @return the pseudo bean name.
 	 */
 	String beanRef() default "__listener";
-
-	/**
-	 * Pulsar consumer properties; they will supersede any properties with the same name
-	 * defined in the consumer factory (if the consumer factory supports property
-	 * overrides).
-	 * <p>
-	 * <b>Supported Syntax</b>
-	 * <p>
-	 * The supported syntax for key-value pairs is the same as the syntax defined for
-	 * entries in a Java {@linkplain java.util.Properties#load(java.io.Reader) properties
-	 * file}:
-	 * <ul>
-	 * <li>{@code key=value}</li>
-	 * <li>{@code key:value}</li>
-	 * <li>{@code key value}</li>
-	 * </ul>
-	 * {@code group.id} and {@code client.id} are ignored.
-	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported. SpEL
-	 * expressions must resolve to a {@link String}, a @{link String[]} or a
-	 * {@code Collection<String>} where each member of the array or collection is a
-	 * property name + value with the above formats.
-	 * @return the properties.
-	 */
-	String[] properties() default {};
 
 	/**
 	 * Override the container factory's {@code concurrency} setting for this listener. May
@@ -167,22 +139,6 @@ public @interface PulsarListener {
 
 	/**
 	 * The bean name or a 'SpEL' expression that resolves to a
-	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
-	 * control the redelivery backoff of messages after a negative ack.
-	 * @return the bean name or empty string to not set the backoff.
-	 */
-	String negativeAckRedeliveryBackoff() default "";
-
-	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
-	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
-	 * control the redelivery backoff of messages after an acknowledgment timeout.
-	 * @return the bean name or empty string to not set the backoff.
-	 */
-	String ackTimeoutRedeliveryBackoff() default "";
-
-	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
 	 * configure a dead letter policy for message redelivery.
 	 * @return the bean name or empty string to not set any dead letter policy.
@@ -190,17 +146,11 @@ public @interface PulsarListener {
 	String deadLetterPolicy() default "";
 
 	/**
-	 * Override the container default ack mode of BATCH.
-	 * @return ack mode used by the listener
-	 */
-	AckMode ackMode() default AckMode.BATCH;
-
-	/**
 	 * The bean name or a 'SpEL' expression that resolves to a
-	 * {@link org.springframework.pulsar.listener.PulsarConsumerErrorHandler} which is
-	 * used as a Spring provided mechanism to handle errors from processing the message.
-	 * @return the bean name for the consumer error handler or an empty string.
+	 * {@link org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCustomizer}
+	 * to use to configure the consumer.
+	 * @return the bean name or empty string to not configure the consumer.
 	 */
-	String pulsarConsumerErrorHandler() default "";
+	String consumerCustomizer() default "";
 
 }
