@@ -29,6 +29,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
+import org.apache.pulsar.reactive.client.adapter.DefaultMessageGroupingFunction;
 import org.apache.pulsar.reactive.client.api.MessageResult;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
@@ -143,6 +144,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		pulsarContainerProperties.setTopics(List.of(topic));
 		pulsarContainerProperties.setSubscriptionName(subscriptionName);
 		pulsarContainerProperties.setConcurrency(5);
+		pulsarContainerProperties.setUseKeyOrderedProcessing(true);
 		pulsarContainerProperties.setMaxInFlight(6);
 		pulsarContainerProperties.setHandlingTimeout(Duration.ofMillis(7));
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
@@ -158,7 +160,8 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 
 		assertThat(container).extracting("pipeline", InstanceOfAssertFactories.type(ReactiveMessagePipeline.class))
 				.hasFieldOrPropertyWithValue("concurrency", 5).hasFieldOrPropertyWithValue("maxInflight", 6)
-				.hasFieldOrPropertyWithValue("handlingTimeout", Duration.ofMillis(7));
+				.hasFieldOrPropertyWithValue("handlingTimeout", Duration.ofMillis(7)).extracting("groupingFunction")
+				.isInstanceOf(DefaultMessageGroupingFunction.class);
 
 		container.stop();
 		pulsarClient.close();
