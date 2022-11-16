@@ -50,8 +50,6 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 
 	private Boolean fluxListener;
 
-	private Integer concurrency;
-
 	public DefaultReactivePulsarListenerContainerFactory(ReactivePulsarConsumerFactory<T> consumerFactory,
 			ReactivePulsarContainerProperties<T> containerProperties) {
 		this.consumerFactory = consumerFactory;
@@ -82,14 +80,7 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 		this.fluxListener = fluxListener;
 	}
 
-	/**
-	 * Specify the container concurrency.
-	 * @param concurrency the number of handlers to create.
-	 */
-	public void setConcurrency(Integer concurrency) {
-		this.concurrency = concurrency;
-	}
-
+	@SuppressWarnings("unchecked")
 	public DefaultReactivePulsarMessageListenerContainer<T> createContainerInstance(
 			ReactivePulsarListenerEndpoint<T> endpoint) {
 
@@ -110,8 +101,27 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 		if (endpoint.getSubscriptionType() != null) {
 			properties.setSubscriptionType(endpoint.getSubscriptionType());
 		}
+		else {
+			properties.setSubscriptionType(this.containerProperties.getSubscriptionType());
+		}
 
-		properties.setSchemaType(endpoint.getSchemaType());
+		if (endpoint.getSchemaType() != null) {
+			properties.setSchemaType(endpoint.getSchemaType());
+		}
+		else {
+			properties.setSchemaType(this.containerProperties.getSchemaType());
+		}
+
+		if (properties.getSchema() == null) {
+			properties.setSchema((Schema<T>) Schema.BYTES);
+		}
+
+		if (endpoint.getConcurrency() != null) {
+			properties.setConcurrency(endpoint.getConcurrency());
+		}
+		else {
+			properties.setConcurrency(this.containerProperties.getConcurrency());
+		}
 
 		return new DefaultReactivePulsarMessageListenerContainer<>(this.getConsumerFactory(), properties);
 	}
@@ -153,16 +163,6 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 	@SuppressWarnings("unchecked")
 	private void initializeContainer(DefaultReactivePulsarMessageListenerContainer<T> instance,
 			ReactivePulsarListenerEndpoint<T> endpoint) {
-		ReactivePulsarContainerProperties<T> instanceProperties = instance.getContainerProperties();
-
-		if (instanceProperties.getSchema() == null) {
-			instanceProperties.setSchema((Schema<T>) Schema.BYTES);
-		}
-
-		if (instanceProperties.getSubscriptionType() == null) {
-			instanceProperties.setSubscriptionType(this.containerProperties.getSubscriptionType());
-		}
-
 		Boolean autoStart = endpoint.getAutoStartup();
 		if (autoStart != null) {
 			instance.setAutoStartup(autoStart);
@@ -171,12 +171,6 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 			instance.setAutoStartup(this.autoStartup);
 		}
 
-		if (endpoint.getConcurrency() != null) {
-			instanceProperties.setConcurrency(endpoint.getConcurrency());
-		}
-		else if (this.concurrency != null) {
-			instanceProperties.setConcurrency(this.concurrency);
-		}
 	}
 
 }
