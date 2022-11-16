@@ -44,7 +44,13 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.pulsar.annotation.EnablePulsar;
+import org.springframework.pulsar.annotation.ReactivePulsarBootstrapConfiguration;
+import org.springframework.pulsar.annotation.ReactivePulsarListenerAnnotationBeanPostProcessor;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
+import org.springframework.pulsar.config.reactive.DefaultReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
@@ -78,11 +84,30 @@ class PulsarReactiveAutoConfigurationTests {
 	}
 
 	@Test
+	void annotationDrivenConfigurationSkippedWhenEnablePulsarAnnotationNotOnClasspath() {
+		this.contextRunner.withClassLoader(new FilteredClassLoader(EnablePulsar.class))
+				.run((context) -> assertThat(context).hasNotFailed()
+						.doesNotHaveBean(PulsarReactiveAnnotationDrivenConfiguration.class));
+	}
+
+	@Test
+	void bootstrapConfigurationSkippedWhenCustomReactivePulsarListenerAnnotationProcessorDefined() {
+		this.contextRunner
+				.withBean("org.springframework.pulsar.config.internalReactivePulsarListenerAnnotationProcessor",
+						String.class, () -> "someFauxBean")
+				.run((context) -> assertThat(context).hasNotFailed()
+						.doesNotHaveBean(ReactivePulsarBootstrapConfiguration.class));
+	}
+
+	@Test
 	void defaultBeansAreAutoConfigured() {
 		this.contextRunner.run((context) -> assertThat(context).hasNotFailed()
 				.hasSingleBean(ReactivePulsarTemplate.class).hasSingleBean(ReactivePulsarClient.class)
 				.hasSingleBean(ProducerCacheProvider.class).hasSingleBean(ReactiveMessageSenderCache.class)
-				.hasSingleBean(ReactivePulsarSenderFactory.class).getBean(ReactivePulsarTemplate.class));
+				.hasSingleBean(ReactivePulsarSenderFactory.class).hasSingleBean(ReactivePulsarTemplate.class)
+				.hasSingleBean(DefaultReactivePulsarListenerContainerFactory.class)
+				.hasSingleBean(ReactivePulsarListenerAnnotationBeanPostProcessor.class)
+				.hasSingleBean(ReactivePulsarListenerEndpointRegistry.class));
 	}
 
 	@ParameterizedTest
@@ -93,6 +118,30 @@ class PulsarReactiveAutoConfigurationTests {
 		T bean = mock(beanClass);
 		this.contextRunner.withBean(beanClass.getName(), beanClass, () -> bean)
 				.run((context) -> assertThat(context).hasNotFailed().getBean(beanClass).isSameAs(bean));
+	}
+
+	@Test
+	void customReactivePulsarListenerContainerFactoryIsRespected() {
+		ReactivePulsarListenerContainerFactory<String> listenerContainerFactory = mock(
+				ReactivePulsarListenerContainerFactory.class);
+		this.contextRunner
+				.withBean("reactivePulsarListenerContainerFactory", ReactivePulsarListenerContainerFactory.class,
+						() -> listenerContainerFactory)
+				.run((context) -> assertThat(context).hasNotFailed()
+						.getBean(ReactivePulsarListenerContainerFactory.class).isSameAs(listenerContainerFactory));
+	}
+
+	@Test
+	void customReactivePulsarListenerAnnotationBeanPostProcessorIsRespected() {
+		ReactivePulsarListenerAnnotationBeanPostProcessor<String> listenerAnnotationBeanPostProcessor = mock(
+				ReactivePulsarListenerAnnotationBeanPostProcessor.class);
+		this.contextRunner
+				.withBean("org.springframework.pulsar.config.internalReactivePulsarListenerAnnotationProcessor",
+						ReactivePulsarListenerAnnotationBeanPostProcessor.class,
+						() -> listenerAnnotationBeanPostProcessor)
+				.run((context) -> assertThat(context).hasNotFailed()
+						.getBean(ReactivePulsarListenerAnnotationBeanPostProcessor.class)
+						.isSameAs(listenerAnnotationBeanPostProcessor));
 	}
 
 	@Test

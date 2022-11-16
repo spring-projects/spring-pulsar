@@ -35,6 +35,7 @@ import org.apache.pulsar.client.api.Range;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageSenderSpec;
@@ -67,6 +68,8 @@ public class PulsarReactiveProperties {
 
 	private final Reader reader = new Reader();
 
+	private final Listener listener = new Listener();
+
 	public Sender getSender() {
 		return this.sender;
 	}
@@ -77,6 +80,10 @@ public class PulsarReactiveProperties {
 
 	public Reader getReader() {
 		return this.reader;
+	}
+
+	public Listener getListener() {
+		return this.listener;
 	}
 
 	public ReactiveMessageSenderSpec buildReactiveMessageSenderSpec() {
@@ -940,6 +947,36 @@ public class PulsarReactiveProperties {
 
 		public void setInitialCapacity(Integer initialCapacity) {
 			this.initialCapacity = initialCapacity;
+		}
+
+	}
+
+	public static class Listener {
+
+		/**
+		 * SchemaType of the consumed messages.
+		 */
+		private SchemaType schemaType;
+
+		/**
+		 * Duration to wait before the message handling times out.
+		 */
+		private Duration handlingTimeout = Duration.ofMinutes(2);
+
+		public SchemaType getSchemaType() {
+			return this.schemaType;
+		}
+
+		public void setSchemaType(SchemaType schemaType) {
+			this.schemaType = schemaType;
+		}
+
+		public Duration getHandlingTimeout() {
+			return this.handlingTimeout;
+		}
+
+		public void setHandlingTimeout(Duration handlingTimeout) {
+			this.handlingTimeout = handlingTimeout;
 		}
 
 	}
