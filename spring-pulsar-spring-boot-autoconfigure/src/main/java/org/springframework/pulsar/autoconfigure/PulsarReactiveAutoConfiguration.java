@@ -31,6 +31,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarReaderFactory;
 import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
@@ -50,6 +51,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 @AutoConfiguration(after = PulsarAutoConfiguration.class)
 @ConditionalOnClass({ ReactivePulsarTemplate.class, ReactivePulsarClient.class })
 @EnableConfigurationProperties(PulsarReactiveProperties.class)
+@Import({ PulsarReactiveAnnotationDrivenConfiguration.class })
 public class PulsarReactiveAutoConfiguration {
 
 	private final PulsarReactiveProperties properties;

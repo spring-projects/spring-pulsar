@@ -79,6 +79,7 @@ public class DocumentConfigurationProperties extends DefaultTask {
 		});
 		snippets.add("application-properties.pulsar-reactive-consumer", "Pulsar Reactive Consumer Properties", (c) -> {
 			c.accept("spring.pulsar.reactive.consumer");
+			c.accept("spring.pulsar.reactive.listener");
 		});
 		snippets.add("application-properties.pulsar-reactive-reader", "Pulsar Reactive Reader Properties", (c) -> {
 			c.accept("spring.pulsar.reactive.reader");
