@@ -16,15 +16,8 @@
 
 package org.springframework.pulsar.config.reactive;
 
-import java.util.List;
-
-import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.common.schema.SchemaType;
-
-import org.springframework.lang.Nullable;
-import org.springframework.pulsar.config.GenericPulsarListenerEndpoint;
+import org.springframework.pulsar.config.ListenerEndpoint;
 import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
-import org.springframework.pulsar.support.MessageConverter;
 
 /**
  * Model for a Pulsar reactive listener endpoint. Can be used against a
@@ -34,24 +27,6 @@ import org.springframework.pulsar.support.MessageConverter;
  * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public interface ReactivePulsarListenerEndpoint<T> extends GenericPulsarListenerEndpoint {
-
-	@Nullable
-	SubscriptionType getSubscriptionType();
-
-	List<String> getTopics();
-
-	String getTopicPattern();
-
-	@Nullable
-	Boolean getAutoStartup();
-
-	void setupListenerContainer(ReactivePulsarMessageListenerContainer<T> listenerContainer,
-			@Nullable MessageConverter messageConverter);
-
-	SchemaType getSchemaType();
-
-	@Nullable
-	Integer getConcurrency();
+public interface ReactivePulsarListenerEndpoint<T> extends ListenerEndpoint<ReactivePulsarMessageListenerContainer<T>> {
 
 }

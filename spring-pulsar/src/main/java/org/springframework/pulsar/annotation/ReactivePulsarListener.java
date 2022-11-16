@@ -76,6 +76,10 @@ public @interface ReactivePulsarListener {
 	 */
 	SubscriptionType subscriptionType() default SubscriptionType.Exclusive;
 
+	/**
+	 * Pulsar schema type for this listener.
+	 * @return the {@code schemaType} for this listener
+	 */
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
@@ -114,7 +118,8 @@ public @interface ReactivePulsarListener {
 
 	/**
 	 * Activate stream consumption.
-	 * @return whether this listener is a streaming one.
+	 * @return if true, the listener method shall take a
+	 * {@link reactor.core.publisher.Flux} as input argument.
 	 */
 	boolean stream() default false;
 

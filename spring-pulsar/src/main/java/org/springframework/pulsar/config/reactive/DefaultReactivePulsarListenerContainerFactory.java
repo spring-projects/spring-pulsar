@@ -36,8 +36,7 @@ import org.springframework.util.StringUtils;
  * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public class DefaultReactivePulsarListenerContainerFactory<T>
-		implements ReactivePulsarListenerContainerFactory<DefaultReactivePulsarMessageListenerContainer<T>, T> {
+public class DefaultReactivePulsarListenerContainerFactory<T> implements ReactivePulsarListenerContainerFactory<T> {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
 

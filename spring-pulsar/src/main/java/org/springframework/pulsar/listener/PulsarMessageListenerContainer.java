@@ -19,27 +19,16 @@ package org.springframework.pulsar.listener;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.context.SmartLifecycle;
-
 /**
  * Internal abstraction used by the framework representing a message listener container.
  * Not meant to be implemented externally.
  *
  * @author Soby Chacko
  */
-public interface PulsarMessageListenerContainer extends SmartLifecycle, DisposableBean {
+public sealed interface PulsarMessageListenerContainer
+		extends MessageListenerContainer permits AbstractPulsarMessageListenerContainer {
 
 	void setupMessageListener(Object messageListener);
-
-	@Override
-	default void destroy() {
-		stop();
-	}
-
-	default void setAutoStartup(boolean autoStartup) {
-		// empty
-	}
 
 	default PulsarContainerProperties getContainerProperties() {
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");

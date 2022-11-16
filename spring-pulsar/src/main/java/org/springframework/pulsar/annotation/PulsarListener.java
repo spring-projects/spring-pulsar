@@ -79,6 +79,10 @@ public @interface PulsarListener {
 	 */
 	SubscriptionType subscriptionType() default SubscriptionType.Exclusive;
 
+	/**
+	 * Pulsar schema type for this listener.
+	 * @return the {@code schemaType} for this listener
+	 */
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**

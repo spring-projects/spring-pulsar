@@ -127,7 +127,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		PulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
+		PulsarListenerContainerFactory pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
 			final ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
 					pulsarConsumerFactory, new PulsarContainerProperties(), null);

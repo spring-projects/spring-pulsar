@@ -36,13 +36,14 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.GenericPulsarListenerContainerRegistry;
+import org.springframework.pulsar.listener.ListenerContainerRegistry;
+import org.springframework.pulsar.listener.MessageListenerContainer;
 import org.springframework.util.Assert;
 
 /**
  * Creates the necessary container instances for the registered
- * {@linkplain GenericPulsarListenerEndpoint endpoints}. Also manages the lifecycle of the
- * listener containers, in particular within the lifecycle of the application context.
+ * {@linkplain ListenerEndpoint endpoints}. Also manages the lifecycle of the listener
+ * containers, in particular within the lifecycle of the application context.
  *
  * <p>
  * Contrary to containers created manually, listener containers managed by registry are
@@ -57,8 +58,8 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  * @author Christophe Bornet
  */
-public class GenericPulsarListenerEndpointRegistry<C extends SmartLifecycle & DisposableBean, E extends GenericPulsarListenerEndpoint>
-		implements GenericPulsarListenerContainerRegistry<C>, DisposableBean, SmartLifecycle, ApplicationContextAware,
+public class ListenerEndpointRegistry<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
+		implements ListenerContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
 		ApplicationListener<ContextRefreshedEvent> {
 
 	private final Class<? extends C> type;
@@ -74,7 +75,7 @@ public class GenericPulsarListenerEndpointRegistry<C extends SmartLifecycle & Di
 	private volatile boolean running;
 
 	@SuppressWarnings("unchecked")
-	protected GenericPulsarListenerEndpointRegistry(Class<?> type) {
+	protected ListenerEndpointRegistry(Class<?> type) {
 		this.type = (Class<? extends C>) type;
 	}
 
@@ -109,11 +110,11 @@ public class GenericPulsarListenerEndpointRegistry<C extends SmartLifecycle & Di
 		return containers;
 	}
 
-	public void registerListenerContainer(E endpoint, GenericPulsarListenerContainerFactory<? extends C, E> factory) {
+	public void registerListenerContainer(E endpoint, ListenerContainerFactory<? extends C, E> factory) {
 		registerListenerContainer(endpoint, factory, false);
 	}
 
-	public void registerListenerContainer(E endpoint, GenericPulsarListenerContainerFactory<? extends C, E> factory,
+	public void registerListenerContainer(E endpoint, ListenerContainerFactory<? extends C, E> factory,
 			boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");
@@ -131,7 +132,7 @@ public class GenericPulsarListenerEndpointRegistry<C extends SmartLifecycle & Di
 		}
 	}
 
-	protected C createListenerContainer(E endpoint, GenericPulsarListenerContainerFactory<? extends C, E> factory) {
+	protected C createListenerContainer(E endpoint, ListenerContainerFactory<? extends C, E> factory) {
 
 		C listenerContainer = factory.createListenerContainer(endpoint);
 

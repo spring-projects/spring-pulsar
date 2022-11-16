@@ -39,7 +39,7 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Soby Chacko
  * @author Alexander Preuß
  */
-public abstract class AbstractPulsarMessageListenerContainer<T> implements PulsarMessageListenerContainer,
+public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> implements PulsarMessageListenerContainer,
 		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());

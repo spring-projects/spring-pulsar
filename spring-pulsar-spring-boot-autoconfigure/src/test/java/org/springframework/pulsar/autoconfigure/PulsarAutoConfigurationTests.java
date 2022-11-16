@@ -48,7 +48,6 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
@@ -156,8 +155,7 @@ class PulsarAutoConfigurationTests {
 
 	@Test
 	void customPulsarListenerContainerFactoryIsRespected() {
-		PulsarListenerContainerFactory<DefaultPulsarMessageListenerContainer<String>> listenerContainerFactory = mock(
-				PulsarListenerContainerFactory.class);
+		PulsarListenerContainerFactory listenerContainerFactory = mock(PulsarListenerContainerFactory.class);
 		this.contextRunner
 				.withBean("pulsarListenerContainerFactory", PulsarListenerContainerFactory.class,
 						() -> listenerContainerFactory)

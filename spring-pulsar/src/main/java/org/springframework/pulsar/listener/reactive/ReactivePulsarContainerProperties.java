@@ -17,7 +17,7 @@
 package org.springframework.pulsar.listener.reactive;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
@@ -32,7 +32,7 @@ import org.apache.pulsar.common.schema.SchemaType;
  */
 public class ReactivePulsarContainerProperties<T> {
 
-	private List<String> topics;
+	private Collection<String> topics;
 
 	private Pattern topicsPattern;
 
@@ -84,11 +84,11 @@ public class ReactivePulsarContainerProperties<T> {
 		this.schemaType = schemaType;
 	}
 
-	public List<String> getTopics() {
+	public Collection<String> getTopics() {
 		return this.topics;
 	}
 
-	public void setTopics(List<String> topics) {
+	public void setTopics(Collection<String> topics) {
 		this.topics = topics;
 	}
 

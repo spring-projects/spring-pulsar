@@ -16,26 +16,24 @@
 
 package org.springframework.pulsar.listener;
 
-import java.util.Collection;
-import java.util.Set;
-
-import org.springframework.lang.Nullable;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.context.SmartLifecycle;
 
 /**
- * A registry for containers.
+ * Internal abstraction used by the framework representing a message listener container.
+ * Not meant to be implemented externally.
  *
- * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public interface GenericPulsarListenerContainerRegistry<T> {
+public interface MessageListenerContainer extends SmartLifecycle, DisposableBean {
 
-	@Nullable
-	T getListenerContainer(String id);
+	@Override
+	default void destroy() {
+		stop();
+	}
 
-	Set<String> getListenerContainerIds();
-
-	Collection<T> getListenerContainers();
-
-	Collection<T> getAllListenerContainers();
+	default void setAutoStartup(boolean autoStartup) {
+		// empty
+	}
 
 }

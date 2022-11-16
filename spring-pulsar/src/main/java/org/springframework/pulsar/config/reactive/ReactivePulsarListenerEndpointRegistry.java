@@ -16,7 +16,7 @@
 
 package org.springframework.pulsar.config.reactive;
 
-import org.springframework.pulsar.config.GenericPulsarListenerEndpointRegistry;
+import org.springframework.pulsar.config.ListenerEndpointRegistry;
 import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 
 /**
@@ -36,8 +36,8 @@ import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListene
  * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public class ReactivePulsarListenerEndpointRegistry<T> extends
-		GenericPulsarListenerEndpointRegistry<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
+public class ReactivePulsarListenerEndpointRegistry<T>
+		extends ListenerEndpointRegistry<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
 
 	public ReactivePulsarListenerEndpointRegistry() {
 		super(ReactivePulsarMessageListenerContainer.class);

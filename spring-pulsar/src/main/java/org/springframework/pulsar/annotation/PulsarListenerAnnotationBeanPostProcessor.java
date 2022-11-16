@@ -290,26 +290,26 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics, topicPattern);
 
 		String containerFactory = resolve(PulsarListener.containerFactory());
-		PulsarListenerContainerFactory<?> listenerContainerFactory = resolveContainerFactory(PulsarListener,
+		PulsarListenerContainerFactory listenerContainerFactory = resolveContainerFactory(PulsarListener,
 				containerFactory, beanName);
 
 		this.registrar.registerEndpoint(endpoint, listenerContainerFactory);
 	}
 
 	@Nullable
-	private PulsarListenerContainerFactory<?> resolveContainerFactory(PulsarListener PulsarListener,
-			Object factoryTarget, String beanName) {
+	private PulsarListenerContainerFactory resolveContainerFactory(PulsarListener PulsarListener, Object factoryTarget,
+			String beanName) {
 
 		String containerFactory = PulsarListener.containerFactory();
 		if (!StringUtils.hasText(containerFactory)) {
 			return null;
 		}
 
-		PulsarListenerContainerFactory<?> factory = null;
+		PulsarListenerContainerFactory factory = null;
 
 		Object resolved = resolveExpression(containerFactory);
 		if (resolved instanceof PulsarListenerContainerFactory) {
-			return (PulsarListenerContainerFactory<?>) resolved;
+			return (PulsarListenerContainerFactory) resolved;
 		}
 		String containerFactoryBeanName = resolveExpressionAsString(containerFactory, "containerFactory");
 		if (StringUtils.hasText(containerFactoryBeanName)) {

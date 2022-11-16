@@ -64,7 +64,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		PulsarListenerEndpoint pulsarListenerEndpoint = mock(PulsarListenerEndpoint.class);
 		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
 
-		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = containerFactory
+		AbstractPulsarMessageListenerContainer<String> concurrentContainer = containerFactory
 				.createListenerContainer(pulsarListenerEndpoint);
 
 		PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();

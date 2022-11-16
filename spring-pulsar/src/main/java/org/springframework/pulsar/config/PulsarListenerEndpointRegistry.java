@@ -35,7 +35,7 @@ import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
  * @author Christophe Bornet
  */
 public class PulsarListenerEndpointRegistry
-		extends GenericPulsarListenerEndpointRegistry<PulsarMessageListenerContainer, PulsarListenerEndpoint> {
+		extends ListenerEndpointRegistry<PulsarMessageListenerContainer, PulsarListenerEndpoint> {
 
 	public PulsarListenerEndpointRegistry() {
 		super(PulsarMessageListenerContainer.class);

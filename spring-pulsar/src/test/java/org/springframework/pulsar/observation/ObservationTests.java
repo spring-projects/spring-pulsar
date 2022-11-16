@@ -202,7 +202,7 @@ public class ObservationTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		PulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
+		PulsarListenerContainerFactory pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory, ObservationRegistry observationRegistry) {
 			PulsarContainerProperties containerProperties = new PulsarContainerProperties();
 			containerProperties.setObservationConvention(new DefaultPulsarListenerObservationConvention() {

@@ -129,7 +129,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		ReactivePulsarListenerContainerFactory<?, String> reactivePulsarListenerContainerFactory(
+		ReactivePulsarListenerContainerFactory<String> reactivePulsarListenerContainerFactory(
 				ReactivePulsarConsumerFactory<String> pulsarConsumerFactory) {
 			return new DefaultReactivePulsarListenerContainerFactory<>(pulsarConsumerFactory,
 					new ReactivePulsarContainerProperties<>());
@@ -158,9 +158,6 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Autowired
 		ReactivePulsarListenerEndpointRegistry<String> registry;
-
-		@Autowired
-		ReactivePulsarConsumerFactory<String> consumerFactory;
 
 		@Test
 		void testPulsarListener() throws Exception {

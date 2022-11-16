@@ -29,7 +29,7 @@ import reactor.core.publisher.Flux;
 /**
  * A {@link ReactivePulsarMessageHandler MessageListener} adapter that invokes a
  * configurable {@link HandlerAdapter}; used when the factory is configured for the
- * listener to receive individual messages.
+ * listener to receive a flux of messages.
  *
  * @param <V> payload type.
  * @author Christophe Bornet

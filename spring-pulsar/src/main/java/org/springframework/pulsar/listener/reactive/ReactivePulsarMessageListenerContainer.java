@@ -16,9 +16,8 @@
 
 package org.springframework.pulsar.listener.reactive;
 
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.context.SmartLifecycle;
 import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCustomizer;
+import org.springframework.pulsar.listener.MessageListenerContainer;
 
 /**
  * Internal abstraction used by the framework representing a reactive message listener
@@ -28,18 +27,9 @@ import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCu
  * @author Christophe Bornet
  */
 public sealed interface ReactivePulsarMessageListenerContainer<T>
-		extends SmartLifecycle, DisposableBean permits DefaultReactivePulsarMessageListenerContainer {
+		extends MessageListenerContainer permits DefaultReactivePulsarMessageListenerContainer {
 
 	void setupMessageHandler(ReactivePulsarMessageHandler messageListener);
-
-	@Override
-	default void destroy() {
-		stop();
-	}
-
-	default void setAutoStartup(boolean autoStartup) {
-		// empty
-	}
 
 	default ReactivePulsarContainerProperties<T> getContainerProperties() {
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");

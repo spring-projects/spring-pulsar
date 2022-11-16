@@ -155,7 +155,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 		}
 
 		@Bean
-		PulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
+		PulsarListenerContainerFactory pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory, ObservationRegistry observationRegistry) {
 			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
 					new PulsarContainerProperties(), observationRegistry);

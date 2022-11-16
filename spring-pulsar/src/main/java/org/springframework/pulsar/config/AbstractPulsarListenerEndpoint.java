@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
@@ -34,7 +33,6 @@ import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
-import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AckMode;
@@ -53,8 +51,6 @@ import org.springframework.util.StringUtils;
  */
 public abstract class AbstractPulsarListenerEndpoint<K>
 		implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
-
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
 	private String subscriptionName;
 

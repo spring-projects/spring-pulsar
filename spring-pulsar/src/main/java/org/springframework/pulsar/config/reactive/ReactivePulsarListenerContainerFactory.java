@@ -16,17 +16,16 @@
 
 package org.springframework.pulsar.config.reactive;
 
-import org.springframework.pulsar.config.GenericPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.ListenerContainerFactory;
 import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 
 /**
  * Factory for Pulsar reactive message listener containers.
  *
- * @param <C> Message listener container type.
  * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public interface ReactivePulsarListenerContainerFactory<C extends ReactivePulsarMessageListenerContainer<T>, T>
-		extends GenericPulsarListenerContainerFactory<C, ReactivePulsarListenerEndpoint<T>> {
+public interface ReactivePulsarListenerContainerFactory<T>
+		extends ListenerContainerFactory<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
 
 }

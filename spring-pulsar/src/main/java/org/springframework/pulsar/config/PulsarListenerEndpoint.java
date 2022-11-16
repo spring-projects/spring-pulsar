@@ -16,16 +16,10 @@
 
 package org.springframework.pulsar.config;
 
-import java.util.Collection;
 import java.util.Properties;
 
-import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.common.schema.SchemaType;
-
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
-import org.springframework.pulsar.support.MessageConverter;
 
 /**
  * Model for a Pulsar listener endpoint. Can be used against a
@@ -35,29 +29,11 @@ import org.springframework.pulsar.support.MessageConverter;
  * @author Soby Chacko
  * @author Alexander Preuß
  */
-public interface PulsarListenerEndpoint extends GenericPulsarListenerEndpoint {
-
-	@Nullable
-	SubscriptionType getSubscriptionType();
-
-	Collection<String> getTopics();
-
-	String getTopicPattern();
-
-	@Nullable
-	Boolean getAutoStartup();
-
-	void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
-			@Nullable MessageConverter messageConverter);
+public interface PulsarListenerEndpoint extends ListenerEndpoint<PulsarMessageListenerContainer> {
 
 	boolean isBatchListener();
 
-	SchemaType getSchemaType();
-
 	Properties getConsumerProperties();
-
-	@Nullable
-	Integer getConcurrency();
 
 	AckMode getAckMode();
 

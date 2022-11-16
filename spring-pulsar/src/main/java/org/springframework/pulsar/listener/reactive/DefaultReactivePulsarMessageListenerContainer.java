@@ -151,7 +151,7 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 				builder.subscriptionName(containerProperties.getSubscriptionName());
 			}
 			if (!CollectionUtils.isEmpty(containerProperties.getTopics())) {
-				builder.topicNames(containerProperties.getTopics());
+				builder.topicNames(new ArrayList<>(containerProperties.getTopics()));
 			}
 			if (containerProperties.getTopicsPattern() != null) {
 				builder.topicsPattern(containerProperties.getTopicsPattern());
