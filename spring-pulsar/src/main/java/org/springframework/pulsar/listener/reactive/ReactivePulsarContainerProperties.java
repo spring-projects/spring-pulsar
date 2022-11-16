@@ -49,6 +49,8 @@ public class ReactivePulsarContainerProperties<T> {
 
 	private int maxInFlight = 0;
 
+	private boolean useKeyOrderedProcessing = false;
+
 	public ReactivePulsarMessageHandler getMessageHandler() {
 		return this.messageHandler;
 	}
@@ -123,6 +125,14 @@ public class ReactivePulsarContainerProperties<T> {
 
 	public void setMaxInFlight(int maxInFlight) {
 		this.maxInFlight = maxInFlight;
+	}
+
+	public boolean isUseKeyOrderedProcessing() {
+		return this.useKeyOrderedProcessing;
+	}
+
+	public void setUseKeyOrderedProcessing(boolean useKeyOrderedProcessing) {
+		this.useKeyOrderedProcessing = useKeyOrderedProcessing;
 	}
 
 }

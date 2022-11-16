@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipeline;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder;
+import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder.ConcurrentOneByOneMessagePipelineBuilder;
 import org.apache.pulsar.reactive.client.internal.api.ApiImplementationFactory;
 
 import org.springframework.core.log.LogAccessor;
@@ -179,8 +180,13 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 					.messageHandler(((ReactivePulsarOneByOneMessageHandler<T>) messageHandler)::received)
 					.handlingTimeout(containerProperties.getHandlingTimeout());
 			if (containerProperties.getConcurrency() > 0) {
-				pipeline = messagePipelineBuilder.concurrent().concurrency(containerProperties.getConcurrency())
-						.maxInflight(containerProperties.getMaxInFlight()).build();
+				ConcurrentOneByOneMessagePipelineBuilder<T> concurrentPipelineBuilder = messagePipelineBuilder
+						.concurrent().concurrency(containerProperties.getConcurrency())
+						.maxInflight(containerProperties.getMaxInFlight());
+				if (containerProperties.isUseKeyOrderedProcessing()) {
+					concurrentPipelineBuilder.useKeyOrderedProcessing();
+				}
+				pipeline = concurrentPipelineBuilder.build();
 			}
 			else {
 				pipeline = pipelineBuilder.build();
