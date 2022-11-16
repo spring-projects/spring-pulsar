@@ -39,7 +39,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarListenerContainerRegistry;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
-import org.springframework.pulsar.support.EndpointHandlerMethod;
 import org.springframework.util.Assert;
 
 /**
@@ -128,17 +127,6 @@ public class PulsarListenerEndpointRegistry implements PulsarListenerContainerRe
 
 	protected PulsarMessageListenerContainer createListenerContainer(PulsarListenerEndpoint endpoint,
 			PulsarListenerContainerFactory<?> factory) {
-
-		if (endpoint instanceof MethodPulsarListenerEndpoint) {
-			MethodPulsarListenerEndpoint<?> mkle = (MethodPulsarListenerEndpoint<?>) endpoint;
-			Object bean = mkle.getBean();
-			if (bean instanceof EndpointHandlerMethod) {
-				EndpointHandlerMethod ehm = (EndpointHandlerMethod) bean;
-				ehm = new EndpointHandlerMethod(ehm.resolveBean(this.applicationContext), ehm.getMethodName());
-				mkle.setBean(ehm.resolveBean(this.applicationContext));
-				mkle.setMethod(ehm.getMethod());
-			}
-		}
 		PulsarMessageListenerContainer listenerContainer = factory.createListenerContainer(endpoint);
 
 		if (listenerContainer instanceof InitializingBean) {
