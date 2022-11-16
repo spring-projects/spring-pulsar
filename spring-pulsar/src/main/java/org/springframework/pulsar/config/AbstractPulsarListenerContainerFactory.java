@@ -43,7 +43,7 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Chris Bono
  */
 public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractPulsarMessageListenerContainer<T>, T>
-		implements PulsarListenerContainerFactory<C>, ApplicationEventPublisherAware, ApplicationContextAware {
+		implements PulsarListenerContainerFactory, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
 

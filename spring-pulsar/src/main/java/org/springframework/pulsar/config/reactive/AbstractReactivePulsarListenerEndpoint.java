@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.config;
+package org.springframework.pulsar.config.reactive;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.List;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -35,22 +34,21 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.AckMode;
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
+import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageHandler;
+import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * Base implementation for {@link PulsarListenerEndpoint}.
+ * Base implementation for {@link ReactivePulsarListenerEndpoint}.
  *
- * @param <K> Message payload type.
- * @author Soby Chacko
- * @author Alexander Preuß
+ * @param <T> Message payload type.
+ * @author Christophe Bornet
  */
-public abstract class AbstractPulsarListenerEndpoint<K>
-		implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
+public abstract class AbstractReactivePulsarListenerEndpoint<T>
+		implements ReactivePulsarListenerEndpoint<T>, BeanFactoryAware, InitializingBean {
 
 	private String subscriptionName;
 
@@ -60,7 +58,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 
 	private String id;
 
-	private final Collection<String> topics = new ArrayList<>();
+	private Collection<String> topics = new ArrayList<>();
 
 	private String topicPattern;
 
@@ -74,13 +72,9 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 
 	private Boolean autoStartup;
 
-	private Properties consumerProperties;
-
-	private Boolean batchListener;
+	private Boolean fluxListener;
 
 	private Integer concurrency;
-
-	private AckMode ackMode;
 
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -142,13 +136,12 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 
 	public void setTopics(String... topics) {
 		Assert.notNull(topics, "'topics' must not be null");
-		this.topics.clear();
-		this.topics.addAll(Arrays.asList(topics));
+		this.topics = Arrays.asList(topics);
 	}
 
 	@Override
-	public Collection<String> getTopics() {
-		return Collections.unmodifiableCollection(this.topics);
+	public List<String> getTopics() {
+		return new ArrayList<>(this.topics);
 	}
 
 	public void setTopicPattern(String topicPattern) {
@@ -172,45 +165,35 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	}
 
 	@Override
-	public void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
+	public void setupListenerContainer(ReactivePulsarMessageListenerContainer<T> listenerContainer,
 			@Nullable MessageConverter messageConverter) {
 
 		setupMessageListener(listenerContainer, messageConverter);
 	}
 
 	@SuppressWarnings("unchecked")
-	private void setupMessageListener(PulsarMessageListenerContainer container,
+	private void setupMessageListener(ReactivePulsarMessageListenerContainer<T> container,
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<K> adapter = createMessageListener(container, messageConverter);
-		Object messageListener = adapter;
-		boolean isBatchListener = isBatchListener();
-		Assert.state(messageListener != null, () -> "Endpoint [" + this + "] must provide a non null message listener");
-		container.setupMessageListener(messageListener);
+		PulsarMessagingMessageListenerAdapter<T> adapter = createMessageHandler(container, messageConverter);
+		Assert.state(adapter != null, () -> "Endpoint [" + this + "] must provide a non null message handler");
+		container.setupMessageHandler((ReactivePulsarMessageHandler) adapter);
 	}
 
-	protected abstract PulsarMessagingMessageListenerAdapter<K> createMessageListener(
-			PulsarMessageListenerContainer container, @Nullable MessageConverter messageConverter);
-
-	public void setConsumerProperties(Properties consumerProperties) {
-		this.consumerProperties = consumerProperties;
-	}
-
-	public Properties getConsumerProperties() {
-		return this.consumerProperties;
-	}
+	protected abstract PulsarMessagingMessageListenerAdapter<T> createMessageHandler(
+			ReactivePulsarMessageListenerContainer<T> container, @Nullable MessageConverter messageConverter);
 
 	@Nullable
-	public Boolean getBatchListener() {
-		return this.batchListener;
+	public Boolean getFluxListener() {
+		return this.fluxListener;
 	}
 
-	public void setBatchListener(boolean batchListener) {
-		this.batchListener = batchListener;
+	public void setFluxListener(boolean fluxListener) {
+		this.fluxListener = fluxListener;
 	}
 
-	public boolean isBatchListener() {
-		return this.batchListener == null ? false : this.batchListener;
+	public boolean isFluxListener() {
+		return this.fluxListener != null && this.fluxListener;
 	}
 
 	public SubscriptionType getSubscriptionType() {
@@ -241,14 +224,6 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	 */
 	public void setConcurrency(Integer concurrency) {
 		this.concurrency = concurrency;
-	}
-
-	public AckMode getAckMode() {
-		return this.ackMode;
-	}
-
-	public void setAckMode(AckMode ackMode) {
-		this.ackMode = ackMode;
 	}
 
 }

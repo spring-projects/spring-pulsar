@@ -39,7 +39,6 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
-import org.apache.pulsar.client.api.RedeliveryBackoff;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -77,25 +76,27 @@ import org.springframework.messaging.handler.annotation.support.DefaultMessageHa
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
-import org.springframework.pulsar.config.MethodPulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
-import org.springframework.pulsar.config.PulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
-import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
+import org.springframework.pulsar.config.reactive.MethodReactivePulsarListenerEndpoint;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerEndpoint;
+import org.springframework.pulsar.config.reactive.ReactivePulsarListenerEndpointRegistry;
+import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.Validator;
 
 /**
- * Bean post-processor that registers methods annotated with {@link PulsarListener} to be
- * invoked by a Pulsar message listener container created under the covers by a
- * {@link PulsarListenerContainerFactory} according to the parameters of the annotation.
+ * Bean post-processor that registers methods annotated with
+ * {@link ReactivePulsarListener} to be invoked by a Pulsar message listener container
+ * created under the covers by a {@link ReactivePulsarListenerContainerFactory} according
+ * to the parameters of the annotation.
  *
  * <p>
- * Annotated methods can use flexible arguments as defined by {@link PulsarListener}.
+ * Annotated methods can use flexible arguments as defined by
+ * {@link ReactivePulsarListener}.
  *
  * <p>
  * This post-processor is automatically registered by the {@link EnablePulsar} annotation.
@@ -107,27 +108,24 @@ import org.springframework.validation.Validator;
  * complete usage details.
  *
  * @param <V> the payload type.
- * @author Soby Chacko
- * @author Chris Bono
- * @author Alexander Preuß
- * @see PulsarListener
+ * @author Christophe Bornet
+ * @see ReactivePulsarListener
  * @see EnablePulsar
  * @see PulsarListenerConfigurer
  * @see PulsarListenerEndpointRegistrar
- * @see PulsarListenerEndpointRegistry
- * @see PulsarListenerEndpoint
- * @see MethodPulsarListenerEndpoint
+ * @see ReactivePulsarListenerEndpointRegistry
+ * @see ReactivePulsarListenerEndpoint
+ * @see MethodReactivePulsarListenerEndpoint
  */
-public class PulsarListenerAnnotationBeanPostProcessor<V>
+public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 		implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
 
 	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
 	/**
-	 * The bean name of the default
-	 * {@link org.springframework.pulsar.config.PulsarListenerContainerFactory}.
+	 * The bean name of the default {@link ReactivePulsarListenerContainerFactory}.
 	 */
-	public static final String DEFAULT_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "pulsarListenerContainerFactory";
+	public static final String DEFAULT_REACTIVE_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "reactivePulsarListenerContainerFactory";
 
 	private static final String THE_LEFT = "The [";
 
@@ -135,7 +133,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 
 	private static final String RIGHT_FOR_LEFT = "] for [";
 
-	private static final String GENERATED_ID_PREFIX = "org.springframework.Pulsar.PulsarListenerEndpointContainer#";
+	private static final String GENERATED_ID_PREFIX = "org.springframework.Pulsar.ReactivePulsarListenerEndpointContainer#";
 
 	private ApplicationContext applicationContext;
 
@@ -145,12 +143,12 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 
 	private BeanExpressionContext expressionContext;
 
-	private PulsarListenerEndpointRegistry endpointRegistry;
+	private ReactivePulsarListenerEndpointRegistry<?> endpointRegistry;
 
-	private String defaultContainerFactoryBeanName = DEFAULT_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME;
+	private String defaultContainerFactoryBeanName = DEFAULT_REACTIVE_PULSAR_LISTENER_CONTAINER_FACTORY_BEAN_NAME;
 
 	private final PulsarListenerEndpointRegistrar registrar = new PulsarListenerEndpointRegistrar(
-			PulsarListenerContainerFactory.class);
+			ReactivePulsarListenerContainerFactory.class);
 
 	private final PulsarHandlerMethodFactoryAdapter messageHandlerMethodFactory = new PulsarHandlerMethodFactoryAdapter();
 
@@ -169,7 +167,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		return LOWEST_PRECEDENCE;
 	}
 
-	public void setEndpointRegistry(PulsarListenerEndpointRegistry endpointRegistry) {
+	public void setEndpointRegistry(ReactivePulsarListenerEndpointRegistry<?> endpointRegistry) {
 		this.endpointRegistry = endpointRegistry;
 	}
 
@@ -214,8 +212,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 				Assert.state(this.beanFactory != null,
 						"BeanFactory must be set to find endpoint registry by bean name");
 				this.endpointRegistry = this.beanFactory.getBean(
-						PulsarListenerBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
-						PulsarListenerEndpointRegistry.class);
+						PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
+						ReactivePulsarListenerEndpointRegistry.class);
 			}
 			this.registrar.setEndpointRegistry(this.endpointRegistry);
 		}
@@ -247,9 +245,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 	public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
 		if (!this.nonAnnotatedClasses.contains(bean.getClass())) {
 			Class<?> targetClass = AopUtils.getTargetClass(bean);
-			Map<Method, Set<PulsarListener>> annotatedMethods = MethodIntrospector.selectMethods(targetClass,
-					(MethodIntrospector.MetadataLookup<Set<PulsarListener>>) method -> {
-						Set<PulsarListener> listenerMethods = findListenerAnnotations(method);
+			Map<Method, Set<ReactivePulsarListener>> annotatedMethods = MethodIntrospector.selectMethods(targetClass,
+					(MethodIntrospector.MetadataLookup<Set<ReactivePulsarListener>>) method -> {
+						Set<ReactivePulsarListener> listenerMethods = findListenerAnnotations(method);
 						return (!listenerMethods.isEmpty() ? listenerMethods : null);
 					});
 			if (annotatedMethods.isEmpty()) {
@@ -258,68 +256,71 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 			}
 			else {
 				// Non-empty set of methods
-				for (Map.Entry<Method, Set<PulsarListener>> entry : annotatedMethods.entrySet()) {
+				for (Map.Entry<Method, Set<ReactivePulsarListener>> entry : annotatedMethods.entrySet()) {
 					Method method = entry.getKey();
-					for (PulsarListener listener : entry.getValue()) {
-						processPulsarListener(listener, method, bean, beanName);
+					for (ReactivePulsarListener listener : entry.getValue()) {
+						processReactivePulsarListener(listener, method, bean, beanName);
 					}
 				}
-				this.logger.debug(() -> annotatedMethods.size() + " @PulsarListener methods processed on bean '"
+				this.logger.debug(() -> annotatedMethods.size() + " @ReactivePulsarListener methods processed on bean '"
 						+ beanName + "': " + annotatedMethods);
 			}
 		}
 		return bean;
 	}
 
-	protected void processPulsarListener(PulsarListener pulsarListener, Method method, Object bean, String beanName) {
+	protected void processReactivePulsarListener(ReactivePulsarListener reactivePulsarListener, Method method,
+			Object bean, String beanName) {
 		Method methodToUse = checkProxy(method, bean);
-		MethodPulsarListenerEndpoint<V> endpoint = new MethodPulsarListenerEndpoint<>();
+		MethodReactivePulsarListenerEndpoint<V> endpoint = new MethodReactivePulsarListenerEndpoint<>();
 		endpoint.setMethod(methodToUse);
 
-		String beanRef = pulsarListener.beanRef();
+		String beanRef = reactivePulsarListener.beanRef();
 		this.listenerScope.addListener(beanRef, bean);
-		String[] topics = resolveTopics(pulsarListener);
-		String topicPattern = getTopicPattern(pulsarListener);
-		processListener(endpoint, pulsarListener, bean, beanName, topics, topicPattern);
+		String[] topics = resolveTopics(reactivePulsarListener);
+		String topicPattern = getTopicPattern(reactivePulsarListener);
+		processListener(endpoint, reactivePulsarListener, bean, beanName, topics, topicPattern);
 		this.listenerScope.removeListener(beanRef);
 	}
 
-	protected void processListener(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener PulsarListener, Object bean,
-			String beanName, String[] topics, String topicPattern) {
+	protected void processListener(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener ReactivePulsarListener, Object bean, String beanName, String[] topics,
+			String topicPattern) {
 
-		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics, topicPattern);
+		processReactivePulsarListenerAnnotation(endpoint, ReactivePulsarListener, bean, topics, topicPattern);
 
-		String containerFactory = resolve(PulsarListener.containerFactory());
-		PulsarListenerContainerFactory listenerContainerFactory = resolveContainerFactory(PulsarListener,
-				containerFactory, beanName);
+		String containerFactory = resolve(ReactivePulsarListener.containerFactory());
+		ReactivePulsarListenerContainerFactory<?> listenerContainerFactory = resolveContainerFactory(
+				ReactivePulsarListener, containerFactory, beanName);
 
 		this.registrar.registerEndpoint(endpoint, listenerContainerFactory);
 	}
 
 	@Nullable
-	private PulsarListenerContainerFactory resolveContainerFactory(PulsarListener PulsarListener, Object factoryTarget,
-			String beanName) {
+	private ReactivePulsarListenerContainerFactory<?> resolveContainerFactory(
+			ReactivePulsarListener ReactivePulsarListener, Object factoryTarget, String beanName) {
 
-		String containerFactory = PulsarListener.containerFactory();
+		String containerFactory = ReactivePulsarListener.containerFactory();
 		if (!StringUtils.hasText(containerFactory)) {
 			return null;
 		}
 
-		PulsarListenerContainerFactory factory = null;
+		ReactivePulsarListenerContainerFactory<?> factory = null;
 
 		Object resolved = resolveExpression(containerFactory);
-		if (resolved instanceof PulsarListenerContainerFactory) {
-			return (PulsarListenerContainerFactory) resolved;
+		if (resolved instanceof ReactivePulsarListenerContainerFactory) {
+			return (ReactivePulsarListenerContainerFactory<?>) resolved;
 		}
 		String containerFactoryBeanName = resolveExpressionAsString(containerFactory, "containerFactory");
 		if (StringUtils.hasText(containerFactoryBeanName)) {
 			assertBeanFactory();
 			try {
-				factory = this.beanFactory.getBean(containerFactoryBeanName, PulsarListenerContainerFactory.class);
+				factory = this.beanFactory.getBean(containerFactoryBeanName,
+						ReactivePulsarListenerContainerFactory.class);
 			}
 			catch (NoSuchBeanDefinitionException ex) {
 				throw new BeanInitializationException(noBeanFoundMessage(factoryTarget, beanName,
-						containerFactoryBeanName, PulsarListenerContainerFactory.class), ex);
+						containerFactoryBeanName, ReactivePulsarListenerContainerFactory.class), ex);
 			}
 		}
 		return factory;
@@ -337,98 +338,63 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 				+ "' was found in the application context";
 	}
 
-	private void processPulsarListenerAnnotation(MethodPulsarListenerEndpoint<?> endpoint,
-			PulsarListener pulsarListener, Object bean, String[] topics, String topicPattern) {
+	private void processReactivePulsarListenerAnnotation(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener reactivePulsarListener, Object bean, String[] topics, String topicPattern) {
 
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
-		endpoint.setSubscriptionName(getEndpointSubscriptionName(pulsarListener));
-		endpoint.setId(getEndpointId(pulsarListener));
+		endpoint.setSubscriptionName(getEndpointSubscriptionName(reactivePulsarListener));
+		endpoint.setId(getEndpointId(reactivePulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
-		endpoint.setSubscriptionType(pulsarListener.subscriptionType());
-		endpoint.setSchemaType(pulsarListener.schemaType());
-		endpoint.setAckMode(pulsarListener.ackMode());
+		endpoint.setSubscriptionType(reactivePulsarListener.subscriptionType());
+		endpoint.setSchemaType(reactivePulsarListener.schemaType());
 
-		String concurrency = pulsarListener.concurrency();
+		String concurrency = reactivePulsarListener.concurrency();
 		if (StringUtils.hasText(concurrency)) {
 			endpoint.setConcurrency(resolveExpressionAsInteger(concurrency, "concurrency"));
 		}
 
-		String autoStartup = pulsarListener.autoStartup();
+		String autoStartup = reactivePulsarListener.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
 		}
-		resolvePulsarProperties(endpoint, pulsarListener.properties());
-		endpoint.setBatchListener(pulsarListener.batch());
+		endpoint.setFluxListener(reactivePulsarListener.stream());
 		endpoint.setBeanFactory(this.beanFactory);
 
-		resolveNegativeAckRedeliveryBackoff(endpoint, pulsarListener);
-		resolveAckTimeoutRedeliveryBackoff(endpoint, pulsarListener);
-		resolveDeadLetterPolicy(endpoint, pulsarListener);
-		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
+		resolveDeadLetterPolicy(endpoint, reactivePulsarListener);
+		resolveConsumerCustomizer(endpoint, reactivePulsarListener);
 	}
 
-	@SuppressWarnings({ "rawtypes" })
-	private void resolvePulsarConsumerErrorHandler(MethodPulsarListenerEndpoint<?> endpoint,
-			PulsarListener pulsarListener) {
-		Object pulsarConsumerErrorHandler = resolveExpression(pulsarListener.pulsarConsumerErrorHandler());
-		if (pulsarConsumerErrorHandler instanceof PulsarConsumerErrorHandler) {
-			endpoint.setPulsarConsumerErrorHandler((PulsarConsumerErrorHandler) pulsarConsumerErrorHandler);
-		}
-		else {
-			String pulsarConsumerErrorHandlerBeanName = resolveExpressionAsString(
-					pulsarListener.pulsarConsumerErrorHandler(), "pulsarConsumerErrorHandler");
-			if (StringUtils.hasText(pulsarConsumerErrorHandlerBeanName)) {
-				endpoint.setPulsarConsumerErrorHandler(
-						this.beanFactory.getBean(pulsarConsumerErrorHandlerBeanName, PulsarConsumerErrorHandler.class));
-			}
-		}
-	}
-
-	private void resolveNegativeAckRedeliveryBackoff(MethodPulsarListenerEndpoint<?> endpoint,
-			PulsarListener pulsarListener) {
-		Object negativeAckRedeliveryBackoff = resolveExpression(pulsarListener.negativeAckRedeliveryBackoff());
-		if (negativeAckRedeliveryBackoff instanceof RedeliveryBackoff) {
-			endpoint.setNegativeAckRedeliveryBackoff((RedeliveryBackoff) negativeAckRedeliveryBackoff);
-		}
-		else {
-			String negativeAckRedeliveryBackoffBeanName = resolveExpressionAsString(
-					pulsarListener.negativeAckRedeliveryBackoff(), "negativeAckRedeliveryBackoff");
-			if (StringUtils.hasText(negativeAckRedeliveryBackoffBeanName)) {
-				endpoint.setNegativeAckRedeliveryBackoff(
-						this.beanFactory.getBean(negativeAckRedeliveryBackoffBeanName, RedeliveryBackoff.class));
-			}
-		}
-	}
-
-	private void resolveAckTimeoutRedeliveryBackoff(MethodPulsarListenerEndpoint<?> endpoint,
-			PulsarListener pulsarListener) {
-		Object ackTimeoutRedeliveryBackoff = resolveExpression(pulsarListener.ackTimeoutRedeliveryBackoff());
-		if (ackTimeoutRedeliveryBackoff instanceof RedeliveryBackoff) {
-			endpoint.setAckTimeoutRedeliveryBackoff((RedeliveryBackoff) ackTimeoutRedeliveryBackoff);
-		}
-		else {
-			String ackTimeoutRedeliveryBackoffBeanName = resolveExpressionAsString(
-					pulsarListener.ackTimeoutRedeliveryBackoff(), "ackTimeoutRedeliveryBackoff");
-			if (StringUtils.hasText(ackTimeoutRedeliveryBackoffBeanName)) {
-				endpoint.setAckTimeoutRedeliveryBackoff(
-						this.beanFactory.getBean(ackTimeoutRedeliveryBackoffBeanName, RedeliveryBackoff.class));
-			}
-		}
-	}
-
-	private void resolveDeadLetterPolicy(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
-		Object deadLetterPolicy = resolveExpression(pulsarListener.deadLetterPolicy());
+	private void resolveDeadLetterPolicy(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener reactivePulsarListener) {
+		Object deadLetterPolicy = resolveExpression(reactivePulsarListener.deadLetterPolicy());
 		if (deadLetterPolicy instanceof DeadLetterPolicy) {
 			endpoint.setDeadLetterPolicy((DeadLetterPolicy) deadLetterPolicy);
 		}
 		else {
-			String deadLetterPolicyBeanName = resolveExpressionAsString(pulsarListener.deadLetterPolicy(),
+			String deadLetterPolicyBeanName = resolveExpressionAsString(reactivePulsarListener.deadLetterPolicy(),
 					"deadLetterPolicy");
 			if (StringUtils.hasText(deadLetterPolicyBeanName)) {
 				endpoint.setDeadLetterPolicy(
 						this.beanFactory.getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class));
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void resolveConsumerCustomizer(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener reactivePulsarListener) {
+		Object customizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
+		if (customizer instanceof ReactiveMessageConsumerBuilderCustomizer<?>) {
+			endpoint.setConsumerCustomizer((ReactiveMessageConsumerBuilderCustomizer) customizer);
+		}
+		else {
+			String consumerCustomizerBeanName = resolveExpressionAsString(reactivePulsarListener.consumerCustomizer(),
+					"consumerCustomizer");
+			if (StringUtils.hasText(consumerCustomizerBeanName)) {
+				endpoint.setConsumerCustomizer(this.beanFactory.getBean(consumerCustomizerBeanName,
+						ReactiveMessageConsumerBuilderCustomizer.class));
 			}
 		}
 	}
@@ -467,36 +433,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	private void resolvePulsarProperties(MethodPulsarListenerEndpoint<?> endpoint, String[] propertyStrings) {
-		if (propertyStrings.length > 0) {
-			Properties properties = new Properties();
-			for (String property : propertyStrings) {
-				Object value = resolveExpression(property);
-				if (value instanceof String) {
-					loadProperty(properties, property, value);
-				}
-				else if (value instanceof String[]) {
-					for (String prop : (String[]) value) {
-						loadProperty(properties, prop, prop);
-					}
-				}
-				else if (value instanceof Collection<?> values) {
-					if (values.size() > 0 && values.iterator().next() instanceof String) {
-						for (String prop : (Collection<String>) value) {
-							loadProperty(properties, prop, prop);
-						}
-					}
-				}
-				else {
-					throw new IllegalStateException(
-							"'properties' must resolve to a String, a String[] or " + "Collection<String>");
-				}
-			}
-			endpoint.setConsumerProperties(properties);
-		}
-	}
-
 	private void loadProperty(Properties properties, String property, Object value) {
 		try {
 			properties.load(new StringReader((String) value));
@@ -506,22 +442,22 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		}
 	}
 
-	private String getEndpointSubscriptionName(PulsarListener pulsarListener) {
-		if (StringUtils.hasText(pulsarListener.subscriptionName())) {
-			return resolveExpressionAsString(pulsarListener.subscriptionName(), "subscriptionName");
+	private String getEndpointSubscriptionName(ReactivePulsarListener reactivePulsarListener) {
+		if (StringUtils.hasText(reactivePulsarListener.subscriptionName())) {
+			return resolveExpressionAsString(reactivePulsarListener.subscriptionName(), "subscriptionName");
 		}
 		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
-	private String getEndpointId(PulsarListener pulsarListener) {
-		if (StringUtils.hasText(pulsarListener.id())) {
-			return resolveExpressionAsString(pulsarListener.id(), "id");
+	private String getEndpointId(ReactivePulsarListener reactivePulsarListener) {
+		if (StringUtils.hasText(reactivePulsarListener.id())) {
+			return resolveExpressionAsString(reactivePulsarListener.id(), "id");
 		}
 		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
-	private String getTopicPattern(PulsarListener pulsarListener) {
-		return resolveExpressionAsString(pulsarListener.topicPattern(), "topicPattern");
+	private String getTopicPattern(ReactivePulsarListener reactivePulsarListener) {
+		return resolveExpressionAsString(reactivePulsarListener.topicPattern(), "topicPattern");
 	}
 
 	private String resolveExpressionAsString(String value, String attribute) {
@@ -536,8 +472,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		return null;
 	}
 
-	private String[] resolveTopics(PulsarListener PulsarListener) {
-		String[] topics = PulsarListener.topics();
+	private String[] resolveTopics(ReactivePulsarListener ReactivePulsarListener) {
+		String[] topics = ReactivePulsarListener.topics();
 		List<String> result = new ArrayList<>();
 		if (topics.length > 0) {
 			for (String topic1 : topics) {
@@ -576,7 +512,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		}
 		else {
 			throw new IllegalArgumentException(
-					String.format("@PulsarListener can't resolve '%s' as a String", resolvedValue));
+					String.format("@ReactivePulsarListener can't resolve '%s' as a String", resolvedValue));
 		}
 	}
 
@@ -584,7 +520,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		Method method = methodArg;
 		if (AopUtils.isJdkDynamicProxy(bean)) {
 			try {
-				// Found a @PulsarListener method on the target class for this JDK proxy
+				// Found a @ReactivePulsarListener method on the target class for this JDK
+				// proxy
 				// ->
 				// is it also present on the proxy itself?
 				method = bean.getClass().getMethod(method.getName(), method.getParameterTypes());
@@ -604,7 +541,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 			}
 			catch (NoSuchMethodException ex) {
 				throw new IllegalStateException(String.format(
-						"@PulsarListener method '%s' found on bean target class '%s', "
+						"@ReactivePulsarListener method '%s' found on bean target class '%s', "
 								+ "but not found in any interface(s) for bean JDK proxy. Either "
 								+ "pull the method up to an interface or switch to subclass (CGLIB) "
 								+ "proxies by setting proxy-target-class/proxyTargetClass " + "attribute to 'true'",
@@ -614,40 +551,41 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		return method;
 	}
 
-	private Collection<PulsarListener> findListenerAnnotations(Class<?> clazz) {
-		Set<PulsarListener> listeners = new HashSet<>();
-		PulsarListener ann = AnnotatedElementUtils.findMergedAnnotation(clazz, PulsarListener.class);
+	private Collection<ReactivePulsarListener> findListenerAnnotations(Class<?> clazz) {
+		Set<ReactivePulsarListener> listeners = new HashSet<>();
+		ReactivePulsarListener ann = AnnotatedElementUtils.findMergedAnnotation(clazz, ReactivePulsarListener.class);
 		if (ann != null) {
 			ann = enhance(clazz, ann);
 			listeners.add(ann);
 		}
-		PulsarListeners anns = AnnotationUtils.findAnnotation(clazz, PulsarListeners.class);
+		ReactivePulsarListeners anns = AnnotationUtils.findAnnotation(clazz, ReactivePulsarListeners.class);
 		if (anns != null) {
 			listeners.addAll(Arrays.stream(anns.value()).map(anno -> enhance(clazz, anno)).toList());
 		}
 		return listeners;
 	}
 
-	private Set<PulsarListener> findListenerAnnotations(Method method) {
-		Set<PulsarListener> listeners = new HashSet<>();
-		PulsarListener ann = AnnotatedElementUtils.findMergedAnnotation(method, PulsarListener.class);
+	private Set<ReactivePulsarListener> findListenerAnnotations(Method method) {
+		Set<ReactivePulsarListener> listeners = new HashSet<>();
+		ReactivePulsarListener ann = AnnotatedElementUtils.findMergedAnnotation(method, ReactivePulsarListener.class);
 		if (ann != null) {
 			ann = enhance(method, ann);
 			listeners.add(ann);
 		}
-		PulsarListeners anns = AnnotationUtils.findAnnotation(method, PulsarListeners.class);
+		ReactivePulsarListeners anns = AnnotationUtils.findAnnotation(method, ReactivePulsarListeners.class);
 		if (anns != null) {
 			listeners.addAll(Arrays.stream(anns.value()).map(anno -> enhance(method, anno)).toList());
 		}
 		return listeners;
 	}
 
-	private PulsarListener enhance(AnnotatedElement element, PulsarListener ann) {
+	private ReactivePulsarListener enhance(AnnotatedElement element, ReactivePulsarListener ann) {
 		if (this.enhancer == null) {
 			return ann;
 		}
 		return AnnotationUtils.synthesizeAnnotation(
-				this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarListener.class, null);
+				this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element),
+				ReactivePulsarListener.class, null);
 	}
 
 	private void addFormatters(FormatterRegistry registry) {
@@ -700,13 +638,13 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 
 		private MessageHandlerMethodFactory createDefaultMessageHandlerMethodFactory() {
 			DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
-			Validator validator = PulsarListenerAnnotationBeanPostProcessor.this.registrar.getValidator();
+			Validator validator = ReactivePulsarListenerAnnotationBeanPostProcessor.this.registrar.getValidator();
 			if (validator != null) {
 				defaultFactory.setValidator(validator);
 			}
-			defaultFactory.setBeanFactory(PulsarListenerAnnotationBeanPostProcessor.this.beanFactory);
-			this.defaultFormattingConversionService
-					.addConverter(new BytesToStringConverter(PulsarListenerAnnotationBeanPostProcessor.this.charset));
+			defaultFactory.setBeanFactory(ReactivePulsarListenerAnnotationBeanPostProcessor.this.beanFactory);
+			this.defaultFormattingConversionService.addConverter(
+					new BytesToStringConverter(ReactivePulsarListenerAnnotationBeanPostProcessor.this.charset));
 			this.defaultFormattingConversionService.addConverter(new BytesToNumberConverter());
 			defaultFactory.setConversionService(this.defaultFormattingConversionService);
 			GenericMessageConverter messageConverter = new GenericMessageConverter(
@@ -714,7 +652,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 			defaultFactory.setMessageConverter(messageConverter);
 
 			List<HandlerMethodArgumentResolver> customArgumentsResolver = new ArrayList<>(
-					PulsarListenerAnnotationBeanPostProcessor.this.registrar.getCustomMethodArgumentResolvers());
+					ReactivePulsarListenerAnnotationBeanPostProcessor.this.registrar
+							.getCustomMethodArgumentResolvers());
 			// Has to be at the end - look at PayloadMethodArgumentResolver documentation
 			// customArgumentsResolver.add(new
 			// PulsarNullAwarePayloadArgumentResolver(messageConverter, validator));

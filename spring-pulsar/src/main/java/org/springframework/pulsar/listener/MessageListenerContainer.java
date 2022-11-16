@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.config;
+package org.springframework.pulsar.listener;
 
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.context.SmartLifecycle;
 
 /**
- * Factory for Pulsar message listener containers.
+ * Internal abstraction used by the framework representing a message listener container.
+ * Not meant to be implemented externally.
  *
- * @author Soby Chacko
  * @author Christophe Bornet
  */
-public interface PulsarListenerContainerFactory
-		extends ListenerContainerFactory<PulsarMessageListenerContainer, PulsarListenerEndpoint> {
+public interface MessageListenerContainer extends SmartLifecycle, DisposableBean {
+
+	@Override
+	default void destroy() {
+		stop();
+	}
+
+	default void setAutoStartup(boolean autoStartup) {
+		// empty
+	}
 
 }

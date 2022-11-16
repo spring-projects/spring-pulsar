@@ -44,12 +44,15 @@ import org.springframework.pulsar.support.converter.PulsarMessagingMessageConver
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
 
+import reactor.core.publisher.Flux;
+
 /**
  * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter providing the
  * necessary infrastructure to extract the payload from a Pulsar message.
  *
  * @param <V> payload type.
  * @author Soby Chacko
+ * @author Christophe Bornet
  */
 public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
@@ -72,6 +75,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 	private boolean isPulsarMessageList;
 
 	private boolean isSpringMessageList;
+
+	private boolean isSpringMessageFlux;
 
 	private boolean isSpringMessage;
 
@@ -130,6 +135,10 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		return this.isSpringMessageList;
 	}
 
+	protected boolean isSpringMessageFlux() {
+		return this.isSpringMessageFlux;
+	}
+
 	protected org.springframework.messaging.Message<?> toMessagingMessage(Message<V> record, Consumer<V> consumer) {
 		return getMessageConverter().toMessage(record, consumer, getType());
 	}
@@ -167,7 +176,8 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 			else if (parameterIsType(parameterType, Message.class)) {
 				pulsarMessageFound = true;
 			}
-			else if (parameterIsType(parameterType, List.class) || parameterIsType(parameterType, Messages.class)) {
+			else if (parameterIsType(parameterType, List.class) || parameterIsType(parameterType, Messages.class)
+					|| parameterIsType(parameterType, Flux.class)) {
 				collectionFound = true;
 			}
 		}
@@ -224,6 +234,18 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 				if (!this.isSpringMessageList && !this.isPulsarMessageList && !isHeaderFound()) {
 					this.simpleExtraction = true;
+				}
+			}
+			else if (parameterizedType.getRawType().equals(Flux.class)
+					&& parameterizedType.getActualTypeArguments().length == 1) {
+
+				Type paramType = parameterizedType.getActualTypeArguments()[0];
+				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
+						.getRawType().equals(org.springframework.messaging.Message.class);
+				this.isSpringMessageFlux = paramType.equals(org.springframework.messaging.Message.class)
+						|| messageHasGeneric;
+				if (messageHasGeneric) {
+					genericParameterType = ((ParameterizedType) paramType).getActualTypeArguments()[0];
 				}
 			}
 			else {

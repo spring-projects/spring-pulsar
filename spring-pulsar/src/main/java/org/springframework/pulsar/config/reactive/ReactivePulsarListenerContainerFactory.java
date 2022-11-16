@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.config;
+package org.springframework.pulsar.config.reactive;
 
-import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.pulsar.config.ListenerContainerFactory;
+import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 
 /**
- * Factory for Pulsar message listener containers.
+ * Factory for Pulsar reactive message listener containers.
  *
- * @author Soby Chacko
+ * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public interface PulsarListenerContainerFactory
-		extends ListenerContainerFactory<PulsarMessageListenerContainer, PulsarListenerEndpoint> {
+public interface ReactivePulsarListenerContainerFactory<T>
+		extends ListenerContainerFactory<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
 
 }
