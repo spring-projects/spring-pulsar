@@ -55,6 +55,7 @@ public class PulsarReactiveAnnotationDrivenConfiguration {
 		PulsarReactiveProperties.Listener listenerProperties = this.properties.getListener();
 		map.from(listenerProperties::getSchemaType).to(containerProperties::setSchemaType);
 		map.from(listenerProperties::getHandlingTimeout).to(containerProperties::setHandlingTimeout);
+		map.from(listenerProperties::getUseKeyOrderedProcessing).to(containerProperties::setUseKeyOrderedProcessing);
 
 		return new DefaultReactivePulsarListenerContainerFactory<>(consumerFactoryProvider.getIfAvailable(),
 				containerProperties);

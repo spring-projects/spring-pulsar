@@ -963,6 +963,12 @@ public class PulsarReactiveProperties {
 		 */
 		private Duration handlingTimeout = Duration.ofMinutes(2);
 
+		/**
+		 * Whether per-key message ordering should be maintained when concurrent
+		 * processing is used.
+		 */
+		private Boolean useKeyOrderedProcessing = false;
+
 		public SchemaType getSchemaType() {
 			return this.schemaType;
 		}
@@ -977,6 +983,14 @@ public class PulsarReactiveProperties {
 
 		public void setHandlingTimeout(Duration handlingTimeout) {
 			this.handlingTimeout = handlingTimeout;
+		}
+
+		public Boolean getUseKeyOrderedProcessing() {
+			return this.useKeyOrderedProcessing;
+		}
+
+		public void setUseKeyOrderedProcessing(Boolean useKeyOrderedProcessing) {
+			this.useKeyOrderedProcessing = useKeyOrderedProcessing;
 		}
 
 	}
