@@ -354,6 +354,15 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 		if (StringUtils.hasText(concurrency)) {
 			endpoint.setConcurrency(resolveExpressionAsInteger(concurrency, "concurrency"));
 		}
+		String maxInFlight = reactivePulsarListener.maxInFlight();
+		if (StringUtils.hasText(maxInFlight)) {
+			endpoint.setMaxInFlight(resolveExpressionAsInteger(maxInFlight, "maxInFlight"));
+		}
+		String useKeyOrderedProcessing = reactivePulsarListener.useKeyOrderedProcessing();
+		if (StringUtils.hasText(useKeyOrderedProcessing)) {
+			endpoint.setUseKeyOrderedProcessing(
+					resolveExpressionAsBoolean(useKeyOrderedProcessing, "useKeyOrderedProcessing"));
+		}
 
 		String autoStartup = reactivePulsarListener.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {
