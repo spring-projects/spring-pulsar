@@ -95,7 +95,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	@Override
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
-		final String topicName = ProducerUtils.resolveTopicName(topic, this);
+		String topicName = ProducerUtils.resolveTopicName(topic, this);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName,
 				encryptionKeys == null ? null : new HashSet<>(encryptionKeys), customizers);
 		return this.producerCache.get(producerCacheKey,

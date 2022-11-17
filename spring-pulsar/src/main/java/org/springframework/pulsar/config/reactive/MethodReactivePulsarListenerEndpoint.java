@@ -114,7 +114,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
 		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
-		final HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
+		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
 		// Since we have access to the handler method here, check if we can type infer the
@@ -122,14 +122,14 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
-		final MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
+		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
 		MethodParameter messageParameter = null;
-		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
+		Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
 						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
 						|| !methodParameter1.hasParameterAnnotation(Header.class))
 				.findFirst();
-		final long count = Arrays.stream(methodParameters)
+		long count = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
 						&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
 						&& !methodParameter1.hasParameterAnnotation(Header.class))
@@ -139,10 +139,9 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 			messageParameter = parameter.get();
 		}
 
-		final DefaultReactivePulsarMessageListenerContainer<?> containerInstance = (DefaultReactivePulsarMessageListenerContainer<?>) container;
-		final ReactivePulsarContainerProperties<?> pulsarContainerProperties = containerInstance
-				.getContainerProperties();
-		final SchemaType schemaType = pulsarContainerProperties.getSchemaType();
+		DefaultReactivePulsarMessageListenerContainer<?> containerInstance = (DefaultReactivePulsarMessageListenerContainer<?>) container;
+		ReactivePulsarContainerProperties<?> pulsarContainerProperties = containerInstance.getContainerProperties();
+		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		if (schemaType != SchemaType.NONE) {
 			switch (schemaType) {
 				case STRING -> pulsarContainerProperties.setSchema((Schema) Schema.STRING);
@@ -188,7 +187,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 				}
 			}
 		}
-		final SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
+		SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
 		pulsarContainerProperties.setSchemaType(type);
 
 		ReactiveMessageConsumerBuilderCustomizer<V> customizer1 = b -> b.deadLetterPolicy(this.deadLetterPolicy);
@@ -204,7 +203,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	private Schema<?> getMessageSchema(MethodParameter messageParameter, Function<Class<?>, Schema<?>> schemaFactory) {
 		ResolvableType messageType = resolvableType(messageParameter);
-		final Class<?> messageClass = messageType.getRawClass();
+		Class<?> messageClass = messageType.getRawClass();
 		return schemaFactory.apply(messageClass);
 	}
 
@@ -219,7 +218,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	private ResolvableType resolvableType(MethodParameter methodParameter) {
 		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
-		final Class<?> rawClass = resolvableType.getRawClass();
+		Class<?> rawClass = resolvableType.getRawClass();
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}

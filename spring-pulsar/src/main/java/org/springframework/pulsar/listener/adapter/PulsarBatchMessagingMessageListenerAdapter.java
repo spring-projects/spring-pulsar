@@ -79,7 +79,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		else if (isPulsarMessageList() && isHeaderFound()) { // List<PulsarMessage>,
 																// @Header
 			List<Message<?>> messages = toSpringMessages(consumer, msg);
-			final Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
+			Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
 			List<Object> list1 = new ArrayList<>(msg);
 			message = MessageBuilder.withPayload(list1).copyHeaders(aggregatedHeaders).build();
 		}
@@ -89,7 +89,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		}
 		else if (isMessageList() && isHeaderFound()) { // List<SpringMessage>, @Header
 			List<Message<?>> messages = toSpringMessages(consumer, msg);
-			final Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
+			Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
 			message = MessageBuilder.withPayload(messages).copyHeaders(aggregatedHeaders).build();
 		}
 		else if (this.isSimpleExtraction()) { // List<Object>
@@ -99,7 +99,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		}
 		else if (isHeaderFound()) { // List<Object>, @Header
 			List<Message<?>> messages = toSpringMessages(consumer, msg);
-			final Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
+			Map<String, List<Object>> aggregatedHeaders = withAggregatedHeaders(messages);
 			List<V> list = new ArrayList<>(msg.size());
 			msg.stream().iterator().forEachRemaining(vMessage -> list.add(vMessage.getValue()));
 			message = MessageBuilder.withPayload(list).copyHeaders(aggregatedHeaders).build();
@@ -123,7 +123,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 	}
 
 	private Map<String, List<Object>> withAggregatedHeaders(List<Message<?>> messages) {
-		final Map<String, List<Object>> aggregatedHeaders = new HashMap<>();
+		Map<String, List<Object>> aggregatedHeaders = new HashMap<>();
 		for (Message<?> message : messages) {
 			message.getHeaders().forEach((s, o) -> {
 				List<Object> objects = aggregatedHeaders.computeIfAbsent(s, k -> new ArrayList<>());
@@ -139,8 +139,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 		return messages;
 	}
 
-	protected void invoke(Object records, Consumer<V> consumer, final Message<?> message,
-			Acknowledgement acknowledgement) {
+	protected void invoke(Object records, Consumer<V> consumer, Message<?> message, Acknowledgement acknowledgement) {
 		try {
 			invokeHandler(records, message, consumer, acknowledgement);
 		}

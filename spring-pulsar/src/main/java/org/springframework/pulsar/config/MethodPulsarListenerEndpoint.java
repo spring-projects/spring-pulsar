@@ -120,7 +120,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
 		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
-		final HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
+		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
 		// Since we have access to the handler method here, check if we can type infer the
@@ -128,14 +128,14 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
-		final MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
+		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
 		MethodParameter messageParameter = null;
-		final Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
+		Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
 						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
 						|| !methodParameter1.hasParameterAnnotation(Header.class))
 				.findFirst();
-		final long count = Arrays.stream(methodParameters)
+		long count = Arrays.stream(methodParameters)
 				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
 						&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
 						&& !methodParameter1.hasParameterAnnotation(Header.class))
@@ -145,9 +145,9 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			messageParameter = parameter.get();
 		}
 
-		final ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
-		final PulsarContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
-		final SchemaType schemaType = pulsarContainerProperties.getSchemaType();
+		ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
+		PulsarContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
+		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		if (schemaType != SchemaType.NONE) {
 			switch (schemaType) {
 				case STRING -> pulsarContainerProperties.setSchema(Schema.STRING);
@@ -193,7 +193,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				}
 			}
 		}
-		final SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
+		SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
 		pulsarContainerProperties.setSchemaType(type);
 
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
@@ -206,7 +206,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	private Schema<?> getMessageSchema(MethodParameter messageParameter, Function<Class<?>, Schema<?>> schemaFactory) {
 		ResolvableType messageType = resolvableType(messageParameter);
-		final Class<?> messageClass = messageType.getRawClass();
+		Class<?> messageClass = messageType.getRawClass();
 		return schemaFactory.apply(messageClass);
 	}
 
@@ -221,7 +221,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	private ResolvableType resolvableType(MethodParameter methodParameter) {
 		ResolvableType resolvableType = ResolvableType.forMethodParameter(methodParameter);
-		final Class<?> rawClass = resolvableType.getRawClass();
+		Class<?> rawClass = resolvableType.getRawClass();
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}

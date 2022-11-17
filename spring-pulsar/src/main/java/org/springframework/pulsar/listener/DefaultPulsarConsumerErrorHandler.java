@@ -51,7 +51,7 @@ public class DefaultPulsarConsumerErrorHandler<T> implements PulsarConsumerError
 
 	@Override
 	public boolean shouldRetryMessage(Exception exception, Message<T> message) {
-		final Pair pair = this.backOffExecutionThreadLocal.get();
+		Pair pair = this.backOffExecutionThreadLocal.get();
 		long nextBackOff;
 		BackOffExecution backOffExecution;
 		if (pair != null && pair.message.equals(message)) {
@@ -85,7 +85,7 @@ public class DefaultPulsarConsumerErrorHandler<T> implements PulsarConsumerError
 	@SuppressWarnings("unchecked")
 	public Message<T> currentMessage() {
 		// there is only one message tracked at any time.
-		final Pair pair = this.backOffExecutionThreadLocal.get();
+		Pair pair = this.backOffExecutionThreadLocal.get();
 		if (pair == null) {
 			return null;
 		}

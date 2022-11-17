@@ -54,14 +54,14 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		admin.topics().createPartitionedTopic(topicName, numPartitions);
 
 		Map<String, Object> config = new HashMap<>();
-		final HashSet<String> topics = new HashSet<>();
+		HashSet<String> topics = new HashSet<>();
 		topics.add("my-part-topic-1");
 		config.put("topicNames", topics);
 		config.put("subscriptionName", "my-part-subscription-1");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 		CountDownLatch latch = new CountDownLatch(3);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
@@ -80,9 +80,9 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "my-part-topic-1");
 		prodConfig.put("messageRoutingMode", MessageRoutingMode.CustomPartition);
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 		pulsarTemplate.newMessage("hello john doe")
 				.withProducerCustomizer(builder -> builder.messageRouter(new FooRouter())).sendAsync();
@@ -91,7 +91,7 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		pulsarTemplate.newMessage("hello buzz doe")
 				.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter())).sendAsync();
 
-		final boolean await = latch.await(10, TimeUnit.SECONDS);
+		boolean await = latch.await(10, TimeUnit.SECONDS);
 		assertThat(await).isTrue();
 	}
 

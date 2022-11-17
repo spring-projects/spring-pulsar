@@ -274,28 +274,28 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private void populateAllNecessaryPropertiesIfNeedBe(Map<String, Object> currentProperties) {
 			if (currentProperties.containsKey("topicNames")) {
-				final String topicsFromMap = (String) currentProperties.get("topicNames");
-				final String[] topicNames = StringUtils.delimitedListToStringArray(topicsFromMap, ",");
-				final Set<String> propertiesDefinedTopics = Set.of(topicNames);
+				String topicsFromMap = (String) currentProperties.get("topicNames");
+				String[] topicNames = StringUtils.delimitedListToStringArray(topicsFromMap, ",");
+				Set<String> propertiesDefinedTopics = Set.of(topicNames);
 				if (!propertiesDefinedTopics.isEmpty()) {
 					currentProperties.put("topicNames", propertiesDefinedTopics);
 				}
 			}
 			if (!currentProperties.containsKey("subscriptionType")) {
-				final SubscriptionType subscriptionType = this.containerProperties.getSubscriptionType();
+				SubscriptionType subscriptionType = this.containerProperties.getSubscriptionType();
 				if (subscriptionType != null) {
 					currentProperties.put("subscriptionType", subscriptionType);
 				}
 			}
 			if (!currentProperties.containsKey("topicNames")) {
-				final String[] topics = this.containerProperties.getTopics();
-				final Set<String> listenerDefinedTopics = new HashSet<>(Arrays.stream(topics).toList());
+				String[] topics = this.containerProperties.getTopics();
+				Set<String> listenerDefinedTopics = new HashSet<>(Arrays.stream(topics).toList());
 				if (!listenerDefinedTopics.isEmpty()) {
 					currentProperties.put("topicNames", listenerDefinedTopics);
 				}
 			}
 			if (!currentProperties.containsKey("topicsPattern")) {
-				final String topicsPattern = this.containerProperties.getTopicsPattern();
+				String topicsPattern = this.containerProperties.getTopicsPattern();
 				if (topicsPattern != null) {
 					currentProperties.put("topicsPattern", topicsPattern);
 				}
@@ -305,15 +305,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					currentProperties.put("subscriptionName", this.containerProperties.getSubscriptionName());
 				}
 			}
-			final RedeliveryBackoff negativeAckRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.negativeAckRedeliveryBackoff;
+			RedeliveryBackoff negativeAckRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.negativeAckRedeliveryBackoff;
 			if (negativeAckRedeliveryBackoff != null) {
 				currentProperties.put("negativeAckRedeliveryBackoff", negativeAckRedeliveryBackoff);
 			}
-			final RedeliveryBackoff ackTimeoutRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.ackTimeoutRedeliveryBackoff;
+			RedeliveryBackoff ackTimeoutRedeliveryBackoff = DefaultPulsarMessageListenerContainer.this.ackTimeoutRedeliveryBackoff;
 			if (ackTimeoutRedeliveryBackoff != null) {
 				currentProperties.put("ackTimeoutRedeliveryBackoff", ackTimeoutRedeliveryBackoff);
 			}
-			final DeadLetterPolicy deadLetterPolicy = DefaultPulsarMessageListenerContainer.this.deadLetterPolicy;
+			DeadLetterPolicy deadLetterPolicy = DefaultPulsarMessageListenerContainer.this.deadLetterPolicy;
 			if (deadLetterPolicy != null) {
 				currentProperties.put("deadLetterPolicy", deadLetterPolicy);
 			}
@@ -380,8 +380,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 										this.consumer.acknowledge(messages);
 									}
 									else {
-										final Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(),
-												true);
+										Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
 										Message<T> last = stream.reduce((a, b) -> b).orElse(null);
 										this.consumer.acknowledgeCumulative(last);
 									}
@@ -493,7 +492,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 			PulsarBatchListenerFailedException pulsarBatchListenerFailedException = (PulsarBatchListenerFailedException) exception;
 			Message<T> pulsarMessage = getPulsarMessageCausedTheException(pulsarBatchListenerFailedException);
-			final Message<T> theCurrentPulsarMessageTracked = this.pulsarConsumerErrorHandler.currentMessage();
+			Message<T> theCurrentPulsarMessageTracked = this.pulsarConsumerErrorHandler.currentMessage();
 			// Previous message in error handled during retry but another msg in sublist
 			// caused error;
 			// resetting state in order to track it
@@ -507,10 +506,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			// handled on the retry. Otherwise, if we are out of retries then the sublist
 			// does not include
 			// the message in error (it instead gets recovered).
-			final int indexOfFailedMessage = messageList.indexOf(pulsarMessage);
+			int indexOfFailedMessage = messageList.indexOf(pulsarMessage);
 			messageList = messageList.subList(indexOfFailedMessage, messageList.size());
-			final boolean toBeRetried = this.pulsarConsumerErrorHandler
-					.shouldRetryMessage(pulsarBatchListenerFailedException, pulsarMessage);
+			boolean toBeRetried = this.pulsarConsumerErrorHandler.shouldRetryMessage(pulsarBatchListenerFailedException,
+					pulsarMessage);
 			if (toBeRetried) {
 				inRetryMode.set(true);
 			}
@@ -535,7 +534,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private void invokeRecordListenerErrorHandler(AtomicBoolean inRetryMode, Message<T> message, Exception e) {
-			final boolean toBeRetried = this.pulsarConsumerErrorHandler.shouldRetryMessage(e, message);
+			boolean toBeRetried = this.pulsarConsumerErrorHandler.shouldRetryMessage(e, message);
 			if (toBeRetried) {
 				inRetryMode.set(true);
 			}
@@ -576,7 +575,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 							this.consumer.acknowledge(messages);
 						}
 						else {
-							final Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
+							Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
 							Message<T> last = stream.reduce((a, b) -> b).orElse(null);
 							this.consumer.acknowledgeCumulative(last);
 						}

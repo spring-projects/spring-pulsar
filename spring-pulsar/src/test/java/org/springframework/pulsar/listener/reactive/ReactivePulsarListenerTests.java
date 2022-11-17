@@ -509,7 +509,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void simpleListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
 					.withTopic("simpleListenerWithHeaders").send();
@@ -523,7 +523,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void pulsarMessageListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
 					.withTopic("pulsarMessageListenerWithHeaders").send();
@@ -537,7 +537,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void springMessagingMessageListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
 					.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
 							"springMessagingMessageListenerWithHeaders"))
 					.withTopic("springMessagingMessageListenerWithHeaders").send();

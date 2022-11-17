@@ -61,10 +61,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-1"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-1");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -112,16 +112,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-2"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-2");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
 		AtomicInteger count = new AtomicInteger(0);
 		doAnswer(invocation -> {
-			final int currentCount = count.incrementAndGet();
+			int currentCount = count.incrementAndGet();
 			if (currentCount <= 3) {
 				throw new RuntimeException();
 			}
@@ -161,16 +161,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-3"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-3");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
 		doAnswer(invocation -> {
-			final Message<Integer> message = invocation.getArgument(1);
-			final Integer value = message.getValue();
+			Message<Integer> message = invocation.getArgument(1);
+			Integer value = message.getValue();
 			if (value % 2 == 0) {
 				throw new RuntimeException();
 			}
@@ -220,26 +220,26 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-4"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-4");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
 		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
-		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
+		PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
 
 		doAnswer(invocation -> {
-			final List<Message<Integer>> message = invocation.getArgument(1);
-			final Message<Integer> integerMessage = message.get(0);
-			final Integer value = integerMessage.getValue();
+			List<Message<Integer>> message = invocation.getArgument(1);
+			Message<Integer> integerMessage = message.get(0);
+			Integer value = integerMessage.getValue();
 			if (value == 0) {
 				throw new PulsarBatchListenerFailedException("failed", integerMessage);
 			}
-			final Acknowledgement acknowledgment = invocation.getArgument(2);
+			Acknowledgement acknowledgment = invocation.getArgument(2);
 			List<MessageId> messageIds = new ArrayList<>();
 			for (Message<Integer> integerMessage1 : message) {
 				messageIds.add(integerMessage1.getMessageId());
@@ -262,9 +262,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "default-error-handler-tests-4");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
 		}
@@ -292,27 +292,27 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-5"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-5");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
 		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
-		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
+		PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
 
 		doAnswer(invocation -> {
-			final List<Message<Integer>> messages = invocation.getArgument(1);
+			List<Message<Integer>> messages = invocation.getArgument(1);
 
 			for (Message<Integer> message : messages) {
 				if (message.getValue() == 5) {
 					throw new PulsarBatchListenerFailedException("failed", message);
 				}
 				else {
-					final Acknowledgement acknowledgment = invocation.getArgument(2);
+					Acknowledgement acknowledgment = invocation.getArgument(2);
 					acknowledgment.acknowledge(message.getMessageId());
 				}
 			}
@@ -333,9 +333,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "default-error-handler-tests-5");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
 		}
@@ -362,27 +362,27 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-6"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-6");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
 		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
-		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
+		PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
 
 		doAnswer(invocation -> {
-			final List<Message<Integer>> messages = invocation.getArgument(1);
+			List<Message<Integer>> messages = invocation.getArgument(1);
 
 			for (Message<Integer> message : messages) {
 				if (message.getValue() == 2 || message.getValue() == 5) {
 					throw new PulsarBatchListenerFailedException("failed", message);
 				}
 				else {
-					final Acknowledgement acknowledgment = invocation.getArgument(2);
+					Acknowledgement acknowledgment = invocation.getArgument(2);
 					acknowledgment.acknowledge(message.getMessageId());
 				}
 			}
@@ -403,9 +403,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "default-error-handler-tests-6");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
 		}
@@ -432,25 +432,25 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-7"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-7");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
 		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
-		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
+		PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
 
 		AtomicInteger count = new AtomicInteger(0);
 		doAnswer(invocation -> {
-			final List<Message<Integer>> messages = invocation.getArgument(1);
-			final Acknowledgement acknowledgment = invocation.getArgument(2);
+			List<Message<Integer>> messages = invocation.getArgument(1);
+			Acknowledgement acknowledgment = invocation.getArgument(2);
 			for (Message<Integer> message : messages) {
 				if (message.getValue() == 5) {
-					final int currentCount = count.getAndIncrement();
+					int currentCount = count.getAndIncrement();
 					if (currentCount < 3) {
 						throw new PulsarBatchListenerFailedException("failed", message);
 					}
@@ -479,9 +479,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "default-error-handler-tests-7");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
 		}
@@ -501,25 +501,25 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		config.put("topicNames", Collections.singleton("default-error-handler-tests-8"));
 		config.put("subscriptionName", "default-error-handler-tests-sub-8");
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
 		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
 		pulsarContainerProperties.setBatchListener(true);
-		final PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
+		PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock(
 				PulsarBatchAcknowledgingMessageListener.class);
 
 		AtomicInteger count = new AtomicInteger(0);
 		doAnswer(invocation -> {
-			final List<Message<Integer>> messages = invocation.getArgument(1);
-			final Acknowledgement acknowledgment = invocation.getArgument(2);
+			List<Message<Integer>> messages = invocation.getArgument(1);
+			Acknowledgement acknowledgment = invocation.getArgument(2);
 			for (Message<Integer> message : messages) {
 				if (message.getValue() == 5) {
-					final int currentCount = count.getAndIncrement();
+					int currentCount = count.getAndIncrement();
 					if (currentCount < 3) {
 						throw new PulsarBatchListenerFailedException("failed", message);
 					}
@@ -551,9 +551,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "default-error-handler-tests-8");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
 		}
