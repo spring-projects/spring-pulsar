@@ -40,59 +40,58 @@ import org.springframework.pulsar.core.PulsarTemplate;
  */
 class PulsarListenerTests implements PulsarTestContainerSupport {
 
-	static CountDownLatch latch1 = new CountDownLatch(1);
-	static CountDownLatch latch2 = new CountDownLatch(10);
+	private static final CountDownLatch LATCH_1 = new CountDownLatch(1);
+
+	private static final CountDownLatch LATCH_2 = new CountDownLatch(10);
 
 	@Test
-	void testBasicListener() throws Exception {
+	void basicPulsarListener() throws Exception {
 		SpringApplication app = new SpringApplication(BasicListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
-			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
-			final boolean await = latch1.await(20, TimeUnit.SECONDS);
-			assertThat(await).isTrue();
+			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
+			pulsarTemplate.send("plt-topic1", "John Doe");
+			assertThat(LATCH_1.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
 	@Test
-	void testBatchListener() throws Exception {
+	void batchPulsarListener() throws Exception {
 		SpringApplication app = new SpringApplication(BatchListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
-			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
+			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
+				pulsarTemplate.send("plt-topic2", "John Doe");
 			}
-			final boolean await = latch2.await(10, TimeUnit.SECONDS);
-			assertThat(await).isTrue();
+			assertThat(LATCH_2.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@Import(PulsarAutoConfiguration.class)
 	static class BasicListenerConfig {
 
-		@PulsarListener(subscriptionName = "test-exclusive-sub-1", topics = "hello-pulsar-exclusive")
+		@PulsarListener(subscriptionName = "plt-subscription1", topics = "plt-topic1")
 		public void listen(String foo) {
-			latch1.countDown();
+			LATCH_1.countDown();
 		}
 
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@Import(PulsarAutoConfiguration.class)
 	static class BatchListenerConfig {
 
-		@PulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive", batch = true)
+		@PulsarListener(subscriptionName = "plt-subscription2", topics = "plt-topic2", batch = true)
 		public void listen(List<String> foo) {
-			foo.forEach(t -> latch2.countDown());
+			foo.forEach(t -> LATCH_2.countDown());
 		}
 
 	}

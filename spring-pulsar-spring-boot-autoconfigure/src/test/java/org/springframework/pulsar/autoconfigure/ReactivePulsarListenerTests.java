@@ -43,73 +43,71 @@ import reactor.core.publisher.Mono;
  * Tests for {@link ReactivePulsarListener}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
-	static CountDownLatch latch1 = new CountDownLatch(1);
-	static CountDownLatch latch2 = new CountDownLatch(10);
+	private static final CountDownLatch LATCH1 = new CountDownLatch(1);
+
+	private static final CountDownLatch LATCH2 = new CountDownLatch(10);
 
 	@Test
-	void testBasicListener() throws Exception {
+	void basicListener() throws Exception {
 		SpringApplication app = new SpringApplication(BasicListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-		app.setAllowCircularReferences(true);
 
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
-			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
-			final boolean await = latch1.await(20, TimeUnit.SECONDS);
-			assertThat(await).isTrue();
+			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
+			pulsarTemplate.send("rplt-topic1", "John Doe");
+			assertThat(LATCH1.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
 	@Test
-	void testFluxListener() throws Exception {
+	void fluxListener() throws Exception {
 		SpringApplication app = new SpringApplication(FluxListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-		app.setAllowCircularReferences(true);
 
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
-			final PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
+			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("hello-pulsar-exclusive", "John Doe");
+				pulsarTemplate.send("rplt-topic2", "John Doe");
 			}
-			final boolean await = latch2.await(10, TimeUnit.SECONDS);
-			assertThat(await).isTrue();
+			assertThat(LATCH2.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
-	@Configuration
-	@Import({ PulsarAutoConfiguration.class, PulsarReactiveAutoConfiguration.class })
+	@Configuration(proxyBeanMethods = false)
+	@Import({ PulsarAutoConfiguration.class, PulsarReactiveAutoConfiguration.class, ConsumerCustomizerConfig.class })
 	static class BasicListenerConfig {
 
-		@ReactivePulsarListener(subscriptionName = "test-exclusive-sub-1", topics = "hello-pulsar-exclusive",
+		@ReactivePulsarListener(subscriptionName = "rplt-subscription1", topics = "rplt-topic1",
 				consumerCustomizer = "consumerCustomizer")
 		public Mono<Void> listen(String foo) {
-			latch1.countDown();
+			LATCH1.countDown();
 			return Mono.empty();
 		}
 
-		@Bean
-		ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
-			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	@Import({ PulsarAutoConfiguration.class, PulsarReactiveAutoConfiguration.class, ConsumerCustomizerConfig.class })
+	static class FluxListenerConfig {
+
+		@ReactivePulsarListener(subscriptionName = "rplt-subscription2", topics = "rplt-topic2", stream = true,
+				consumerCustomizer = "consumerCustomizer")
+		public Flux<MessageResult<Void>> listen(Flux<Message<String>> messages) {
+			return messages.doOnNext(t -> LATCH2.countDown()).map(m -> MessageResult.acknowledge(m.getMessageId()));
 		}
 
 	}
 
-	@Configuration
-	@Import({ PulsarAutoConfiguration.class, PulsarReactiveAutoConfiguration.class })
-	static class FluxListenerConfig {
-
-		@ReactivePulsarListener(subscriptionName = "test-exclusive-sub-2", topics = "hello-pulsar-exclusive",
-				stream = true, consumerCustomizer = "consumerCustomizer")
-		public Flux<MessageResult<Void>> listen(Flux<Message<String>> messages) {
-			return messages.doOnNext(t -> latch2.countDown()).map(m -> MessageResult.acknowledge(m.getMessageId()));
-		}
+	@Configuration(proxyBeanMethods = false)
+	static class ConsumerCustomizerConfig {
 
 		@Bean
 		ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
