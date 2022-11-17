@@ -17,6 +17,7 @@
 package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.TimeUnit;
@@ -268,7 +269,9 @@ class PulsarReactiveAutoConfigurationTests {
 			ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache();
 			try (MockedStatic<AdaptedReactivePulsarClientFactory> mockedClientFactory = Mockito
 					.mockStatic(AdaptedReactivePulsarClientFactory.class)) {
-				mockedClientFactory.when(AdaptedReactivePulsarClientFactory::createCache).thenReturn(cache);
+				mockedClientFactory.when(() -> AdaptedReactivePulsarClientFactory.createCache()).thenReturn(cache);
+				mockedClientFactory.when(() -> AdaptedReactivePulsarClientFactory.create(any(PulsarClient.class)))
+						.thenReturn(mock(ReactivePulsarClient.class));
 				contextRunner.withClassLoader(new FilteredClassLoader(CaffeineProducerCacheProvider.class))
 						.run((context) -> assertThat(context).hasNotFailed()
 								.doesNotHaveBean(ProducerCacheProvider.class)
