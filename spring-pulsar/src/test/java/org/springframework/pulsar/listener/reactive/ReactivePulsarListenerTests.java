@@ -25,7 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -239,7 +241,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void testPulsarListenerStreaming() throws Exception {
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("topic-4", "hello foo");
+				pulsarTemplate.send("streaming-1", "hello foo");
 			}
 			assertThat(latch1.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -247,7 +249,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void testPulsarListenerStreamingSpringMessage() throws Exception {
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("topic-5", "hello foo");
+				pulsarTemplate.send("streaming-2", "hello foo");
 			}
 			assertThat(latch2.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -256,15 +258,13 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class TestPulsarListenersForStreaming {
 
-			@ReactivePulsarListener(topics = "topic-4", subscriptionName = "subscription-4", stream = true,
-					consumerCustomizer = "consumerCustomizer")
-			Flux<MessageResult<Void>> listen4(Flux<Message<String>> messages) {
+			@ReactivePulsarListener(topics = "streaming-1", stream = true, consumerCustomizer = "consumerCustomizer")
+			Flux<MessageResult<Void>> listen1(Flux<Message<String>> messages) {
 				return messages.doOnNext(m -> latch1.countDown()).map(m -> MessageResult.acknowledge(m.getMessageId()));
 			}
 
-			@ReactivePulsarListener(topics = "topic-5", subscriptionName = "subscription-5", stream = true,
-					consumerCustomizer = "consumerCustomizer")
-			Flux<MessageResult<Void>> listen5(Flux<org.springframework.messaging.Message<String>> messages) {
+			@ReactivePulsarListener(topics = "streaming-2", stream = true, consumerCustomizer = "consumerCustomizer")
+			Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<String>> messages) {
 				return messages.doOnNext(m -> latch2.countDown()).map(m -> {
 					Object mId = m.getHeaders().get(PulsarHeaders.MESSAGE_ID);
 					if (mId instanceof MessageId) {
@@ -603,6 +603,66 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@Bean
 			ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
+				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = PulsarListenerConcurrencyTestCases.TestPulsarListenersForConcurrency.class)
+	class PulsarListenerConcurrencyTestCases {
+
+		static CountDownLatch latch = new CountDownLatch(100);
+
+		static BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+
+		@Test
+		void pulsarListenerWithConcurrency() throws Exception {
+			for (int i = 0; i < 100; i++) {
+				pulsarTemplate.send("pulsarListenerConcurrency", "hello foo");
+			}
+			assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void pulsarListenerWithConcurrencyKeyOrdered() throws Exception {
+			pulsarTemplate.newMessage("first").withTopic("pulsarListenerWithConcurrencyKeyOrdered")
+					.withMessageCustomizer(m -> m.key("key")).send();
+			pulsarTemplate.newMessage("second").withTopic("pulsarListenerWithConcurrencyKeyOrdered")
+					.withMessageCustomizer(m -> m.key("key")).send();
+			assertThat(queue.poll(5, TimeUnit.SECONDS)).isEqualTo("first");
+			assertThat(queue.poll(5, TimeUnit.SECONDS)).isEqualTo("second");
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class TestPulsarListenersForConcurrency {
+
+			@ReactivePulsarListener(topics = "pulsarListenerConcurrency", consumerCustomizer = "consumerCustomizer",
+					concurrency = "100")
+			Mono<Void> listen1(String message) {
+				latch.countDown();
+				// if messages are not handled concurrently, this will make the latch
+				// await timeout.
+				return Mono.delay(Duration.ofMillis(100)).then();
+			}
+
+			@ReactivePulsarListener(topics = "pulsarListenerWithConcurrencyKeyOrdered",
+					consumerCustomizer = "consumerCustomizer", concurrency = "100", useKeyOrderedProcessing = "true")
+			Mono<Void> listen2(String message) {
+				if (message.equals("first")) {
+					// if message processing is not ordered by keys, "first" will be added
+					// to the queue after "second"
+					return Mono.delay(Duration.ofMillis(1000)).doOnNext(m -> queue.add(message)).then();
+				}
+				queue.add(message);
+				return Mono.empty();
+			}
+
+			@Bean
+			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
 				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
