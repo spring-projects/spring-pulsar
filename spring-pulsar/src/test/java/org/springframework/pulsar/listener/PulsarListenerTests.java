@@ -129,7 +129,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Bean
 		PulsarListenerContainerFactory pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			final ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
+			ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
 					pulsarConsumerFactory, new PulsarContainerProperties(), null);
 			return pulsarListenerContainerFactory;
 		}
@@ -168,9 +168,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		void testPulsarListenerProvidedConsumerProperties(@Autowired PulsarListenerEndpointRegistry registry)
 				throws Exception {
 
-			final PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("foo")
+			PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("foo")
 					.getContainerProperties();
-			final Properties pulsarConsumerProperties = pulsarContainerProperties.getPulsarConsumerProperties();
+			Properties pulsarConsumerProperties = pulsarContainerProperties.getPulsarConsumerProperties();
 			assertThat(pulsarConsumerProperties.size()).isEqualTo(2);
 			assertThat(pulsarConsumerProperties.get("topicNames")).isEqualTo("foo-1");
 			assertThat(pulsarConsumerProperties.get("subscriptionName")).isEqualTo("subscription-1");
@@ -185,7 +185,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					Map.of("batchingEnabled", false));
 			PulsarTemplate<String> customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
-			final ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) registry
+			ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) registry
 					.getListenerContainer("bar");
 
 			assertThat(bar.getConcurrency()).isEqualTo(3);
@@ -204,7 +204,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					Map.of("batchingEnabled", false));
 			PulsarTemplate<String> customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
-			final ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) registry
+			ConcurrentPulsarMessageListenerContainer<?> bar = (ConcurrentPulsarMessageListenerContainer<?>) registry
 					.getListenerContainer("bar");
 
 			assertThat(bar.getConcurrency()).isEqualTo(3);
@@ -218,7 +218,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void ackModeAppliedToContainerFromListener(@Autowired PulsarListenerEndpointRegistry registry) {
-			final PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("ackMode-test-id")
+			PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("ackMode-test-id")
 					.getContainerProperties();
 			assertThat(pulsarContainerProperties.getAckMode()).isEqualTo(AckMode.RECORD);
 		}
@@ -643,7 +643,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void simpleListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
 					.withTopic("simpleListenerWithHeaders").send();
@@ -657,7 +657,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void pulsarMessageListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
 					.withTopic("pulsarMessageListenerWithHeaders").send();
@@ -671,7 +671,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void springMessagingMessageListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
 					.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
 							"springMessagingMessageListenerWithHeaders"))
 					.withTopic("springMessagingMessageListenerWithHeaders").send();
@@ -685,7 +685,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void simpleBatchListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-simple-batch-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-simple-batch-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "simpleBatchListenerWithHeaders"))
 					.withTopic("simpleBatchListenerWithHeaders").send();
@@ -698,7 +698,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void pulsarMessageBatchListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-batch-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-batch-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "pulsarMessageBatchListenerWithHeaders"))
 					.withTopic("pulsarMessageBatchListenerWithHeaders").send();
@@ -712,7 +712,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void springMessagingMessageBatchListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-batch-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-batch-listener")
 					.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
 							"springMessagingMessageBatchListenerWithHeaders"))
 					.withTopic("springMessagingMessageBatchListenerWithHeaders").send();
@@ -726,7 +726,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void pulsarMessagesBatchListenerWithHeaders() throws Exception {
-			final MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-messages-batch-listener")
+			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-messages-batch-listener")
 					.withMessageCustomizer(
 							messageBuilder -> messageBuilder.property("foo", "pulsarMessagesBatchListenerWithHeaders"))
 					.withTopic("pulsarMessagesBatchListenerWithHeaders").send();

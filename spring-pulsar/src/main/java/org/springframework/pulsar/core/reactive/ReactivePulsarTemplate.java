@@ -90,7 +90,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	private Mono<MessageId> doSend(String topic, T message,
 			MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
-		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
+		String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
 		this.logger.trace(() -> String.format("Sending reactive message to '%s' topic", topicName));
 		ReactiveMessageSender<T> sender = createMessageSender(topic, message, customizer);
 		return sender.sendOne(getMessageSpec(messageSpecBuilderCustomizer, message)).doOnError(
@@ -100,7 +100,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	}
 
 	private Flux<MessageId> doSendMany(String topic, Flux<T> messages) {
-		final String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
+		String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
 		this.logger.trace(() -> String.format("Sending reactive messages to '%s' topic", topicName));
 
 		if (this.schema != null) {

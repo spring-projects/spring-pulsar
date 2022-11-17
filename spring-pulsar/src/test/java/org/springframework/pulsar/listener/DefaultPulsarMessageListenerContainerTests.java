@@ -60,14 +60,14 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	@Test
 	void basicDefaultConsumer() throws Exception {
 		Map<String, Object> config = new HashMap<>();
-		final HashSet<String> strings = new HashSet<>();
+		HashSet<String> strings = new HashSet<>();
 		strings.add("dpmlct-012");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "dpmlct-sb-012");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 		CountDownLatch latch = new CountDownLatch(1);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
@@ -78,9 +78,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		container.start();
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "dpmlct-012");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		pulsarTemplate.sendAsync("hello john doe");
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 		container.stop();
@@ -90,15 +90,15 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	@Test
 	void subscriptionInitialPositionEarliest() throws Exception {
 		Map<String, Object> config = new HashMap<>();
-		final HashSet<String> strings = new HashSet<>();
+		HashSet<String> strings = new HashSet<>();
 		strings.add("dpmlct-013");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "dpmlct-sb-013");
 		config.put("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 		CountDownLatch latch = new CountDownLatch(5);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
@@ -109,9 +109,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "dpmlct-013");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 5; i++) {
 			pulsarTemplate.send("hello john doe" + i);
 		}
@@ -125,14 +125,14 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	@Test
 	void subscriptionInitialPositionDefaultLatest() throws Exception {
 		Map<String, Object> config = new HashMap<>();
-		final HashSet<String> strings = new HashSet<>();
+		HashSet<String> strings = new HashSet<>();
 		strings.add("dpmlct-014");
 		config.put("topicNames", strings);
 		config.put("subscriptionName", "dpmlct-sb-014");
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		List<String> messages = new ArrayList<>();
 		pulsarContainerProperties.setMessageListener(
@@ -143,9 +143,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "dpmlct-014");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 5; i++) {
 			pulsarTemplate.send("hello john doe" + i);
 		}
@@ -169,9 +169,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				.maxDelayMs(5 * 1000).build();
 		config.put("negativeAckRedeliveryBackoff", redeliveryBackoff);
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
 				new DefaultPulsarConsumerFactory<>(pulsarClient, config));
 		CountDownLatch latch = new CountDownLatch(10);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -186,12 +186,12 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 
-		final Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
+		Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
 		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-015");
-		final DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 5; i++) {
 			pulsarTemplate.send("hello john doe" + i);
 		}
@@ -219,10 +219,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				.deadLetterTopic("dpmlct-016-dlq-topic").build();
 		config.put("deadLetterPolicy", deadLetterPolicy);
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
 		CountDownLatch latch = new CountDownLatch(6);
@@ -251,9 +251,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		container.start();
 
 		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-016");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 1; i < 6; i++) {
 			pulsarTemplate.send(i);
 		}
@@ -277,10 +277,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				.build();
 		config.put("deadLetterPolicy", deadLetterPolicy);
 
-		final PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		final DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, config);
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
 		CountDownLatch latch = new CountDownLatch(6);
@@ -312,9 +312,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		container.start();
 
 		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "dpmlct-016");
-		final DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-				pulsarClient, prodConfig);
-		final PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 1; i < 6; i++) {
 			pulsarTemplate.send(i);
 		}

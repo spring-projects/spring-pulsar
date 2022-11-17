@@ -49,7 +49,7 @@ public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageCo
 	@Override
 	public Message<?> toMessage(org.apache.pulsar.client.api.Message<V> record, Consumer<V> consumer, Type type) {
 
-		final Map<String, Object> messageHeaders = new HashMap<>();
+		Map<String, Object> messageHeaders = new HashMap<>();
 		this.pulsarMessageHeaderMapper.toHeaders(record, messageHeaders);
 		Message<?> message = MessageBuilder.createMessage(extractAndConvertValue(record),
 				new MessageHeaders(messageHeaders));

@@ -158,14 +158,14 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 			@Nullable Collection<String> encryptionKeys, T message,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
-		final String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
+		String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 
 		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
 		Observation observation = newObservation(senderContext);
 		try {
 			observation.start();
-			final Producer<T> producer = prepareProducerForSend(topic, message, encryptionKeys, producerCustomizer);
+			Producer<T> producer = prepareProducerForSend(topic, message, encryptionKeys, producerCustomizer);
 			TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
 			if (typedMessageBuilderCustomizer != null) {
 				typedMessageBuilderCustomizer.customize(messageBuilder);

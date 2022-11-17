@@ -244,7 +244,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 	}
 
 	@Override
-	public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (!this.nonAnnotatedClasses.contains(bean.getClass())) {
 			Class<?> targetClass = AopUtils.getTargetClass(bean);
 			Map<Method, Set<PulsarListener>> annotatedMethods = MethodIntrospector.selectMethods(targetClass,
