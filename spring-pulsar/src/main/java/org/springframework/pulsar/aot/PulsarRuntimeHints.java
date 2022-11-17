@@ -41,6 +41,8 @@ import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
 import org.springframework.lang.Nullable;
 
+import reactor.core.publisher.Flux;
+
 /**
  * {@link RuntimeHintsRegistrar} for Spring for Apache Pulsar.
  *
@@ -59,7 +61,7 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 		Stream.of(HashSet.class, TreeMap.class, Authentication.class, AuthenticationDataProvider.class,
 				SecretsSerializer.class, NioSocketChannel.class, AbstractByteBufAllocator.class,
 				NioDatagramChannel.class, PulsarAdminBuilderImpl.class, OffloadProcessStatusImpl.class, Commands.class,
-				ReferenceCountUtil.class).forEach(
+				ReferenceCountUtil.class, Flux.class).forEach(
 						type -> reflectionHints.registerType(type,
 								builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 										MemberCategory.INVOKE_DECLARED_METHODS,
