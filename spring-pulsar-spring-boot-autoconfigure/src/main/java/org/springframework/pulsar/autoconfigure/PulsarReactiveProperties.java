@@ -167,11 +167,6 @@ public class PulsarReactiveProperties {
 		private CompressionType compressionType;
 
 		/**
-		 * Name of the initial subscription of the topic.
-		 */
-		private String initialSubscriptionName;
-
-		/**
 		 * Type of access to the topic the producer requires.
 		 */
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
@@ -282,14 +277,6 @@ public class PulsarReactiveProperties {
 			this.compressionType = compressionType;
 		}
 
-		public String getInitialSubscriptionName() {
-			return this.initialSubscriptionName;
-		}
-
-		public void setInitialSubscriptionName(String initialSubscriptionName) {
-			this.initialSubscriptionName = initialSubscriptionName;
-		}
-
 		public ProducerAccessMode getProducerAccessMode() {
 			return this.producerAccessMode;
 		}
@@ -320,7 +307,6 @@ public class PulsarReactiveProperties {
 			map.from(this::getBatchingEnabled).to(spec::setBatchingEnabled);
 			map.from(this::getChunkingEnabled).to(spec::setChunkingEnabled);
 			map.from(this::getCompressionType).to(spec::setCompressionType);
-			map.from(this::getInitialSubscriptionName).to(spec::setInitialSubscriptionName);
 			map.from(this::getProducerAccessMode).to(spec::setAccessMode);
 
 			return new ImmutableReactiveMessageSenderSpec(spec);

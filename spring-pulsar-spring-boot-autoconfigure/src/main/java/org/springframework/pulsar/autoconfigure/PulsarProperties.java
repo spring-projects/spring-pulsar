@@ -528,11 +528,6 @@ public class PulsarProperties {
 		private CompressionType compressionType;
 
 		/**
-		 * Name of the initial subscription of the topic.
-		 */
-		private String initialSubscriptionName;
-
-		/**
 		 * Type of access to the topic the producer requires.
 		 */
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
@@ -651,14 +646,6 @@ public class PulsarProperties {
 			this.compressionType = compressionType;
 		}
 
-		public String getInitialSubscriptionName() {
-			return this.initialSubscriptionName;
-		}
-
-		public void setInitialSubscriptionName(String initialSubscriptionName) {
-			this.initialSubscriptionName = initialSubscriptionName;
-		}
-
 		public ProducerAccessMode getProducerAccessMode() {
 			return this.producerAccessMode;
 		}
@@ -692,7 +679,6 @@ public class PulsarProperties {
 			map.from(this::isBatchingEnabled).to(properties.in("batchingEnabled"));
 			map.from(this::isChunkingEnabled).to(properties.in("chunkingEnabled"));
 			map.from(this::getCompressionType).to(properties.in("compressionType"));
-			map.from(this::getInitialSubscriptionName).to(properties.in("initialSubscriptionName"));
 			map.from(this::getProducerAccessMode).to(properties.in("accessMode"));
 
 			return properties;
