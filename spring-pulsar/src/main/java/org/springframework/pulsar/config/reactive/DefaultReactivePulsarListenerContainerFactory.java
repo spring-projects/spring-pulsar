@@ -123,6 +123,20 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 			properties.setConcurrency(this.containerProperties.getConcurrency());
 		}
 
+		if (endpoint.getMaxInFlight() != null) {
+			properties.setMaxInFlight(endpoint.getMaxInFlight());
+		}
+		else {
+			properties.setMaxInFlight(this.containerProperties.getMaxInFlight());
+		}
+
+		if (endpoint.getUseKeyOrderedProcessing() != null) {
+			properties.setUseKeyOrderedProcessing(endpoint.getUseKeyOrderedProcessing());
+		}
+		else {
+			properties.setUseKeyOrderedProcessing(this.containerProperties.isUseKeyOrderedProcessing());
+		}
+
 		return new DefaultReactivePulsarMessageListenerContainer<>(this.getConsumerFactory(), properties);
 	}
 

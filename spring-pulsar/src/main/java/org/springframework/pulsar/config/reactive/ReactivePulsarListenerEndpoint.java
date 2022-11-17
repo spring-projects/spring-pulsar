@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.config.reactive;
 
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.config.ListenerEndpoint;
 import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListenerContainer;
 
@@ -28,5 +29,13 @@ import org.springframework.pulsar.listener.reactive.ReactivePulsarMessageListene
  * @author Christophe Bornet
  */
 public interface ReactivePulsarListenerEndpoint<T> extends ListenerEndpoint<ReactivePulsarMessageListenerContainer<T>> {
+
+	boolean isFluxListener();
+
+	@Nullable
+	Integer getMaxInFlight();
+
+	@Nullable
+	Boolean getUseKeyOrderedProcessing();
 
 }

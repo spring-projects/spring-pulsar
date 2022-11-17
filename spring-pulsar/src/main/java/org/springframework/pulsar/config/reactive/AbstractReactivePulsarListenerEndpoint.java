@@ -76,6 +76,10 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 
 	private Integer concurrency;
 
+	private Integer maxInFlight;
+
+	private Boolean useKeyOrderedProcessing;
+
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
 		this.beanFactory = beanFactory;
@@ -192,6 +196,7 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		this.fluxListener = fluxListener;
 	}
 
+	@Override
 	public boolean isFluxListener() {
 		return this.fluxListener != null && this.fluxListener;
 	}
@@ -224,6 +229,24 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 	 */
 	public void setConcurrency(Integer concurrency) {
 		this.concurrency = concurrency;
+	}
+
+	@Override
+	public Integer getMaxInFlight() {
+		return this.maxInFlight;
+	}
+
+	public void setMaxInFlight(Integer maxInFlight) {
+		this.maxInFlight = maxInFlight;
+	}
+
+	@Override
+	public Boolean getUseKeyOrderedProcessing() {
+		return this.useKeyOrderedProcessing;
+	}
+
+	public void setUseKeyOrderedProcessing(Boolean useKeyOrderedProcessing) {
+		this.useKeyOrderedProcessing = useKeyOrderedProcessing;
 	}
 
 }

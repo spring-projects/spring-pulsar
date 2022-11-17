@@ -143,6 +143,28 @@ public @interface ReactivePulsarListener {
 	String concurrency() default "";
 
 	/**
+	 * Override the container factory's {@code maxInFlight} setting for this listener. May
+	 * be a property placeholder or SpEL expression that evaluates to a {@link Number}, in
+	 * which case {@link Number#intValue()} is used to obtain the value.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return the maximum in-flight messages in the reactive client pipeline.
+	 */
+	String maxInFlight() default "";
+
+	/**
+	 * Set to true or false, to override the default setting in the container factory. May
+	 * be a property placeholder or SpEL expression that evaluates to a {@link Boolean} or
+	 * a {@link String}, in which case the {@link Boolean#parseBoolean(String)} is used to
+	 * obtain the value.
+	 * <p>
+	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * @return true to keep ordering by message key when concurrency > 1, false to not
+	 * keep ordering.
+	 */
+	String useKeyOrderedProcessing() default "";
+
+	/**
 	 * The bean name or a 'SpEL' expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
 	 * configure a dead letter policy for message redelivery.

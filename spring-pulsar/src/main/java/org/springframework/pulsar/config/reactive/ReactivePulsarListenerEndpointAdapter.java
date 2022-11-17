@@ -80,4 +80,19 @@ public class ReactivePulsarListenerEndpointAdapter<T> implements ReactivePulsarL
 		return null;
 	}
 
+	@Override
+	public boolean isFluxListener() {
+		return false;
+	}
+
+	@Override
+	public Integer getMaxInFlight() {
+		return null;
+	}
+
+	@Override
+	public Boolean getUseKeyOrderedProcessing() {
+		return null;
+	}
+
 }
