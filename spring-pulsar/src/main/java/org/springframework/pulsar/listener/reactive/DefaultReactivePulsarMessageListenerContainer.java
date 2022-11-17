@@ -181,8 +181,7 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 					.handlingTimeout(containerProperties.getHandlingTimeout());
 			if (containerProperties.getConcurrency() > 0) {
 				ConcurrentOneByOneMessagePipelineBuilder<T> concurrentPipelineBuilder = messagePipelineBuilder
-						.concurrent().concurrency(containerProperties.getConcurrency())
-						.maxInflight(containerProperties.getMaxInFlight());
+						.concurrent().concurrency(containerProperties.getConcurrency());
 				if (containerProperties.isUseKeyOrderedProcessing()) {
 					concurrentPipelineBuilder.useKeyOrderedProcessing();
 				}

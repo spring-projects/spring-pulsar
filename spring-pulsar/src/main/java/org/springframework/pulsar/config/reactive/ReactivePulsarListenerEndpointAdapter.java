@@ -86,11 +86,6 @@ public class ReactivePulsarListenerEndpointAdapter<T> implements ReactivePulsarL
 	}
 
 	@Override
-	public Integer getMaxInFlight() {
-		return null;
-	}
-
-	@Override
 	public Boolean getUseKeyOrderedProcessing() {
 		return null;
 	}

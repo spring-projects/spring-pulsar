@@ -145,7 +145,6 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		pulsarContainerProperties.setSubscriptionName(subscriptionName);
 		pulsarContainerProperties.setConcurrency(5);
 		pulsarContainerProperties.setUseKeyOrderedProcessing(true);
-		pulsarContainerProperties.setMaxInFlight(6);
 		pulsarContainerProperties.setHandlingTimeout(Duration.ofMillis(7));
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -159,7 +158,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
 		assertThat(container).extracting("pipeline", InstanceOfAssertFactories.type(ReactiveMessagePipeline.class))
-				.hasFieldOrPropertyWithValue("concurrency", 5).hasFieldOrPropertyWithValue("maxInflight", 6)
+				.hasFieldOrPropertyWithValue("concurrency", 5)
 				.hasFieldOrPropertyWithValue("handlingTimeout", Duration.ofMillis(7)).extracting("groupingFunction")
 				.isInstanceOf(DefaultMessageGroupingFunction.class);
 

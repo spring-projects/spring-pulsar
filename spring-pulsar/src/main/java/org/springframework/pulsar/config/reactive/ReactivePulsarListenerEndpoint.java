@@ -33,9 +33,6 @@ public interface ReactivePulsarListenerEndpoint<T> extends ListenerEndpoint<Reac
 	boolean isFluxListener();
 
 	@Nullable
-	Integer getMaxInFlight();
-
-	@Nullable
 	Boolean getUseKeyOrderedProcessing();
 
 }
