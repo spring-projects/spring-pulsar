@@ -22,7 +22,6 @@ import org.apache.pulsar.client.api.Message;
 import org.reactivestreams.Publisher;
 
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarOneByOneMessageHandler;
 
@@ -36,8 +35,8 @@ import reactor.core.publisher.Mono;
  * @param <V> payload type.
  * @author Christophe Bornet
  */
-public class PulsarReactiveOneByOneMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
-		implements ReactivePulsarOneByOneMessageHandler<V> {
+public class PulsarReactiveOneByOneMessagingMessageListenerAdapter<V>
+		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarOneByOneMessageHandler<V> {
 
 	public PulsarReactiveOneByOneMessagingMessageListenerAdapter(Object bean, Method method) {
 		super(bean, method);

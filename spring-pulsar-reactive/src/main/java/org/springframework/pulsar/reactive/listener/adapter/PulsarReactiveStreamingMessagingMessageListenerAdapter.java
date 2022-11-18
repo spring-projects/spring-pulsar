@@ -22,7 +22,6 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.reactive.client.api.MessageResult;
 
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarStreamingHandler;
 
@@ -36,8 +35,8 @@ import reactor.core.publisher.Flux;
  * @param <V> payload type.
  * @author Christophe Bornet
  */
-public class PulsarReactiveStreamingMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
-		implements ReactivePulsarStreamingHandler<V> {
+public class PulsarReactiveStreamingMessagingMessageListenerAdapter<V>
+		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarStreamingHandler<V> {
 
 	public PulsarReactiveStreamingMessagingMessageListenerAdapter(Object bean, Method method) {
 		super(bean, method);
