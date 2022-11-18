@@ -86,8 +86,7 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 				.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
 						MemberCategory.DECLARED_FIELDS));
 
-		Stream.of("com.github.benmanes.caffeine.cache.SSMSA",
-				"com.github.benmanes.caffeine.cache.PSAMS")
+		Stream.of("com.github.benmanes.caffeine.cache.SSMSA", "com.github.benmanes.caffeine.cache.PSAMS")
 				.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
 						MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS,
 						MemberCategory.INTROSPECT_PUBLIC_METHODS));
