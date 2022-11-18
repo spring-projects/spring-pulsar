@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.annotation;
+package org.springframework.pulsar.reactive.config.annotation;
 
 import org.springframework.context.annotation.DeferredImportSelector;
 import org.springframework.core.annotation.Order;
@@ -22,16 +22,16 @@ import org.springframework.core.type.AnnotationMetadata;
 
 /**
  * A {@link DeferredImportSelector} implementation with the lowest order to import
- * {@link PulsarBootstrapConfiguration} as late as possible.
+ * {@link ReactivePulsarBootstrapConfiguration} as late as possible.
  *
- * @author Soby Chacko
+ * @author Chris Bono
  */
 @Order
-public class PulsarListenerConfigurationSelector implements DeferredImportSelector {
+public class ReactivePulsarListenerConfigurationSelector implements DeferredImportSelector {
 
 	@Override
 	public String[] selectImports(AnnotationMetadata importingClassMetadata) {
-		return new String[] { PulsarBootstrapConfiguration.class.getName() };
+		return new String[] { ReactivePulsarBootstrapConfiguration.class.getName() };
 	}
 
 }

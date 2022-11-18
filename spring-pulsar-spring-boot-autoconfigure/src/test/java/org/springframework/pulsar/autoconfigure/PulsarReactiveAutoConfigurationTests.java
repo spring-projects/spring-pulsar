@@ -45,20 +45,20 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.pulsar.annotation.EnablePulsar;
-import org.springframework.pulsar.annotation.ReactivePulsarBootstrapConfiguration;
-import org.springframework.pulsar.annotation.ReactivePulsarListenerAnnotationBeanPostProcessor;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
-import org.springframework.pulsar.config.reactive.DefaultReactivePulsarListenerContainerFactory;
-import org.springframework.pulsar.config.reactive.ReactivePulsarListenerContainerFactory;
-import org.springframework.pulsar.config.reactive.ReactivePulsarListenerEndpointRegistry;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarReaderFactory;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarReaderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarTemplate;
+import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
+import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
+import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarBootstrapConfiguration;
+import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerAnnotationBeanPostProcessor;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarReaderFactory;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarReaderFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 
 /**
  * Autoconfiguration tests for {@link PulsarReactiveAutoConfiguration}.
@@ -86,7 +86,7 @@ class PulsarReactiveAutoConfigurationTests {
 
 	@Test
 	void annotationDrivenConfigurationSkippedWhenEnablePulsarAnnotationNotOnClasspath() {
-		this.contextRunner.withClassLoader(new FilteredClassLoader(EnablePulsar.class))
+		this.contextRunner.withClassLoader(new FilteredClassLoader(EnableReactivePulsar.class))
 				.run((context) -> assertThat(context).hasNotFailed()
 						.doesNotHaveBean(PulsarReactiveAnnotationDrivenConfiguration.class));
 	}

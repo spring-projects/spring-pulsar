@@ -24,6 +24,7 @@ settings.gradle.projectsLoaded {
 rootProject.name = 'spring-pulsar-dist'
 
 include 'spring-pulsar'
+include 'spring-pulsar-reactive'
 include 'spring-pulsar-dependencies'
 include 'spring-pulsar-spring-boot-autoconfigure'
 include 'spring-pulsar-spring-boot-starter'

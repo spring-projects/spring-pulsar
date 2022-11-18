@@ -32,9 +32,9 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.pulsar.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.reactive.ReactiveMessageConsumerBuilderCustomizer;
+import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
+import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
