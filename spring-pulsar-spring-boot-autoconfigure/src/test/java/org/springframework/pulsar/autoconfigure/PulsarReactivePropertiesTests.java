@@ -19,13 +19,14 @@ package org.springframework.pulsar.autoconfigure;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.HashingScheme;
-import org.apache.pulsar.client.api.KeySharedPolicy;
+import org.apache.pulsar.client.api.KeySharedMode;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
@@ -35,11 +36,15 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.EnumSource.Mode;
 
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import org.springframework.pulsar.autoconfigure.PulsarReactiveProperties.SchedulerType;
 
 import reactor.core.scheduler.Schedulers;
 
@@ -51,6 +56,10 @@ import reactor.core.scheduler.Schedulers;
 public class PulsarReactivePropertiesTests {
 
 	private final PulsarReactiveProperties properties = new PulsarReactiveProperties();
+
+	private void bind(String name, String value) {
+		bind(Collections.singletonMap(name, value));
+	}
 
 	private void bind(Map<String, String> map) {
 		ConfigurationPropertySource source = new MapConfigurationPropertySource(map);
@@ -109,12 +118,10 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.consumer.topics-pattern", "my-pattern");
 			props.put("spring.pulsar.reactive.consumer.subscription-name", "my-subscription");
 			props.put("spring.pulsar.reactive.consumer.subscription-type", "Shared");
-			props.put("spring.pulsar.reactive.consumer.key-shared-mode", "STICKY");
 			props.put("spring.pulsar.reactive.consumer.subscription-properties[my-sub-prop]", "my-sub-prop-value");
 			props.put("spring.pulsar.reactive.consumer.receiver-queue-size", "1");
 			props.put("spring.pulsar.reactive.consumer.acknowledgements-group-time", "2s");
 			props.put("spring.pulsar.reactive.consumer.acknowledge-asynchronously", "false");
-			props.put("spring.pulsar.reactive.consumer.acknowledge-scheduler-type", "parallel");
 			props.put("spring.pulsar.reactive.consumer.negative-ack-redelivery-delay", "3s");
 			props.put("spring.pulsar.reactive.consumer.dead-letter-policy.max-redeliver-count", "4");
 			props.put("spring.pulsar.reactive.consumer.dead-letter-policy.retry-letter-topic", "my-retry-topic");
@@ -146,14 +153,11 @@ public class PulsarReactivePropertiesTests {
 			assertThat(consumerSpec.getTopicsPattern().toString()).isEqualTo("my-pattern");
 			assertThat(consumerSpec.getSubscriptionName()).isEqualTo("my-subscription");
 			assertThat(consumerSpec.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
-			assertThat(consumerSpec.getKeySharedPolicy())
-					.isExactlyInstanceOf(KeySharedPolicy.stickyHashRange().getClass());
 			assertThat(consumerSpec.getSubscriptionProperties()).hasSize(1).containsEntry("my-sub-prop",
 					"my-sub-prop-value");
 			assertThat(consumerSpec.getReceiverQueueSize()).isEqualTo(1);
 			assertThat(consumerSpec.getAcknowledgementsGroupTime()).isEqualTo(Duration.ofSeconds(2));
 			assertThat(consumerSpec.getAcknowledgeAsynchronously()).isFalse();
-			assertThat(consumerSpec.getAcknowledgeScheduler()).isEqualTo(Schedulers.parallel());
 			assertThat(consumerSpec.getNegativeAckRedeliveryDelay()).isEqualTo(Duration.ofSeconds(3));
 			assertThat(consumerSpec.getDeadLetterPolicy().getMaxRedeliverCount()).isEqualTo(4);
 			assertThat(consumerSpec.getDeadLetterPolicy().getRetryLetterTopic()).isEqualTo("my-retry-topic");
@@ -177,6 +181,33 @@ public class PulsarReactivePropertiesTests {
 			assertThat(consumerSpec.getAutoAckOldestChunkedMessageOnQueueFull()).isFalse();
 			assertThat(consumerSpec.getMaxPendingChunkedMessage()).isEqualTo(11);
 			assertThat(consumerSpec.getExpireTimeOfIncompleteChunkedMessage()).isEqualTo(Duration.ofSeconds(12));
+		}
+
+		@ParameterizedTest
+		@EnumSource(KeySharedMode.class)
+		void keySharedModeProperty(KeySharedMode keySharedMode) {
+			bind("spring.pulsar.reactive.consumer.key-shared-mode", keySharedMode.name());
+			ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
+
+			assertThat(consumerSpec.getKeySharedPolicy().getKeySharedMode()).isEqualTo(keySharedMode);
+		}
+
+		@ParameterizedTest
+		@EnumSource(value = SchedulerType.class, names = "immediate", mode = Mode.EXCLUDE)
+		void acknowledgeScheduler(SchedulerType acknowledgeSchedulerType) {
+			bind("spring.pulsar.reactive.consumer.acknowledge-scheduler-type", acknowledgeSchedulerType.name());
+			ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
+
+			assertThat(consumerSpec.getAcknowledgeScheduler().toString())
+					.isEqualTo("Schedulers.%s()".formatted(acknowledgeSchedulerType));
+		}
+
+		@Test
+		void acknowledgeSchedulerImmediate() {
+			bind("spring.pulsar.reactive.consumer.acknowledge-scheduler-type", "immediate");
+			ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
+
+			assertThat(consumerSpec.getAcknowledgeScheduler()).isSameAs(Schedulers.immediate());
 		}
 
 	}
