@@ -22,7 +22,6 @@ dependencies {
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
 	optional 'com.jayway.jsonpath:json-path'
-	optional 'io.projectreactor:reactor-core'
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testRuntimeOnly 'ch.qos.logback:logback-classic'

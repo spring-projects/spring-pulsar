@@ -22,7 +22,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.List;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
@@ -44,8 +43,6 @@ import org.springframework.pulsar.support.converter.PulsarMessagingMessageConver
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
 
-import reactor.core.publisher.Flux;
-
 /**
  * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter providing the
  * necessary infrastructure to extract the payload from a Pulsar message.
@@ -60,7 +57,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 	private final Object bean;
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
+	protected final LogAccessor logger = new LogAccessor(getClass());
 
 	private final Type inferredType;
 
@@ -176,8 +173,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 			else if (parameterIsType(parameterType, Message.class)) {
 				pulsarMessageFound = true;
 			}
-			else if (parameterIsType(parameterType, List.class) || parameterIsType(parameterType, Messages.class)
-					|| parameterIsType(parameterType, Flux.class)) {
+			else if (isMultipleMessageType(parameterType)) {
 				collectionFound = true;
 			}
 		}
@@ -212,6 +208,15 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		return genericParameterType;
 	}
 
+	/**
+	 * Determines if a type is one that holds multiple messages.
+	 * @param type the type to check
+	 * @return true if the type is a {@link List} or a {@link Messages}, false otherwise
+	 */
+	protected boolean isMultipleMessageType(Type type) {
+		return parameterIsType(type, List.class) || parameterIsType(type, Messages.class);
+	}
+
 	private Type extractGenericParameterTypFromMethodParameter(MethodParameter methodParameter) {
 		Type genericParameterType = methodParameter.getGenericParameterType();
 		if (genericParameterType instanceof ParameterizedType parameterizedType) {
@@ -236,8 +241,7 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 					this.simpleExtraction = true;
 				}
 			}
-			else if (parameterizedType.getRawType().equals(Flux.class)
-					&& parameterizedType.getActualTypeArguments().length == 1) {
+			else if (isFlux(parameterizedType.getRawType()) && parameterizedType.getActualTypeArguments().length == 1) {
 
 				Type paramType = parameterizedType.getActualTypeArguments()[0];
 				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
@@ -255,7 +259,16 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		return genericParameterType;
 	}
 
-	private boolean parameterIsType(Type parameterType, Type type) {
+	/**
+	 * Determine if the type is a reactive Flux.
+	 * @param type type to check
+	 * @return false as the imperative side does not know about Flux
+	 */
+	protected boolean isFlux(Type type) {
+		return false;
+	}
+
+	protected boolean parameterIsType(Type parameterType, Type type) {
 		if (parameterType instanceof ParameterizedType parameterizedType) {
 			Type rawType = parameterizedType.getRawType();
 			if (rawType.equals(type)) {
