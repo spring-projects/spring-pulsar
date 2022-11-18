@@ -15,6 +15,13 @@ To start the cluster run the following script from project root dir:
 ./tools/pulsar/docker/standalone/pulsar-start.sh
 ----
 
+===== Mac M1 (Arm64)
+If you are running on Mac M1 (ARM64) and have issues running the above image, try running the following script from project root dir:
+[source,shell]
+----
+./tools/pulsar/docker/standalone/pulsar-start-arm64.sh
+----
+
 ==== Stop
 To stop the cluster run the following script from project root dir:
 [source,shell]
