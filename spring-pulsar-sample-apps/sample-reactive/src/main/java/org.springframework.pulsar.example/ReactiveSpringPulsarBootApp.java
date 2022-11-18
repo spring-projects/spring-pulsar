@@ -61,8 +61,8 @@ public class ReactiveSpringPulsarBootApp {
 
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {
-			this.reactivePulsarTemplate
-					.send("sample-reactive-topic1", Flux.range(0, 10).map((i) -> "sample-message-" + i)).subscribe();
+			Flux.range(0, 10).map((i) -> "sample-message-" + i)
+					.as(messages -> this.reactivePulsarTemplate.send("sample-reactive-topic1", messages)).subscribe();
 		}
 
 		@ReactivePulsarListener(subscriptionName = "sample-reactive-sub1", topics = "sample-reactive-topic1",
@@ -89,9 +89,8 @@ public class ReactiveSpringPulsarBootApp {
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {
 			this.reactivePulsarTemplate.setSchema(Schema.JSON(Foo.class));
-			this.reactivePulsarTemplate
-					.send("sample-reactive-topic2", Flux.range(0, 10).map((i) -> new Foo("Foo-" + i, "Bar-" + i)))
-					.subscribe();
+			Flux.range(0, 10).map((i) -> new Foo("Foo-" + i, "Bar-" + i))
+					.as(messages -> this.reactivePulsarTemplate.send("sample-reactive-topic2", messages)).subscribe();
 		}
 
 		@ReactivePulsarListener(subscriptionName = "sample-reactive-sub2", topics = "sample-reactive-topic2",
@@ -125,9 +124,8 @@ public class ReactiveSpringPulsarBootApp {
 
 		@Bean
 		ApplicationRunner sendSimple(ReactivePulsarTemplate<String> reactivePulsarTemplate) {
-			return args -> reactivePulsarTemplate
-					.send("sample-reactive-topic3", Flux.range(0, 10).map((i) -> "msg-from-sendSimple-" + i))
-					.subscribe();
+			return args -> Flux.range(0, 10).map((i) -> "msg-from-sendSimple-" + i)
+					.as(messages -> reactivePulsarTemplate.send("sample-reactive-topic3", messages)).subscribe();
 		}
 
 		@PulsarListener(subscriptionName = "sample-reactive-sub3", topics = "sample-reactive-topic3")
