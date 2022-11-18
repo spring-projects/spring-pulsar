@@ -32,13 +32,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarReaderFactory;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarSenderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarReaderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarSenderFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarTemplate;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarReaderFactory;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarReaderFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 

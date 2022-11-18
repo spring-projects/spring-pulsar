@@ -17,7 +17,6 @@
 package org.springframework.pulsar.config;
 
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.listener.MessageListenerContainer;
 
 /**
@@ -40,9 +39,8 @@ public interface ListenerContainerFactory<C extends MessageListenerContainer, E 
 
 	/**
 	 * Create and configure a container without a listener; used to create containers that
-	 * are not used for {@link PulsarListener} and {@link ReactivePulsarListener}
-	 * annotations. Containers created using this method are not added to the listener
-	 * endpoint registry.
+	 * are not used for {@link PulsarListener} annotations. Containers created using this
+	 * method are not added to the listener endpoint registry.
 	 * @param topics the topics.
 	 * @return the container.
 	 */

@@ -36,9 +36,9 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.core.reactive.DefaultReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarTemplate;
+import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 
 import reactor.core.publisher.Flux;
 

@@ -22,11 +22,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
-import org.springframework.pulsar.config.reactive.DefaultReactivePulsarListenerContainerFactory;
-import org.springframework.pulsar.core.reactive.ReactivePulsarConsumerFactory;
-import org.springframework.pulsar.listener.reactive.ReactivePulsarContainerProperties;
+import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
+import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
+import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarContainerProperties;
 
 /**
  * Configuration for Reactive Pulsar annotation-driven support.
@@ -34,7 +34,7 @@ import org.springframework.pulsar.listener.reactive.ReactivePulsarContainerPrope
  * @author Christophe Bornet
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnClass(EnablePulsar.class)
+@ConditionalOnClass(EnableReactivePulsar.class)
 public class PulsarReactiveAnnotationDrivenConfiguration {
 
 	private final PulsarReactiveProperties properties;
@@ -62,7 +62,7 @@ public class PulsarReactiveAnnotationDrivenConfiguration {
 	}
 
 	@Configuration(proxyBeanMethods = false)
-	@EnablePulsar
+	@EnableReactivePulsar
 	@ConditionalOnMissingBean(name = PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
 	static class EnableReactivePulsarConfiguration {
 
