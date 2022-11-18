@@ -16,14 +16,11 @@
 
 package org.springframework.pulsar.example;
 
-import java.time.Duration;
-import java.util.Collections;
-
+import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.MessageResult;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
-import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
-import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,11 +33,12 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
-import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
+import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 public class ReactiveSpringPulsarBootApp {
@@ -50,43 +48,67 @@ public class ReactiveSpringPulsarBootApp {
 	}
 
 	/**
-	 * Sends POJO messages with a reactive template and receives them with a reactive
-	 * consumer.
+	 * Sends string messages with a reactive template and receives them with a simple
+	 * reactive listener.
 	 */
 	@Configuration(proxyBeanMethods = false)
-	static class ReactiveSenderWithReactiveConsumer implements ApplicationListener<ApplicationReadyEvent> {
+	static class ReactiveTemplateWithSimpleReactiveListener implements ApplicationListener<ApplicationReadyEvent> {
+
+		private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+		@Autowired
+		private ReactivePulsarTemplate<String> reactivePulsarTemplate;
+
+		@Override
+		public void onApplicationEvent(ApplicationReadyEvent event) {
+			this.reactivePulsarTemplate
+					.send("sample-reactive-topic1", Flux.range(0, 10).map((i) -> "sample-message-" + i)).subscribe();
+		}
+
+		@ReactivePulsarListener(subscriptionName = "sample-reactive-sub1", topics = "sample-reactive-topic1",
+				consumerCustomizer = "subscriptionInitialPositionEarliest")
+		public Mono<Void> listenSimple(String msg) {
+			this.logger.info("Simple reactive listener received: {}", msg);
+			return Mono.empty();
+		}
+
+	}
+
+	/**
+	 * Sends POJO messages with a reactive template and receives them with a reactive
+	 * streaming listener.
+	 */
+	@Configuration(proxyBeanMethods = false)
+	static class ReactiveTemplateWithStreamingReactiveListener implements ApplicationListener<ApplicationReadyEvent> {
 
 		private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 		@Autowired
 		private ReactivePulsarTemplate<Foo> reactivePulsarTemplate;
 
-		// TODO remove this once the auto-config is available
-		@Bean
-		ReactivePulsarConsumerFactory<Foo> reactivePulsarConsumerFactory(ReactivePulsarClient reactivePulsarClient) {
-			MutableReactiveMessageConsumerSpec spec = new MutableReactiveMessageConsumerSpec();
-			spec.setTopicNames(Collections.singletonList("sample-reactive-topic1"));
-			spec.setSubscriptionName("sample-reactive-sub1");
-			spec.setConsumerName("sample-reactive-consumer1");
-			return new DefaultReactivePulsarConsumerFactory<>(reactivePulsarClient, spec);
-		}
-
-		@Bean
-		ApplicationRunner listenPojo(ReactivePulsarConsumerFactory<Foo> reactiveConsumerFactory) {
-			return args -> {
-				ReactiveMessageConsumer<Foo> messageConsumer = reactiveConsumerFactory
-						.createConsumer(Schema.JSON(Foo.class));
-				messageConsumer.consumeMany((messageFlux) -> messageFlux.map(MessageResult::acknowledgeAndReturn))
-						.take(Duration.ofSeconds(10)).subscribe((msg) -> this.logger.info("Received: {}", msg));
-			};
-		}
-
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {
 			this.reactivePulsarTemplate.setSchema(Schema.JSON(Foo.class));
 			this.reactivePulsarTemplate
-					.send("sample-reactive-topic1", Flux.range(0, 10).map((i) -> new Foo("Foo-" + i, "Bar-" + i)))
+					.send("sample-reactive-topic2", Flux.range(0, 10).map((i) -> new Foo("Foo-" + i, "Bar-" + i)))
 					.subscribe();
+		}
+
+		@ReactivePulsarListener(subscriptionName = "sample-reactive-sub2", topics = "sample-reactive-topic2",
+				stream = true, schemaType = SchemaType.JSON, consumerCustomizer = "subscriptionInitialPositionEarliest")
+		public Flux<MessageResult<Void>> listenStreaming(Flux<Message<Foo>> messages) {
+			return messages.doOnNext((msg) -> this.logger.info("Streaming reactive listener received: {}", msg.getValue()))
+					.map(m -> MessageResult.acknowledge(m.getMessageId()));
+		}
+
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class ConsumerCustomizerConfig {
+
+		@Bean
+		ReactiveMessageConsumerBuilderCustomizer<String> subscriptionInitialPositionEarliest() {
+			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 		}
 
 	}
@@ -96,20 +118,20 @@ public class ReactiveSpringPulsarBootApp {
 	 * listener.
 	 */
 	@Configuration(proxyBeanMethods = false)
-	static class ReactiveSenderWithImperativeListener {
+	static class ReactiveTemplateWithImperativeListener {
 
 		private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 		@Bean
 		ApplicationRunner sendSimple(ReactivePulsarTemplate<String> reactivePulsarTemplate) {
 			return args -> reactivePulsarTemplate
-					.send("sample-reactive-topic2", Flux.range(0, 10).map((i) -> "msg-from-sendSimple-" + i))
+					.send("sample-reactive-topic3", Flux.range(0, 10).map((i) -> "msg-from-sendSimple-" + i))
 					.subscribe();
 		}
 
-		@PulsarListener(subscriptionName = "sample-reactive-sub2", topics = "sample-reactive-topic2")
+		@PulsarListener(subscriptionName = "sample-reactive-sub3", topics = "sample-reactive-topic3")
 		void listenSimple(String message) {
-			this.logger.info("Received: {}", message);
+			this.logger.info("Imperative listener received: {}", message);
 		}
 
 	}
