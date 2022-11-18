@@ -97,7 +97,8 @@ public class ReactiveSpringPulsarBootApp {
 		@ReactivePulsarListener(subscriptionName = "sample-reactive-sub2", topics = "sample-reactive-topic2",
 				stream = true, schemaType = SchemaType.JSON, consumerCustomizer = "subscriptionInitialPositionEarliest")
 		public Flux<MessageResult<Void>> listenStreaming(Flux<Message<Foo>> messages) {
-			return messages.doOnNext((msg) -> this.logger.info("Streaming reactive listener received: {}", msg.getValue()))
+			return messages
+					.doOnNext((msg) -> this.logger.info("Streaming reactive listener received: {}", msg.getValue()))
 					.map(m -> MessageResult.acknowledge(m.getMessageId()));
 		}
 
