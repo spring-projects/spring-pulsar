@@ -5,7 +5,7 @@
 :numbered:
 :icons: font
 :hide-uri-scheme:
-Soby Chacko; Chris Bono; Alexander Preuß; Jay Bryant
+Soby Chacko; Chris Bono; Alexander Preuß; Jay Bryant; Christophe Bornet
 
 //ifdef::backend-html5[]
 //*{project-version}*
