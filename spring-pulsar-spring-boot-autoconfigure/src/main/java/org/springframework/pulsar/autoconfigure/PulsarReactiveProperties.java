@@ -26,14 +26,13 @@ import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.HashingScheme;
-import org.apache.pulsar.client.api.KeySharedMode;
-import org.apache.pulsar.client.api.KeySharedPolicy;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.Range;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageConsumerSpec;
@@ -436,15 +435,15 @@ public class PulsarReactiveProperties {
 		 */
 		private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
-		/*
-		 * KeyShared mode of KeyShared subscription.
-		 */
-		private KeySharedMode keySharedMode;
-
 		/**
 		 * Map of properties to add to the subscription.
 		 */
 		private SortedMap<String, String> subscriptionProperties = new TreeMap<>();
+
+		/**
+		 * Subscription mode to be used when subscribing to the topic.
+		 */
+		private SubscriptionMode subscriptionMode = SubscriptionMode.Durable;
 
 		/**
 		 * Number of messages that can be accumulated before the consumer calls "receive".
@@ -482,7 +481,7 @@ public class PulsarReactiveProperties {
 		/**
 		 * Whether the retry letter topic is enabled.
 		 */
-		private Boolean retryLetterTopicEnable;
+		private Boolean retryLetterTopicEnable = false;
 
 		/**
 		 * Maximum number of messages that a consumer can be pushed at once from a broker
@@ -553,7 +552,7 @@ public class PulsarReactiveProperties {
 		 */
 		private Boolean autoUpdatePartitions = true;
 
-		private Duration autoUpdatePartitionsInterval;
+		private Duration autoUpdatePartitionsInterval = Duration.ofMinutes(1);
 
 		/**
 		 * Whether to replicate subscription state.
@@ -609,20 +608,20 @@ public class PulsarReactiveProperties {
 			this.subscriptionType = subscriptionType;
 		}
 
-		public KeySharedMode getKeySharedMode() {
-			return this.keySharedMode;
-		}
-
-		public void setKeySharedMode(KeySharedMode keySharedMode) {
-			this.keySharedMode = keySharedMode;
-		}
-
 		public SortedMap<String, String> getSubscriptionProperties() {
 			return this.subscriptionProperties;
 		}
 
 		public void setSubscriptionProperties(SortedMap<String, String> subscriptionProperties) {
 			this.subscriptionProperties = subscriptionProperties;
+		}
+
+		public SubscriptionMode getSubscriptionMode() {
+			return this.subscriptionMode;
+		}
+
+		public void setSubscriptionMode(SubscriptionMode subscriptionMode) {
+			this.subscriptionMode = subscriptionMode;
 		}
 
 		public Integer getReceiverQueueSize() {
@@ -835,11 +834,8 @@ public class PulsarReactiveProperties {
 			map.from(this::getTopicsPattern).to(spec::setTopicsPattern);
 			map.from(this::getSubscriptionName).to(spec::setSubscriptionName);
 			map.from(this::getSubscriptionType).to(spec::setSubscriptionType);
-			map.from(this::getKeySharedMode).as((mode) -> switch (mode) {
-				case STICKY -> KeySharedPolicy.stickyHashRange();
-				case AUTO_SPLIT -> KeySharedPolicy.autoSplitHashRange();
-			}).to(spec::setKeySharedPolicy);
 			map.from(this::getSubscriptionProperties).to(spec::setSubscriptionProperties);
+			map.from(this::getSubscriptionMode).to(spec::setSubscriptionMode);
 			map.from(this::getReceiverQueueSize).to(spec::setReceiverQueueSize);
 			map.from(this::getAcknowledgementsGroupTime).to(spec::setAcknowledgementsGroupTime);
 			map.from(this::getAcknowledgeAsynchronously).to(spec::setAcknowledgeAsynchronously);
@@ -862,6 +858,7 @@ public class PulsarReactiveProperties {
 			map.from(this::getProperties).to(spec::setProperties);
 			map.from(this::getReadCompacted).to(spec::setReadCompacted);
 			map.from(this::getBatchIndexAckEnabled).to(spec::setBatchIndexAckEnabled);
+			map.from(this::getSubscriptionInitialPosition).to(spec::setSubscriptionInitialPosition);
 			map.from(this::getTopicsPatternAutoDiscoveryPeriod).to(spec::setTopicsPatternAutoDiscoveryPeriod);
 			map.from(this::getTopicsPatternSubscriptionMode).to(spec::setTopicsPatternSubscriptionMode);
 			map.from(this::getAutoUpdatePartitions).to(spec::setAutoUpdatePartitions);
