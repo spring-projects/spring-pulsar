@@ -60,6 +60,7 @@ public final class ConsumerBuilderConfigurationUtil {
 		propertiesCopy.remove("cryptoKeyReader");
 		propertiesCopy.remove("messageCrypto");
 		propertiesCopy.remove("batchReceivePolicy");
+		propertiesCopy.remove("keySharedPolicy");
 		propertiesCopy.remove("payloadProcessor");
 
 		builder.loadConf(propertiesCopy);
@@ -79,6 +80,8 @@ public final class ConsumerBuilderConfigurationUtil {
 				"messageCrypto");
 		applyValueToBuilderAfterLoadConf(builderConf::getBatchReceivePolicy, builder::batchReceivePolicy, properties,
 				"batchReceivePolicy");
+		applyValueToBuilderAfterLoadConf(builderConf::getKeySharedPolicy, builder::keySharedPolicy, properties,
+				"keySharedPolicy");
 		applyValueToBuilderAfterLoadConf(builderConf::getPayloadProcessor, builder::messagePayloadProcessor, properties,
 				"payloadProcessor");
 	}

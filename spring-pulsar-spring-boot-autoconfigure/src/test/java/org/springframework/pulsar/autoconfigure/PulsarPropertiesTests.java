@@ -18,6 +18,7 @@ package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,14 +28,17 @@ import java.util.Set;
 
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
+import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -145,8 +149,8 @@ public class PulsarPropertiesTests {
 			Map<String, Object> producerProps = properties.buildProducerProperties();
 
 			// Verify that the props can be loaded in a ProducerBuilder
-			ConfigurationDataUtils.loadData(producerProps, new ProducerConfigurationData(),
-					ProducerConfigurationData.class);
+			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(producerProps,
+					new ProducerConfigurationData(), ProducerConfigurationData.class));
 
 			assertThat(producerProps).containsEntry("topicName", "my-topic")
 					.containsEntry("producerName", "my-producer").containsEntry("sendTimeoutMs", 2_000)
@@ -181,6 +185,8 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.consumer.topics-pattern", "my-pattern");
 			props.put("spring.pulsar.consumer.subscription-name", "my-subscription");
 			props.put("spring.pulsar.consumer.subscription-type", "Shared");
+			props.put("spring.pulsar.consumer.subscription-properties[my-sub-prop]", "my-sub-prop-value");
+			props.put("spring.pulsar.consumer.subscription-mode", "NonDurable");
 			props.put("spring.pulsar.consumer.receiver-queue-size", "1");
 			props.put("spring.pulsar.consumer.acknowledgements-group-time", "2s");
 			props.put("spring.pulsar.consumer.negative-ack-redelivery-delay", "3s");
@@ -195,8 +201,19 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.consumer.subscription-initial-position", "Earliest");
 			props.put("spring.pulsar.consumer.pattern-auto-discovery-period", "9");
 			props.put("spring.pulsar.consumer.regex-subscription-mode", "AllTopics");
+			props.put("spring.pulsar.consumer.dead-letter-policy.max-redeliver-count", "4");
+			props.put("spring.pulsar.consumer.dead-letter-policy.retry-letter-topic", "my-retry-topic");
+			props.put("spring.pulsar.consumer.dead-letter-policy.dead-letter-topic", "my-dlt-topic");
+			props.put("spring.pulsar.consumer.dead-letter-policy.initial-subscription-name", "my-initial-subscription");
+			props.put("spring.pulsar.consumer.retry-enable", "true");
 			props.put("spring.pulsar.consumer.auto-update-partitions", "false");
+			props.put("spring.pulsar.consumer.auto-update-partitions-interval", "10s");
 			props.put("spring.pulsar.consumer.replicate-subscription-state", "true");
+			props.put("spring.pulsar.consumer.reset-include-head", "true");
+			props.put("spring.pulsar.consumer.batch-index-ack-enabled", "true");
+			props.put("spring.pulsar.consumer.ack-receipt-enabled", "true");
+			props.put("spring.pulsar.consumer.pool-messages", "true");
+			props.put("spring.pulsar.consumer.start-paused", "true");
 			props.put("spring.pulsar.consumer.auto-ack-oldest-chunked-message-on-queue-full", "false");
 			props.put("spring.pulsar.consumer.max-pending-chunked-message", "11");
 			props.put("spring.pulsar.consumer.expire-time-of-incomplete-chunked-message", "12s");
@@ -204,13 +221,20 @@ public class PulsarPropertiesTests {
 			bind(props);
 			Map<String, Object> consumerProps = properties.buildConsumerProperties();
 
+			// Verify that the props can be loaded in a ConsumerBuilder
+			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(consumerProps,
+					new ConsumerConfigurationData<>(), ConsumerConfigurationData.class));
+
 			assertThat(consumerProps)
 					.hasEntrySatisfying("topicNames",
 							n -> assertThat((Collection<String>) n).containsExactly("my-topic"))
 					.hasEntrySatisfying("topicsPattern", p -> assertThat(p.toString()).isEqualTo("my-pattern"))
 					.containsEntry("subscriptionName", "my-subscription")
-					.containsEntry("subscriptionType", SubscriptionType.Shared).containsEntry("receiverQueueSize", 1)
-					.containsEntry("acknowledgementsGroupTimeMicros", 2_000_000L)
+					.containsEntry("subscriptionType", SubscriptionType.Shared)
+					.hasEntrySatisfying("subscriptionProperties",
+							p -> assertThat((Map<String, String>) p).containsEntry("my-sub-prop", "my-sub-prop-value"))
+					.containsEntry("subscriptionMode", SubscriptionMode.NonDurable)
+					.containsEntry("receiverQueueSize", 1).containsEntry("acknowledgementsGroupTimeMicros", 2_000_000L)
 					.containsEntry("negativeAckRedeliveryDelayMicros", 3_000_000L)
 					.containsEntry("maxTotalReceiverQueueSizeAcrossPartitions", 5)
 					.containsEntry("consumerName", "my-consumer").containsEntry("ackTimeoutMillis", 6_000L)
@@ -222,7 +246,17 @@ public class PulsarPropertiesTests {
 					.containsEntry("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest)
 					.containsEntry("patternAutoDiscoveryPeriod", 9)
 					.containsEntry("regexSubscriptionMode", RegexSubscriptionMode.AllTopics)
-					.containsEntry("autoUpdatePartitions", false).containsEntry("replicateSubscriptionState", true)
+					.hasEntrySatisfying("deadLetterPolicy", dlp -> {
+						DeadLetterPolicy deadLetterPolicy = (DeadLetterPolicy) dlp;
+						assertThat(deadLetterPolicy.getMaxRedeliverCount()).isEqualTo(4);
+						assertThat(deadLetterPolicy.getRetryLetterTopic()).isEqualTo("my-retry-topic");
+						assertThat(deadLetterPolicy.getDeadLetterTopic()).isEqualTo("my-dlt-topic");
+						assertThat(deadLetterPolicy.getInitialSubscriptionName()).isEqualTo("my-initial-subscription");
+					}).containsEntry("retryEnable", true).containsEntry("autoUpdatePartitions", false)
+					.containsEntry("autoUpdatePartitionsIntervalSeconds", 10L)
+					.containsEntry("replicateSubscriptionState", true).containsEntry("resetIncludeHead", true)
+					.containsEntry("batchIndexAckEnabled", true).containsEntry("ackReceiptEnabled", true)
+					.containsEntry("poolMessages", true).containsEntry("startPaused", true)
 					.containsEntry("autoAckOldestChunkedMessageOnQueueFull", false)
 					.containsEntry("maxPendingChunkedMessage", 11)
 					.containsEntry("expireTimeOfIncompleteChunkedMessageMillis", 12_000L);
