@@ -26,11 +26,12 @@ import java.util.Map;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.HashingScheme;
-import org.apache.pulsar.client.api.KeySharedMode;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
+import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
@@ -130,6 +131,7 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.consumer.topics-pattern", "my-pattern");
 			props.put("spring.pulsar.reactive.consumer.subscription-name", "my-subscription");
 			props.put("spring.pulsar.reactive.consumer.subscription-type", "Shared");
+			props.put("spring.pulsar.reactive.consumer.subscription-mode", "NonDurable");
 			props.put("spring.pulsar.reactive.consumer.subscription-properties[my-sub-prop]", "my-sub-prop-value");
 			props.put("spring.pulsar.reactive.consumer.receiver-queue-size", "1");
 			props.put("spring.pulsar.reactive.consumer.acknowledgements-group-time", "2s");
@@ -149,6 +151,7 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.consumer.properties[my-prop]", "my-prop-value");
 			props.put("spring.pulsar.reactive.consumer.read-compacted", "true");
 			props.put("spring.pulsar.reactive.consumer.batch-index-ack-enabled", "true");
+			props.put("spring.pulsar.reactive.consumer.subscription-initial-position", "Earliest");
 			props.put("spring.pulsar.reactive.consumer.topics-pattern-auto-discovery-period", "9s");
 			props.put("spring.pulsar.reactive.consumer.topics-pattern-subscription-mode", "AllTopics");
 			props.put("spring.pulsar.reactive.consumer.auto-update-partitions", "false");
@@ -165,6 +168,7 @@ public class PulsarReactivePropertiesTests {
 			assertThat(consumerSpec.getTopicsPattern().toString()).isEqualTo("my-pattern");
 			assertThat(consumerSpec.getSubscriptionName()).isEqualTo("my-subscription");
 			assertThat(consumerSpec.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
+			assertThat(consumerSpec.getSubscriptionMode()).isEqualTo(SubscriptionMode.NonDurable);
 			assertThat(consumerSpec.getSubscriptionProperties()).hasSize(1).containsEntry("my-sub-prop",
 					"my-sub-prop-value");
 			assertThat(consumerSpec.getReceiverQueueSize()).isEqualTo(1);
@@ -185,6 +189,7 @@ public class PulsarReactivePropertiesTests {
 			assertThat(consumerSpec.getProperties()).hasSize(1).containsEntry("my-prop", "my-prop-value");
 			assertThat(consumerSpec.getReadCompacted()).isTrue();
 			assertThat(consumerSpec.getBatchIndexAckEnabled()).isTrue();
+			assertThat(consumerSpec.getSubscriptionInitialPosition()).isEqualTo(SubscriptionInitialPosition.Earliest);
 			assertThat(consumerSpec.getTopicsPatternAutoDiscoveryPeriod()).isEqualTo(Duration.ofSeconds(9));
 			assertThat(consumerSpec.getTopicsPatternSubscriptionMode()).isEqualTo(RegexSubscriptionMode.AllTopics);
 			assertThat(consumerSpec.getAutoUpdatePartitions()).isFalse();
@@ -193,15 +198,6 @@ public class PulsarReactivePropertiesTests {
 			assertThat(consumerSpec.getAutoAckOldestChunkedMessageOnQueueFull()).isFalse();
 			assertThat(consumerSpec.getMaxPendingChunkedMessage()).isEqualTo(11);
 			assertThat(consumerSpec.getExpireTimeOfIncompleteChunkedMessage()).isEqualTo(Duration.ofSeconds(12));
-		}
-
-		@ParameterizedTest
-		@EnumSource(KeySharedMode.class)
-		void keySharedModeProperty(KeySharedMode keySharedMode) {
-			bind("spring.pulsar.reactive.consumer.key-shared-mode", keySharedMode.name());
-			ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
-
-			assertThat(consumerSpec.getKeySharedPolicy().getKeySharedMode()).isEqualTo(keySharedMode);
 		}
 
 		@ParameterizedTest
