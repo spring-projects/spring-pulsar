@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
@@ -33,6 +34,8 @@ import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
+import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -113,6 +116,7 @@ public class PulsarPropertiesTests {
 	class ProducerPropertiesTests {
 
 		@Test
+		@SuppressWarnings("unchecked")
 		void producerProperties() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.producer.topic-name", "my-topic");
@@ -125,26 +129,43 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.producer.hashing-scheme", "Murmur3_32Hash");
 			props.put("spring.pulsar.producer.crypto-failure-action", "SEND");
 			props.put("spring.pulsar.producer.batching-max-publish-delay", "5s");
-			props.put("spring.pulsar.producer.batching-max-messages", "6");
+			props.put("spring.pulsar.producer.batching-partition-switch-frequency-by-publish-delay", "6");
+			props.put("spring.pulsar.producer.batching-max-messages", "7");
+			props.put("spring.pulsar.producer.batching-max-bytes", "8");
 			props.put("spring.pulsar.producer.batching-enabled", "false");
 			props.put("spring.pulsar.producer.chunking-enabled", "true");
+			props.put("spring.pulsar.producer.encryption-keys[0]", "my-key");
 			props.put("spring.pulsar.producer.compression-type", "LZ4");
+			props.put("spring.pulsar.producer.initial-sequence-id", "9");
 			props.put("spring.pulsar.producer.producer-access-mode", "Exclusive");
+			props.put("spring.pulsar.producer.lazy-start=partitioned-producers", "true");
+			props.put("spring.pulsar.producer.properties[my-prop]", "my-prop-value");
 
 			bind(props);
 			Map<String, Object> producerProps = properties.buildProducerProperties();
 
+			// Verify that the props can be loaded in a ProducerBuilder
+			ConfigurationDataUtils.loadData(producerProps, new ProducerConfigurationData(),
+					ProducerConfigurationData.class);
+
 			assertThat(producerProps).containsEntry("topicName", "my-topic")
-					.containsEntry("producerName", "my-producer").containsEntry("sendTimeoutMs", 2_000L)
+					.containsEntry("producerName", "my-producer").containsEntry("sendTimeoutMs", 2_000)
 					.containsEntry("blockIfQueueFull", true).containsEntry("maxPendingMessages", 3)
 					.containsEntry("maxPendingMessagesAcrossPartitions", 4)
 					.containsEntry("messageRoutingMode", MessageRoutingMode.CustomPartition)
 					.containsEntry("hashingScheme", HashingScheme.Murmur3_32Hash)
 					.containsEntry("cryptoFailureAction", ProducerCryptoFailureAction.SEND)
-					.containsEntry("batchingMaxPublishDelayMicros", 5_000_000L).containsEntry("batchingMaxMessages", 6)
+					.containsEntry("batchingMaxPublishDelayMicros", 5_000_000L)
+					.containsEntry("batchingPartitionSwitchFrequencyByPublishDelay", 6)
+					.containsEntry("batchingMaxMessages", 7).containsEntry("batchingMaxBytes", 8)
 					.containsEntry("batchingEnabled", false).containsEntry("chunkingEnabled", true)
-					.containsEntry("compressionType", CompressionType.LZ4)
-					.containsEntry("accessMode", ProducerAccessMode.Exclusive);
+					.hasEntrySatisfying("encryptionKeys",
+							keys -> assertThat(((Set<String>) keys)).containsExactly("my-key"))
+					.containsEntry("compressionType", CompressionType.LZ4).containsEntry("initialSequenceId", 9L)
+					.containsEntry("accessMode", ProducerAccessMode.Exclusive)
+					.containsEntry("lazyStartPartitionedProducers", true)
+					.hasEntrySatisfying("properties", properties -> assertThat(((Map<String, String>) properties))
+							.containsEntry("my-prop", "my-prop-value"));
 		}
 
 	}
