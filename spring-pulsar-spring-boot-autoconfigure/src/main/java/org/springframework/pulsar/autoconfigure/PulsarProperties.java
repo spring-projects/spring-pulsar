@@ -27,12 +27,15 @@ import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.HashingScheme;
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
@@ -133,6 +136,16 @@ public class PulsarProperties {
 		private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
 		/**
+		 * Map of properties to add to the subscription.
+		 */
+		private Map<String, String> subscriptionProperties = new HashMap<>();
+
+		/**
+		 * Subscription mode to be used when subscribing to the topic.
+		 */
+		private SubscriptionMode subscriptionMode = SubscriptionMode.Durable;
+
+		/**
 		 * Number of messages that can be accumulated before the consumer calls "receive".
 		 */
 		private Integer receiverQueueSize = 1000;
@@ -206,15 +219,58 @@ public class PulsarProperties {
 		private RegexSubscriptionMode regexSubscriptionMode = RegexSubscriptionMode.PersistentOnly;
 
 		/**
+		 * Dead letter policy to use.
+		 */
+		@Nullable
+		private DeadLetterPolicy deadLetterPolicy;
+
+		/**
+		 * Whether to auto retry messages.
+		 */
+		private Boolean retryEnable = false;
+
+		/**
 		 * Whether the consumer auto-subscribes for partition increase. This is only for
 		 * partitioned consumers.
 		 */
 		private Boolean autoUpdatePartitions = true;
 
 		/**
+		 * Interval of partitions discovery updates.
+		 */
+		private Duration autoUpdatePartitionsInterval = Duration.ofMinutes(1);
+
+		/**
 		 * Whether to replicate subscription state.
 		 */
 		private Boolean replicateSubscriptionState = false;
+
+		/**
+		 * Whether to include the given position of any reset operation like
+		 * {@link org.apache.pulsar.client.api.Consumer#seek(long) or
+		 * {@link Consumer#seek(MessageId)}}.
+		 */
+		private Boolean resetIncludeHead = false;
+
+		/**
+		 * Whether the batch index acknowledgment is enabled.
+		 */
+		private Boolean batchIndexAckEnabled = false;
+
+		/**
+		 * Whether an acknowledgement receipt is enabled.
+		 */
+		private Boolean ackReceiptEnabled = false;
+
+		/**
+		 * Whether pooling of messages and the underlying data buffers is enabled.
+		 */
+		private Boolean poolMessages = false;
+
+		/**
+		 * Whether to start the consumer in a paused state.
+		 */
+		private Boolean startPaused = false;
 
 		/**
 		 * Whether to automatically drop outstanding un-acked messages if the queue is
@@ -255,6 +311,22 @@ public class PulsarProperties {
 
 		public void setSubscriptionName(String subscriptionName) {
 			this.subscriptionName = subscriptionName;
+		}
+
+		public Map<String, String> getSubscriptionProperties() {
+			return this.subscriptionProperties;
+		}
+
+		public void setSubscriptionProperties(Map<String, String> subscriptionProperties) {
+			this.subscriptionProperties = subscriptionProperties;
+		}
+
+		public SubscriptionMode getSubscriptionMode() {
+			return this.subscriptionMode;
+		}
+
+		public void setSubscriptionMode(SubscriptionMode subscriptionMode) {
+			this.subscriptionMode = subscriptionMode;
 		}
 
 		public SubscriptionType getSubscriptionType() {
@@ -345,7 +417,7 @@ public class PulsarProperties {
 			this.properties = properties;
 		}
 
-		public Boolean isReadCompacted() {
+		public Boolean getReadCompacted() {
 			return this.readCompacted;
 		}
 
@@ -377,7 +449,24 @@ public class PulsarProperties {
 			this.regexSubscriptionMode = regexSubscriptionMode;
 		}
 
-		public Boolean isAutoUpdatePartitions() {
+		@Nullable
+		public DeadLetterPolicy getDeadLetterPolicy() {
+			return this.deadLetterPolicy;
+		}
+
+		public void setDeadLetterPolicy(@Nullable DeadLetterPolicy deadLetterPolicy) {
+			this.deadLetterPolicy = deadLetterPolicy;
+		}
+
+		public Boolean getRetryEnable() {
+			return this.retryEnable;
+		}
+
+		public void setRetryEnable(Boolean retryEnable) {
+			this.retryEnable = retryEnable;
+		}
+
+		public Boolean getAutoUpdatePartitions() {
 			return this.autoUpdatePartitions;
 		}
 
@@ -385,7 +474,15 @@ public class PulsarProperties {
 			this.autoUpdatePartitions = autoUpdatePartitions;
 		}
 
-		public Boolean isReplicateSubscriptionState() {
+		public Duration getAutoUpdatePartitionsInterval() {
+			return this.autoUpdatePartitionsInterval;
+		}
+
+		public void setAutoUpdatePartitionsInterval(Duration autoUpdatePartitionsInterval) {
+			this.autoUpdatePartitionsInterval = autoUpdatePartitionsInterval;
+		}
+
+		public Boolean getReplicateSubscriptionState() {
 			return this.replicateSubscriptionState;
 		}
 
@@ -393,7 +490,47 @@ public class PulsarProperties {
 			this.replicateSubscriptionState = replicateSubscriptionState;
 		}
 
-		public Boolean isAutoAckOldestChunkedMessageOnQueueFull() {
+		public Boolean getResetIncludeHead() {
+			return this.resetIncludeHead;
+		}
+
+		public void setResetIncludeHead(Boolean resetIncludeHead) {
+			this.resetIncludeHead = resetIncludeHead;
+		}
+
+		public Boolean getBatchIndexAckEnabled() {
+			return this.batchIndexAckEnabled;
+		}
+
+		public void setBatchIndexAckEnabled(Boolean batchIndexAckEnabled) {
+			this.batchIndexAckEnabled = batchIndexAckEnabled;
+		}
+
+		public Boolean getAckReceiptEnabled() {
+			return this.ackReceiptEnabled;
+		}
+
+		public void setAckReceiptEnabled(Boolean ackReceiptEnabled) {
+			this.ackReceiptEnabled = ackReceiptEnabled;
+		}
+
+		public Boolean getPoolMessages() {
+			return this.poolMessages;
+		}
+
+		public void setPoolMessages(Boolean poolMessages) {
+			this.poolMessages = poolMessages;
+		}
+
+		public Boolean getStartPaused() {
+			return this.startPaused;
+		}
+
+		public void setStartPaused(Boolean startPaused) {
+			this.startPaused = startPaused;
+		}
+
+		public Boolean getAutoAckOldestChunkedMessageOnQueueFull() {
 			return this.autoAckOldestChunkedMessageOnQueueFull;
 		}
 
@@ -426,6 +563,8 @@ public class PulsarProperties {
 			map.from(this::getTopicsPattern).to(properties.in("topicsPattern"));
 			map.from(this::getSubscriptionName).to(properties.in("subscriptionName"));
 			map.from(this::getSubscriptionType).to(properties.in("subscriptionType"));
+			map.from(this::getSubscriptionProperties).to(properties.in("subscriptionProperties"));
+			map.from(this::getSubscriptionMode).to(properties.in("subscriptionMode"));
 			map.from(this::getReceiverQueueSize).to(properties.in("receiverQueueSize"));
 			map.from(this::getAcknowledgementsGroupTime).as(it -> it.toNanos() / 1000)
 					.to(properties.in("acknowledgementsGroupTimeMicros"));
@@ -439,13 +578,22 @@ public class PulsarProperties {
 			map.from(this::getPriorityLevel).to(properties.in("priorityLevel"));
 			map.from(this::getCryptoFailureAction).to(properties.in("cryptoFailureAction"));
 			map.from(this::getProperties).to(properties.in("properties"));
-			map.from(this::isReadCompacted).to(properties.in("readCompacted"));
+			map.from(this::getReadCompacted).to(properties.in("readCompacted"));
 			map.from(this::getSubscriptionInitialPosition).to(properties.in("subscriptionInitialPosition"));
 			map.from(this::getPatternAutoDiscoveryPeriod).to(properties.in("patternAutoDiscoveryPeriod"));
 			map.from(this::getRegexSubscriptionMode).to(properties.in("regexSubscriptionMode"));
-			map.from(this::isAutoUpdatePartitions).to(properties.in("autoUpdatePartitions"));
-			map.from(this::isReplicateSubscriptionState).to(properties.in("replicateSubscriptionState"));
-			map.from(this::isAutoAckOldestChunkedMessageOnQueueFull)
+			map.from(this::getDeadLetterPolicy).to(properties.in("deadLetterPolicy"));
+			map.from(this::getRetryEnable).to(properties.in("retryEnable"));
+			map.from(this::getAutoUpdatePartitions).to(properties.in("autoUpdatePartitions"));
+			map.from(this::getAutoUpdatePartitionsInterval).as(Duration::toSeconds)
+					.to(properties.in("autoUpdatePartitionsIntervalSeconds"));
+			map.from(this::getReplicateSubscriptionState).to(properties.in("replicateSubscriptionState"));
+			map.from(this::getResetIncludeHead).to(properties.in("resetIncludeHead"));
+			map.from(this::getBatchIndexAckEnabled).to(properties.in("batchIndexAckEnabled"));
+			map.from(this::getAckReceiptEnabled).to(properties.in("ackReceiptEnabled"));
+			map.from(this::getPoolMessages).to(properties.in("poolMessages"));
+			map.from(this::getStartPaused).to(properties.in("startPaused"));
+			map.from(this::getAutoAckOldestChunkedMessageOnQueueFull)
 					.to(properties.in("autoAckOldestChunkedMessageOnQueueFull"));
 			map.from(this::getMaxPendingChunkedMessage).to(properties.in("maxPendingChunkedMessage"));
 			map.from(this::getExpireTimeOfIncompleteChunkedMessage).as(Duration::toMillis)
