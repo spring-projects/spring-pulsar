@@ -17,7 +17,11 @@
 package org.springframework.pulsar.autoconfigure;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -48,6 +52,8 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.lang.Nullable;
+import org.springframework.util.unit.DataSize;
 
 import reactor.core.scheduler.Schedulers;
 
@@ -146,10 +152,17 @@ public class PulsarReactiveProperties {
 		 */
 		private Duration batchingMaxPublishDelay = Duration.ofMillis(1);
 
+		private Integer roundRobinRouterBatchingPartitionSwitchFrequency;
+
 		/**
 		 * Maximum number of messages to be batched.
 		 */
 		private Integer batchingMaxMessages = 1000;
+
+		/**
+		 * Maximum number of bytes permitted in a batch.
+		 */
+		private DataSize batchingMaxBytes = DataSize.ofKilobytes(128);
 
 		/**
 		 * Whether to automatically batch messages.
@@ -162,14 +175,51 @@ public class PulsarReactiveProperties {
 		private Boolean chunkingEnabled = false;
 
 		/**
+		 * Names of the public encryption keys to use when encrypting data.
+		 */
+		private Set<String> encryptionKeys = new HashSet<>();
+
+		/**
 		 * Message compression type.
 		 */
 		private CompressionType compressionType;
 
 		/**
+		 * Baseline for the sequence ids for messages published by the producer.
+		 */
+		@Nullable
+		private Long initialSequenceId;
+
+		/**
+		 * Whether partitioned producer automatically discover new partitions at runtime.
+		 */
+		private Boolean autoUpdatePartitions = true;
+
+		/**
+		 * Interval of partitions discovery updates.
+		 */
+		private Duration autoUpdatePartitionsInterval = Duration.ofMinutes(1);
+
+		/**
+		 * Whether the multiple schema mode is enabled.
+		 */
+		private Boolean multiSchema = true;
+
+		/**
 		 * Type of access to the topic the producer requires.
 		 */
 		private ProducerAccessMode producerAccessMode = ProducerAccessMode.Shared;
+
+		/**
+		 * Whether producers in Shared mode register and connect immediately to the owner
+		 * broker of each partition or start lazily on demand.
+		 */
+		private Boolean lazyStartPartitionedProducers = false;
+
+		/**
+		 * Map of properties to add to the producer.
+		 */
+		private Map<String, String> properties = new HashMap<>();
 
 		private final Cache cache = new Cache();
 
@@ -245,12 +295,29 @@ public class PulsarReactiveProperties {
 			this.batchingMaxPublishDelay = batchingMaxPublishDelay;
 		}
 
+		public Integer getRoundRobinRouterBatchingPartitionSwitchFrequency() {
+			return this.roundRobinRouterBatchingPartitionSwitchFrequency;
+		}
+
+		public void setRoundRobinRouterBatchingPartitionSwitchFrequency(
+				Integer roundRobinRouterBatchingPartitionSwitchFrequency) {
+			this.roundRobinRouterBatchingPartitionSwitchFrequency = roundRobinRouterBatchingPartitionSwitchFrequency;
+		}
+
 		public Integer getBatchingMaxMessages() {
 			return this.batchingMaxMessages;
 		}
 
 		public void setBatchingMaxMessages(Integer batchingMaxMessages) {
 			this.batchingMaxMessages = batchingMaxMessages;
+		}
+
+		public DataSize getBatchingMaxBytes() {
+			return this.batchingMaxBytes;
+		}
+
+		public void setBatchingMaxBytes(DataSize batchingMaxBytes) {
+			this.batchingMaxBytes = batchingMaxBytes;
 		}
 
 		public Boolean getBatchingEnabled() {
@@ -269,6 +336,14 @@ public class PulsarReactiveProperties {
 			this.chunkingEnabled = chunkingEnabled;
 		}
 
+		public Set<String> getEncryptionKeys() {
+			return this.encryptionKeys;
+		}
+
+		public void setEncryptionKeys(Set<String> encryptionKeys) {
+			this.encryptionKeys = encryptionKeys;
+		}
+
 		public CompressionType getCompressionType() {
 			return this.compressionType;
 		}
@@ -277,12 +352,61 @@ public class PulsarReactiveProperties {
 			this.compressionType = compressionType;
 		}
 
+		@Nullable
+		public Long getInitialSequenceId() {
+			return this.initialSequenceId;
+		}
+
+		public void setInitialSequenceId(@Nullable Long initialSequenceId) {
+			this.initialSequenceId = initialSequenceId;
+		}
+
+		public Boolean getAutoUpdatePartitions() {
+			return this.autoUpdatePartitions;
+		}
+
+		public void setAutoUpdatePartitions(Boolean autoUpdatePartitions) {
+			this.autoUpdatePartitions = autoUpdatePartitions;
+		}
+
+		public Duration getAutoUpdatePartitionsInterval() {
+			return this.autoUpdatePartitionsInterval;
+		}
+
+		public void setAutoUpdatePartitionsInterval(Duration autoUpdatePartitionsInterval) {
+			this.autoUpdatePartitionsInterval = autoUpdatePartitionsInterval;
+		}
+
+		public Boolean getMultiSchema() {
+			return this.multiSchema;
+		}
+
+		public void setMultiSchema(Boolean multiSchema) {
+			this.multiSchema = multiSchema;
+		}
+
 		public ProducerAccessMode getProducerAccessMode() {
 			return this.producerAccessMode;
 		}
 
 		public void setProducerAccessMode(ProducerAccessMode producerAccessMode) {
 			this.producerAccessMode = producerAccessMode;
+		}
+
+		public Boolean getLazyStartPartitionedProducers() {
+			return this.lazyStartPartitionedProducers;
+		}
+
+		public void setLazyStartPartitionedProducers(Boolean lazyStartPartitionedProducers) {
+			this.lazyStartPartitionedProducers = lazyStartPartitionedProducers;
+		}
+
+		public Map<String, String> getProperties() {
+			return this.properties;
+		}
+
+		public void setProperties(Map<String, String> properties) {
+			this.properties = properties;
 		}
 
 		public Cache getCache() {
@@ -303,11 +427,21 @@ public class PulsarReactiveProperties {
 			map.from(this::getHashingScheme).to(spec::setHashingScheme);
 			map.from(this::getCryptoFailureAction).to(spec::setCryptoFailureAction);
 			map.from(this::getBatchingMaxPublishDelay).to(spec::setBatchingMaxPublishDelay);
+			map.from(this::getRoundRobinRouterBatchingPartitionSwitchFrequency)
+					.to(spec::setRoundRobinRouterBatchingPartitionSwitchFrequency);
 			map.from(this::getBatchingMaxMessages).to(spec::setBatchingMaxMessages);
+			map.from(this::getBatchingMaxBytes).asInt(DataSize::toBytes).to(spec::setBatchingMaxBytes);
 			map.from(this::getBatchingEnabled).to(spec::setBatchingEnabled);
 			map.from(this::getChunkingEnabled).to(spec::setChunkingEnabled);
+			map.from(this::getEncryptionKeys).to(spec::setEncryptionKeys);
 			map.from(this::getCompressionType).to(spec::setCompressionType);
+			map.from(this::getInitialSequenceId).to(spec::setInitialSequenceId);
+			map.from(this::getAutoUpdatePartitions).to(spec::setAutoUpdatePartitions);
+			map.from(this::getAutoUpdatePartitionsInterval).to(spec::setAutoUpdatePartitionsInterval);
+			map.from(this::getMultiSchema).to(spec::setMultiSchema);
 			map.from(this::getProducerAccessMode).to(spec::setAccessMode);
+			map.from(this::getLazyStartPartitionedProducers).to(spec::setLazyStartPartitionedProducers);
+			map.from(this::getProperties).to(spec::setProperties);
 
 			return new ImmutableReactiveMessageSenderSpec(spec);
 		}

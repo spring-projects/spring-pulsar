@@ -81,11 +81,17 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.sender.hashing-scheme", "Murmur3_32Hash");
 			props.put("spring.pulsar.reactive.sender.crypto-failure-action", "SEND");
 			props.put("spring.pulsar.reactive.sender.batching-max-publish-delay", "5s");
-			props.put("spring.pulsar.reactive.sender.batching-max-messages", "6");
+			props.put("spring.pulsar.reactive.sender.round-robin-router-batching-partition-switch-frequency", "6");
+			props.put("spring.pulsar.reactive.sender.batching-max-messages", "7");
+			props.put("spring.pulsar.reactive.sender.batching-max-bytes", "8");
 			props.put("spring.pulsar.reactive.sender.batching-enabled", "false");
 			props.put("spring.pulsar.reactive.sender.chunking-enabled", "true");
+			props.put("spring.pulsar.reactive.sender.encryption-keys[0]", "my-key");
 			props.put("spring.pulsar.reactive.sender.compression-type", "LZ4");
+			props.put("spring.pulsar.reactive.sender.initial-sequence-id", "9");
 			props.put("spring.pulsar.reactive.sender.producer-access-mode", "Exclusive");
+			props.put("spring.pulsar.reactive.sender.lazy-start=partitioned-producers", "true");
+			props.put("spring.pulsar.reactive.sender.properties[my-prop]", "my-prop-value");
 
 			bind(props);
 			ReactiveMessageSenderSpec senderSpec = properties.buildReactiveMessageSenderSpec();
@@ -99,11 +105,17 @@ public class PulsarReactivePropertiesTests {
 			assertThat(senderSpec.getHashingScheme()).isEqualTo(HashingScheme.Murmur3_32Hash);
 			assertThat(senderSpec.getCryptoFailureAction()).isEqualTo(ProducerCryptoFailureAction.SEND);
 			assertThat(senderSpec.getBatchingMaxPublishDelay()).isEqualTo(Duration.ofSeconds(5));
-			assertThat(senderSpec.getBatchingMaxMessages()).isEqualTo(6);
+			assertThat(senderSpec.getRoundRobinRouterBatchingPartitionSwitchFrequency()).isEqualTo(6);
+			assertThat(senderSpec.getBatchingMaxMessages()).isEqualTo(7);
+			assertThat(senderSpec.getBatchingMaxBytes()).isEqualTo(8);
 			assertThat(senderSpec.getBatchingEnabled()).isEqualTo(false);
 			assertThat(senderSpec.getChunkingEnabled()).isEqualTo(true);
+			assertThat(senderSpec.getEncryptionKeys()).containsExactly("my-key");
 			assertThat(senderSpec.getCompressionType()).isEqualTo(CompressionType.LZ4);
+			assertThat(senderSpec.getInitialSequenceId()).isEqualTo(9);
 			assertThat(senderSpec.getAccessMode()).isEqualTo(ProducerAccessMode.Exclusive);
+			assertThat(senderSpec.getLazyStartPartitionedProducers()).isTrue();
+			assertThat(senderSpec.getProperties()).hasSize(1).containsEntry("my-prop", "my-prop-value");
 		}
 
 	}
