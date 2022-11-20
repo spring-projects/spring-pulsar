@@ -31,6 +31,7 @@ import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.ProxyProtocol;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -1037,6 +1038,11 @@ public class PulsarProperties {
 		private Duration connectionTimeout = Duration.ofSeconds(10);
 
 		/**
+		 * Maximum duration for completing a request.
+		 */
+		private Duration requestTimeout = Duration.ofMinutes(1);
+
+		/**
 		 * Initial backoff interval.
 		 */
 		private Duration initialBackoffInterval = Duration.ofMillis(100);
@@ -1056,6 +1062,18 @@ public class PulsarProperties {
 		 * Limit of direct memory that will be allocated by the client.
 		 */
 		private DataSize memoryLimit = DataSize.ofMegabytes(64);
+
+		/**
+		 * URL of proxy service. proxyServiceUrl and proxyProtocol must be mutually
+		 * inclusive.
+		 */
+		private String proxyServiceUrl;
+
+		/**
+		 * Protocol of proxy service. proxyServiceUrl and proxyProtocol must be mutually
+		 * inclusive.
+		 */
+		private ProxyProtocol proxyProtocol;
 
 		/**
 		 * Enables transactions. To use this, start the transactionCoordinatorClient with
@@ -1168,7 +1186,7 @@ public class PulsarProperties {
 			this.numConnectionsPerBroker = numConnectionsPerBroker;
 		}
 
-		public Boolean isUseTcpNoDelay() {
+		public Boolean getUseTcpNoDelay() {
 			return this.useTcpNoDelay;
 		}
 
@@ -1176,7 +1194,7 @@ public class PulsarProperties {
 			this.useTcpNoDelay = useTcpNoDelay;
 		}
 
-		public Boolean isUseTls() {
+		public Boolean getUseTls() {
 			return this.useTls;
 		}
 
@@ -1184,7 +1202,7 @@ public class PulsarProperties {
 			this.useTls = useTls;
 		}
 
-		public Boolean isTlsHostnameVerificationEnable() {
+		public Boolean getTlsHostnameVerificationEnable() {
 			return this.tlsHostnameVerificationEnable;
 		}
 
@@ -1200,7 +1218,7 @@ public class PulsarProperties {
 			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
 		}
 
-		public Boolean isTlsAllowInsecureConnection() {
+		public Boolean getTlsAllowInsecureConnection() {
 			return this.tlsAllowInsecureConnection;
 		}
 
@@ -1208,7 +1226,7 @@ public class PulsarProperties {
 			this.tlsAllowInsecureConnection = tlsAllowInsecureConnection;
 		}
 
-		public Boolean isUseKeyStoreTls() {
+		public Boolean getUseKeyStoreTls() {
 			return this.useKeyStoreTls;
 		}
 
@@ -1320,6 +1338,14 @@ public class PulsarProperties {
 			this.connectionTimeout = connectionTimeout;
 		}
 
+		public Duration getRequestTimeout() {
+			return this.requestTimeout;
+		}
+
+		public void setRequestTimeout(Duration requestTimeout) {
+			this.requestTimeout = requestTimeout;
+		}
+
 		public Duration getInitialBackoffInterval() {
 			return this.initialBackoffInterval;
 		}
@@ -1352,7 +1378,23 @@ public class PulsarProperties {
 			this.memoryLimit = memoryLimit;
 		}
 
-		public Boolean isEnableTransaction() {
+		public String getProxyServiceUrl() {
+			return this.proxyServiceUrl;
+		}
+
+		public void setProxyServiceUrl(String proxyServiceUrl) {
+			this.proxyServiceUrl = proxyServiceUrl;
+		}
+
+		public ProxyProtocol getProxyProtocol() {
+			return this.proxyProtocol;
+		}
+
+		public void setProxyProtocol(ProxyProtocol proxyProtocol) {
+			this.proxyProtocol = proxyProtocol;
+		}
+
+		public Boolean getEnableTransaction() {
 			return this.enableTransaction;
 		}
 
@@ -1421,12 +1463,12 @@ public class PulsarProperties {
 			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
 			map.from(this::getNumListenerThreads).to(properties.in("numListenerThreads"));
 			map.from(this::getNumConnectionsPerBroker).to(properties.in("connectionsPerBroker"));
-			map.from(this::isUseTcpNoDelay).to(properties.in("useTcpNoDelay"));
-			map.from(this::isUseTls).to(properties.in("useTls"));
-			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
+			map.from(this::getUseTcpNoDelay).to(properties.in("useTcpNoDelay"));
+			map.from(this::getUseTls).to(properties.in("useTls"));
+			map.from(this::getTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
-			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
-			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
+			map.from(this::getTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
+			map.from(this::getUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
 			map.from(this::getSslProvider).to(properties.in("sslProvider"));
 			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
 			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
@@ -1441,12 +1483,15 @@ public class PulsarProperties {
 					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
 			map.from(this::getKeepAliveInterval).as(Duration::toSeconds).to(properties.in("keepAliveIntervalSeconds"));
 			map.from(this::getConnectionTimeout).as(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
+			map.from(this::getRequestTimeout).as(Duration::toMillis).to(properties.in("requestTimeoutMs"));
 			map.from(this::getInitialBackoffInterval).as(Duration::toNanos)
 					.to(properties.in("initialBackoffIntervalNanos"));
 			map.from(this::getMaxBackoffInterval).as(Duration::toNanos).to(properties.in("maxBackoffIntervalNanos"));
 			map.from(this::isEnableBusyWait).to(properties.in("enableBusyWait"));
 			map.from(this::getMemoryLimit).as(DataSize::toBytes).to(properties.in("memoryLimitBytes"));
-			map.from(this::isEnableTransaction).to(properties.in("enableTransaction"));
+			map.from(this::getProxyServiceUrl).to(properties.in("proxyServiceUrl"));
+			map.from(this::getProxyProtocol).to(properties.in("proxyProtocol"));
+			map.from(this::getEnableTransaction).to(properties.in("enableTransaction"));
 			map.from(this::getDnsLookupBindAddress).to(properties.in("dnsLookupBindAddress"));
 			map.from(this::getDnsLookupBindPort).to(properties.in("dnsLookupBindPort"));
 			map.from(this::getSocks5ProxyAddress).to(properties.in("socks5ProxyAddress"));
