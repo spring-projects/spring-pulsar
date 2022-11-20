@@ -30,6 +30,8 @@ import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.HashingScheme;
+import org.apache.pulsar.client.api.KeySharedMode;
+import org.apache.pulsar.client.api.KeySharedPolicy;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
@@ -52,6 +54,7 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.unit.DataSize;
 
 import reactor.core.scheduler.Schedulers;
@@ -569,6 +572,17 @@ public class PulsarReactiveProperties {
 		 */
 		private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
 
+		/*
+		 * KeyShared mode of KeyShared subscription.
+		 */
+		private KeySharedMode keySharedMode;
+
+		/*
+		 * List of ranges to use on the created KeySharedPolicy when the KeySharedMode is
+		 * set to STICKY.
+		 */
+		private List<Range> keySharedStickyRanges;
+
 		/**
 		 * Map of properties to add to the subscription.
 		 */
@@ -740,6 +754,22 @@ public class PulsarReactiveProperties {
 
 		public void setSubscriptionType(SubscriptionType subscriptionType) {
 			this.subscriptionType = subscriptionType;
+		}
+
+		public KeySharedMode getKeySharedMode() {
+			return this.keySharedMode;
+		}
+
+		public void setKeySharedMode(KeySharedMode keySharedMode) {
+			this.keySharedMode = keySharedMode;
+		}
+
+		public List<Range> getKeySharedStickyRanges() {
+			return this.keySharedStickyRanges;
+		}
+
+		public void setKeySharedStickyRanges(List<Range> keySharedStickyRanges) {
+			this.keySharedStickyRanges = keySharedStickyRanges;
 		}
 
 		public SortedMap<String, String> getSubscriptionProperties() {
@@ -968,6 +998,7 @@ public class PulsarReactiveProperties {
 			map.from(this::getTopicsPattern).to(spec::setTopicsPattern);
 			map.from(this::getSubscriptionName).to(spec::setSubscriptionName);
 			map.from(this::getSubscriptionType).to(spec::setSubscriptionType);
+			map.from(this::getKeySharedMode).as(this::createKeySharedPolicyForMode).to(spec::setKeySharedPolicy);
 			map.from(this::getSubscriptionProperties).to(spec::setSubscriptionProperties);
 			map.from(this::getSubscriptionMode).to(spec::setSubscriptionMode);
 			map.from(this::getReceiverQueueSize).to(spec::setReceiverQueueSize);
@@ -1003,6 +1034,22 @@ public class PulsarReactiveProperties {
 			map.from(this::getMaxPendingChunkedMessage).to(spec::setMaxPendingChunkedMessage);
 			map.from(this::getExpireTimeOfIncompleteChunkedMessage).to(spec::setExpireTimeOfIncompleteChunkedMessage);
 			return new ImmutableReactiveMessageConsumerSpec(spec);
+		}
+
+		@Nullable
+		private KeySharedPolicy createKeySharedPolicyForMode(KeySharedMode mode) {
+			KeySharedPolicy keySharedPolicy = null;
+			if (mode == KeySharedMode.AUTO_SPLIT) {
+				keySharedPolicy = KeySharedPolicy.autoSplitHashRange();
+			}
+			else if (mode == KeySharedMode.STICKY) {
+				if (CollectionUtils.isEmpty(this.getKeySharedStickyRanges())) {
+					throw new IllegalArgumentException(
+							"Must specify 'key-shared-sticky-ranges' when 'key-shared-mode' is STICKY");
+				}
+				keySharedPolicy = KeySharedPolicy.stickyHashRange().ranges(this.getKeySharedStickyRanges());
+			}
+			return keySharedPolicy;
 		}
 
 	}

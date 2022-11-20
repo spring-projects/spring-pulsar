@@ -17,6 +17,8 @@
 package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -26,21 +28,27 @@ import java.util.Map;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.HashingScheme;
+import org.apache.pulsar.client.api.KeySharedMode;
+import org.apache.pulsar.client.api.KeySharedPolicy.KeySharedPolicyAutoSplit;
+import org.apache.pulsar.client.api.KeySharedPolicy.KeySharedPolicySticky;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.Range;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.EnumSource.Mode;
 
+import org.springframework.boot.context.properties.bind.BindException;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
@@ -53,6 +61,7 @@ import reactor.core.scheduler.Schedulers;
  * Unit tests for {@link PulsarReactiveProperties}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public class PulsarReactivePropertiesTests {
 
@@ -216,6 +225,80 @@ public class PulsarReactivePropertiesTests {
 			ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
 
 			assertThat(consumerSpec.getAcknowledgeScheduler()).isSameAs(Schedulers.immediate());
+		}
+
+		@Nested
+		class KeySharedPropertyTests {
+
+			@Test
+			void keySharedModeNotSpecified() {
+				bind(Collections.emptyMap());
+
+				assertThat(properties.buildReactiveMessageConsumerSpec().getKeySharedPolicy()).isNull();
+			}
+
+			@Test
+			void keySharedModeAutoSplit() {
+				bind("spring.pulsar.reactive.consumer.key-shared-mode", KeySharedMode.AUTO_SPLIT.name());
+				ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
+
+				assertThat(consumerSpec.getKeySharedPolicy()).isInstanceOf(KeySharedPolicyAutoSplit.class);
+			}
+
+			@Test
+			void keySharedModeStickyWithSingleRange() {
+				Map<String, String> props = new HashMap<>();
+				props.put("spring.pulsar.reactive.consumer.key-shared-mode", "STICKY");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[0].start", "1");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[0].end", "100");
+
+				bind(props);
+				ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
+
+				assertThat(consumerSpec.getKeySharedPolicy()).isInstanceOf(KeySharedPolicySticky.class)
+						.asInstanceOf(InstanceOfAssertFactories.type(KeySharedPolicySticky.class))
+						.extracting(KeySharedPolicySticky::getRanges).asList().containsExactly(Range.of(1, 100));
+			}
+
+			@Test
+			void keySharedModeStickyWithMultipleRanges() {
+				Map<String, String> props = new HashMap<>();
+				props.put("spring.pulsar.reactive.consumer.key-shared-mode", "STICKY");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[0].start", "1");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[0].end", "100");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[1].start", "101");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[1].end", "200");
+
+				bind(props);
+				ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
+
+				assertThat(consumerSpec.getKeySharedPolicy()).isInstanceOf(KeySharedPolicySticky.class)
+						.asInstanceOf(InstanceOfAssertFactories.type(KeySharedPolicySticky.class))
+						.extracting(KeySharedPolicySticky::getRanges).asList()
+						.containsExactly(Range.of(1, 100), Range.of(101, 200));
+			}
+
+			@Test
+			void keySharedModeStickyWithInvalidRange() {
+				Map<String, String> props = new HashMap<>();
+				props.put("spring.pulsar.reactive.consumer.key-shared-mode", "STICKY");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[0].start", "100");
+				props.put("spring.pulsar.reactive.consumer.key-shared-sticky-ranges[0].end", "1");
+
+				assertThatExceptionOfType(BindException.class).isThrownBy(() -> bind(props)).havingRootCause()
+						.isInstanceOf(IllegalArgumentException.class)
+						.withMessageContaining("Range end must >= range start.");
+			}
+
+			@Test
+			void keySharedModeStickyWithNoRanges() {
+				bind("spring.pulsar.reactive.consumer.key-shared-mode", "STICKY");
+
+				assertThatIllegalArgumentException().isThrownBy(properties::buildReactiveMessageConsumerSpec)
+						.withMessageContaining(
+								"Must specify 'key-shared-sticky-ranges' when 'key-shared-mode' is STICKY");
+			}
+
 		}
 
 	}
