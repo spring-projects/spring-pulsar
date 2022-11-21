@@ -541,6 +541,7 @@ public class PulsarReactiveProperties {
 			map.from(this::getReceiverQueueSize).to(spec::setReceiverQueueSize);
 			map.from(this::getReadCompacted).to(spec::setReadCompacted);
 			map.from(this::getKeyHashRanges).as(List::of).to(spec::setKeyHashRanges);
+			map.from(this::getCryptoFailureAction).to(spec::setCryptoFailureAction);
 
 			return new ImmutableReactiveMessageReaderSpec(spec);
 		}
