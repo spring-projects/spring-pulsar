@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
@@ -209,6 +210,42 @@ public class PulsarPropertiesTests {
 		private final String authParamsStr = "{\"token\":\"1234\"}";
 
 		private final String authToken = "1234";
+
+		@Test
+		@SuppressWarnings("unchecked")
+		void adminProperties() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.administration.service-url", "my-service-url");
+			props.put("spring.pulsar.administration.tls-hostname-verification-enable", "true");
+			props.put("spring.pulsar.administration.tls-trust-certs-file-path", "my-trust-certs-file-path");
+			props.put("spring.pulsar.administration.tls-allow-insecure-connection", "true");
+			props.put("spring.pulsar.administration.use-key-store-tls", "true");
+			props.put("spring.pulsar.administration.ssl-provider", "my-ssl-provider");
+			props.put("spring.pulsar.administration.tls-trust-store-type", "my-trust-store-type");
+			props.put("spring.pulsar.administration.tls-trust-store-path", "my-trust-store-path");
+			props.put("spring.pulsar.administration.tls-trust-store-password", "my-trust-store-password");
+			props.put("spring.pulsar.administration.tls-ciphers[0]", "my-tls-cipher");
+			props.put("spring.pulsar.administration.tls-protocols[0]", "my-tls-protocol");
+
+			bind(props);
+			Map<String, Object> adminProps = properties.buildAdminProperties();
+
+			// Verify that the props can be loaded in a ClientBuilder
+			assertThatNoException().isThrownBy(() -> PulsarAdmin.builder().loadConf(adminProps));
+
+			assertThat(adminProps).containsEntry("serviceUrl", "my-service-url")
+					.containsEntry("tlsHostnameVerificationEnable", true)
+					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
+					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
+					.containsEntry("sslProvider", "my-ssl-provider")
+					.containsEntry("tlsTrustStoreType", "my-trust-store-type")
+					.containsEntry("tlsTrustStorePath", "my-trust-store-path")
+					.containsEntry("tlsTrustStorePassword", "my-trust-store-password")
+					.hasEntrySatisfying("tlsCiphers",
+							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-cipher"))
+					.hasEntrySatisfying("tlsProtocols",
+							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-protocol"));
+		}
 
 		@Test
 		void authenticationUsingAuthParamsString() {
