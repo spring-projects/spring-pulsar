@@ -102,10 +102,8 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		pulsarConsumerFactory.createConsumer(Schema.STRING).consumeNothing().block(Duration.ofSeconds(10));
 		CountDownLatch latch = new CountDownLatch(5);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
-		pulsarContainerProperties.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg.map(m -> {
-			latch.countDown();
-			return MessageResult.acknowledge(m.getMessageId());
-		}));
+		pulsarContainerProperties.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg
+				.doOnNext((m) -> latch.countDown()).map(MessageResult::acknowledge));
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -292,13 +290,9 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 
 		CountDownLatch latch = new CountDownLatch(6);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
-		pulsarContainerProperties.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg.map(m -> {
-			latch.countDown();
-			if (m.getValue().endsWith("4")) {
-				return MessageResult.negativeAcknowledge(m.getMessageId());
-			}
-			return MessageResult.acknowledge(m.getMessageId());
-		}));
+		pulsarContainerProperties.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg
+				.doOnNext((m) -> latch.countDown()).map((m) -> m.getValue().endsWith("4")
+						? MessageResult.negativeAcknowledge(m) : MessageResult.acknowledge(m)));
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
@@ -320,7 +314,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 			if (message.getValue().endsWith("4")) {
 				dlqLatch.countDown();
 			}
-			return Mono.just(MessageResult.acknowledge(message.getMessageId()));
+			return Mono.just(MessageResult.acknowledge(message));
 		}).block();
 
 		assertThat(dlqLatch.await(10, TimeUnit.SECONDS)).isTrue();
