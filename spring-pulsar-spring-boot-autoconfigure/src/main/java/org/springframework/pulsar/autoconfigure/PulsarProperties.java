@@ -1811,6 +1811,26 @@ public class PulsarProperties {
 		 */
 		private Set<String> tlsProtocols;
 
+		/**
+		 * Connection time out.
+		 */
+		private Duration connectTimeout = Duration.ofMinutes(1);
+
+		/**
+		 * Server response read time out.
+		 */
+		private Duration readTimeout = Duration.ofMinutes(1);
+
+		/**
+		 * Server request time out.
+		 */
+		private Duration requestTimeout = Duration.ofMinutes(5);
+
+		/**
+		 * Certificates auto refresh time if Pulsar admin uses tls authentication.
+		 */
+		private Duration autoCertRefreshTime = Duration.ofMinutes(5);
+
 		public String getServiceUrl() {
 			return this.serviceUrl;
 		}
@@ -1923,6 +1943,38 @@ public class PulsarProperties {
 			this.tlsProtocols = tlsProtocols;
 		}
 
+		public Duration getConnectTimeout() {
+			return this.connectTimeout;
+		}
+
+		public void setConnectTimeout(Duration connectTimeout) {
+			this.connectTimeout = connectTimeout;
+		}
+
+		public Duration getReadTimeout() {
+			return this.readTimeout;
+		}
+
+		public void setReadTimeout(Duration readTimeout) {
+			this.readTimeout = readTimeout;
+		}
+
+		public Duration getRequestTimeout() {
+			return this.requestTimeout;
+		}
+
+		public void setRequestTimeout(Duration requestTimeout) {
+			this.requestTimeout = requestTimeout;
+		}
+
+		public Duration getAutoCertRefreshTime() {
+			return this.autoCertRefreshTime;
+		}
+
+		public void setAutoCertRefreshTime(Duration autoCertRefreshTime) {
+			this.autoCertRefreshTime = autoCertRefreshTime;
+		}
+
 		public Map<String, Object> buildProperties() {
 			if (StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
 				throw new IllegalArgumentException(
@@ -1947,6 +1999,10 @@ public class PulsarProperties {
 			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
 			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
 			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
+			map.from(this::getConnectTimeout).to(properties.in("connectTimeout"));
+			map.from(this::getReadTimeout).to(properties.in("readTimeout"));
+			map.from(this::getRequestTimeout).to(properties.in("requestTimeout"));
+			map.from(this::getAutoCertRefreshTime).to(properties.in("autoCertRefreshTime"));
 
 			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
 

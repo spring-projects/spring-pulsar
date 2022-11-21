@@ -16,12 +16,15 @@
 
 package org.springframework.pulsar.core;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
@@ -61,12 +64,28 @@ public class PulsarAdministration
 	 * @param adminConfig the {@link PulsarAdmin} configuration
 	 */
 	public PulsarAdministration(Map<String, Object> adminConfig) {
-		this.adminBuilder = PulsarAdmin.builder().loadConf(adminConfig);
+
+		this.adminBuilder = PulsarAdmin.builder();
+
+		Map<String, Object> conf = new HashMap<>(adminConfig);
+		if (conf.remove("connectTimeout") instanceof Duration connectTimeout) {
+			this.adminBuilder.connectionTimeout((int) connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		if (conf.remove("readTimeout") instanceof Duration readTimeout) {
+			this.adminBuilder.readTimeout((int) readTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		if (conf.remove("requestTimeout") instanceof Duration requestTimeout) {
+			this.adminBuilder.requestTimeout((int) requestTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		if (conf.remove("autoCertRefreshTime") instanceof Duration autoCertRefreshTime) {
+			this.adminBuilder.autoCertRefreshTime((int) autoCertRefreshTime.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		this.adminBuilder.loadConf(conf);
 
 		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
 		// authentication from the config props
-		String authPluginClassName = (String) adminConfig.get("authPluginClassName");
-		String authParams = (String) adminConfig.get("authParams");
+		String authPluginClassName = (String) conf.get("authPluginClassName");
+		String authParams = (String) conf.get("authParams");
 		if (StringUtils.hasText(authPluginClassName) && StringUtils.hasText(authParams)) {
 			try {
 				this.adminBuilder.authentication(authPluginClassName, authParams);
@@ -75,6 +94,7 @@ public class PulsarAdministration
 				throw new RuntimeException("Unable to create admin auth: " + ex.getMessage(), ex);
 			}
 		}
+
 	}
 
 	/**
