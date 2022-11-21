@@ -1510,7 +1510,7 @@ public class PulsarProperties {
 			this.maxBackoffInterval = maxBackoffInterval;
 		}
 
-		public Boolean isEnableBusyWait() {
+		public Boolean getEnableBusyWait() {
 			return this.enableBusyWait;
 		}
 
@@ -1629,13 +1629,14 @@ public class PulsarProperties {
 			map.from(this::getMaxLookupRedirects).to(properties.in("maxLookupRedirects"));
 			map.from(this::getMaxNumberOfRejectedRequestPerConnection)
 					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
-			map.from(this::getKeepAliveInterval).as(Duration::toSeconds).to(properties.in("keepAliveIntervalSeconds"));
-			map.from(this::getConnectionTimeout).as(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getRequestTimeout).as(Duration::toMillis).to(properties.in("requestTimeoutMs"));
+			map.from(this::getKeepAliveInterval).asInt(Duration::toSeconds)
+					.to(properties.in("keepAliveIntervalSeconds"));
+			map.from(this::getConnectionTimeout).asInt(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
+			map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(properties.in("requestTimeoutMs"));
 			map.from(this::getInitialBackoffInterval).as(Duration::toNanos)
 					.to(properties.in("initialBackoffIntervalNanos"));
 			map.from(this::getMaxBackoffInterval).as(Duration::toNanos).to(properties.in("maxBackoffIntervalNanos"));
-			map.from(this::isEnableBusyWait).to(properties.in("enableBusyWait"));
+			map.from(this::getEnableBusyWait).to(properties.in("enableBusyWait"));
 			map.from(this::getMemoryLimit).as(DataSize::toBytes).to(properties.in("memoryLimitBytes"));
 			map.from(this::getProxyServiceUrl).to(properties.in("proxyServiceUrl"));
 			map.from(this::getProxyProtocol).to(properties.in("proxyProtocol"));
