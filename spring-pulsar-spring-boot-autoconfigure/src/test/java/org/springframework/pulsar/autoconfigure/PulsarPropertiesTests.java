@@ -263,9 +263,9 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.producer.block-if-queue-full", "true");
 			props.put("spring.pulsar.producer.max-pending-messages", "3");
 			props.put("spring.pulsar.producer.max-pending-messages-across-partitions", "4");
-			props.put("spring.pulsar.producer.message-routing-mode", "CustomPartition");
-			props.put("spring.pulsar.producer.hashing-scheme", "Murmur3_32Hash");
-			props.put("spring.pulsar.producer.crypto-failure-action", "SEND");
+			props.put("spring.pulsar.producer.message-routing-mode", "custompartition");
+			props.put("spring.pulsar.producer.hashing-scheme", "murmur3_32hash");
+			props.put("spring.pulsar.producer.crypto-failure-action", "send");
 			props.put("spring.pulsar.producer.batching-max-publish-delay", "5s");
 			props.put("spring.pulsar.producer.batching-partition-switch-frequency-by-publish-delay", "6");
 			props.put("spring.pulsar.producer.batching-max-messages", "7");
@@ -273,9 +273,9 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.producer.batching-enabled", "false");
 			props.put("spring.pulsar.producer.chunking-enabled", "true");
 			props.put("spring.pulsar.producer.encryption-keys[0]", "my-key");
-			props.put("spring.pulsar.producer.compression-type", "LZ4");
+			props.put("spring.pulsar.producer.compression-type", "lz4");
 			props.put("spring.pulsar.producer.initial-sequence-id", "9");
-			props.put("spring.pulsar.producer.producer-access-mode", "Exclusive");
+			props.put("spring.pulsar.producer.producer-access-mode", "exclusive");
 			props.put("spring.pulsar.producer.lazy-start=partitioned-producers", "true");
 			props.put("spring.pulsar.producer.properties[my-prop]", "my-prop-value");
 
@@ -318,9 +318,9 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.consumer.topics[0]", "my-topic");
 			props.put("spring.pulsar.consumer.topics-pattern", "my-pattern");
 			props.put("spring.pulsar.consumer.subscription-name", "my-subscription");
-			props.put("spring.pulsar.consumer.subscription-type", "Shared");
+			props.put("spring.pulsar.consumer.subscription-type", "shared");
 			props.put("spring.pulsar.consumer.subscription-properties[my-sub-prop]", "my-sub-prop-value");
-			props.put("spring.pulsar.consumer.subscription-mode", "NonDurable");
+			props.put("spring.pulsar.consumer.subscription-mode", "nondurable");
 			props.put("spring.pulsar.consumer.receiver-queue-size", "1");
 			props.put("spring.pulsar.consumer.acknowledgements-group-time", "2s");
 			props.put("spring.pulsar.consumer.negative-ack-redelivery-delay", "3s");
@@ -329,12 +329,12 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.consumer.ack-timeout", "6s");
 			props.put("spring.pulsar.consumer.tick-duration", "7s");
 			props.put("spring.pulsar.consumer.priority-level", "8");
-			props.put("spring.pulsar.consumer.crypto-failure-action", "DISCARD");
+			props.put("spring.pulsar.consumer.crypto-failure-action", "discard");
 			props.put("spring.pulsar.consumer.properties[my-prop]", "my-prop-value");
 			props.put("spring.pulsar.consumer.read-compacted", "true");
-			props.put("spring.pulsar.consumer.subscription-initial-position", "Earliest");
+			props.put("spring.pulsar.consumer.subscription-initial-position", "earliest");
 			props.put("spring.pulsar.consumer.pattern-auto-discovery-period", "9");
-			props.put("spring.pulsar.consumer.regex-subscription-mode", "AllTopics");
+			props.put("spring.pulsar.consumer.regex-subscription-mode", "all-topics");
 			props.put("spring.pulsar.consumer.dead-letter-policy.max-redeliver-count", "4");
 			props.put("spring.pulsar.consumer.dead-letter-policy.retry-letter-topic", "my-retry-topic");
 			props.put("spring.pulsar.consumer.dead-letter-policy.dead-letter-topic", "my-dlt-topic");

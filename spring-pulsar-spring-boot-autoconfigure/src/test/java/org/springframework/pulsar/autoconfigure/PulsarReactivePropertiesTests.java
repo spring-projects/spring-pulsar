@@ -80,9 +80,9 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.sender.send-timeout", "2s");
 			props.put("spring.pulsar.reactive.sender.max-pending-messages", "3");
 			props.put("spring.pulsar.reactive.sender.max-pending-messages-across-partitions", "4");
-			props.put("spring.pulsar.reactive.sender.message-routing-mode", "CustomPartition");
-			props.put("spring.pulsar.reactive.sender.hashing-scheme", "Murmur3_32Hash");
-			props.put("spring.pulsar.reactive.sender.crypto-failure-action", "SEND");
+			props.put("spring.pulsar.reactive.sender.message-routing-mode", "custompartition");
+			props.put("spring.pulsar.reactive.sender.hashing-scheme", "murmur3_32hash");
+			props.put("spring.pulsar.reactive.sender.crypto-failure-action", "send");
 			props.put("spring.pulsar.reactive.sender.batching-max-publish-delay", "5s");
 			props.put("spring.pulsar.reactive.sender.round-robin-router-batching-partition-switch-frequency", "6");
 			props.put("spring.pulsar.reactive.sender.batching-max-messages", "7");
@@ -90,9 +90,9 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.sender.batching-enabled", "false");
 			props.put("spring.pulsar.reactive.sender.chunking-enabled", "true");
 			props.put("spring.pulsar.reactive.sender.encryption-keys[0]", "my-key");
-			props.put("spring.pulsar.reactive.sender.compression-type", "LZ4");
+			props.put("spring.pulsar.reactive.sender.compression-type", "lz4");
 			props.put("spring.pulsar.reactive.sender.initial-sequence-id", "9");
-			props.put("spring.pulsar.reactive.sender.producer-access-mode", "Exclusive");
+			props.put("spring.pulsar.reactive.sender.producer-access-mode", "exclusive");
 			props.put("spring.pulsar.reactive.sender.lazy-start=partitioned-producers", "true");
 			props.put("spring.pulsar.reactive.sender.properties[my-prop]", "my-prop-value");
 
@@ -132,8 +132,8 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.consumer.topics[0]", "my-topic");
 			props.put("spring.pulsar.reactive.consumer.topics-pattern", "my-pattern");
 			props.put("spring.pulsar.reactive.consumer.subscription-name", "my-subscription");
-			props.put("spring.pulsar.reactive.consumer.subscription-type", "Shared");
-			props.put("spring.pulsar.reactive.consumer.subscription-mode", "NonDurable");
+			props.put("spring.pulsar.reactive.consumer.subscription-type", "shared");
+			props.put("spring.pulsar.reactive.consumer.subscription-mode", "nondurable");
 			props.put("spring.pulsar.reactive.consumer.subscription-properties[my-sub-prop]", "my-sub-prop-value");
 			props.put("spring.pulsar.reactive.consumer.receiver-queue-size", "1");
 			props.put("spring.pulsar.reactive.consumer.acknowledgements-group-time", "2s");
@@ -149,13 +149,13 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.consumer.ack-timeout", "6s");
 			props.put("spring.pulsar.reactive.consumer.ack-timeout-tick-time", "7s");
 			props.put("spring.pulsar.reactive.consumer.priority-level", "8");
-			props.put("spring.pulsar.reactive.consumer.crypto-failure-action", "DISCARD");
+			props.put("spring.pulsar.reactive.consumer.crypto-failure-action", "discard");
 			props.put("spring.pulsar.reactive.consumer.properties[my-prop]", "my-prop-value");
 			props.put("spring.pulsar.reactive.consumer.read-compacted", "true");
 			props.put("spring.pulsar.reactive.consumer.batch-index-ack-enabled", "true");
-			props.put("spring.pulsar.reactive.consumer.subscription-initial-position", "Earliest");
+			props.put("spring.pulsar.reactive.consumer.subscription-initial-position", "earliest");
 			props.put("spring.pulsar.reactive.consumer.topics-pattern-auto-discovery-period", "9s");
-			props.put("spring.pulsar.reactive.consumer.topics-pattern-subscription-mode", "AllTopics");
+			props.put("spring.pulsar.reactive.consumer.topics-pattern-subscription-mode", "alltopics");
 			props.put("spring.pulsar.reactive.consumer.auto-update-partitions", "false");
 			props.put("spring.pulsar.reactive.consumer.auto-update-partitions-interval", "10s");
 			props.put("spring.pulsar.reactive.consumer.replicate-subscription-state", "true");
@@ -236,7 +236,7 @@ public class PulsarReactivePropertiesTests {
 			props.put("spring.pulsar.reactive.reader.read-compacted", "true");
 			props.put("spring.pulsar.reactive.reader.key-hash-ranges[0].start", "2");
 			props.put("spring.pulsar.reactive.reader.key-hash-ranges[0].end", "3");
-			props.put("spring.pulsar.reactive.reader.crypto-failure-action", "DISCARD");
+			props.put("spring.pulsar.reactive.reader.crypto-failure-action", "discard");
 
 			bind(props);
 			ReactiveMessageReaderSpec readerSpec = properties.buildReactiveMessageReaderSpec();
