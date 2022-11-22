@@ -20,11 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.CompressionType;
@@ -43,6 +41,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -80,7 +79,6 @@ public class PulsarPropertiesTests {
 		private final String authToken = "1234";
 
 		@Test
-		@SuppressWarnings("unchecked")
 		void clientProperties() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.client.service-url", "my-service-url");
@@ -142,9 +140,13 @@ public class PulsarPropertiesTests {
 					.containsEntry("tlsTrustStorePath", "my-trust-store-path")
 					.containsEntry("tlsTrustStorePassword", "my-trust-store-password")
 					.hasEntrySatisfying("tlsCiphers",
-							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-cipher"))
+							ciphers -> assertThat(ciphers)
+									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+									.containsExactly("my-tls-cipher"))
 					.hasEntrySatisfying("tlsProtocols",
-							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-protocol"))
+							protocols -> assertThat(protocols)
+									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+									.containsExactly("my-tls-protocol"))
 					.containsEntry("statsIntervalSeconds", 6L).containsEntry("concurrentLookupRequest", 7)
 					.containsEntry("maxLookupRequest", 8).containsEntry("maxLookupRedirects", 9)
 					.containsEntry("maxNumberOfRejectedRequestPerConnection", 10)
@@ -212,7 +214,6 @@ public class PulsarPropertiesTests {
 		private final String authToken = "1234";
 
 		@Test
-		@SuppressWarnings("unchecked")
 		void adminProperties() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.administration.service-url", "my-service-url");
@@ -242,9 +243,13 @@ public class PulsarPropertiesTests {
 					.containsEntry("tlsTrustStorePath", "my-trust-store-path")
 					.containsEntry("tlsTrustStorePassword", "my-trust-store-password")
 					.hasEntrySatisfying("tlsCiphers",
-							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-cipher"))
+							ciphers -> assertThat(ciphers)
+									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+									.containsExactly("my-tls-cipher"))
 					.hasEntrySatisfying("tlsProtocols",
-							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-protocol"));
+							protocols -> assertThat(protocols)
+									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+									.containsExactly("my-tls-protocol"));
 		}
 
 		@Test
@@ -291,7 +296,6 @@ public class PulsarPropertiesTests {
 	class ProducerPropertiesTests {
 
 		@Test
-		@SuppressWarnings("unchecked")
 		void producerProperties() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.producer.topic-name", "my-topic");
@@ -335,12 +339,14 @@ public class PulsarPropertiesTests {
 					.containsEntry("batchingMaxMessages", 7).containsEntry("batchingMaxBytes", 8)
 					.containsEntry("batchingEnabled", false).containsEntry("chunkingEnabled", true)
 					.hasEntrySatisfying("encryptionKeys",
-							keys -> assertThat(((Set<String>) keys)).containsExactly("my-key"))
+							keys -> assertThat(keys).asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+									.containsExactly("my-key"))
 					.containsEntry("compressionType", CompressionType.LZ4).containsEntry("initialSequenceId", 9L)
 					.containsEntry("accessMode", ProducerAccessMode.Exclusive)
-					.containsEntry("lazyStartPartitionedProducers", true)
-					.hasEntrySatisfying("properties", properties -> assertThat(((Map<String, String>) properties))
-							.containsEntry("my-prop", "my-prop-value"));
+					.containsEntry("lazyStartPartitionedProducers", true).hasEntrySatisfying("properties",
+							properties -> assertThat(properties)
+									.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+									.containsEntry("my-prop", "my-prop-value"));
 		}
 
 	}
@@ -349,7 +355,6 @@ public class PulsarPropertiesTests {
 	class ConsumerPropertiesTests {
 
 		@Test
-		@SuppressWarnings("unchecked")
 		void consumerProperties() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.consumer.topics[0]", "my-topic");
@@ -398,12 +403,16 @@ public class PulsarPropertiesTests {
 
 			assertThat(consumerProps)
 					.hasEntrySatisfying("topicNames",
-							n -> assertThat((Collection<String>) n).containsExactly("my-topic"))
+							topics -> assertThat(topics)
+									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+									.containsExactly("my-topic"))
 					.hasEntrySatisfying("topicsPattern", p -> assertThat(p.toString()).isEqualTo("my-pattern"))
 					.containsEntry("subscriptionName", "my-subscription")
 					.containsEntry("subscriptionType", SubscriptionType.Shared)
 					.hasEntrySatisfying("subscriptionProperties",
-							p -> assertThat((Map<String, String>) p).containsEntry("my-sub-prop", "my-sub-prop-value"))
+							properties -> assertThat(properties)
+									.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+									.containsEntry("my-sub-prop", "my-sub-prop-value"))
 					.containsEntry("subscriptionMode", SubscriptionMode.NonDurable)
 					.containsEntry("receiverQueueSize", 1).containsEntry("acknowledgementsGroupTimeMicros", 2_000_000L)
 					.containsEntry("negativeAckRedeliveryDelayMicros", 3_000_000L)
@@ -412,7 +421,9 @@ public class PulsarPropertiesTests {
 					.containsEntry("tickDurationMillis", 7_000L).containsEntry("priorityLevel", 8)
 					.containsEntry("cryptoFailureAction", ConsumerCryptoFailureAction.DISCARD)
 					.hasEntrySatisfying("properties",
-							p -> assertThat((Map<String, String>) p).containsEntry("my-prop", "my-prop-value"))
+							properties -> assertThat(properties)
+									.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+									.containsEntry("my-prop", "my-prop-value"))
 					.containsEntry("readCompacted", true)
 					.containsEntry("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest)
 					.containsEntry("patternAutoDiscoveryPeriod", 9)
