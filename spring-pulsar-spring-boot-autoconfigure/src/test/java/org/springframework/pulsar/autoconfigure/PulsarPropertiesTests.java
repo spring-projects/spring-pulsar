@@ -33,6 +33,8 @@ import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.ProxyProtocol;
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
@@ -65,6 +67,138 @@ public class PulsarPropertiesTests {
 	private void bind(Map<String, String> map) {
 		ConfigurationPropertySource source = new MapConfigurationPropertySource(map);
 		new Binder(source).bind("spring.pulsar", Bindable.ofInstance(this.properties));
+	}
+
+	@Nested
+	class ClientPropertiesTests {
+
+		private final String authPluginClassName = "org.apache.pulsar.client.impl.auth.AuthenticationToken";
+
+		private final String authParamsStr = "{\"token\":\"1234\"}";
+
+		private final String authToken = "1234";
+
+		@Test
+		@SuppressWarnings("unchecked")
+		void clientProperties() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.client.service-url", "my-service-url");
+			props.put("spring.pulsar.client.listener-name", "my-listener");
+			props.put("spring.pulsar.client.operation-timeout", "1s");
+			props.put("spring.pulsar.client.lookup-timeout", "2s");
+			props.put("spring.pulsar.client.num-io-threads", "3");
+			props.put("spring.pulsar.client.num-listener-threads", "4");
+			props.put("spring.pulsar.client.num-connections-per-broker", "5");
+			props.put("spring.pulsar.client.use-tcp-no-delay", "false");
+			props.put("spring.pulsar.client.use-tls", "true");
+			props.put("spring.pulsar.client.tls-hostname-verification-enable", "true");
+			props.put("spring.pulsar.client.tls-trust-certs-file-path", "my-trust-certs-file-path");
+			props.put("spring.pulsar.client.tls-allow-insecure-connection", "true");
+			props.put("spring.pulsar.client.use-key-store-tls", "true");
+			props.put("spring.pulsar.client.ssl-provider", "my-ssl-provider");
+			props.put("spring.pulsar.client.tls-trust-store-type", "my-trust-store-type");
+			props.put("spring.pulsar.client.tls-trust-store-path", "my-trust-store-path");
+			props.put("spring.pulsar.client.tls-trust-store-password", "my-trust-store-password");
+			props.put("spring.pulsar.client.tls-ciphers[0]", "my-tls-cipher");
+			props.put("spring.pulsar.client.tls-protocols[0]", "my-tls-protocol");
+			props.put("spring.pulsar.client.stats-interval", "6s");
+			props.put("spring.pulsar.client.max-concurrent-lookup-request", "7");
+			props.put("spring.pulsar.client.max-lookup-request", "8");
+			props.put("spring.pulsar.client.max-lookup-redirects", "9");
+			props.put("spring.pulsar.client.max-number-of-rejected-request-per-connection", "10");
+			props.put("spring.pulsar.client.keep-alive-interval", "11s");
+			props.put("spring.pulsar.client.connection-timeout", "12s");
+			props.put("spring.pulsar.client.request-timeout", "13s");
+			props.put("spring.pulsar.client.initial-backoff-interval", "14s");
+			props.put("spring.pulsar.client.max-backoff-interval", "15s");
+			props.put("spring.pulsar.client.enable-busy-wait", "true");
+			props.put("spring.pulsar.client.memory-limit", "16B");
+			props.put("spring.pulsar.client.proxy-service-url", "my-proxy-service-url");
+			props.put("spring.pulsar.client.proxy-protocol", "sni");
+			props.put("spring.pulsar.client.enable-transaction", "true");
+			props.put("spring.pulsar.client.dns-lookup-bind-address", "my-dns-lookup-bind-address");
+			props.put("spring.pulsar.client.dns-lookup-bind-port", "17");
+			props.put("spring.pulsar.client.socks5-proxy-address", "my-socks5-proxy-address");
+			props.put("spring.pulsar.client.socks5-proxy-username", "my-socks5-proxy-username");
+			props.put("spring.pulsar.client.socks5-proxy-password", "my-socks5-proxy-password");
+
+			bind(props);
+			Map<String, Object> clientProps = properties.buildClientProperties();
+
+			// Verify that the props can be loaded in a ClientBuilder
+			assertThatNoException().isThrownBy(() -> PulsarClient.builder().loadConf(clientProps));
+
+			assertThat(clientProps).containsEntry("serviceUrl", "my-service-url")
+					.containsEntry("listenerName", "my-listener").containsEntry("operationTimeoutMs", 1_000L)
+					.containsEntry("lookupTimeoutMs", 2_000L).containsEntry("numIoThreads", 3)
+					.containsEntry("numListenerThreads", 4).containsEntry("connectionsPerBroker", 5)
+					.containsEntry("useTcpNoDelay", false).containsEntry("useTls", true)
+					.containsEntry("tlsHostnameVerificationEnable", true)
+					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
+					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
+					.containsEntry("sslProvider", "my-ssl-provider")
+					.containsEntry("tlsTrustStoreType", "my-trust-store-type")
+					.containsEntry("tlsTrustStorePath", "my-trust-store-path")
+					.containsEntry("tlsTrustStorePassword", "my-trust-store-password")
+					.hasEntrySatisfying("tlsCiphers",
+							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-cipher"))
+					.hasEntrySatisfying("tlsProtocols",
+							t -> assertThat(((Set<String>) t)).containsExactly("my-tls-protocol"))
+					.containsEntry("statsIntervalSeconds", 6L).containsEntry("concurrentLookupRequest", 7)
+					.containsEntry("maxLookupRequest", 8).containsEntry("maxLookupRedirects", 9)
+					.containsEntry("maxNumberOfRejectedRequestPerConnection", 10)
+					.containsEntry("keepAliveIntervalSeconds", 11).containsEntry("connectionTimeoutMs", 12_000)
+					.containsEntry("requestTimeoutMs", 13_000)
+					.containsEntry("initialBackoffIntervalNanos", 14_000_000_000L)
+					.containsEntry("maxBackoffIntervalNanos", 15_000_000_000L).containsEntry("enableBusyWait", true)
+					.containsEntry("memoryLimitBytes", 16L).containsEntry("proxyServiceUrl", "my-proxy-service-url")
+					.containsEntry("proxyProtocol", ProxyProtocol.SNI).containsEntry("enableTransaction", true)
+					.containsEntry("dnsLookupBindAddress", "my-dns-lookup-bind-address")
+					.containsEntry("dnsLookupBindPort", 17)
+					.containsEntry("socks5ProxyAddress", "my-socks5-proxy-address")
+					.containsEntry("socks5ProxyUsername", "my-socks5-proxy-username")
+					.containsEntry("socks5ProxyPassword", "my-socks5-proxy-password");
+		}
+
+		@Test
+		void authenticationUsingAuthParamsString() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.client.auth-plugin-class-name",
+					"org.apache.pulsar.client.impl.auth.AuthenticationToken");
+			props.put("spring.pulsar.client.auth-params", authParamsStr);
+			bind(props);
+			assertThat(properties.getClient().getAuthParams()).isEqualTo(authParamsStr);
+			assertThat(properties.getClient().getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			Map<String, Object> clientProps = properties.buildClientProperties();
+
+			assertThat(clientProps).containsEntry("authPluginClassName", authPluginClassName)
+					.containsEntry("authParams", authParamsStr);
+		}
+
+		@Test
+		void authenticationUsingAuthenticationMap() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.client.auth-plugin-class-name", authPluginClassName);
+			props.put("spring.pulsar.client.authentication.token", authToken);
+			bind(props);
+			assertThat(properties.getClient().getAuthentication()).containsEntry("token", authToken);
+			assertThat(properties.getClient().getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			Map<String, Object> clientProps = properties.buildClientProperties();
+			assertThat(clientProps).containsEntry("authPluginClassName", authPluginClassName)
+					.containsEntry("authParams", authParamsStr);
+		}
+
+		@Test
+		void authenticationNotAllowedUsingBothAuthParamsStringAndAuthenticationMap() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.client.auth-plugin-class-name", authPluginClassName);
+			props.put("spring.pulsar.client.auth-params", authParamsStr);
+			props.put("spring.pulsar.client.authentication.token", authToken);
+			bind(props);
+			assertThatIllegalArgumentException().isThrownBy(properties::buildClientProperties).withMessageContaining(
+					"Cannot set both spring.pulsar.client.authParams and spring.pulsar.client.authentication.*");
+		}
+
 	}
 
 	@Nested
