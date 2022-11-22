@@ -101,7 +101,7 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@ReactivePulsarListener(subscriptionName = "rplt-subscription2", topics = "rplt-topic2", stream = true,
 				consumerCustomizer = "consumerCustomizer")
 		public Flux<MessageResult<Void>> listen(Flux<Message<String>> messages) {
-			return messages.doOnNext(t -> LATCH2.countDown()).map(m -> MessageResult.acknowledge(m.getMessageId()));
+			return messages.doOnNext(t -> LATCH2.countDown()).map(MessageResult::acknowledge);
 		}
 
 	}

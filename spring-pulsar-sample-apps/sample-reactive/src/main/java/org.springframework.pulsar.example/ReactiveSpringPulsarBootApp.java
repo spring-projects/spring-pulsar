@@ -98,7 +98,7 @@ public class ReactiveSpringPulsarBootApp {
 		public Flux<MessageResult<Void>> listenStreaming(Flux<Message<Foo>> messages) {
 			return messages
 					.doOnNext((msg) -> this.logger.info("Streaming reactive listener received: {}", msg.getValue()))
-					.map(m -> MessageResult.acknowledge(m.getMessageId()));
+					.map(MessageResult::acknowledge);
 		}
 
 	}
