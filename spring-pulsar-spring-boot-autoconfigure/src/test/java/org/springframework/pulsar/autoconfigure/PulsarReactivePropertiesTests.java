@@ -29,11 +29,13 @@ import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.Range;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -216,6 +218,37 @@ public class PulsarReactivePropertiesTests {
 			ReactiveMessageConsumerSpec consumerSpec = properties.buildReactiveMessageConsumerSpec();
 
 			assertThat(consumerSpec.getAcknowledgeScheduler()).isSameAs(Schedulers.immediate());
+		}
+
+	}
+
+	@Nested
+	class ReaderPropertiesTests {
+
+		@Test
+		void readerPropsToReaderSpec() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.reactive.reader.topic-names[0]", "my-topic");
+			props.put("spring.pulsar.reactive.reader.reader-name", "my-reader");
+			props.put("spring.pulsar.reactive.reader.subscription-name", "my-subscription");
+			props.put("spring.pulsar.reactive.reader.generated-subscription-name-prefix", "my-prefix");
+			props.put("spring.pulsar.reactive.reader.receiver-queue-size", "1");
+			props.put("spring.pulsar.reactive.reader.read-compacted", "true");
+			props.put("spring.pulsar.reactive.reader.key-hash-ranges[0].start", "2");
+			props.put("spring.pulsar.reactive.reader.key-hash-ranges[0].end", "3");
+			props.put("spring.pulsar.reactive.reader.crypto-failure-action", "DISCARD");
+
+			bind(props);
+			ReactiveMessageReaderSpec readerSpec = properties.buildReactiveMessageReaderSpec();
+
+			assertThat(readerSpec.getTopicNames()).containsExactly("my-topic");
+			assertThat(readerSpec.getReaderName()).isEqualTo("my-reader");
+			assertThat(readerSpec.getSubscriptionName()).isEqualTo("my-subscription");
+			assertThat(readerSpec.getGeneratedSubscriptionNamePrefix()).isEqualTo("my-prefix");
+			assertThat(readerSpec.getReceiverQueueSize()).isEqualTo(1);
+			assertThat(readerSpec.getReadCompacted()).isTrue();
+			assertThat(readerSpec.getKeyHashRanges()).containsExactly(Range.of(2, 3));
+			assertThat(readerSpec.getCryptoFailureAction()).isEqualTo(ConsumerCryptoFailureAction.DISCARD);
 		}
 
 	}
