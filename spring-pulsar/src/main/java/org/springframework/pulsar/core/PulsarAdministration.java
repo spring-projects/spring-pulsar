@@ -64,37 +64,8 @@ public class PulsarAdministration
 	 * @param adminConfig the {@link PulsarAdmin} configuration
 	 */
 	public PulsarAdministration(Map<String, Object> adminConfig) {
-
 		this.adminBuilder = PulsarAdmin.builder();
-
-		Map<String, Object> conf = new HashMap<>(adminConfig);
-		if (conf.remove("connectTimeout") instanceof Duration connectTimeout) {
-			this.adminBuilder.connectionTimeout((int) connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
-		}
-		if (conf.remove("readTimeout") instanceof Duration readTimeout) {
-			this.adminBuilder.readTimeout((int) readTimeout.toMillis(), TimeUnit.MILLISECONDS);
-		}
-		if (conf.remove("requestTimeout") instanceof Duration requestTimeout) {
-			this.adminBuilder.requestTimeout((int) requestTimeout.toMillis(), TimeUnit.MILLISECONDS);
-		}
-		if (conf.remove("autoCertRefreshTime") instanceof Duration autoCertRefreshTime) {
-			this.adminBuilder.autoCertRefreshTime((int) autoCertRefreshTime.toMillis(), TimeUnit.MILLISECONDS);
-		}
-		this.adminBuilder.loadConf(conf);
-
-		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
-		// authentication from the config props
-		String authPluginClassName = (String) conf.get("authPluginClassName");
-		String authParams = (String) conf.get("authParams");
-		if (StringUtils.hasText(authPluginClassName) && StringUtils.hasText(authParams)) {
-			try {
-				this.adminBuilder.authentication(authPluginClassName, authParams);
-			}
-			catch (UnsupportedAuthenticationException ex) {
-				throw new RuntimeException("Unable to create admin auth: " + ex.getMessage(), ex);
-			}
-		}
-
+		loadConf(this.adminBuilder, adminConfig);
 	}
 
 	/**
@@ -114,6 +85,36 @@ public class PulsarAdministration
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
+	}
+
+	private void loadConf(PulsarAdminBuilder builder, Map<String, Object> adminConfig) {
+		Map<String, Object> conf = new HashMap<>(adminConfig);
+		if (conf.remove("connectTimeout") instanceof Duration connectTimeout) {
+			builder.connectionTimeout((int) connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		if (conf.remove("readTimeout") instanceof Duration readTimeout) {
+			builder.readTimeout((int) readTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		if (conf.remove("requestTimeout") instanceof Duration requestTimeout) {
+			builder.requestTimeout((int) requestTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		if (conf.remove("autoCertRefreshTime") instanceof Duration autoCertRefreshTime) {
+			builder.autoCertRefreshTime((int) autoCertRefreshTime.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		builder.loadConf(conf);
+
+		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
+		// authentication from the config props
+		String authPluginClassName = (String) conf.get("authPluginClassName");
+		String authParams = (String) conf.get("authParams");
+		if (StringUtils.hasText(authPluginClassName) && StringUtils.hasText(authParams)) {
+			try {
+				builder.authentication(authPluginClassName, authParams);
+			}
+			catch (UnsupportedAuthenticationException ex) {
+				throw new RuntimeException("Unable to create admin auth: " + ex.getMessage(), ex);
+			}
+		}
 	}
 
 	private void initialize() {
