@@ -22,7 +22,10 @@ import static org.mockito.Mockito.mock;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.apache.pulsar.common.schema.SchemaType;
+import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,7 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
@@ -64,7 +68,7 @@ import io.micrometer.observation.ObservationRegistry;
 @SuppressWarnings("unchecked")
 class PulsarAutoConfigurationTests {
 
-	private ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
 			.withConfiguration(AutoConfigurations.of(PulsarAutoConfiguration.class));
 
 	@Test
@@ -147,7 +151,7 @@ class PulsarAutoConfigurationTests {
 
 	@Test
 	void pulsarConsumerFactoryWithEnumPropertyValue() {
-		this.contextRunner.withPropertyValues("spring.pulsar.consumer.subscriptionInitialPosition=Earliest")
+		this.contextRunner.withPropertyValues("spring.pulsar.consumer.subscription-initial-position=earliest")
 				.run((context -> assertThat(context).hasNotFailed().getBean(PulsarConsumerFactory.class)
 						.extracting("consumerConfig").hasFieldOrPropertyWithValue("subscriptionInitialPosition",
 								SubscriptionInitialPosition.Earliest)));
@@ -205,15 +209,23 @@ class PulsarAutoConfigurationTests {
 	}
 
 	@Test
-	void consumerBatchPropertiesAreHonored() {
+	void listenerPropertiesAreHonored() {
 		contextRunner
-				.withPropertyValues("spring.pulsar.listener.max-num-messages=10",
-						"spring.pulsar.listener.max-num-bytes=101B", "spring.pulsar.listener.batch-timeout=50ms")
-				.run((context -> assertThat(context).hasNotFailed()
-						.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("containerProperties")
-						.hasFieldOrPropertyWithValue("maxNumMessages", 10)
-						.hasFieldOrPropertyWithValue("maxNumBytes", 101)
-						.hasFieldOrPropertyWithValue("batchTimeoutMillis", 50)));
+				.withPropertyValues("spring.pulsar.listener.ack-mode=manual", "spring.pulsar.listener.schema-type=avro",
+						"spring.pulsar.listener.max-num-messages=10", "spring.pulsar.listener.max-num-bytes=101B",
+						"spring.pulsar.listener.batch-timeout=50ms", "spring.pulsar.consumer.subscription-type=shared")
+				.run((context -> {
+					AbstractObjectAssert<?, PulsarContainerProperties> properties = assertThat(context).hasNotFailed()
+							.getBean(ConcurrentPulsarListenerContainerFactory.class)
+							.extracting(ConcurrentPulsarListenerContainerFactory<Object>::getContainerProperties);
+					properties.extracting(PulsarContainerProperties::getAckMode).isEqualTo(AckMode.MANUAL);
+					properties.extracting(PulsarContainerProperties::getSchemaType).isEqualTo(SchemaType.AVRO);
+					properties.extracting(PulsarContainerProperties::getMaxNumMessages).isEqualTo(10);
+					properties.extracting(PulsarContainerProperties::getMaxNumBytes).isEqualTo(101);
+					properties.extracting(PulsarContainerProperties::getBatchTimeoutMillis).isEqualTo(50);
+					properties.extracting(PulsarContainerProperties::getSubscriptionType)
+							.isEqualTo(SubscriptionType.Shared);
+				}));
 	}
 
 	@Nested
