@@ -50,6 +50,7 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.util.unit.DataSize;
@@ -611,6 +612,7 @@ public class PulsarReactiveProperties {
 		/**
 		 * Configuration for the dead letter queue.
 		 */
+		@NestedConfigurationProperty
 		private DeadLetterPolicy deadLetterPolicy;
 
 		/**

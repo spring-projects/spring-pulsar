@@ -41,6 +41,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AckMode;
@@ -223,6 +224,7 @@ public class PulsarProperties {
 		 * Dead letter policy to use.
 		 */
 		@Nullable
+		@NestedConfigurationProperty
 		private DeadLetterPolicy deadLetterPolicy;
 
 		/**
