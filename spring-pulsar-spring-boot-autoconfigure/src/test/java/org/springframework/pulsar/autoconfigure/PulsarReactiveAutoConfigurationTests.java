@@ -20,10 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.adapter.ProducerCacheProvider;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
@@ -59,6 +62,7 @@ import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.ReactivePulsarReaderFactory;
 import org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarContainerProperties;
 
 /**
  * Autoconfiguration tests for {@link PulsarReactiveAutoConfiguration}.
@@ -243,6 +247,24 @@ class PulsarReactiveAutoConfigurationTests {
 							.extracting("pulsarClientSupplier", InstanceOfAssertFactories.type(Supplier.class))
 							.extracting(Supplier::get).isSameAs(client)));
 		}
+	}
+
+	@Test
+	void reactiveListenerPropertiesAreHonored() {
+		contextRunner.withPropertyValues("spring.pulsar.reactive.listener.schema-type=avro",
+				"spring.pulsar.reactive.listener.handling-timeout=10s",
+				"spring.pulsar.reactive.listener.use-key-ordered-processing=true",
+				"spring.pulsar.reactive.consumer.subscription-type=shared").run((context -> {
+					AbstractObjectAssert<?, ReactivePulsarContainerProperties<?>> properties = assertThat(context)
+							.hasNotFailed().getBean(DefaultReactivePulsarListenerContainerFactory.class)
+							.extracting(DefaultReactivePulsarListenerContainerFactory<Object>::getContainerProperties);
+					properties.extracting(ReactivePulsarContainerProperties::getSchemaType).isEqualTo(SchemaType.AVRO);
+					properties.extracting(ReactivePulsarContainerProperties::getHandlingTimeout)
+							.isEqualTo(Duration.ofSeconds(10));
+					properties.extracting(ReactivePulsarContainerProperties::isUseKeyOrderedProcessing).isEqualTo(true);
+					properties.extracting(ReactivePulsarContainerProperties::getSubscriptionType)
+							.isEqualTo(SubscriptionType.Shared);
+				}));
 	}
 
 	@Nested
