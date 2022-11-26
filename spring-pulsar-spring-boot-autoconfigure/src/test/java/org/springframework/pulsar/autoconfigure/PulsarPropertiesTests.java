@@ -19,6 +19,7 @@ package org.springframework.pulsar.autoconfigure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -217,6 +218,10 @@ public class PulsarPropertiesTests {
 		void adminProperties() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.administration.service-url", "my-service-url");
+			props.put("spring.pulsar.administration.connection-timeout", "12s");
+			props.put("spring.pulsar.administration.read-timeout", "13s");
+			props.put("spring.pulsar.administration.request-timeout", "14s");
+			props.put("spring.pulsar.administration.auto-cert-refresh-time", "15s");
 			props.put("spring.pulsar.administration.tls-hostname-verification-enable", "true");
 			props.put("spring.pulsar.administration.tls-trust-certs-file-path", "my-trust-certs-file-path");
 			props.put("spring.pulsar.administration.tls-allow-insecure-connection", "true");
@@ -231,10 +236,15 @@ public class PulsarPropertiesTests {
 			bind(props);
 			Map<String, Object> adminProps = properties.buildAdminProperties();
 
-			// Verify that the props can be loaded in a ClientBuilder
-			assertThatNoException().isThrownBy(() -> PulsarAdmin.builder().loadConf(adminProps));
+			// Verify that the props can NOT be loaded directly via a ClientBuilder due to
+			// the
+			// unknown readTimeout and autoCertRefreshTime properties
+			assertThatRuntimeException().isThrownBy(() -> PulsarAdmin.builder().loadConf(adminProps)).havingCause()
+					.withMessageContaining("Unrecognized field \"autoCertRefreshTimeMs\"");
 
 			assertThat(adminProps).containsEntry("serviceUrl", "my-service-url")
+					.containsEntry("connectionTimeoutMs", 12_000).containsEntry("readTimeoutMs", 13_000)
+					.containsEntry("requestTimeoutMs", 14_000).containsEntry("autoCertRefreshTimeMs", 15_000)
 					.containsEntry("tlsHostnameVerificationEnable", true)
 					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
 					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
