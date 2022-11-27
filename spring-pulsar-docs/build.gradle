@@ -6,7 +6,7 @@ plugins {
 description = 'Spring Pulsar Docs'
 
 ext {
-	micrometerDocsVersion="1.0.0-SNAPSHOT"
+	micrometerDocsVersion="1.0.0-M7"
 }
 
 configurations {

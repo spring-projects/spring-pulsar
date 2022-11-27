@@ -8,21 +8,16 @@ javaPlatform {
 
 ext {
 	googleJsr305Version = '3.0.2'
-	micrometerVersion = '1.10.0'
-	micrometerTracingVersion = '1.0.0'
 	protobufJavaVersion = '3.21.5'
 	testcontainersVersion = '1.17.3'
 	pulsarVersion = '2.10.2'
 	pulsarClientReactiveVersion = '0.1.0-SNAPSHOT'
-	springBootVersion = '3.0.0-RC1'
+	springBootVersion = '3.0.0'
 }
 
 dependencies {
 	api platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
 	api platform("org.testcontainers:testcontainers-bom:$testcontainersVersion")
-	// TODO remove micrometer entries once SB goes to MM snapshots as it specifies them in its bom
-	api platform("io.micrometer:micrometer-bom:$micrometerVersion")
-	api platform("io.micrometer:micrometer-tracing-bom:$micrometerTracingVersion")
 	constraints {
 		api "com.google.code.findbugs:jsr305:$googleJsr305Version"
 		api "com.google.protobuf:protobuf-java:$protobufJavaVersion"
