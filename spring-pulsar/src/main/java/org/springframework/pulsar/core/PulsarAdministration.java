@@ -100,8 +100,8 @@ public class PulsarAdministration
 		if (conf.remove("requestTimeoutMs") instanceof Integer requestTimeout) {
 			builder.requestTimeout(requestTimeout, TimeUnit.MILLISECONDS);
 		}
-		if (conf.remove("autoCertRefreshTimeMs") instanceof Integer autoCertRefreshTime) {
-			builder.autoCertRefreshTime(autoCertRefreshTime, TimeUnit.MILLISECONDS);
+		if (conf.remove("autoCertRefreshSeconds") instanceof Integer autoCertRefreshTime) {
+			builder.autoCertRefreshTime(autoCertRefreshTime, TimeUnit.SECONDS);
 		}
 		builder.loadConf(conf);
 
