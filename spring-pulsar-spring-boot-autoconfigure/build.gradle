@@ -18,6 +18,7 @@ dependencies {
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
 }

@@ -18,6 +18,8 @@ package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,8 +27,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.pulsar.autoconfigure.SpringPulsarBootAppSanityTests.SpringPulsarBootTestApp;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Sanity tests to ensure that {@code Spring Pulsar} can be auto-configured into a Spring
@@ -34,8 +42,13 @@ import org.springframework.pulsar.core.PulsarTemplate;
  *
  * @author Chris Bono
  */
-@SpringBootTest(classes = SpringPulsarBootTestApp.class)
+@SpringBootTest(classes = SpringPulsarBootTestApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 class SpringPulsarBootAppSanityTests implements PulsarTestContainerSupport {
+
+	@DynamicPropertySource
+	static void pulsarProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.pulsar.client.service-url", PulsarTestContainerSupport::getPulsarBrokerUrl);
+	}
 
 	@Test
 	void appStartsWithAutoConfiguredSpringPulsarComponents(
@@ -43,9 +56,34 @@ class SpringPulsarBootAppSanityTests implements PulsarTestContainerSupport {
 		assertThat(pulsarTemplate.getIfAvailable()).isNotNull();
 	}
 
+	@Test
+	void templateCanBeAccessedDuringWebRequest(@Autowired TestRestTemplate restTemplate) {
+		String body = restTemplate.getForObject("/hello", String.class);
+		assertThat(body).startsWith("Hello World -> ");
+	}
+
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
 	static class SpringPulsarBootTestApp {
+
+		@Autowired
+		private ObjectProvider<PulsarTemplate<String>> pulsarTemplateProvider;
+
+		@RestController
+		class TestWebController {
+
+			@GetMapping("/hello")
+			String sayHello() throws PulsarClientException {
+
+				PulsarTemplate<String> pulsarTemplate = pulsarTemplateProvider.getIfAvailable();
+				if (pulsarTemplate == null) {
+					return "NOPE! Not hello world";
+				}
+				MessageId msgId = pulsarTemplate.send("spbast-hello-topic", "hello");
+				return "Hello World -> " + msgId;
+			}
+
+		}
 
 	}
 
