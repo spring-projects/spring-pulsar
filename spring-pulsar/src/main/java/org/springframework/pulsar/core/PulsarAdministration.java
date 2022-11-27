@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.core;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -89,17 +88,20 @@ public class PulsarAdministration
 
 	private void loadConf(PulsarAdminBuilder builder, Map<String, Object> adminConfig) {
 		Map<String, Object> conf = new HashMap<>(adminConfig);
-		if (conf.remove("connectTimeout") instanceof Duration connectTimeout) {
-			builder.connectionTimeout((int) connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
+
+		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
+		// timeout settings from the config props
+		if (conf.remove("connectionTimeoutMs") instanceof Integer connectTimeout) {
+			builder.connectionTimeout(connectTimeout, TimeUnit.MILLISECONDS);
 		}
-		if (conf.remove("readTimeout") instanceof Duration readTimeout) {
-			builder.readTimeout((int) readTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		if (conf.remove("readTimeoutMs") instanceof Integer readTimeout) {
+			builder.readTimeout(readTimeout, TimeUnit.MILLISECONDS);
 		}
-		if (conf.remove("requestTimeout") instanceof Duration requestTimeout) {
-			builder.requestTimeout((int) requestTimeout.toMillis(), TimeUnit.MILLISECONDS);
+		if (conf.remove("requestTimeoutMs") instanceof Integer requestTimeout) {
+			builder.requestTimeout(requestTimeout, TimeUnit.MILLISECONDS);
 		}
-		if (conf.remove("autoCertRefreshTime") instanceof Duration autoCertRefreshTime) {
-			builder.autoCertRefreshTime((int) autoCertRefreshTime.toMillis(), TimeUnit.MILLISECONDS);
+		if (conf.remove("autoCertRefreshTimeMs") instanceof Integer autoCertRefreshTime) {
+			builder.autoCertRefreshTime(autoCertRefreshTime, TimeUnit.MILLISECONDS);
 		}
 		builder.loadConf(conf);
 

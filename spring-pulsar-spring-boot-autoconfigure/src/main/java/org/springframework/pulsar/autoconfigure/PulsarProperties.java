@@ -1815,17 +1815,17 @@ public class PulsarProperties {
 		private Set<String> tlsProtocols;
 
 		/**
-		 * Connection time out.
+		 * Duration to wait for a connection to server to be established.
 		 */
-		private Duration connectTimeout = Duration.ofMinutes(1);
+		private Duration connectionTimeout = Duration.ofMinutes(1);
 
 		/**
-		 * Server response read time out.
+		 * Server response read time out for any request.
 		 */
 		private Duration readTimeout = Duration.ofMinutes(1);
 
 		/**
-		 * Server request time out.
+		 * Server request time out for any request.
 		 */
 		private Duration requestTimeout = Duration.ofMinutes(5);
 
@@ -1946,12 +1946,12 @@ public class PulsarProperties {
 			this.tlsProtocols = tlsProtocols;
 		}
 
-		public Duration getConnectTimeout() {
-			return this.connectTimeout;
+		public Duration getConnectionTimeout() {
+			return this.connectionTimeout;
 		}
 
-		public void setConnectTimeout(Duration connectTimeout) {
-			this.connectTimeout = connectTimeout;
+		public void setConnectionTimeout(Duration connectionTimeout) {
+			this.connectionTimeout = connectionTimeout;
 		}
 
 		public Duration getReadTimeout() {
@@ -2002,10 +2002,10 @@ public class PulsarProperties {
 			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
 			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
 			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
-			map.from(this::getConnectTimeout).to(properties.in("connectTimeout"));
-			map.from(this::getReadTimeout).to(properties.in("readTimeout"));
-			map.from(this::getRequestTimeout).to(properties.in("requestTimeout"));
-			map.from(this::getAutoCertRefreshTime).to(properties.in("autoCertRefreshTime"));
+			map.from(this::getConnectionTimeout).asInt(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
+			map.from(this::getReadTimeout).asInt(Duration::toMillis).to(properties.in("readTimeoutMs"));
+			map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(properties.in("requestTimeoutMs"));
+			map.from(this::getAutoCertRefreshTime).asInt(Duration::toMillis).to(properties.in("autoCertRefreshTimeMs"));
 
 			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
 
