@@ -119,6 +119,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	@SuppressWarnings("unchecked")
 	private Producer<T> wrapProducerWithCloseCallback(Producer<T> producer, Consumer<Producer<T>> closeCallback) {
 		ProxyFactory factory = new ProxyFactory(producer);
+		factory.setProxyTargetClass(true);
 		factory.addAdvice(new MethodInterceptor() {
 			@Nullable
 			@Override
