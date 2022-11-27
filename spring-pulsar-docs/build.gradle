@@ -6,7 +6,7 @@ plugins {
 description = 'Spring Pulsar Docs'
 
 ext {
-	micrometerDocsVersion="1.0.0-M7"
+	micrometerDocsVersion="1.0.0"
 }
 
 configurations {
@@ -18,8 +18,7 @@ dependencies {
 	api project (':spring-pulsar')
 	api 'org.springframework.boot:spring-boot-starter'
 	configurationProperties(project(path: ":spring-pulsar-spring-boot-autoconfigure", configuration: "configurationPropertiesMetadata"))
-	observationDocs "io.micrometer:micrometer-docs-generator-spans:$micrometerDocsVersion"
-	observationDocs "io.micrometer:micrometer-docs-generator-metrics:$micrometerDocsVersion"
+	observationDocs "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 
 task aggregatedJavadoc(type: Javadoc) {
@@ -65,24 +64,12 @@ task documentConfigurationProperties(type: org.springframework.pulsar.gradle.doc
 def observationsInputDir = file("${rootDir}/spring-pulsar/src/main/java/org/springframework/pulsar/observation").absolutePath
 def observationsOutputDir = file("${buildDir}/docs/generated/observation/").absolutePath
 
-task generateObservabilityMetricsDocs(type: JavaExec) {
-	mainClass = 'io.micrometer.docs.metrics.DocsFromSources'
+task generateObservabilityDocs(type: JavaExec) {
+	mainClass = 'io.micrometer.docs.DocsGeneratorCommand'
 	inputs.dir(observationsInputDir)
 	outputs.dir(observationsOutputDir)
 	classpath configurations.observationDocs
-	args observationsInputDir, '.*', observationsOutputDir
-}
-
-task generateObservabilitySpansDocs(type: JavaExec) {
-	mainClass = 'io.micrometer.docs.spans.DocsFromSources'
-	inputs.dir(observationsInputDir)
-	outputs.dir(observationsOutputDir)
-	classpath configurations.observationDocs
-	args observationsInputDir, '.*', observationsOutputDir
-}
-
-task generateObservabilityDocs {
-	dependsOn generateObservabilityMetricsDocs, generateObservabilitySpansDocs
+	args observationsInputDir, /.+/, observationsOutputDir
 }
 
 tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
