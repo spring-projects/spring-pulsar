@@ -2005,7 +2005,8 @@ public class PulsarProperties {
 			map.from(this::getConnectionTimeout).asInt(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
 			map.from(this::getReadTimeout).asInt(Duration::toMillis).to(properties.in("readTimeoutMs"));
 			map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(properties.in("requestTimeoutMs"));
-			map.from(this::getAutoCertRefreshTime).asInt(Duration::toMillis).to(properties.in("autoCertRefreshTimeMs"));
+			map.from(this::getAutoCertRefreshTime).asInt(Duration::toSeconds)
+					.to(properties.in("autoCertRefreshSeconds"));
 
 			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
 

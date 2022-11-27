@@ -240,11 +240,11 @@ public class PulsarPropertiesTests {
 			// the
 			// unknown readTimeout and autoCertRefreshTime properties
 			assertThatRuntimeException().isThrownBy(() -> PulsarAdmin.builder().loadConf(adminProps)).havingCause()
-					.withMessageContaining("Unrecognized field \"autoCertRefreshTimeMs\"");
+					.withMessageContaining("Unrecognized field \"autoCertRefreshSeconds\"");
 
 			assertThat(adminProps).containsEntry("serviceUrl", "my-service-url")
 					.containsEntry("connectionTimeoutMs", 12_000).containsEntry("readTimeoutMs", 13_000)
-					.containsEntry("requestTimeoutMs", 14_000).containsEntry("autoCertRefreshTimeMs", 15_000)
+					.containsEntry("requestTimeoutMs", 14_000).containsEntry("autoCertRefreshSeconds", 15)
 					.containsEntry("tlsHostnameVerificationEnable", true)
 					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
 					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
