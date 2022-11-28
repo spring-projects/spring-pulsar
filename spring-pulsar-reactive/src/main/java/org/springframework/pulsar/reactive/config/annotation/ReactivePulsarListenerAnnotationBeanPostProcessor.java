@@ -74,7 +74,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.GenericMessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
-import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.annotation.PulsarListenerConfigurer;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
@@ -657,14 +656,6 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 			GenericMessageConverter messageConverter = new GenericMessageConverter(
 					this.defaultFormattingConversionService);
 			defaultFactory.setMessageConverter(messageConverter);
-
-			List<HandlerMethodArgumentResolver> customArgumentsResolver = new ArrayList<>(
-					ReactivePulsarListenerAnnotationBeanPostProcessor.this.registrar
-							.getCustomMethodArgumentResolvers());
-			// Has to be at the end - look at PayloadMethodArgumentResolver documentation
-			// customArgumentsResolver.add(new
-			// PulsarNullAwarePayloadArgumentResolver(messageConverter, validator));
-			defaultFactory.setCustomArgumentResolvers(customArgumentsResolver);
 
 			defaultFactory.afterPropertiesSet();
 
