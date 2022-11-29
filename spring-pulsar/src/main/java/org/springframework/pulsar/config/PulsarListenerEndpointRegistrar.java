@@ -23,9 +23,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.lang.Nullable;
-import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.util.Assert;
-import org.springframework.validation.Validator;
 
 /**
  * Helper bean for registering {@link ListenerEndpoint} with a
@@ -42,10 +40,6 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	private final List<PulsarListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
 
 	private ListenerEndpointRegistry endpointRegistry;
-
-	private Validator validator;
-
-	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
 	private ListenerContainerFactory<?, ?> containerFactory;
 
@@ -68,16 +62,6 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		return this.endpointRegistry;
 	}
 
-	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory PulsarHandlerMethodFactory) {
-		Assert.isNull(this.validator, "A validator cannot be provided with a custom message handler factory");
-		this.messageHandlerMethodFactory = PulsarHandlerMethodFactory;
-	}
-
-	@Nullable
-	public MessageHandlerMethodFactory getMessageHandlerMethodFactory() {
-		return this.messageHandlerMethodFactory;
-	}
-
 	public void setContainerFactory(ListenerContainerFactory<?, ?> containerFactory) {
 		this.containerFactory = containerFactory;
 	}
@@ -89,17 +73,6 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
-	}
-
-	@Nullable
-	public Validator getValidator() {
-		return this.validator;
-	}
-
-	public void setValidator(Validator validator) {
-		Assert.isNull(this.messageHandlerMethodFactory,
-				"A validator cannot be provided with a custom message handler factory");
-		this.validator = validator;
 	}
 
 	@Override
