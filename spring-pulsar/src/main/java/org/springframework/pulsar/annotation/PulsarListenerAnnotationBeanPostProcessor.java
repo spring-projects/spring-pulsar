@@ -167,19 +167,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		return LOWEST_PRECEDENCE;
 	}
 
-	public void setEndpointRegistry(PulsarListenerEndpointRegistry endpointRegistry) {
-		this.endpointRegistry = endpointRegistry;
-	}
-
-	public void setDefaultContainerFactoryBeanName(String containerFactoryBeanName) {
-		this.defaultContainerFactoryBeanName = containerFactoryBeanName;
-	}
-
-	public void setCharset(Charset charset) {
-		Assert.notNull(charset, "'charset' cannot be null");
-		this.charset = charset;
-	}
-
 	@Override
 	public void afterPropertiesSet() {
 		buildEnhancer();
@@ -601,20 +588,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 			}
 		}
 		return method;
-	}
-
-	private Collection<PulsarListener> findListenerAnnotations(Class<?> clazz) {
-		Set<PulsarListener> listeners = new HashSet<>();
-		PulsarListener ann = AnnotatedElementUtils.findMergedAnnotation(clazz, PulsarListener.class);
-		if (ann != null) {
-			ann = enhance(clazz, ann);
-			listeners.add(ann);
-		}
-		PulsarListeners anns = AnnotationUtils.findAnnotation(clazz, PulsarListeners.class);
-		if (anns != null) {
-			listeners.addAll(Arrays.stream(anns.value()).map(anno -> enhance(clazz, anno)).toList());
-		}
-		return listeners;
 	}
 
 	private Set<PulsarListener> findListenerAnnotations(Method method) {
