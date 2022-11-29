@@ -86,7 +86,6 @@ import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.Validator;
 
 /**
  * Bean post-processor that registers methods annotated with {@link PulsarListener} to be
@@ -223,16 +222,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
 
-		// Set the custom handler method factory once resolved by the configurer -
-		// otherwise register default formatters
-		MessageHandlerMethodFactory handlerMethodFactory = this.registrar.getMessageHandlerMethodFactory();
-		if (handlerMethodFactory != null) {
-			this.messageHandlerMethodFactory.setHandlerMethodFactory(handlerMethodFactory);
-		}
-		else {
-			addFormatters(this.messageHandlerMethodFactory.defaultFormattingConversionService);
-		}
-
+		addFormatters(this.messageHandlerMethodFactory.defaultFormattingConversionService);
 		// Actually register all listeners
 		this.registrar.afterPropertiesSet();
 	}
@@ -699,10 +689,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 
 		private MessageHandlerMethodFactory createDefaultMessageHandlerMethodFactory() {
 			DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
-			Validator validator = PulsarListenerAnnotationBeanPostProcessor.this.registrar.getValidator();
-			if (validator != null) {
-				defaultFactory.setValidator(validator);
-			}
 			defaultFactory.setBeanFactory(PulsarListenerAnnotationBeanPostProcessor.this.beanFactory);
 			this.defaultFormattingConversionService
 					.addConverter(new BytesToStringConverter(PulsarListenerAnnotationBeanPostProcessor.this.charset));
