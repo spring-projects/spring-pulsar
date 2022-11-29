@@ -24,7 +24,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
-import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.util.Assert;
 import org.springframework.validation.Validator;
 
@@ -43,8 +42,6 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	private final List<PulsarListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
 
 	private ListenerEndpointRegistry endpointRegistry;
-
-	private List<HandlerMethodArgumentResolver> customMethodArgumentResolvers = new ArrayList<>();
 
 	private Validator validator;
 
