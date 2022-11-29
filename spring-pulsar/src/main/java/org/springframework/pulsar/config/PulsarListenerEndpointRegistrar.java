@@ -17,8 +17,6 @@
 package org.springframework.pulsar.config;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.BeanFactory;
@@ -71,14 +69,6 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	@Nullable
 	public ListenerEndpointRegistry getEndpointRegistry() {
 		return this.endpointRegistry;
-	}
-
-	public List<HandlerMethodArgumentResolver> getCustomMethodArgumentResolvers() {
-		return Collections.unmodifiableList(this.customMethodArgumentResolvers);
-	}
-
-	public void setCustomMethodArgumentResolvers(HandlerMethodArgumentResolver... methodArgumentResolvers) {
-		this.customMethodArgumentResolvers = Arrays.asList(methodArgumentResolvers);
 	}
 
 	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory PulsarHandlerMethodFactory) {
