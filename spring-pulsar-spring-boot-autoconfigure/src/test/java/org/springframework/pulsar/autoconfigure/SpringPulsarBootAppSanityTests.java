@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Chris Bono
  */
 @SpringBootTest(classes = SpringPulsarBootTestApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@Disabled("temporarily")
 class SpringPulsarBootAppSanityTests implements PulsarTestContainerSupport {
 
 	@DynamicPropertySource
