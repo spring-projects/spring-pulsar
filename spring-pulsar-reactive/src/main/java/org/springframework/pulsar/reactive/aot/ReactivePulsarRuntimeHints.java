@@ -87,7 +87,8 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 						MemberCategory.DECLARED_FIELDS));
 
 		Stream.of("reactor.core.publisher.Flux", "com.github.benmanes.caffeine.cache.SSMSA",
-				"com.github.benmanes.caffeine.cache.PSAMS")
+				"com.github.benmanes.caffeine.cache.PSAMS", "com.github.benmanes.caffeine.cache.SSLMSA",
+				"com.github.benmanes.caffeine.cache.PSAMW")
 				.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
 						MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS,
 						MemberCategory.INTROSPECT_PUBLIC_METHODS));
