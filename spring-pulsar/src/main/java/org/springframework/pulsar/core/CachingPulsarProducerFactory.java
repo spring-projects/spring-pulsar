@@ -26,17 +26,17 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.logging.LogFactory;
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.ProducerStats;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.TypedMessageBuilder;
+import org.apache.pulsar.client.api.transaction.Transaction;
 import org.apache.pulsar.common.protocol.schema.SchemaHash;
 
-import org.springframework.aop.framework.AopProxyUtils;
-import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
@@ -106,7 +106,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		try {
 			Producer<T> producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
-			return wrapProducerWithCloseCallback(producer,
+			return new ProducerWithCloseCallback<>(producer,
 					(p) -> this.logger
 							.trace(() -> String.format("Client closed producer %s but will skip actual closing",
 									ProducerUtils.formatProducer(producer))));
@@ -114,27 +114,6 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		catch (PulsarClientException ex) {
 			throw new RuntimeException(ex);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private Producer<T> wrapProducerWithCloseCallback(Producer<T> producer, Consumer<Producer<T>> closeCallback) {
-		ProxyFactory factory = new ProxyFactory(producer);
-		factory.addAdvice(new MethodInterceptor() {
-			@Nullable
-			@Override
-			public Object invoke(MethodInvocation invocation) throws Throwable {
-				if (invocation.getMethod().getName().equals("close")) {
-					closeCallback.accept((Producer<T>) invocation.getThis());
-					return null;
-				}
-				if (invocation.getMethod().getName().equals("closeAsync")) {
-					closeCallback.accept((Producer<T>) invocation.getThis());
-					return CompletableFuture.completedFuture(null);
-				}
-				return invocation.proceed();
-			}
-		});
-		return (Producer<T>) factory.getProxy();
 	}
 
 	@Override
@@ -147,7 +126,10 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	@SuppressWarnings("unchecked")
 	private void closeProducer(Producer<T> producer) {
-		Producer<T> actualProducer = (Producer<T>) AopProxyUtils.getSingletonTarget(producer);
+		Producer<T> actualProducer = null;
+		if (producer instanceof ProducerWithCloseCallback<T> wrappedProducer) {
+			actualProducer = wrappedProducer.getActualProducer();
+		}
 		if (actualProducer == null) {
 			this.logger.warn(() -> String.format("Unable to get actual producer for %s - will skip closing it",
 					ProducerUtils.formatProducer(producer)));
@@ -212,6 +194,110 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		public int hashCode() {
 			return this.topic.hashCode() + this.schemaHash.hashCode() + Objects.hashCode(this.encryptionKeys)
 					+ Objects.hashCode(this.customizers);
+		}
+
+	}
+
+	/**
+	 * A producer that does not actually close when the user calls
+	 * {@link Producer#close()}.
+	 *
+	 * @param <T> producer type.
+	 */
+	static class ProducerWithCloseCallback<T> implements Producer<T> {
+
+		private final Producer<T> producer;
+
+		private final Consumer<Producer<T>> closeCallback;
+
+		ProducerWithCloseCallback(Producer<T> producer, Consumer<Producer<T>> closeCallback) {
+			this.producer = producer;
+			this.closeCallback = closeCallback;
+		}
+
+		public Producer<T> getActualProducer() {
+			return this.producer;
+		}
+
+		@Override
+		public String getTopic() {
+			return this.producer.getTopic();
+		}
+
+		@Override
+		public String getProducerName() {
+			return this.producer.getProducerName();
+		}
+
+		@Override
+		public MessageId send(T message) throws PulsarClientException {
+			return this.producer.send(message);
+		}
+
+		@Override
+		public CompletableFuture<MessageId> sendAsync(T message) {
+			return this.producer.sendAsync(message);
+		}
+
+		@Override
+		public void flush() throws PulsarClientException {
+			this.producer.flush();
+		}
+
+		@Override
+		public CompletableFuture<Void> flushAsync() {
+			return this.producer.flushAsync();
+		}
+
+		@Override
+		public TypedMessageBuilder<T> newMessage() {
+			return this.producer.newMessage();
+		}
+
+		@Override
+		public <V> TypedMessageBuilder<V> newMessage(Schema<V> schema) {
+			return this.producer.newMessage(schema);
+		}
+
+		@Override
+		public TypedMessageBuilder<T> newMessage(Transaction txn) {
+			return this.producer.newMessage(txn);
+		}
+
+		@Override
+		public long getLastSequenceId() {
+			return this.producer.getLastSequenceId();
+		}
+
+		@Override
+		public ProducerStats getStats() {
+			return this.producer.getStats();
+		}
+
+		@Override
+		public void close() throws PulsarClientException {
+			this.closeCallback.accept(this.producer);
+		}
+
+		@Override
+		public CompletableFuture<Void> closeAsync() {
+			this.closeCallback.accept(this.producer);
+			return CompletableFuture.completedFuture(null);
+		}
+
+		@Override
+		public boolean isConnected() {
+			return this.producer.isConnected();
+		}
+
+		@Override
+		public long getLastDisconnectedTimestamp() {
+			return this.producer.getLastDisconnectedTimestamp();
+		}
+
+		@Override
+		public int getNumOfPartitions() {
+			return this.producer.getNumOfPartitions();
 		}
 
 	}

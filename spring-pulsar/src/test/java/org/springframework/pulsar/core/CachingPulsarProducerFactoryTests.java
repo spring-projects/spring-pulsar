@@ -46,8 +46,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerCacheKey;
+import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerWithCloseCallback;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -86,19 +86,19 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
 				Collections.singletonList(cacheKey));
-		Producer<String> cachedProducerProxy = producerCache.asMap().get(cacheKey);
-		assertThat(cachedProducerProxy).isSameAs(producer1);
+		Producer<String> cachedProducerWrapper = producerCache.asMap().get(cacheKey);
+		assertThat(cachedProducerWrapper).isSameAs(producer1);
 	}
 
 	@Test
-	void cachedProducerIsCloseSafeProxy() throws PulsarClientException {
+	void cachedProducerIsCloseSafeWrapper() throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 
-		Producer<String> proxyProducer = producerFactory.createProducer(schema, "topic1");
-		Producer<String> actualProducer = actualProducerFrom(proxyProducer);
+		Producer<String> wrappedProducer = producerFactory.createProducer(schema, "topic1");
+		Producer<String> actualProducer = actualProducerFrom(wrappedProducer);
 
 		assertThat(actualProducer.isConnected()).isTrue();
-		proxyProducer.close();
+		wrappedProducer.close();
 		assertThat(actualProducer.isConnected()).isTrue();
 		actualProducer.close();
 		assertThat(actualProducer.isConnected()).isFalse();
@@ -222,10 +222,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Producer<String> actualProducerFrom(Producer<String> proxyProducer) {
-		Producer<String> actualProducer = (Producer<String>) AopProxyUtils.getSingletonTarget(proxyProducer);
-		assertThat(actualProducer).isNotNull();
-		return actualProducer;
+	private Producer<String> actualProducerFrom(Producer<String> wrappedProducer) {
+        assertThat(wrappedProducer).isInstanceOf(ProducerWithCloseCallback.class);
+        return ((ProducerWithCloseCallback)wrappedProducer).getActualProducer();
 	}
 
 	@SuppressWarnings("unchecked")
