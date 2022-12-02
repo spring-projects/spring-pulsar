@@ -223,8 +223,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@SuppressWarnings("unchecked")
 	private Producer<String> actualProducerFrom(Producer<String> wrappedProducer) {
-        assertThat(wrappedProducer).isInstanceOf(ProducerWithCloseCallback.class);
-        return ((ProducerWithCloseCallback)wrappedProducer).getActualProducer();
+		assertThat(wrappedProducer).isInstanceOf(ProducerWithCloseCallback.class);
+		return ((ProducerWithCloseCallback) wrappedProducer).getActualProducer();
 	}
 
 	@SuppressWarnings("unchecked")
