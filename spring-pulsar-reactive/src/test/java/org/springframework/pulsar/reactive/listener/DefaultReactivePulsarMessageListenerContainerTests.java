@@ -132,7 +132,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		pulsarConsumerFactory
 				.createConsumer(Schema.STRING,
 						Collections.singletonList(
-								c -> c.topicNames(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
+								c -> c.topics(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
 				.consumeNothing().block(Duration.ofSeconds(10));
 		CountDownLatch latch = new CountDownLatch(1);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
@@ -244,7 +244,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		pulsarConsumerFactory
 				.createConsumer(Schema.STRING,
 						Collections.singletonList(
-								c -> c.topicNames(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
+								c -> c.topics(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
 				.consumeNothing().block(Duration.ofSeconds(10));
 		CountDownLatch latch = new CountDownLatch(1);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
@@ -282,7 +282,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, config);
 		ReactiveMessageConsumer<String> dlqConsumer = pulsarConsumerFactory.createConsumer(Schema.STRING,
-				Collections.singletonList(b -> b.topicNames(Collections.singletonList(deadLetterTopic))));
+				Collections.singletonList(b -> b.topics(Collections.singletonList(deadLetterTopic))));
 
 		// Ensure subscriptions are created
 		pulsarConsumerFactory.createConsumer(Schema.STRING).consumeNothing().block(Duration.ofSeconds(10));

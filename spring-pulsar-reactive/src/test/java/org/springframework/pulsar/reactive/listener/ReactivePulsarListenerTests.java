@@ -209,7 +209,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@Bean
 			ReactiveMessageConsumerBuilderCustomizer<String> listen2Customizer() {
-				return b -> b.topicNames(List.of("topic-2"))
+				return b -> b.topics(List.of("topic-2"))
 						.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
