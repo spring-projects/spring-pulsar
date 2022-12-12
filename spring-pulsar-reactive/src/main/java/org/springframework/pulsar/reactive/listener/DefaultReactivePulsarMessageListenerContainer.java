@@ -152,7 +152,7 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 				builder.subscriptionName(containerProperties.getSubscriptionName());
 			}
 			if (!CollectionUtils.isEmpty(containerProperties.getTopics())) {
-				builder.topicNames(new ArrayList<>(containerProperties.getTopics()));
+				builder.topics(new ArrayList<>(containerProperties.getTopics()));
 			}
 			if (containerProperties.getTopicsPattern() != null) {
 				builder.topicsPattern(containerProperties.getTopicsPattern());
@@ -181,7 +181,7 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 					.handlingTimeout(containerProperties.getHandlingTimeout());
 			if (containerProperties.getConcurrency() > 0) {
 				ConcurrentOneByOneMessagePipelineBuilder<T> concurrentPipelineBuilder = messagePipelineBuilder
-						.concurrent().concurrency(containerProperties.getConcurrency());
+						.concurrency(containerProperties.getConcurrency());
 				if (containerProperties.isUseKeyOrderedProcessing()) {
 					concurrentPipelineBuilder.useKeyOrderedProcessing();
 				}
