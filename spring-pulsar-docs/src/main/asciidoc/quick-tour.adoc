@@ -1,40 +1,14 @@
 [[quick-tour]]
-=== Quick Tour
+= Quick Tour
 
 :spring-pulsar-version: 0.1.0-SNAPSHOT
 
-In this section, we take a quick tour of Spring for Apache Pulsar.
-
-==== Minimum Supported Versions
-
-The minimum supported versions for the underlying libraries required by the framework are as follows:
-|===
-| Library | Version
-
-| Java
-| 17
-
-| Apache Pulsar
-| 2.10.0
-
-| Spring Boot
-| 3.0.0
-
-| Spring Framework
-| 6.0.0
-
-| Gradle
-| 7.x (7.5 or later)
-|===
-
-=== Quick Sample
-
-In the following sample Spring Boot application, we show how to write a publisher and a consumer that use Spring for Apache Pulsar.
+We will take a quick tour of Spring for Apache Pulsar by showing a sample Spring Boot application that produces and consumes.
 This is a complete application and does not require any additional configuration, as long as you have a Pulsar cluster running on the default location - `localhost:6650`.
 
 NOTE: We recommend using a Spring-Boot-First approach for Spring for Apache Pulsar-based application, as that simplifies things tremendously. To do so, you can add the `spring-pulsar-spring-boot-starter` module as a dependency.
 
-==== Dependencies
+== Dependencies
 
 Spring Boot applications need only the `spring-pulsar-spring-boot-starter` dependency. The following listings show how to define the dependency for Maven and Gradle, respectively:
 
@@ -58,44 +32,8 @@ dependencies {
 }
 ----
 
-===== Non-GA Versions
-You can find snapshot or milestone versions of the dependency in the Spring Artifactory repository. The following listings show how to define the repositories for Maven and Gradle, respectively:
 
-[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
-.Maven
-----
-<repositories>
-    ...
-    <repository>
-        <id>spring-milestones</id>
-        <name>Spring Milestones</name>
-        <url>https://repo.spring.io/milestone</url>
-        <snapshots>
-            <enabled>false</enabled>
-        </snapshots>
-    </repository>
-    <repository>
-        <id>spring-snapshots</id>
-        <name>Spring Snapshots</name>
-        <url>https://repo.spring.io/snapshot</url>
-        <releases>
-            <enabled>false</enabled>
-        </releases>
-    </repository>
-</repositories>
-----
-
-[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
-.Gradle
-----
-repositories {
-  ...
-  maven { url 'https://repo.spring.io/milestone' }
-  maven { url 'https://repo.spring.io/snapshot' }
-}
-----
-
-==== Application Code
+== Application Code
 
 The following listing shows the Spring Boot application case for the example:
 
@@ -110,10 +48,10 @@ public class PulsarBootHelloWorld {
 
     @Bean
     ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-        return (args) -> pulsarTemplate.send("hello-pulsar", "Hello Pulsar World!");
+        return (args) -> pulsarTemplate.send("hello-pulsar-topic", "Hello Pulsar World!");
     }
 
-    @PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+    @PulsarListener(subscriptionName = "hello-pulsar-sub", topics = "hello-pulsar-topic")
     void listen(String message) {
         System.out.println("Message Received: " + message);
     }
@@ -121,7 +59,7 @@ public class PulsarBootHelloWorld {
 ----
 
 Let us quickly go through the higher-level details of this application.
-<<index.adoc#reference,Later in this documentation>>, we see these components in much more detail.
+Later in the documentation we see these components in much more detail.
 
 In the preceding sample, we heavily rely on Spring Boot auto-configuration.
 Spring Boot auto-configures several components for our application.
@@ -137,18 +75,3 @@ Behind the scenes, it creates a message listener container to create and manage 
 As with a regular Pulsar consumer, the default subscription type when using `PulsarListener` is the `Exclusive` mode.
 As records are published in to the `hello-pulsar` topic, the `Pulsarlistener` consumes them and prints them on the console.
 The framework also infers the schema type used from the data type that the `PulsarListner` method uses as the payload -- `String`, in this case.
-
-
-=== Building the Project
-If you have cloned the project locally, follow these steps to build the project from the soure code.
-
-Spring for Apache Pulsar uses Gradle as its build tool. Run the following command to do a full build of the project:
-[indent=0]
-----
-./gradlew clean build
-----
-You can build without running tests by using the following command:
-[indent=0]
-----
-./gradlew clean build -x test
-----

@@ -1,50 +1,41 @@
 [[spring-pulsar-reference]]
 = Spring for Apache Pulsar
-:toc: left
-:toclevels: 4
-:numbered:
-:icons: font
-:hide-uri-scheme:
-Soby Chacko; Chris Bono; Alexander Preuß; Jay Bryant; Christophe Bornet
 
-//ifdef::backend-html5[]
-//*{project-version}*
-//
-//NOTE: This documentation is also available as https://docs.spring.io/spring-pulsar/docs/{project-version}/reference/pdf/spring-pulsar-reference.pdf[PDF].
-//endif::[]
-//
-//ifdef::backend-pdf[]
-//NOTE: This documentation is also available as https://docs.spring.io/spring-pulsar/docs/{project-version}/reference/html/index.html[HTML].
-//endif::[]
+include::attributes.adoc[]
 
-(C) 2022 VMware, Inc.
+include::authors.adoc[]
 
-Copies of this document may be made for your own use and for distribution to others, provided that you do not charge any fee for such copies and further provided that each copy contains this Copyright Notice, whether distributed in print or electronically.
+include::copyright.adoc[]
 
-== Preface
-
-include::preface.adoc[]
-
-[[quick-intro]]
-== Introduction
-
-This first part of the reference documentation is a high-level quick tour of Spring for Apache Pulsar.
-
-include::quick-tour.adoc[]
+include::intro.adoc[leveloffset=+1]
 
 [[reference]]
 == Reference
-
 This part of the reference documentation goes through the details of the various components in Spring for Apache Pulsar.
 
 include::pulsar.adoc[]
 
-[[resources]]
+include::reactive-pulsar.adoc[leveloffset=+2]
+
+include::pulsar-admin.adoc[leveloffset=+2]
+
+include::observability.adoc[leveloffset=+2]
+
+:sectnums!:
+[[other-resources]]
 == Other Resources
 
 In addition to this reference documentation, we recommend a number of other resources that may help you learn about Spring and Apache Pulsar.
 
+- {github}[Spring for Apache Pulsar GitHub Repository]
 - https://pulsar.apache.org/[Apache Pulsar Project Home Page]
 - https://pulsar.apache.org/docs/client-libraries-java/[Apache Pulsar Java Client]
-- https://github.com/spring-projects-experimental/spring-pulsar[Spring for Apache Pulsar GitHub Repository]
 - https://github.com/apache/pulsar[Apache Pulsar GitHub Repository]
+- https://github.com/apache/pulsar-client-reactive[Apache Pulsar Reactive Client GitHub Repository]
+
+[[appendix]]
+== Appendices
+
+include::application-properties.adoc[leveloffset=+2]
+
+include::non-ga-versions.adoc[leveloffset=+2]
