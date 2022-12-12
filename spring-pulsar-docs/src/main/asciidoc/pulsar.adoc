@@ -4,14 +4,14 @@
 :javadocs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/api
 :github: https://github.com/spring-projects-experimental/spring-pulsar
 
-This section offers detailed explanations of the various concerns that impact using Spring for Apache Pulsar.
-For a quick but less detailed introduction, see <<index.adoc#quick-intro>>.
+include::quick-tour.adoc[leveloffset=+3]
 
 [[pulsar-client]]
 ==== Pulsar Client
 
 When you use the Pulsar Spring Boot Starter, you get the `PulsarClient` auto-configured.
-This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object called `PulsarClientConfiguration`. By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`. However, there are many application properties available to configure the client. See the <<application-properties.adoc#appendix.application-properties.pulsar-client,Appendix>> for more detail.
+This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object called `PulsarClientConfiguration`. By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`. However, there are many application properties available to configure the client.
+See the <<application-properties.adoc#appendix.application-properties.pulsar-client,Appendix>> for more detail.
 
 [[client-authentication]]
 ===== Authentication
@@ -101,13 +101,15 @@ See the <<application-properties.adoc#appendix.application-properties.pulsar-pro
 
 [[pulsar-producer-factory]]
 ==== Pulsar Producer Factory
-The `PulsarTemplate` relies on a `PulsarProducerFactory` to actually create the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric application properties. See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
+The `PulsarTemplate` relies on a `PulsarProducerFactory` to actually create the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric application properties.
+See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
 
 [[producer-caching]]
 ==== Pulsar Producer Caching
 Each underlying Pulsar producer consumes resources. To improve performance and avoid continual creation of producers, the producer factory caches the producers that it creates. They are cached in an LRU fashion and evicted when they have not been used within a configured time period. The link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/core/CachingPulsarProducerFactory.java#L159[cache key] is composed of just enough information to ensure that callers are returned the same producer on subsequent creation requests.
 
-Additionally, you can configure the cache settings by specifying any of the `spring.producer.cache` prefixed application properties. See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
+Additionally, you can configure the cache settings by specifying any of the `spring.pulsar.producer.cache` prefixed application properties.
+See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
 
 
 [[pulsar-listener]]
@@ -118,7 +120,8 @@ To use `PulsarListener`, you need to use the `@EnablePulsar` annotation.
 When you use Spring Boot support, it automatically enables this annotation and configures all the components necessary for `PulsarListener`, such as the message listener infrastructure (which is responsible for creating the Pulsar consumer).
 `PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` to create and manage the Pulsar consumer.
 
-This consumer factory is also auto-configured through Spring Boot. See the <<application-properties.adoc#appendix.application-properties.pulsar-consumer,Appendix>> for Pulsar consumer properties.
+This consumer factory is also auto-configured through Spring Boot.
+See the <<application-properties.adoc#appendix.application-properties.pulsar-consumer,Appendix>> for Pulsar consumer properties.
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section:
 
@@ -287,7 +290,7 @@ void listen(String message) {
 ----
 ====
 
-Note that the properties used are direct Pulsar consumer properties.
+TIP: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` application configuration properties
 
 [[pulsar-message-listener-container]]
 ==== Pulsar Message Listener Container
@@ -579,7 +582,8 @@ When calling `acknowledge()`, you need not receive the payload with the `Message
 You can also call a different variant of `acknowledge` by providing the message ID: `acknowledge.acknowledge(message.getMessageId());`
 When you use `acknowledge(messageId)`, you must receive the payload by using the `Message<?>` envelope.
 
-Similar to what is possible for acknowledging, the `Acknowledgment` API also provides options for negatively acknowledging. See the nack methods shown earlier.
+Similar to what is possible for acknowledging, the `Acknowledgment` API also provides options for negatively acknowledging.
+See the nack methods shown earlier.
 
 You can also call `acknowledge` directly on the Pulsar consumer:
 
@@ -1223,40 +1227,6 @@ ProducerInterceptor secondInterceptor() {
 ----
 ====
 
-[[pulsar-admin]]
-==== Pulsar Admin
-On the Pulsar administration side, Spring Boot auto-configuration provides a `PulsarAdministration` to manage Pulsar clusters.
-The administration implements an interface called `PulsarAdminOperations` and provides {javadocs}/org/springframework/pulsar/core/PulsarAdminOperations.html[a `createOrModify` method] to handle topic administration through its contract.
-
-When you use the Pulsar Spring Boot starter, you get the `PulsarAdministration` auto-configured.
-By default, the application tries to connect to a local Pulsar instance at `http://localhost:8080`. However, there are many application properties available to help you configure the client. See the <<application-properties.adoc#appendix.application-properties.pulsar-administration,Appendix>> for more detail.
-
-===== Authentication
-When accessing a Pulsar cluster that requires authentication, the admin client requires the same security configuration as the regular Pulsar client. You can use the aforementioned <<client-authentication,security configuration>> by replacing `spring.pulsar.client` with `spring.pulsar.administration`.
-
-==== Automatic Topic creation
-On initialization, the `PulsarAdministration` checks if there are any `PulsarTopic` beans in the application context.
-For all such beans, the `PulsarAdministration` either creates the corresponding topic or, if necessary, modifies the number of partitions.
-
-The following example shows how to add `PulsarTopic` beans to let the `PulsarAdministration` auto-create topics for you:
-
-====
-[source,java]
-----
-@Bean
-PulsarTopic simpleTopic {
-	// This will create a non-partitioned topic in the public/default namespace
-	return PulsarTopic.builder("simple-topic").build();
-}
-
-@Bean
-PulsarTopic partitionedTopic {
-	// This will create a partitioned topic with 3 partitions in the provided tenant and namespace
-	return PulsarTopic.builder("persistent://my-tenant/my-namespace/partitioned-topic", 3).build();
-}
-----
-====
-
 [[pulsar-headers]]
 ==== Pulsar Headers
 
@@ -1314,95 +1284,3 @@ When extracting the various headers, we do so as a `List<>` as well.
 Spring Pulsar ensures that the headers list corresponds to the data list.
 
 You can also extract headers in the same manner when you use the batch listener and receive payloads as `List<org.apache.pulsar.client.api.Message<?>`, `org.apache.pulsar.client.api.Messages<?>`, or `org.springframework.messaging.Messsge<?>`.
-
-[[micrometer]]
-=== Observability
-
-Spring for Apache Pulsar includes a way to manage observability through https://micrometer.io/[Micrometer].
-
-[[observation]]
-==== Micrometer Observations
-The `PulsarTemplate` and `PulsarListener` are instrumented with the Micrometer observations API.
-When a Micrometer `ObservationRegistry` bean is provided, send and receive operations are traced and timed.
-
-===== Custom tags
-The default implementation adds the `bean.name` tag for template observations and `listener.id` tag for listener observations.
-To add other tags to timers and traces, configure a custom `PulsarTemplateObservationConvention` or `PulsarListenerObservationConvention` to the template or listener container, respectively.
-
-TIP: You can subclass either `DefaultPulsarTemplateObservationConvention` or `DefaultPulsarListenerObservationConvention` or provide completely new implementations.
-
-include::observation/_metrics.adoc[leveloffset=+2]
-
-include::observation/_spans.adoc[leveloffset=+2]
-
-See https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
-
-===== Manual Configuration without Spring Boot
-If you do not use Spring Boot, you need to configure and provide an `ObservationRegistry` as well as Micrometer Tracing. See https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
-
-===== Auto-Configuration with Spring Boot
-If you use Spring Boot, the Spring Boot Actuator auto-configures an instance of `ObservationRegistry` for you.
-If `micrometer-core` is on the classpath, every stopped observation leads to a timer.
-
-Spring Boot also auto-configures Micrometer Tracing for you. This includes support for Brave OpenTelemetry, Zipkin, and Wavefront. When using the Micrometer Observation API, finishing observations leads to spans reported to Zipkin or Wavefront. You can control tracing by setting properties under `management.tracing`. You can use Zipkin with `management.zipkin.tracing`, while Wavefront uses `management.wavefront`.
-
-====== Example Configuration
-The following example shows the steps to configure your Spring Boot application to use Zipkin with Brave.
-
-. Add the required dependencies to your application (in Maven or Gradle, respectively):
-+
-[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
-.Maven
-----
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.micrometer</groupId>
-        <artifactId>micrometer-tracing-bridge-brave</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.zipkin.reporter2</groupId>
-        <artifactId>zipkin-reporter-brave</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.zipkin.reporter2</groupId>
-        <artifactId>zipkin-sender-urlconnection</artifactId>
-    </dependency>
-</dependencies>
-----
-+
-[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
-.Gradle
-----
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-    implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
-}
-----
-+
-NOTE
-====
-You need the `'io.zipkin.reporter2:zipkin-sender-urlconnection'` dependency only if your application does not have a configured WebClient or RestTemplate.
-====
-. Add the required properties to your application:
-+
-[source,yaml,indent=0,subs="verbatim"]
-----
-management:
-  tracing.enabled: true
-  zipkin:
-    tracing.endpoint: "http://localhost:9411/api/v2/spans"
-----
-+
-The `tracing.endpoint` above expects Zipkin is running locally as described https://zipkin.io/pages/quickstart.html[here].
-
-At this point, your application should record traces when you send and receive Pulsar messages. You should be able to view them in the Zipkin UI (at http://localhost:9411, when running locally).
-
-TIP: You can also see the preceding configuration on the link:{github}/blob/main/spring-pulsar-sample-apps/README.adoc[Spring Pulsar Sample Apps].
-
-The steps are very similar to configuring any of the other supported Tracing environments.

@@ -1,0 +1,10 @@
+:toc: left
+:toclevels: 6
+:numbered:
+:icons: font
+:hide-uri-scheme:
+:sectnums:
+:sectnumlevels: 3
+
+:github: https://github.com/spring-projects-experimental/spring-pulsar
+:spring-boot-docs: https://docs.spring.io/spring-boot/docs/3.0.0/reference/htmlsingle

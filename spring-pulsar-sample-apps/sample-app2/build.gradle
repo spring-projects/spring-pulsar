@@ -6,7 +6,7 @@ plugins {
 description = 'Spring Pulsar Sample Applications (Custom Routing)'
 
 dependencies {
-	api project(':spring-pulsar-spring-boot-starter')
+	implementation project(':spring-pulsar-spring-boot-starter')
 	implementation 'com.google.code.findbugs:jsr305'
 
 	// observability
