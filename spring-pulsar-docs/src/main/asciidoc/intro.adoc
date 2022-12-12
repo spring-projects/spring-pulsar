@@ -27,7 +27,7 @@ The minimum supported versions for the underlying libraries required by the fram
 |===
 
 == Building the Project
-If you have cloned the project locally, follow these steps to build the project from the soure code.
+If you have cloned the project locally, follow these steps to build the project from the source code.
 
 Spring for Apache Pulsar uses Gradle as its build tool. Run the following command to do a full build of the project:
 [indent=0]
