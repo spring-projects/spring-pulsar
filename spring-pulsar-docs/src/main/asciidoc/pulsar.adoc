@@ -1015,7 +1015,7 @@ Next, we provide this bean name to `PulsarListener` by setting the `deadLetterPo
 Note that the `PulsarListener` has a subscription type of `Shared`, as the DLQ feature only works with shared subscriptions.
 This code is primarily for demonstration purposes, so we provide an `ackTimeout` value of 1 second.
 The idea is that the code throws the exception and, if Pulsar does not receive an ack within 1 second, it does a retry.
-If that cycle continues ten times (as that is our max redelivery count in the `DeadLetterPolicy`), the Pulsar consumer publishes the messages to the DQL topic.
+If that cycle continues ten times (as that is our max redelivery count in the `DeadLetterPolicy`), the Pulsar consumer publishes the messages to the DLQ topic.
 We have another `PulsarListener` that listens on the DLQ topic to receive data as it is published to the DLQ topic.
 
 .Special note on DLQ topics when using partitioned topics

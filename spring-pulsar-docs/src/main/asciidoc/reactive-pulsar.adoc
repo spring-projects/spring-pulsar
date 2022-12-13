@@ -19,7 +19,6 @@ If you put the word `Reactive` in front of a provided imperative component, you 
 However, the following is not yet supported:
 
 * Error Handling in non-shared subscriptions
-* Automatic ack/nacks in listeners
 * Accessing Pulsar headers via `@Header` in streaming mode
 * Observations
 
@@ -30,10 +29,8 @@ include::reactive-quick-tour.adoc[leveloffset=+1]
 Here are a few key design points to keep in mind.
 
 === Apache Pulsar Reactive
-The reactive support is ultimately provided by the https://github.com/apache/pulsar-client-reactive[Apache Pulsar Reactive client] whose current implementation is an adapter around the regular Pulsar client's asynchronous API.
+The reactive support is ultimately provided by the https://github.com/apache/pulsar-client-reactive[Apache Pulsar Reactive client] whose current implementation is a fully non-blocking adapter around the regular Pulsar client's asynchronous API.
 This implies that the Reactive client requires the regular client.
-
-NOTE: The current implementation is fully non-blocking but will likely change in the future to a fully native Reactive client
 
 === Additive Auto-Configuration
 Due to the dependence on the regular (imperative) client, the Reactive auto-configuration provided by the framework is additive to the imperative auto-configuration.
@@ -337,21 +334,20 @@ The "listener" aspect is provided by the `ReactivePulsarMessageHandler` of which
 === Concurrency
 When consuming records in streaming mode (`stream = true`) concurrency comes naturally via the underlying Reactive support in the client implementation.
 
-However, when handling messages one-by-one, the concurrency can be specified to increase processing throughput.
+However, when handling messages one-by-one, concurrency can be specified to increase processing throughput.
 Simply set the `concurrency` property on `@ReactivePulsarListener`.
-Additionally, when `concurrency > 1` you can ensure messages are ordered by key on each parallel by setting `useKeyOrderedProcessing = "true"` on the annotation.
+Additionally, when `concurrency > 1` you can ensure messages are ordered by key and therefore sent to the same handler by setting `useKeyOrderedProcessing = "true"` on the annotation.
 
 Again, the `ReactiveMessagePipeline` does the heavy lifting, we simply set the properties on it.
 
-====
-**QUESTION**
+.[small]#Reactive vs Imperative#
+****
+Concurrency in the reactive container is different from its imperative counterpart.
+The latter creates multiple threads (each with a Pulsar consumer) whereas the former dispatches the messages to multiple handler instances concurrently on the Reactive parallel scheduler.
 
-How does the subscription type affect the concurrency setting?
-
-How does the number of partitions and subscription type interact w/ the concurrency setting in the ReactiveMessagePipeline?
-
-The imperative counterpart says these things: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/reference/html/#_concurrentpulsarmessagelistenercontainer
-====
+One advantage of reactive concurrency is that it can be used with `Exclusive` and `Failover` subscriptions to increase processing throughput if strict ordering is not required.
+In contrast to imperative concurrency that can not currently be used with `Exclusive` and does not provide more processing power with `Failover`.
+****
 
 [[reactive-pulsar-headers]]
 === Pulsar Headers
@@ -391,16 +387,16 @@ You must directly call the corresponding methods on the Spring message to retrie
 
 [[reactive-message-ack]]
 === Message Acknowledgment
-
-Unlike its imperative counterpart, message acknowledgment must be handled manually (albeit indirectly) when consuming in a Reactive fashion.
-The listener method must return a signal of success or failure.
+The framework automatically handles message acknowledgement.
+However, the listener method must send a signal indicating whether the message was successfully processed.
 The container implementation then uses that signal to perform the ack or nack operation.
+This is a slightly different from its imperative counterpart where the signal is implied as positive unless the method throws an exception.
 
 ==== OneByOne Listener
 The single message (aka OneByOne) message listener method returns a `Mono<Void>` to signal whether the message was successfully processed. `Mono.empty()` indicates success (acknowledgment) and `Mono.error()` indicates failure (negative acknowledgment).
 
 ==== Streaming Listener
-The streaming listener method returns a `Flux<MessageResult<Void>>` where each `MessageResult` element represents a processed message and holds the message id, value and whether it was acknowledged. The `MessageResult` has a set of `acknowledge` and `negativeAcknowledge` static factory methods that can be used to create the appropriate `MessageResult` instance
+The streaming listener method returns a `Flux<MessageResult<Void>>` where each `MessageResult` element represents a processed message and holds the message id, value and whether it was acknowledged. The `MessageResult` has a set of `acknowledge` and `negativeAcknowledge` static factory methods that can be used to create the appropriate `MessageResult` instance.
 
 [[reactive-redelivery]]
 === Message Redelivery and Error Handling
@@ -486,7 +482,7 @@ Next, we provide this bean name to `ReactivePulsarListener` by setting the `dead
 Note that the `ReactivePulsarListener` has a subscription type of `Shared`, as the DLQ feature only works with shared subscriptions.
 This code is primarily for demonstration purposes, so we provide an `ackTimeout` value of 1 second.
 The idea is that the code throws the exception and, if Pulsar does not receive an ack within 1 second, it does a retry.
-If that cycle continues ten times (as that is our max redelivery count in the `DeadLetterPolicy`), the Pulsar consumer publishes the messages to the DQL topic.
+If that cycle continues ten times (as that is our max redelivery count in the `DeadLetterPolicy`), the Pulsar consumer publishes the messages to the DLQ topic.
 We have another `ReactivePulsarListener` that listens on the DLQ topic to receive data as it is published to the DLQ topic.
 
 .Special note on DLQ topics when using partitioned topics
