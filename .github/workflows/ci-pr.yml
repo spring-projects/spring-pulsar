@@ -3,7 +3,8 @@ name: CI PRs
 on:
   pull_request:
     branches: [ main ]
-
+    paths-ignore:
+      - '.github/**'
 env:
   ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
   ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
