@@ -1,6 +1,5 @@
 [[spring-pulsar-reference]]
 = Spring for Apache Pulsar
-
 include::attributes.adoc[]
 
 include::authors.adoc[]
