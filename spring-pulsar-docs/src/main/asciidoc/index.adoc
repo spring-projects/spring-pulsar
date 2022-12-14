@@ -3,6 +3,7 @@
 include::attributes.adoc[]
 
 include::authors.adoc[]
+(v{spring-pulsar-version})
 
 include::copyright.adoc[]
 
