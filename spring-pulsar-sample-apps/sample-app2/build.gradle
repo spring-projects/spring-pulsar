@@ -25,6 +25,9 @@ bootRun {
 }
 
 project.afterEvaluate {
+	project.tasks.publishArtifacts.enabled(false)
 	project.tasks.artifactoryPublish.enabled(false)
 	project.tasks.publishToOssrh.enabled(false)
+	project.tasks.publishMavenJavaPublicationToOssrhRepository.enabled(false)
+	project.tasks.publishAllPublicationsToOssrhRepository.enabled(false)
 }
