@@ -1,7 +1,6 @@
 [[quick-tour]]
 = Quick Tour
-
-:spring-pulsar-version: 0.1.0-SNAPSHOT
+include::attributes.adoc[]
 
 We will take a quick tour of Spring for Apache Pulsar by showing a sample Spring Boot application that produces and consumes.
 This is a complete application and does not require any additional configuration, as long as you have a Pulsar cluster running on the default location - `localhost:6650`.

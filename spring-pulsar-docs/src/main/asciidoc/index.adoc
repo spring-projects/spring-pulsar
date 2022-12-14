@@ -12,7 +12,7 @@ include::intro.adoc[leveloffset=+1]
 == Reference
 This part of the reference documentation goes through the details of the various components in Spring for Apache Pulsar.
 
-include::pulsar.adoc[]
+include::pulsar.adoc[leveloffset=+2]
 
 include::reactive-pulsar.adoc[leveloffset=+2]
 
