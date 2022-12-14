@@ -1,8 +1,6 @@
 [[reactive-pulsar]]
 = Reactive Support
-
-:javadocs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/api
-:github: https://github.com/spring-projects-experimental/spring-pulsar
+include::attributes.adoc[]
 
 The framework provides a Reactive counterpart for almost all supported features.
 
@@ -103,7 +101,7 @@ template.newMessage(msg)
 
 TIP: Note that, when using a `MessageRouter`, the only valid setting for `spring.pulsar.reactive.sender.message-routing-mode` is `custom`.
 
-==== Schema
+=== Specifying Schema Information
 If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
 However, if you use any complex types (such as `JSON`, `AVRO`, `PROTOBUF`, and others), you need to set the proper schema type on the `ReactivePulsarTemplate` before invoking any send operations, as the following example shows for JSON:
 
@@ -114,7 +112,7 @@ template.setSchema(Schema.JSON(Foo.class));
 ----
 ====
 
-IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE. For KEY_VALUE schemata, only INLINE encoding is supported.
+IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
 
 [[reactive-sender-factory]]
 === ReactivePulsarSenderFactory
@@ -308,6 +306,12 @@ ReactiveMessageConsumerBuilderCustomizer<String> directConsumerPropsCustomizer()
 
 CAUTION: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.reactive.consumer` Spring Boot configuration properties
 
+=== Specifying Schema Information
+
+As indicated earlier, for Java primitives, the Spring Pulsar framework can infer the proper Schema to use on the `ReactivePulsarListener`.
+However, for more complex types (such as JSON or AVRO), you need to specify the schema type on the annotation.
+
+IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
 
 [[reactive-message-listener-container]]
 === Message Listener Container Infrastructure

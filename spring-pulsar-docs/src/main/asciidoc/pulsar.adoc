@@ -1,24 +1,24 @@
 [[pulsar]]
-=== Using Spring for Apache Pulsar
+= Using Spring for Apache Pulsar
+include::attributes.adoc[]
 
-:javadocs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/api
-:github: https://github.com/spring-projects-experimental/spring-pulsar
-
-include::quick-tour.adoc[leveloffset=+3]
+include::quick-tour.adoc[leveloffset=+1]
 
 [[pulsar-client]]
-==== Pulsar Client
+== Pulsar Client
 
 When you use the Pulsar Spring Boot Starter, you get the `PulsarClient` auto-configured.
 This is done through a factory bean called `PulsarClientFactoryBean`, which takes a configuration object called `PulsarClientConfiguration`. By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`. However, there are many application properties available to configure the client.
 See the <<application-properties.adoc#appendix.application-properties.pulsar-client,Appendix>> for more detail.
 
 [[client-authentication]]
-===== Authentication
+=== Authentication
 include::authentication.adoc[]
 
+== Message Production
+
 [[pulsar-producer]]
-==== Pulsar Producer
+=== Pulsar Template
 
 On the Pulsar producer side, Spring Boot auto-configuration provides a `PulsarTemplate` for publishing records. The template implements an interface called `PulsarOperations` and provides methods to publish records through its contract.
 
@@ -28,16 +28,16 @@ They return the `MessageId` of the message that was published once the message i
 The `sendAsync` method calls are asynchronous calls that are non-blocking.
 They return a `CompletableFuture`, which you can use to asynchronously receive the message ID once the messages are published.
 
-===== Simple API
+==== Simple API
 The template provides a handful of methods ({javadocs}/org/springframework/pulsar/core/PulsarOperations.html[prefixed with _'send'_]) for simple send requests that contain only a message or a destination topic. For more complicated send requests, a fluent API lets you configure more options.
 
 TIP: Both `send` and `sendAsync` methods have a variety that allows publishing with only the message.
 When you do that, the application must provide the topic name by setting the property `spring.pulsar.producer.topic-name`.
 
-===== Fluent API
+==== Fluent API
 The template provides a {javadocs}/org/springframework/pulsar/core/PulsarOperations.html#newMessage(T)[fluent builder] to handle more complicated send requests.
 
-====== Message customization
+==== Message customization
 You can specify a `TypedMessageBuilderCustomizer` to configure the outgoing message. For example, the following code shows how to send a keyed message:
 ====
 [source, java]
@@ -48,7 +48,7 @@ template.newMessage(msg)
 ----
 ====
 
-====== Producer customization
+==== Producer customization
 You can specify a `ProducerBuilderCustomizer` to configure the underlying Pulsar producer builder that ultimately constructs the producer used to send the outgoing message.
 
 WARNING: Use with caution as this gives full access to the producer builder and invoking some of its methods (such as `create`) may have unintended side effects.
@@ -86,7 +86,7 @@ template.newMessage(msg)
 ----
 ====
 
-===== Schema
+=== Specifying Schema Information
 If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
 However, if you use any complex types (such as `JSON`, `AVRO`, `PROTOBUF`, and others), you need to set the proper schema type on the `PulsarTemplate` before invoking any send operations, as the following example shows for JSON:
 
@@ -97,10 +97,12 @@ pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 ----
 ====
 
+IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
+
 See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>> for Pulsar producer properties.
 
 [[pulsar-producer-factory]]
-==== Pulsar Producer Factory
+=== Pulsar Producer Factory
 The `PulsarTemplate` relies on a `PulsarProducerFactory` to actually create the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric application properties.
 See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
 
@@ -111,9 +113,36 @@ Each underlying Pulsar producer consumes resources. To improve performance and a
 Additionally, you can configure the cache settings by specifying any of the `spring.pulsar.producer.cache` prefixed application properties.
 See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
 
+=== Intercept Messages on the Producer
+Adding a `ProducerInterceptor`  lets you intercept and mutate messages received by the producer before they are published to the brokers.
+To do so, you can pass a list of interceptors into the `PulsarTemplate` constructor.
+When using multiple interceptors, the order they are applied in is the order in which they appear in the list.
+
+If you use Spring Boot auto-configuration, you can specify the interceptors as Beans.
+They are passed automatically to the `PulsarTemplate`.
+Ordering of the interceptors is achieved by using the `@Order` annotation as follows:
+
+====
+[source, java]
+----
+@Bean
+@Order(100)
+ProducerInterceptor firstInterceptor() {
+  ...
+}
+
+@Bean
+@Order(200)
+ProducerInterceptor secondInterceptor() {
+  ...
+}
+----
+====
+
+== Message Consumption
 
 [[pulsar-listener]]
-==== Pulsar Listener
+=== Pulsar Listener
 
 When it comes to Pulsar consumers, we recommend that end-user applications use the `PulsarListener` annotation.
 To use `PulsarListener`, you need to use the `@EnablePulsar` annotation.
@@ -275,7 +304,6 @@ public void listen(org.apache.pulsar.client.api.Messages<Foo>> messages) {
 ----
 ====
 
-
 When you use `PulsarListener`, you can provide Pulsar consumer properties directly on the annotation itself.
 This is convenient if you do not want to use the Boot configuration properties mentioned earlier or have multiple `PulsarListener` methods.
 
@@ -292,8 +320,35 @@ void listen(String message) {
 
 TIP: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` application configuration properties
 
+
+=== Specifying Schema Information
+
+As indicated earlier, for Java primitives, the Spring Pulsar framework can infer the proper Schema to use on the `PulsarListener`.
+However, for more complex types (such as JSON or AVRO), you need to specify the schema type on the annotation.
+
+IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
+
+=== Accessing the Pulsar Consumer Object
+Sometimes, you need direct access to the Pulsar Consumer object.
+The following example shows how to get it:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
+public void listen(String message, org.apache.pulsar.client.api.Consumer<String> consumer) {
+    System.out.println("Message Received: " + message);
+    ConsumerStats stats = consumer.getStats();
+    ...
+}
+----
+====
+
+CAUTION: When accessing the `Consumer` object this way, do NOT invoke any operations that would change the Consumer's cursor position by invoking any receive methods.
+All such operations must be done by the container.
+
 [[pulsar-message-listener-container]]
-==== Pulsar Message Listener Container
+=== Pulsar Message Listener Container
 
 Now that we saw the basic interactions on the consumer side through `PulsarListener`. Let us now dive into the inner workings of how `PulsarListener` interacts with the underlying Pulsar consumer.
 Keep in mind that, for end-user applications, in most scenarios, we recommend using the `PulsarListener` annotation directly for consuming from a Pulsar topic when using Spring for Apache Pulsar, as that model covers a broad set of application use cases.
@@ -324,7 +379,7 @@ We see the details about these various message listeners in the following sectio
 
 Before doing so, however, let us take a closer look at the container itself.
 
-===== DefaultPulsarMessageListenerContainer
+==== DefaultPulsarMessageListenerContainer
 
 This is a single consumer-based message listener container.
 The following listing shows its constructor:
@@ -375,7 +430,7 @@ return pulsarListenerContainer;
 `DefaultPulsarMessageListenerContainer` creates only a single consumer.
 If you want to have multiple consumers managed through multiple threads, you need to use `ConcurrentPulsarMessageListenerContainer`.
 
-===== ConcurrentPulsarMessageListenerContainer
+==== ConcurrentPulsarMessageListenerContainer
 
 `ConcurrentPulsarMessageListenerContainer` has the following constructor:
 
@@ -432,12 +487,12 @@ NOTE: In this version, there is no message ordering, as `Shared` subscriptions d
 
 If you need message ordering and still want a shared subscription types, you need to use the `Key_Shared` subscription type.
 
-==== Consuming the Records
+==== Message Consumption
 
-In this section, we are going to see how the message listener container enables both single-record and batch-based message consumption.
+Let us take a look at how the message listener container enables both single-record and batch-based message consumption.
 
+[discrete]
 ==== Single Record Consumption
-
 Let us revisit our basic `PulsarListener` for the sake of this discussion:
 
 ====
@@ -456,8 +511,8 @@ The framework detects that the `PulsarListener`, in this case, receives a single
 Although the records are consumed by the message listener container in batches, it iterates through the received batch and invokes the listener method through an adapter for `PulsarRecordMessageListener`.
 As you can see in the previous section, `PulsarRecordMessageListener` extends from the `MessageListener` provided by the Pulsar Java client, and it supports the basic `received` method.
 
+[discrete]
 ==== Batch Consumption
-
 The following example shows the `PulsarListener` consuming records in batches:
 
 ====
@@ -474,13 +529,64 @@ public void listen4(List<Foo> messages) {
 When you use this type of `PulsarListener`, the framework detects that you are in batch mode.
 Since it already received the data in batches by using the Consumer's `batchReceive` method, it hands off the entire batch to the listener method through an adapter for `PulsarBatchMessageListener`.
 
-==== Message Acknowledgment
+[[pulsar-headers]]
+=== Pulsar Headers
+The Pulsar message metadata can be consumed as Spring message headers.
+The list of available headers can be found in https://github.com/spring-projects-experimental/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
+
+==== Accessing in Single Record based Consumer
+
+The following example shows how you can access the various Pulsar Headers in an application that uses the single record mode of consuming:
+
+====
+[source,java]
+----
+@PulsarListener(topics = "simpleListenerWithHeaders")
+void simpleListenerWithHeaders(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
+                @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
+                @Header("foo") String foo) {
+
+}
+----
+====
+
+In the preceding example, we access the values for the `messageId` and `rawData` message metadata as well as a custom message property named `foo`.
+The Spring `@Header` annotation is used for each header field.
+
+You can also use Pulsar's `Message` as the envelope to carry the payload.
+When doing so, the user can directly call the corresponding methods on the Pulsar message for retrieving the metadata.
+However, as a convenience, you can also retrieve it by using the `Header` annotation.
+Note that you can also use the Spring messaging `Message` envelope to carry the payload and then retrieve the Pulsar headers by using `@Header`.
+
+==== Accessing in Batch Record based Consumer
+
+In this section, we see how to access the various Pulsar Headers in an application that uses a batch consumer:
+
+====
+[source,java]
+----
+@PulsarListener(topics = "simpleBatchListenerWithHeaders", batch = true)
+void simpleBatchListenerWithHeaders(List<String> data,
+					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
+					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
+
+}
+----
+====
+
+In the preceding example, we consume the data as a `List<String>`.
+When extracting the various headers, we do so as a `List<>` as well.
+Spring Pulsar ensures that the headers list corresponds to the data list.
+
+You can also extract headers in the same manner when you use the batch listener and receive payloads as `List<org.apache.pulsar.client.api.Message<?>`, `org.apache.pulsar.client.api.Messages<?>`, or `org.springframework.messaging.Messsge<?>`.
+
+=== Message Acknowledgment
 
 When you use Spring for Apache Pulsar, the message acknowledgment is handled by the framework, unless opted out by the application.
 In this section, we go through the details of how the framework takes care of message acknowledgment.
 
 [[message-ack-modes]]
-===== Message ACK modes
+==== Message ACK modes
 
 Spring for Apache Pulsar provides the following modes for acknowledging messages:
 
@@ -491,7 +597,7 @@ Spring for Apache Pulsar provides the following modes for acknowledging messages
 `BATCH` acknowledgment mode is the default, but you can change it on the message listener container.
 In the following sections, we see how acknowledgment works when you use both single and batch versions of `PulsarListener` and how they translate to the backing message listener container (and, ultimately, to the Pulsar consumer).
 
-===== Automatic Message Ack in Single Record Mode
+==== Automatic Message Ack in Single Record Mode
 
 Let us revisit our basic single message based `PulsarListener`:
 
@@ -537,7 +643,7 @@ You can also set the listener property, `spring.pulsar.listner.ack-mode`, to set
 When doing this, you need not set this on the `PulsarListener` annotation.
 In that case, all the `PulsarListener` methods in the application acquire that property.
 
-===== Manual Message Ack in Single Record Mode
+==== Manual Message Ack in Single Record Mode
 
 You might not always want the framework to send acknowledgments but, rather, do that directly from the application itself.
 Spring for Apache Pulsar provides a couple of ways to enable manual message acknowledgments. The following example shows one of them:
@@ -610,7 +716,7 @@ Therefore, you should use the `Acknowledgment` object approach when using manual
 IMPORTANT: When using manual acknowledgment, it is important to understand that the framework completely stays from any acknowledgment at all.
 Hence, it is extremely important to think through the right acknowledgment strategies when designing applications.
 
-===== Message Ack in Batch Consumption
+==== Automatic Message Ack in Batch Consumption
 
 When you consume records in batches (see "`<<message-ack-modes>>`") and you use the default ack mode of `BATCH` is used, when the entire batch is processed successfully, the entire batch is acknowledged.
 If any records throw an exception, the entire batch is negatively acknowledged.
@@ -636,7 +742,7 @@ When consuming in batch mode, `RECORD` is not an allowed ack mode.
 This might cause an issue, as an application may not want the entire batch to be re-delivered again.
 In such situations, you need to use the `MANUAL` acknowledgement mode.
 
-===== Manual Message Acknowledgment in Batch Consumption
+==== Manual Message Ack in Batch Consumption
 
 As seen in the previous section, when `MANUAL` ack mode is set on the message listener container, the framework does not do any acknowledgment, positive or negative.
 It is entirely up to the application to take care of such concerns.
@@ -683,202 +789,12 @@ When you use a batch listener, the message listener container cannot know which 
 Therefore, to manually acknowledge, you need to use one of the overloaded `acknowledge` method that takes a `MessageId` or a `List<MessageId>`.
 You can also negatively acknowledge with the `MessageId` for the batch listener.
 
-==== Publishing and Consuming Partitioned Topics
-
-In the following example, we publish to a topic called `hello-pulsar-partitioned`.
-It is a topic that is partitioned, and, for this sample, we assume that the topic is already created with three partitions.
-
-====
-[source, java]
-----
-@SpringBootApplication
-public class PulsarBootPartitioned {
-
-	public static void main(String[] args) {
-		SpringApplication.run(PulsarBootPartitioned.class, "--spring.pulsar.producer.message-routing-mode=CustomPartition");
-	}
-
-	@Bean
-	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		pulsarTemplate.setDefaultTopicName("hello-pulsar-partitioned");
-		return args -> {
-			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.sendAsync("hello john doe 0 ", new FooRouter());
-				pulsarTemplate.sendAsync("hello alice doe 1", new BarRouter());
-				pulsarTemplate.sendAsync("hello buzz doe 2", new BuzzRouter());
-			}
-		};
-	}
-
-	@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned")
-	public void listen(String message) {
-		System.out.println("Message Received: " + message);
-	}
-
-    static class FooRouter implements MessageRouter {
-
-		@Override
-		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
-			return 0;
-		}
-	}
-
-	static class BarRouter implements MessageRouter {
-
-		@Override
-		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
-			return 1;
-		}
-	}
-
-	static class BuzzRouter implements MessageRouter {
-
-		@Override
-		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
-			return 2;
-		}
-	}
-
-}
-----
-====
-
-In the preceding example, we publish to a partitioned topic, and we would like to publish some data segment to a specific partition.
-If you leave it to Pulsar's default, it follows a round-robin mode of partition assignments, and we would like to override that.
-To do so, we provide a message router object with the `send` method.
-Consider the three message routers implemented.
-`FooRouter` always sends data to partition `0`, `BarRouter` sends to partition `1`, and `BuzzRouter` sends to partition `2`.
-Also note that we now use the `sendAsync` method of `PulsarTemplate` that returns a `CompletableFuture`.
-When running the application, we also need to set the `messageRoutingMode` on the producer to `CustomPartition` (`spring.pulsar.producer.message-routing-mode`).
-
-On the consumer side, we use a `PulsarListener` with the exclusive subscription type.
-This means that data from all the partitions ends up in the same consumer and there is no ordering guarantee.
-
-What can we do if we want each partition to be consumed by a single distinct consumer?
-We can switch to the `failover` subscription mode and add three separate consumers:
-
-====
-[source, java]
-----
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
-public void listen1(String foo) {
-    System.out.println("Message Received 1: " + foo);
-}
-
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
-public void listen2(String foo) {
-    System.out.println("Message Received 2: " + foo);
-}
-
-@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
-public void listen3(String foo) {
-    System.out.println("Message Received 3: " + foo);
-}
-----
-====
-
-When you follow this approach, a single partition always gets consumed by a dedicated consumer.
-
-In a similar vein, if you want to use Pulsar's shared consumer type, you can use the `shared` subscription type.
-However, when you use the `shared` mode, you lose any ordering guarantees, as a single consumer may receive messages from all the partitions before another consumer gets a chance.
-
-Consider the following example:
-
-====
-[source, java]
-----
-@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Shared)
-public void listen1(String foo) {
-    System.out.println("Message Received 1: " + foo);
-}
-
-@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Shared)
-public void listen2(String foo) {
-    System.out.println("Message Received 2: " + foo);
-}
-----
-====
-
-==== Accessing the Pulsar Message Object
-
-In your `PulsarListener` method, you can receive the record directly as a Pulsar Message instead of the actual payload type:
-
-====
-[source, java]
-----
-@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
-public void listen(org.apache.pulsar.client.api.Message<String> message) {
-    System.out.println("Data Received: " + message.getValue());
-}
-----
-
-====
-
-You can also receive records in batches:
-
-====
-[source, java]
-----
-@PulsarListener(subscriptionName = "batch-subscription", topics = "hello-pulsar", batch = "true")
-public void listen(List<org.apache.pulsar.client.api.Message<String>> messages) {
-    // Iterate on the messages
-}
-----
-====
-
-==== Accessing the Pulsar Consumer Object
-
-Sometimes, you need direct access to the Pulsar Consumer object.
-The following example shows how to get it:
-
-====
-[source, java]
-----
-@PulsarListener(subscriptionName = "hello-pulsar-subscription", topics = "hello-pulsar")
-public void listen(String message, org.apache.pulsar.client.api.Consumer<String> consumer) {
-    System.out.println("Message Received: " + message);
-    ConsumerStats stats = consumer.getStats();
-    ...
-}
-----
-====
-
-When accessing the `Consumer` object this way, do NOT invoke any operations that would change the Consumer's cursor position by invoking any receive methods.
-All such operations must be done by the container.
-
-==== Specify Schema Information
-
-As indicated earlier, for Java primitives, the Spring Pulsar framework can infer the proper Schema to use on the `PulsarListener`.
-However, for more complex types (such as JSON or AVRO), you need to specify the schema type on the annotation.
-The following example shows how to do so:
-
-====
-[source, java]
-----
-@PulsarListener(subscriptionName = "json-subscription", topics = "hello-pulsar-json", schemaType = SchemaType.JSON)
-public void listen(Foo foo) {
-    System.out.println("Message received: " + foo);
-}
-----
-====
-
-Also, on the producer side, for the Java primitives, the framework can infer the Schema. However, for any other types, you need to set them on the `PulsarTemplate`, as follows:
-
-====
-[source, java]
-----
-template.setSchema(JSONSchema.of(Foo.class));
-----
-====
-
-TIP: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE. For KEY_VALUE schemata, only INLINE encoding is supported.
-
-==== Message Redelivery and Error Handling
+=== Message Redelivery and Error Handling
 
 Now that we have seen both `PulsarListener` and the message listener container infrastructure and its various functions, let us now try to understand message redelivery and error handling.
 Apache Pulsar provides various native strategies for message redelivery and error handling. We take a look at them and see how we can use them through Spring for Apache Pulsar.
 
-===== Specifying Acknowledgment Timeout for Message Redelivery
+==== Specifying Acknowledgment Timeout for Message Redelivery
 
 By default, Pulsar consumers does not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
 When you use Spring for Apache Pulsar, you can enable this property by setting the `spring.pulsar.consumer.ack-timeout` Boot property.
@@ -930,7 +846,7 @@ In the preceding example, we specify a bean for Pulsar's `RedeliveryBackoff` wit
 After the initial ack timeout occurs, the message redeliveries are controlled through this backoff bean.
 We provide the backoff bean to the `PulsarListener` annotation by setting the `ackTimeoutRedeliveryBackoff` property to the actual bean name -- `ackTimeoutRedeliveryBackoff`, in this case.
 
-===== Specifying Negative Acknowledgment Redelivery
+==== Specifying Negative Acknowledgment Redelivery
 
 When acknowledging negatively, Pulsar consumer lets you specify how the application wants the message to be re-delivered.
 The default is to redeliver the message in one minute, but you can change it by setting `spring.pulsar.consumer.negative-ack-redelivery-delay`.
@@ -973,7 +889,7 @@ class NegativeAckRedeliveryConfig {
 ----
 ====
 
-===== Using Dead Letter Topic from Apache Pulsar for Message Redelivery and Error Handling
+==== Using Dead Letter Topic from Apache Pulsar for Message Redelivery and Error Handling
 
 Apache Pulsar lets applications use a dead letter topic on consumers with a `Shared` subscription type.
 For the `Exclusive` and `Failover` subscription types, this feature is not available.
@@ -1026,7 +942,7 @@ The problem is that, if you do not specify a DLQ topic (as opposed to what we di
 The easy way to solve this is to provide a DLQ topic name always.
 ****
 
-===== Native Error Handling in Spring for Apache Pulsar
+==== Native Error Handling in Spring for Apache Pulsar
 
 As we noted earlier, the DLQ feature in Apache Pulsar works only for shared subscriptions.
 What does an application do if it needs to use some similar feature for non-shared subscriptions?
@@ -1158,7 +1074,7 @@ Finally, we have a second `PulsarListener` that receives messages from the DLT t
 In the examples provided in this section so far, we only saw how to use `PulsarConsumerErrorHandler` with a single record message listener.
 Next, we look at how you can use this on batch listeners.
 
-===== Batch listener with PulsarConsumerErrorHandler
+==== Batch listener with PulsarConsumerErrorHandler
 
 First, let us look at a batch `PulsarListener` method:
 
@@ -1201,86 +1117,118 @@ On retry, the container sends a new batch of messages, starting with the failed 
 If it fails again, it is retried, until the retries are exhausted, at which point the message is sent to the DLT.
 At that point, the message is acknowledged by the container, and the listener is handed over with the subsequent messages in the original batch.
 
-==== Intercept Messages on the Producer
-Adding a `ProducerInterceptor`  lets you intercept and mutate messages received by the producer before they are published to the brokers.
-To do so, you can pass a list of interceptors into the `PulsarTemplate` constructor.
-When using multiple interceptors, the order they are applied in is the order in which they appear in the list.
+== Publishing and Consuming Partitioned Topics
 
-If you use Spring Boot auto-configuration, you can specify the interceptors as Beans.
-They are passed automatically to the `PulsarTemplate`.
-Ordering of the interceptors is achieved by using the `@Order` annotation as follows:
+In the following example, we publish to a topic called `hello-pulsar-partitioned`.
+It is a topic that is partitioned, and, for this sample, we assume that the topic is already created with three partitions.
 
 ====
 [source, java]
 ----
-@Bean
-@Order(100)
-ProducerInterceptor firstInterceptor() {
-  ...
-}
+@SpringBootApplication
+public class PulsarBootPartitioned {
 
-@Bean
-@Order(200)
-ProducerInterceptor secondInterceptor() {
-  ...
-}
-----
-====
+	public static void main(String[] args) {
+		SpringApplication.run(PulsarBootPartitioned.class, "--spring.pulsar.producer.message-routing-mode=CustomPartition");
+	}
 
-[[pulsar-headers]]
-==== Pulsar Headers
+	@Bean
+	public ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
+		pulsarTemplate.setDefaultTopicName("hello-pulsar-partitioned");
+		return args -> {
+			for (int i = 0; i < 10; i++) {
+				pulsarTemplate.sendAsync("hello john doe 0 ", new FooRouter());
+				pulsarTemplate.sendAsync("hello alice doe 1", new BarRouter());
+				pulsarTemplate.sendAsync("hello buzz doe 2", new BuzzRouter());
+			}
+		};
+	}
 
-In this section, we see how we can use the Pulsar message metadata as Pulsar headers in a Spring application.
-First, let us examine all the available Pulsar headers from the message metadata.
+	@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned")
+	public void listen(String message) {
+		System.out.println("Message Received: " + message);
+	}
 
-.[.underline]#Available **Pulsar Message Metadata as Spring Headers**#
-[%collapsible]
-====
-https://github.com/spring-projects-experimental/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[Click here] to see the available Pulsar headers.
-====
+    static class FooRouter implements MessageRouter {
 
-===== Accessing Pulsar Headers in Single Record based Consumer
+		@Override
+		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
+			return 0;
+		}
+	}
 
-The following example shows how you can access the various Pulsar Headers in an application that uses the single record mode of consuming:
+	static class BarRouter implements MessageRouter {
 
-====
-[source,java]
-----
-@PulsarListener(topics = "simpleListenerWithHeaders")
-void simpleListenerWithHeaders(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
-                @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
-                @Header("foo") String foo) {
+		@Override
+		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
+			return 1;
+		}
+	}
 
-}
-----
-====
+	static class BuzzRouter implements MessageRouter {
 
-In the preceding example, we access the values for the `messageId` and `rawData` message metadata as well as a custom message property named `foo`.
-The Spring `@Header` annotation is used for each header field.
-
-You can also use Pulsar's `Message` as the envelope to carry the payload.
-When doing so, the user can directly call the corresponding methods on the Pulsar message for retrieving the metadata.
-However, as a convenience, you can also retrieve it by using the `Header` annotation.
-Note that you can also use the Spring messaging `Message` envelope to carry the payload and then retrieve the Pulsar headers by using `@Header`.
-
-===== Accessing Pulsar Headers in Batch Record based Consumer
-
-In this section, we see how to access the various Pulsar Headers in an application that uses a batch consumer:
-
-====
-[source,java]
-----
-@PulsarListener(topics = "simpleBatchListenerWithHeaders", batch = true)
-void simpleBatchListenerWithHeaders(List<String> data,
-					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
-					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
+		@Override
+		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
+			return 2;
+		}
+	}
 
 }
 ----
 ====
 
-In the preceding example, we consume the data as a `List<String>`.
-When extracting the various headers, we do so as a `List<>` as well.
-Spring Pulsar ensures that the headers list corresponds to the data list.
+In the preceding example, we publish to a partitioned topic, and we would like to publish some data segment to a specific partition.
+If you leave it to Pulsar's default, it follows a round-robin mode of partition assignments, and we would like to override that.
+To do so, we provide a message router object with the `send` method.
+Consider the three message routers implemented.
+`FooRouter` always sends data to partition `0`, `BarRouter` sends to partition `1`, and `BuzzRouter` sends to partition `2`.
+Also note that we now use the `sendAsync` method of `PulsarTemplate` that returns a `CompletableFuture`.
+When running the application, we also need to set the `messageRoutingMode` on the producer to `CustomPartition` (`spring.pulsar.producer.message-routing-mode`).
 
-You can also extract headers in the same manner when you use the batch listener and receive payloads as `List<org.apache.pulsar.client.api.Message<?>`, `org.apache.pulsar.client.api.Messages<?>`, or `org.springframework.messaging.Messsge<?>`.
+On the consumer side, we use a `PulsarListener` with the exclusive subscription type.
+This means that data from all the partitions ends up in the same consumer and there is no ordering guarantee.
+
+What can we do if we want each partition to be consumed by a single distinct consumer?
+We can switch to the `failover` subscription mode and add three separate consumers:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
+public void listen1(String foo) {
+    System.out.println("Message Received 1: " + foo);
+}
+
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
+public void listen2(String foo) {
+    System.out.println("Message Received 2: " + foo);
+}
+
+@PulsarListener(subscriptionName = "hello-pulsar-partitioned-subscription",  topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Failover)
+public void listen3(String foo) {
+    System.out.println("Message Received 3: " + foo);
+}
+----
+====
+
+When you follow this approach, a single partition always gets consumed by a dedicated consumer.
+
+In a similar vein, if you want to use Pulsar's shared consumer type, you can use the `shared` subscription type.
+However, when you use the `shared` mode, you lose any ordering guarantees, as a single consumer may receive messages from all the partitions before another consumer gets a chance.
+
+Consider the following example:
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Shared)
+public void listen1(String foo) {
+    System.out.println("Message Received 1: " + foo);
+}
+
+@PulsarListener(subscriptionName = "hello-pulsar-shared-subscription", topics = "hello-pulsar-partitioned", subscriptionType = SubscriptionType.Shared)
+public void listen2(String foo) {
+    System.out.println("Message Received 2: " + foo);
+}
+----
+====

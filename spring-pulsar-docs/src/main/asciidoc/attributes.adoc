@@ -6,5 +6,8 @@
 :sectnums:
 :sectnumlevels: 3
 
+:spring-pulsar-version: 0.1.0-SNAPSHOT
+
 :github: https://github.com/spring-projects-experimental/spring-pulsar
+:javadocs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/api
 :spring-boot-docs: https://docs.spring.io/spring-boot/docs/3.0.0/reference/htmlsingle
