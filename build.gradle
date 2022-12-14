@@ -45,6 +45,15 @@ check {
 	dependsOn checkstyleNohttp
 }
 
+import java.time.Duration
+
+nexusPublishing {
+	transitionCheckOptions {
+		maxRetries = 120
+		delayBetween = Duration.ofSeconds(10)
+	}
+}
+
 subprojects { subproject ->
 	task updateCopyrights {
 		onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
@@ -76,4 +85,3 @@ subprojects { subproject ->
 		}
 	}
 }
-

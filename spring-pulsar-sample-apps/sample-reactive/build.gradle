@@ -20,4 +20,5 @@ bootRun {
 
 project.afterEvaluate {
 	project.tasks.artifactoryPublish.enabled(false)
+	project.tasks.publishToOssrh.enabled(false)
 }
