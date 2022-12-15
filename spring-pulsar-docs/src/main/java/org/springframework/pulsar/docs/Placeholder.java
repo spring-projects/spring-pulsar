@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2022 the original author or authors.
+ * Copyright 2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,8 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.gradle;
+package org.springframework.pulsar.docs;
 
-import org.gradle.api.Project;
-import org.gradle.api.plugins.PluginManager;
+public class Placeholder {
 
-/**
- * @author Chris Bono
- */
-public class SpringModulePlugin extends SpringDocsModulePlugin {
-
-	@Override
-	public void apply(final Project project) {
-		super.apply(project);
-		PluginManager pluginManager = project.getPluginManager();
-		pluginManager.apply(JacocoConventionsPlugin.class);
-	}
 }

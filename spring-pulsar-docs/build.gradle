@@ -21,6 +21,22 @@ dependencies {
 	observationDocs "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 
+jar {
+	enabled = false
+}
+
+javadoc {
+	enabled = false
+}
+
+javadocJar {
+	enabled = false
+}
+
+sourcesJar {
+	enabled = false
+}
+
 task aggregatedJavadoc(type: Javadoc) {
 	group = 'Documentation'
 	description = 'Generates aggregated Javadoc API documentation.'

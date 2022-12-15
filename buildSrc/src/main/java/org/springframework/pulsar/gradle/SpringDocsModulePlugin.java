@@ -19,7 +19,6 @@ package org.springframework.pulsar.gradle;
 import io.spring.gradle.convention.RepositoryConventionPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
@@ -27,6 +26,7 @@ import org.gradle.api.plugins.PluginManager;
 import org.springframework.boot.gradle.JavaConventionsPlugin;
 import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
 import org.springframework.pulsar.gradle.docs.asciidoc.AsciidoctorConventionsPlugin;
+import org.springframework.pulsar.gradle.publish.PublishAllJavaComponentsPlugin;
 import org.springframework.pulsar.gradle.publish.SpringPublishPlugin;
 
 /**
@@ -44,13 +44,7 @@ public class SpringDocsModulePlugin implements Plugin<Project> {
 		pluginManager.apply(JavaConventionsPlugin.class);
 		pluginManager.apply(AsciidoctorConventionsPlugin.class);
 		pluginManager.apply(SpringPublishPlugin.class);
+        pluginManager.apply(PublishAllJavaComponentsPlugin.class);
 		pluginManager.apply(OptionalDependenciesPlugin.class);
-
-		Task deployArtifacts = project.task("deployArtifacts");
-		deployArtifacts.setGroup("Deploy tasks");
-		deployArtifacts.setDescription("Deploys the artifacts to either Artifactory or Maven Central");
-		if (!ProjectUtils.isRelease(project)) {
-			deployArtifacts.dependsOn(project.getTasks().getByName("artifactoryPublish"));
-		}
 	}
 }
