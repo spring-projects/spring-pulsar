@@ -37,7 +37,7 @@ jobs:
 
       - name: Deploy the artifacts
         run: |
-          ./gradlew :spring-pulsar-docs:deployDocs --info --PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" --stacktrace
+          ./gradlew :spring-pulsar-docs:deployDocs --info -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" --stacktrace
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
