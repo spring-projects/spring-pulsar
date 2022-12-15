@@ -190,3 +190,17 @@ publishing {
 artifactoryPublish {
 	publications(publishing.publications.mavenJava)
 }
+
+signing {
+	required { project.hasProperty("signing.keyId") || project.hasProperty("signingKey") && gradle.taskGraph.hasTask("publishArtifacts") }
+	def signingKeyId = (String) project.findProperty("signing.keyId");
+	def signingKey = (String) project.findProperty("signingKey");
+	def signingPassword = (String) project.findProperty("signingPassword");
+	if (signingKeyId != null) {
+		useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword);
+	}
+	else {
+		useInMemoryPgpKeys(signingKey, signingPassword);
+	}
+	sign publishing.publications.mavenJava
+}

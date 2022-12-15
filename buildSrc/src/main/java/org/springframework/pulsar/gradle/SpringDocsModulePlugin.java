@@ -26,7 +26,6 @@ import org.gradle.api.plugins.PluginManager;
 import org.springframework.boot.gradle.JavaConventionsPlugin;
 import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
 import org.springframework.pulsar.gradle.docs.asciidoc.AsciidoctorConventionsPlugin;
-import org.springframework.pulsar.gradle.publish.PublishAllJavaComponentsPlugin;
 import org.springframework.pulsar.gradle.publish.SpringPublishPlugin;
 
 /**
@@ -44,7 +43,6 @@ public class SpringDocsModulePlugin implements Plugin<Project> {
 		pluginManager.apply(JavaConventionsPlugin.class);
 		pluginManager.apply(AsciidoctorConventionsPlugin.class);
 		pluginManager.apply(SpringPublishPlugin.class);
-        pluginManager.apply(PublishAllJavaComponentsPlugin.class);
 		pluginManager.apply(OptionalDependenciesPlugin.class);
 	}
 }
