@@ -191,16 +191,23 @@ artifactoryPublish {
 	publications(publishing.publications.mavenJava)
 }
 
+tasks.register('deployDocs') {
+	dependsOn artifactoryPublish
+}
+
 signing {
-	required { project.hasProperty("signing.keyId") || project.hasProperty("signingKey") && gradle.taskGraph.hasTask("publishArtifacts") }
-	def signingKeyId = (String) project.findProperty("signing.keyId");
-	def signingKey = (String) project.findProperty("signingKey");
-	def signingPassword = (String) project.findProperty("signingPassword");
+	required {
+		project.hasProperty("signing.keyId") || project.hasProperty("signingKey") &&
+			(gradle.taskGraph.hasTask("publishArtifacts") || gradle.taskGraph.hasTask("deployDocs"))
+	}
+	def signingKeyId = (String) project.findProperty("signing.keyId")
+	def signingKey = (String) project.findProperty("signingKey")
+	def signingPassword = (String) project.findProperty("signingPassword")
 	if (signingKeyId != null) {
-		useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword);
+		useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
 	}
 	else {
-		useInMemoryPgpKeys(signingKey, signingPassword);
+		useInMemoryPgpKeys(signingKey, signingPassword)
 	}
 	sign publishing.publications.mavenJava
 }

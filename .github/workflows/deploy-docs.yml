@@ -1,0 +1,43 @@
+name: Deploy Release Docs
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Version to deploy (tag or branch name)'
+        required: true
+        type: string
+
+env:
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+jobs:
+  deploy_docs:
+    name: Deploy docs to Artifactory (release)
+    if: github.repository == 'spring-projects-experimental/spring-pulsar'
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout-source
+        name: Checkout source code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.releaseVersion }}
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+
+      - name: Set up Gradle
+        uses: spring-io/spring-gradle-build-action@v1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build the artifacts
+        run: |
+          ./gradlew :spring-pulsar-docs:clean :spring-pulsar-docs:build
+
+      - name: Deploy the artifacts
+        run: |
+          ./gradlew :spring-pulsar-docs:deployDocs --info --PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" --stacktrace
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
