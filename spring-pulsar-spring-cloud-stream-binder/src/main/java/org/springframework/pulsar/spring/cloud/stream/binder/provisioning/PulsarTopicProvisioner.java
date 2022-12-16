@@ -26,6 +26,11 @@ import org.springframework.cloud.stream.provisioning.ProvisioningProvider;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
 
+/**
+ * Pulsar topic provisioner.
+ *
+ * @author Soby Chacko
+ */
 public class PulsarTopicProvisioner implements
 		ProvisioningProvider<ExtendedConsumerProperties<PulsarConsumerProperties>, ExtendedProducerProperties<PulsarProducerProperties>>,
 		InitializingBean {

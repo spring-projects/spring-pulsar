@@ -16,6 +16,11 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
+/**
+ * Pulsar consumer properties used by the binder.
+ *
+ * @author Soby Chacko
+ */
 public class PulsarConsumerProperties {
 
 }
