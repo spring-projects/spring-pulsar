@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder.provisioning;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cloud.stream.binder.ExtendedConsumerProperties;
 import org.springframework.cloud.stream.binder.ExtendedProducerProperties;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
@@ -32,13 +31,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarPr
  * @author Soby Chacko
  */
 public class PulsarTopicProvisioner implements
-		ProvisioningProvider<ExtendedConsumerProperties<PulsarConsumerProperties>, ExtendedProducerProperties<PulsarProducerProperties>>,
-		InitializingBean {
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-
-	}
+		ProvisioningProvider<ExtendedConsumerProperties<PulsarConsumerProperties>, ExtendedProducerProperties<PulsarProducerProperties>> {
 
 	@Override
 	public ProducerDestination provisionProducerDestination(String name,
