@@ -17,6 +17,7 @@
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
 import org.springframework.cloud.stream.binder.AbstractMessageChannelBinder;
+import org.springframework.cloud.stream.binder.Binder;
 import org.springframework.cloud.stream.binder.BinderSpecificPropertiesProvider;
 import org.springframework.cloud.stream.binder.ExtendedConsumerProperties;
 import org.springframework.cloud.stream.binder.ExtendedProducerProperties;
@@ -31,8 +32,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarPr
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
 
 /**
- * {@link org.springframework.cloud.stream.binder.Binder} implementation for Apache
- * Pulsar.
+ * {@link Binder} implementation for Apache Pulsar.
  *
  * @author Soby Chacko
  */

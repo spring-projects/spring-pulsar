@@ -13,7 +13,7 @@ ext {
 	pulsarVersion = '2.10.2'
 	pulsarClientReactiveVersion = '0.1.0'
 	springBootVersion = '3.0.0'
-	springCloudStreamVersion = '4.0.0-SNAPSHOT'
+	springCloudStreamVersion = '4.0.0'
 }
 
 dependencies {
