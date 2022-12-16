@@ -1,0 +1,14 @@
+plugins {
+    id 'org.springframework.pulsar.spring-module'
+}
+
+description = 'Spring Cloud Stream Binder for Apache Pulsar'
+
+dependencies {
+    api project (':spring-pulsar')
+    api('org.springframework.cloud:spring-cloud-stream') {
+        exclude group: 'javax.activation', module: 'javax.activation-api'
+        exclude group: 'javax.annotation', module: 'javax.annotation-api'
+    }
+
+}

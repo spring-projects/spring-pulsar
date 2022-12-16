@@ -13,6 +13,7 @@ ext {
 	pulsarVersion = '2.10.2'
 	pulsarClientReactiveVersion = '0.1.0'
 	springBootVersion = '3.0.0'
+	springCloudStreamVersion = '4.0.0-SNAPSHOT'
 }
 
 dependencies {
@@ -24,5 +25,6 @@ dependencies {
 		api "org.apache.pulsar:pulsar-client-all:$pulsarVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-adapter:$pulsarClientReactiveVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine:$pulsarClientReactiveVersion"
+		api "org.springframework.cloud:spring-cloud-stream:$springCloudStreamVersion"
 	}
 }
