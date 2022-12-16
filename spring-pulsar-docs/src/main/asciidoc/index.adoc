@@ -9,6 +9,8 @@ include::copyright.adoc[]
 
 include::intro.adoc[leveloffset=+1]
 
+include::getting-help.adoc[leveloffset=+2]
+
 [[reference]]
 == Reference
 This part of the reference documentation goes through the details of the various components in Spring for Apache Pulsar.

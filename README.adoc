@@ -18,7 +18,7 @@ Are you having trouble with Spring Pulsar? We want to help!
 * Learn the Spring basics -- Spring Pulsar builds on many other Spring projects; check the https://spring.io[spring.io] website for a wealth of reference documentation.
 If you are new to Spring, try one of the https://spring.io/guides[guides].
 // TODO (NYI): * If you are upgrading, read the {github}/wiki[release notes] for upgrade instructions and "new and noteworthy" features.
-// TODO (NYI): * Ask a question -- we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`].
+* Ask a question -- we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`].
 * Report bugs with Spring Pulsar at {github}/issues[github.com/spring-projects-experimental/spring-pulsar/issues].
 
 
