@@ -14,9 +14,8 @@ By participating, you are expected to uphold this code. Please report unacceptab
 
 == Using GitHub Issues
 We use GitHub issues to track bugs and enhancements.
-// NYI
-// If you have a general usage question please ask on https://stackoverflow.com[Stack Overflow].
-// The Spring Pulsar team and the broader community monitor the https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`] tag.
+If you have a general usage question please ask on https://stackoverflow.com[Stack Overflow].
+The Spring for Apache Pulsar team and the broader community monitor the https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`] tag.
 
 If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible.
 Ideally, that would include a small sample project that reproduces the problem.
