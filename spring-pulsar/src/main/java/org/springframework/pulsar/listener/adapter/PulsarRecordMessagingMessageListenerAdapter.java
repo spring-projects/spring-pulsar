@@ -34,7 +34,6 @@ import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
  * @param <V> payload type.
  * @author Soby Chacko
  */
-@SuppressWarnings("serial")
 public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
 		implements PulsarAcknowledgingMessageListener<V> {
 

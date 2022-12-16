@@ -44,7 +44,6 @@ import org.springframework.util.Assert;
  * @param <V> payload type.
  * @author Soby Chacko
  */
-@SuppressWarnings("serial")
 public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
 		implements PulsarBatchAcknowledgingMessageListener<V> {
 
