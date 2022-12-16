@@ -22,6 +22,7 @@ import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
 import org.springframework.cloud.stream.provisioning.ProvisioningException;
 import org.springframework.cloud.stream.provisioning.ProvisioningProvider;
+import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
 
@@ -33,16 +34,74 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarPr
 public class PulsarTopicProvisioner implements
 		ProvisioningProvider<ExtendedConsumerProperties<PulsarConsumerProperties>, ExtendedProducerProperties<PulsarProducerProperties>> {
 
+	// TODO: Retrieve partitions through config
 	@Override
 	public ProducerDestination provisionProducerDestination(String name,
 			ExtendedProducerProperties<PulsarProducerProperties> properties) throws ProvisioningException {
-		return null;
+		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(1).build();
+		return new PulsarProducerDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
 	@Override
 	public ConsumerDestination provisionConsumerDestination(String name, String group,
 			ExtendedConsumerProperties<PulsarConsumerProperties> properties) throws ProvisioningException {
-		return null;
+		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(1).build();
+		return new PulsarConsumerDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
+	}
+
+	private static class PulsarDestination implements ProducerDestination, ConsumerDestination {
+
+		private final String producerDestinationName;
+
+		private final int partitions;
+
+		PulsarDestination(String destinationName, Integer partitions) {
+			this.producerDestinationName = destinationName;
+			this.partitions = partitions;
+		}
+
+		@Override
+		public String getName() {
+			return this.producerDestinationName;
+		}
+
+		@Override
+		public String getNameForPartition(int partition) {
+			return this.producerDestinationName;
+		}
+
+		public int getPartitions() {
+			return this.partitions;
+		}
+
+	}
+
+	private static class PulsarProducerDestination extends PulsarDestination {
+
+		PulsarProducerDestination(String destinationName, Integer partitions) {
+			super(destinationName, partitions);
+		}
+
+		@Override
+		public String toString() {
+			return "PulsarProducerDestination{" + "producerDestinationName='" + getName() + '\'' + ", partitions="
+					+ getPartitions() + '}';
+		}
+
+	}
+
+	private static class PulsarConsumerDestination extends PulsarDestination {
+
+		PulsarConsumerDestination(String destinationName, Integer partitions) {
+			super(destinationName, partitions);
+		}
+
+		@Override
+		public String toString() {
+			return "PulsarConsumerDestination{" + "producerDestinationName='" + getName() + '\'' + ", partitions="
+					+ getPartitions() + '}';
+		}
+
 	}
 
 }
