@@ -57,19 +57,6 @@ public class PulsarMessagingMessageConverter<V> implements PulsarRecordMessageCo
 		return message;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public V fromMessage(Message<?> messageArg, String defaultTopic) {
-		Message<?> message = messageArg;
-		if (this.messagingConverter != null) {
-			Message<?> converted = this.messagingConverter.toMessage(message.getPayload(), message.getHeaders());
-			if (converted != null) {
-				message = converted;
-			}
-		}
-		return null; // TODO
-	}
-
 	protected org.springframework.messaging.converter.MessageConverter getMessagingConverter() {
 		return this.messagingConverter;
 	}

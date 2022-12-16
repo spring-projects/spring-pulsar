@@ -18,16 +18,7 @@ package org.springframework.pulsar.support.converter;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-
-import org.apache.pulsar.client.api.Consumer;
-import org.apache.pulsar.client.api.Messages;
-
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
 
 /**
  * Batch records message converter.
@@ -45,18 +36,6 @@ public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessa
 
 	public PulsarBatchMessagingMessageConverter(PulsarRecordMessageConverter<T> recordConverter) {
 		this.recordConverter = recordConverter;
-	}
-
-	@Override
-	public Message<?> toMessage(List<org.apache.pulsar.client.api.Message<T>> records, Consumer<T> consumer,
-			Type type) {
-		List<Object> payloads = new ArrayList<>();
-		List<Exception> conversionFailures = new ArrayList<>();
-		for (org.apache.pulsar.client.api.Message<T> message : records) {
-			payloads.add(obtainPayload(type, message, conversionFailures));
-		}
-
-		return MessageBuilder.createMessage(payloads, new MessageHeaders(Collections.emptyMap()));
 	}
 
 	private Object obtainPayload(Type type, org.apache.pulsar.client.api.Message<T> record,
@@ -85,11 +64,6 @@ public class PulsarBatchMessagingMessageConverter<T> implements PulsarBatchMessa
 			throw new RuntimeException("The batch converter can only report conversion failures to the listener "
 					+ "if the record.value() is byte[], Bytes, or String", ex);
 		}
-	}
-
-	@Override
-	public T fromMessage(Messages<T> message, String defaultTopic) {
-		throw new UnsupportedOperationException();
 	}
 
 }
