@@ -4,8 +4,6 @@
 
 Spring Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
 
-**#WARNING#**: This is a WIP project. Many of the support available at the moment are prototypes and experimental.
-
 **#TIP#**: Most of the ideas in this project are borrowed from the Spring for Apache Kafka project, thus a familiarity with it would help.
 
 == Getting Started
