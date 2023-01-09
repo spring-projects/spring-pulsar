@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,17 +73,14 @@ public class DocumentConfigurationProperties extends DefaultTask {
 			c.accept("spring.pulsar.consumer");
 			c.accept("spring.pulsar.listener");
 		});
+		snippets.add("application-properties.pulsar-function", "Pulsar Function Properties", (c) -> c.accept("spring.pulsar.function"));
 		snippets.add("application-properties.pulsar-administration", "Pulsar Administration Properties", (c) -> c.accept("spring.pulsar.administration"));
-		snippets.add("application-properties.pulsar-reactive-sender", "Pulsar Reactive Sender Properties", (c) -> {
-			c.accept("spring.pulsar.reactive.sender");
-		});
+		snippets.add("application-properties.pulsar-reactive-sender", "Pulsar Reactive Sender Properties", (c) -> c.accept("spring.pulsar.reactive.sender"));
 		snippets.add("application-properties.pulsar-reactive-consumer", "Pulsar Reactive Consumer Properties", (c) -> {
 			c.accept("spring.pulsar.reactive.consumer");
 			c.accept("spring.pulsar.reactive.listener");
 		});
-		snippets.add("application-properties.pulsar-reactive-reader", "Pulsar Reactive Reader Properties", (c) -> {
-			c.accept("spring.pulsar.reactive.reader");
-		});
+		snippets.add("application-properties.pulsar-reactive-reader", "Pulsar Reactive Reader Properties", (c) -> c.accept("spring.pulsar.reactive.reader"));
 		snippets.writeTo(this.outputDir.toPath());
 	}
 }

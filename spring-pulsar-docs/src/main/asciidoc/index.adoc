@@ -21,6 +21,8 @@ include::reactive-pulsar.adoc[leveloffset=+2]
 
 include::pulsar-admin.adoc[leveloffset=+2]
 
+include::pulsar-function.adoc[leveloffset=+2]
+
 include::observability.adoc[leveloffset=+2]
 
 :sectnums!:

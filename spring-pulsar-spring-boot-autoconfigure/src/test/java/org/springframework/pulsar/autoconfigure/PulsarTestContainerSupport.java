@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.testcontainers.utility.DockerImageName;
 public interface PulsarTestContainerSupport {
 
 	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(
-			isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage());
+			isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage()).withFunctionsWorker();
 
 	@BeforeAll
 	static void startContainer() {

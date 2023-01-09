@@ -1,0 +1,24 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "spring.pulsar.function.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable function support.",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.pulsar.producer.cache.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable caching in the PulsarProducerFactory.",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.pulsar.reactive.sender.cache.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable caching in the ReactivePulsarSenderFactory.",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}

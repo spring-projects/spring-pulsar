@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ public class PulsarProperties {
 
 	private final Client client = new Client();
 
+	private final Function function = new Function();
+
 	private final Listener listener = new Listener();
 
 	private final Producer producer = new Producer();
@@ -85,6 +87,10 @@ public class PulsarProperties {
 
 	public Listener getListener() {
 		return this.listener;
+	}
+
+	public Function getFunction() {
+		return this.function;
 	}
 
 	public Producer getProducer() {
@@ -733,7 +739,7 @@ public class PulsarProperties {
 		 */
 		private Map<String, String> properties = new HashMap<>();
 
-		private Cache cache = new Cache();
+		private final Cache cache = new Cache();
 
 		public String getTopicName() {
 			return this.topicName;
@@ -1654,6 +1660,37 @@ public class PulsarProperties {
 
 	}
 
+	public static class Function {
+
+		/**
+		 * Whether to stop processing further function creates/updates when a failure
+		 * occurs.
+		 */
+		private Boolean failFast = Boolean.TRUE;
+
+		/**
+		 * Whether to throw an exception if any failure is encountered during processing.
+		 */
+		private Boolean propagateFailures = Boolean.TRUE;
+
+		public Boolean getFailFast() {
+			return this.failFast;
+		}
+
+		public void setFailFast(Boolean failFast) {
+			this.failFast = failFast;
+		}
+
+		public Boolean getPropagateFailures() {
+			return this.propagateFailures;
+		}
+
+		public void setPropagateFailures(Boolean propagateFailures) {
+			this.propagateFailures = propagateFailures;
+		}
+
+	}
+
 	public static class Listener {
 
 		/**
@@ -2015,7 +2052,6 @@ public class PulsarProperties {
 
 	}
 
-	@SuppressWarnings("serial")
 	private static class Properties extends HashMap<String, Object> {
 
 		<V> java.util.function.Consumer<V> in(String key) {

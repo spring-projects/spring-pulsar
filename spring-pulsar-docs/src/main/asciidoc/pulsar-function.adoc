@@ -1,0 +1,128 @@
+[[pulsar-function]]
+= Pulsar Functions
+include::attributes.adoc[]
+
+Spring for Apache Pulsar provides basic suppport for {apache-pulsar-io-docs}/[Pulsar IO] (connectors) and {apache-pulsar-function-docs}[Pulsar Functions] which allow users to define stream processing pipelines made up of `sources`, `processors`, and `sinks`.
+The `sources` and `sinks` are modeled by _Pulsar IO (connectors)_ and the `processors` are represented by _Pulsar Functions_.
+
+NOTE: Because connectors are just special functions, and for simplicity, we refer to sources, sinks and functions collectively as "Pulsar Functions".
+
+.Pre-requisites
+****
+
+*Familiarity* - the audience is expected to be somewhat familiar w/ _Pulsar IO_ and _Pulsar Functions_.
+If that is not the case it may be helpful to see their getting started guides.
+
+*Feature enabled* - to use these features the functions support in Apache Pulsar must be enabled and configured (it is disabled by default).
+The built-in connectors may also need to be installed on the Pulsar cluster.
+
+See the {apache-pulsar-io-docs}/[Pulsar IO] and {apache-pulsar-function-docs}[Pulsar Functions] docs for more details.
+****
+
+== Pulsar Function Administration
+The framework provides the `PulsarFunctionAdministration` component to manage Pulsar functions.
+When you use the Pulsar Spring Boot starter, you get the `PulsarFunctionAdministration` auto-configured.
+
+By default, the application tries to connect to a local Pulsar instance at `http://localhost:8080`.
+However, because it leverages the already configured `PulsarAdministration`, see <<pulsar-admin.adoc#pulsar-admin-client,Pulsar Admin Client>> for available client options (including authentication). Other available application properties can be found in the <<application-properties.adoc#appendix.application-properties.pulsar-function,Appendix>> prefixed by `spring.pulsar.function`.
+
+== Automatic Function Management
+On initialization, the framework finds all `PulsarFunction`, `PulsarSink`, and `PulsarSource` beans in the application context.
+For each bean, the corresponding Pulsar function is either created or updated.
+The proper API is called based on function type, function config, and whether the function already exists.
+
+NOTE: The `PulsarFunction`, `PulsarSink`, and `PulsarSource` beans are simple wrappers around the Apache Pulsar config objects `FunctionConfig`, `SinkConfig`, and `SourceConfig`, respectively.
+Due to the large number of supported connectors (and their varied configurations) the framework does not attempt to create a configuration properties hierarchy to mirror the varied Apache Pulsar connectors.
+Instead, the burden is on the user to supply the full config object and then the framework handles the management (create/update) using the supplied config.
+
+== Limitations
+
+=== No Magic Pulsar Functions
+Pulsar functions and custom connectors are represented by custom application code (eg. a `java.util.Function`).
+There is no magic support to automatically register the custom code.
+While this would be amazing, it has some technical challenges and not yet been implemented.
+As such, it is up to the user to ensure the function (or custom connector) is available at the location specified in the function config.
+For example, if the function config has a `jar` value of `./some/path/MyFunction.jar` then the function jar file must exist at the specified path.
+
+=== Name Identifier
+The `name` property from the function config is used as the identifier to determine if a function already exists in order to decide if an update or create operation is performed.
+As such, the name should not be modified if function updates are desired.
+
+== Configuration
+
+=== Pulsar Function Archive
+Each Pulsar function is represented by an actual archive (eg. jar file).
+The path to the archive is specified via the `archive` property for sources and sinks, and the `jar` property for functions.
+
+The following rules determine the "type" of path:
+
+* The path is a *URL* when it starts w/ `(file|http|https|function|sink|source)://`
+* The path is *built-in* when it starts w/ `builtin://` (points to one of the provided out-of-the-box connectors)
+* The path is *local* otherwise.
+
+The action that occurs during the create/update operation is dependent on path "type" as follows:
+
+* When the path is a *URL* the content is downloaded by the server
+* When the path is *built-in* the content is already available on the server
+* When the path is *local* the content is uploaded to the server
+
+=== Built-in Source and Sinks
+Apache Pulsar provides many source and sink connectors out-of-the-box, aka built-in connectors. To use a built-in connector simply set the `archive` to `builtin://<connector-type>` (eg `builtin://rabbit`).
+
+== Examples
+
+Here are some examples that show how to configure a `PulsarSource` bean which results in the `PulsarFunctionAdministration` auto-creating the backing Pulsar source connector.
+
+.PulsarSource using built-in Rabbit connector
+====
+[source,java]
+----
+@Bean
+PulsarSource rabbitSource() {
+    Map<String, Object> configs = new HashMap<>();
+    configs.put("host", "my.rabbit.host");
+    configs.put("port", 5672);
+    configs.put("virtualHost", "/");
+    configs.put("username", "guest");
+    configs.put("password", "guest");
+    configs.put("queueName", "test_rabbit");
+    configs.put("connectionName", "test-connection");
+    SourceConfig sourceConfig = SourceConfig.builder()
+            .tenant("public")
+            .namespace("default")
+            .name("rabbit-test-source")
+            .archive("builtin://rabbitmq")
+            .topicName("incoming_rabbit")
+            .configs(configs).build();
+    return new PulsarSource(sourceConfig, null);
+}
+----
+====
+
+This next example is the same as the previous, except that it uses the Spring Boot auto-configured `RabbitProperties` to ease the configuration burden. This of course requires the application to be using Spring Boot with Rabbit auto-configuration enabled.
+
+.PulsarSource using built-in Rabbit connector and Spring Boot RabbitProperties
+====
+[source,java]
+----
+@Bean
+PulsarSource rabbitSourceWithBootProps(RabbitProperties props) {
+    Map<String, Object> configs = new HashMap<>();
+    configs.put("host", props.determineHost());
+    configs.put("port", props.determinePort());
+    configs.put("virtualHost", props.determineVirtualHost());
+    configs.put("username", props.determineUsername());
+    configs.put("password", props.determinePassword());
+    configs.put("queueName", "test_rabbit");
+    configs.put("connectionName", "test-connection");
+    SourceConfig sourceConfig = SourceConfig.builder()
+            .tenant("public")
+            .namespace("default")
+            .name("rabbit-test-source")
+            .archive("builtin://rabbitmq")
+            .topicName("incoming_rabbit")
+            .configs(configs).build();
+    return new PulsarSource(sourceConfig, null);
+}
+----
+====

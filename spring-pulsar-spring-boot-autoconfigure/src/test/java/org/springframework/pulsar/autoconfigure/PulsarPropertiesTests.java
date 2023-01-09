@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,10 +59,6 @@ import org.springframework.boot.context.properties.source.MapConfigurationProper
 public class PulsarPropertiesTests {
 
 	private final PulsarProperties properties = new PulsarProperties();
-
-	private void bind(String name, String value) {
-		bind(Collections.singletonMap(name, value));
-	}
 
 	private void bind(Map<String, String> map) {
 		ConfigurationPropertySource source = new MapConfigurationPropertySource(map);
@@ -452,6 +447,29 @@ public class PulsarPropertiesTests {
 					.containsEntry("autoAckOldestChunkedMessageOnQueueFull", false)
 					.containsEntry("maxPendingChunkedMessage", 11)
 					.containsEntry("expireTimeOfIncompleteChunkedMessageMillis", 12_000L);
+		}
+
+	}
+
+	@Nested
+	class FunctionPropertiesTests {
+
+		@Test
+		void functionProperties() {
+			Map<String, String> props = new HashMap<>();
+			bind(props);
+
+			// check defaults
+			assertThat(properties.getFunction().getFailFast()).isTrue();
+			assertThat(properties.getFunction().getPropagateFailures()).isTrue();
+
+			// set values and verify
+			props.put("spring.pulsar.function.fail-fast", "false");
+			props.put("spring.pulsar.function.propagate-failures", "false");
+			bind(props);
+
+			assertThat(properties.getFunction().getFailFast()).isFalse();
+			assertThat(properties.getFunction().getPropagateFailures()).isFalse();
 		}
 
 	}

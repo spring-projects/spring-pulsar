@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.function.PulsarFunction;
+import org.springframework.pulsar.function.PulsarFunctionAdministration;
+import org.springframework.pulsar.function.PulsarSink;
+import org.springframework.pulsar.function.PulsarSource;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
 
 import io.micrometer.observation.ObservationRegistry;
@@ -111,6 +115,16 @@ public class PulsarAutoConfiguration {
 	@ConditionalOnMissingBean(PulsarAdministration.class)
 	public PulsarAdministration pulsarAdministration() {
 		return new PulsarAdministration(this.properties.buildAdminProperties());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(PulsarFunctionAdministration.class)
+	@ConditionalOnProperty(name = "spring.pulsar.function.enabled", havingValue = "true", matchIfMissing = true)
+	public PulsarFunctionAdministration pulsarFunctionAdministration(PulsarAdministration pulsarAdministration,
+			ObjectProvider<PulsarFunction> pulsarFunctions, ObjectProvider<PulsarSink> pulsarSinks,
+			ObjectProvider<PulsarSource> pulsarSources) {
+		return new PulsarFunctionAdministration(pulsarAdministration, pulsarFunctions, pulsarSinks, pulsarSources,
+				this.properties.getFunction().getFailFast(), this.properties.getFunction().getPropagateFailures());
 	}
 
 }

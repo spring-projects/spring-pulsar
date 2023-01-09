@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
@@ -241,6 +242,44 @@ class PulsarAutoConfigurationTests {
 							.extracting("configs", InstanceOfAssertFactories.map(String.class, Object.class))
 							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
 							.containsEntry("authParams", "{\"password\":\"topsecret\",\"userId\":\"username\"}")));
+		}
+
+	}
+
+	@Nested
+	class FunctionAutoConfigurationTests {
+
+		@Test
+		void functionSupportEnabledByDefault() {
+			// NOTE: hasNoNullFieldsOrProperties() ensures object providers set
+			contextRunner.run(context -> assertThat(context).hasNotFailed().getBean(PulsarFunctionAdministration.class)
+					.hasFieldOrPropertyWithValue("failFast", Boolean.TRUE)
+					.hasFieldOrPropertyWithValue("propagateFailures", Boolean.TRUE).hasNoNullFieldsOrProperties()
+					.extracting("pulsarAdministration").isSameAs(context.getBean(PulsarAdministration.class)));
+		}
+
+		@Test
+		void functionSupportCanBeConfigured() {
+			contextRunner
+					.withPropertyValues("spring.pulsar.fu,nction.fail-fast=false",
+							"spring.pulsar.function.propagate-failures=false")
+					.run(context -> assertThat(context).hasNotFailed().getBean(PulsarFunctionAdministration.class)
+							.hasFieldOrPropertyWithValue("failFast", Boolean.FALSE)
+							.hasFieldOrPropertyWithValue("propagateFailures", Boolean.FALSE));
+		}
+
+		@Test
+		void functionSupportCanBeDisabled() {
+			contextRunner.withPropertyValues("spring.pulsar.function.enabled=false").run(
+					context -> assertThat(context).hasNotFailed().doesNotHaveBean(PulsarFunctionAdministration.class));
+		}
+
+		@Test
+		void customFunctionAdminIsRespected() {
+			PulsarFunctionAdministration customFunctionAdmin = mock(PulsarFunctionAdministration.class);
+			contextRunner.withBean(PulsarFunctionAdministration.class, () -> customFunctionAdmin)
+					.run(context -> assertThat(context).hasNotFailed().getBean(PulsarFunctionAdministration.class)
+							.isSameAs(customFunctionAdmin));
 		}
 
 	}
