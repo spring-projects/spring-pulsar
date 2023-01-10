@@ -1,0 +1,37 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+	id 'org.springframework.boot' version '3.0.0'
+}
+
+group = 'org.springframework.pulsar.sample'
+description = 'Sample Signup App (Pulsar Functions)'
+
+dependencies {
+	implementation project(':spring-pulsar-spring-boot-starter')
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.boot:spring-boot-starter-data-cassandra'
+	implementation 'com.devskiller:jfairy:0.6.5'
+	implementation 'com.google.code.findbugs:jsr305'
+
+	// observability
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+	implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
+}
+
+bootRun {
+	jvmArgs = [
+			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
+			"--add-opens", "java.base/java.util=ALL-UNNAMED",
+			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
+	]
+}
+
+project.afterEvaluate {
+	project.tasks.publishArtifacts.enabled(false)
+	project.tasks.artifactoryPublish.enabled(false)
+	project.tasks.publishToOssrh.enabled(false)
+	project.tasks.publishMavenJavaPublicationToOssrhRepository.enabled(false)
+	project.tasks.publishAllPublicationsToOssrhRepository.enabled(false)
+}

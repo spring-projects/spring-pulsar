@@ -34,6 +34,7 @@ public class LenientCheckClasspathForProhibitedDependencies extends CheckClasspa
 	private static Set<String> OVERRIDE_PROHIBITED_DEPENDENCIES = Set.of(
 			"javax.validation:validation-api",
 			"javax.ws.rs:javax.ws.rs-api",
+			"javax.inject:javax.inject",
 			"javax.xml.bind:jaxb-api",
 			"commons-logging:commons-logging");
 

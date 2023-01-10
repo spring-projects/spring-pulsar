@@ -1,0 +1,227 @@
+= Sample Stream Pipeline with Pulsar Functions
+
+:curdir: {docdir}/guides/pulsar-functions
+
+A sample appfootnote:[Inspired by the sample app in https://streamnative.io/blog/release/2022-09-21-announcing-spring-for-apache-pulsar/] that leverages the built-in Pulsar Functions support in Spring for Apache Pulsar to create a streaming pipeline to handle user signups.
+
+The app consists of a Rabbit source, a Pulsar function, and a Cassandra sink with the following details:
+
+* Messages sent to RabbitMQ `user_signup` queue are sourced into Pulsar `user-signup` topic
+* Messages from `user-signup` topic are fed into Pulsar Signup function which:
+** the signup tier count is incremented and logged
+** `ENTERPRISE` tier signups result in a customer message in `customer-onboard` Pulsar topic
+* Messages from `customer-onboard` topic are sinked into `customer_onboard` Cassandra table
+
+== Pre-requisites
+****
+* Ability to run Docker containers locally and Docker Compose installed - see https://docs.docker.com/compose/install/[here] for more details
+****
+
+== Steps
+
+****
+NOTE: All commands are expected to be executed from the directory this document lives in [.small]#link:{curdir}[]#
+****
+
+=== Build app and function
+Build the application and function libs with the following command:
+----
+../../gradlew clean build
+----
+
+=== Download connectors
+The connector libs are not included in the Docker image, download them one time by executing the following script:
+
+[source,shell]
+----
+./download-connectors.sh
+----
+
+=== Start services
+Start the Pulsar, RabbitMQ, and Cassandra services using Docker Compose with the following command:
+----
+docker-compose up -d
+----
+
+.Verify `rabbitmq` is ready by executing the following command
+----
+docker logs rabbitmq | grep "Server startup complete"
+----
+.which should produce
+----
+2023-01-04 21:06:39.692935+00:00 [info] <0.721.0> Server startup complete; 4 plugins started.
+----
+
+.Verify `pulsar` is ready by executing the following command
+----
+docker logs pulsar 2>&1 | grep "messaging service is ready"
+----
+.which should produce
+----
+2023-01-04T21:39:57 [main] INFO  org.apache.pulsar.broker.PulsarService - messaging service is ready, bootstrap_seconds=4
+2023-01-04T21:39:57 [main] INFO  org.apache.pulsar.broker.PulsarService - messaging service is ready, bootstrap service port = 8080, broker url= pulsar://localhost:6650, cluster=standalone, configs=org.apache.pulsar.broker....
+----
+
+.Verify `pulsar` has the connectors installed by executing the following command
+----
+curl -s http://localhost:8080/admin/v2/functions/connectors
+----
+.which should produce
+[source,json]
+----
+[
+  {
+    "name": "cassandra",
+    "description": "Writes data into Cassandra",
+    "sinkClass": "org.apache.pulsar.io.cassandra.CassandraStringSink",
+    "sinkConfigClass": "org.apache.pulsar.io.cassandra.CassandraSinkConfig"
+  },
+  {
+    "name": "rabbitmq",
+    "description": "RabbitMQ source and sink connector",
+    "sourceClass": "org.apache.pulsar.io.rabbitmq.RabbitMQSource",
+    "sinkClass": "org.apache.pulsar.io.rabbitmq.RabbitMQSink",
+    "sourceConfigClass": "org.apache.pulsar.io.rabbitmq.RabbitMQSourceConfig",
+    "sinkConfigClass": "org.apache.pulsar.io.rabbitmq.RabbitMQSinkConfig"
+  }
+]
+----
+
+.Verify `cassandra` is ready by executing the following command
+----
+docker logs cassandra 2>&1 | grep "Creating replication strategy sample_pulsar_functions_keyspace params KeyspaceParams"
+----
+.which should produce
+----
+INFO  [Native-Transport-Requests-5] 2023-01-04 21:40:48,635 Keyspace.java:381 - Creating replication strategy sample_pulsar_functions_keyspace params KeyspaceParams{durable_writes=true, replication=ReplicationParams{class=org.apache.cassandra.locator.SimpleStrategy, replication_factor=1}}
+----
+NOTE: It will typically take about 60 seconds for `cassandra` to complete its startup process so if the above fails, try again after 60 seconds.
+
+At this point the following services are up and running:
+
+* `cassandra`
+** **keyspace:** `sample_pulsar_functions_keyspace`
+** **table:** `customer_onboard`
+* `rabbitmq`
+** management UI
+* `pulsar` standalone
+** function support enabled
+** `cassandra` and `rabbit` connectors installed
+
+=== Start application
+The sample app registers the Pulsar Functions which effectively create the streaming pipeline.
+
+.Run the sample app within your IDE or by executing the following command
+----
+cd sample-signup-app && ../../../gradlew bootRun
+----
+.which should produce
+----
+[main] PulsarFunctionAdministration : Creating 'UserSignupFunction' function (using local archive: /Users/cbono/repos/spring-pulsar/spring-pulsar-sample-apps/sample-pulsar-functions/signup-function/target/signup-function-0.0.1-SNAPSHOT.jar)
+[main] PulsarFunctionAdministration : Creating 'CustomerOnboardCassandraSink' sink (using local archive: builtin://cassandra)
+[main] PulsarFunctionAdministration : Creating 'UserSignupRabbitSource' source (using local archive: builtin://rabbitmq)
+[main] SignupApplication            : Started SignupApplication in 6.485 seconds (process running for 6.839)
+----
+
+.Verify the functions are actually registered by executing the following Pulsar commands
+----
+docker exec -it pulsar bin/pulsar-admin sources list
+docker exec -it pulsar bin/pulsar-admin functions list
+docker exec -it pulsar bin/pulsar-admin sinks list
+----
+.which should produce
+----
+[
+  "UserSignupRabbitSource"
+]
+UserSignupFunction
+[
+  "CustomerOnboardCassandraSink"
+]
+----
+
+=== Verify pipeline
+The app produces a random user signup record to the RabbitMQ `user_signup` queue every 5 seconds.
+It also logs all messages on the `user-signup` and `customer-onboard` Pulsar topics as well as the last 5 emails sent to the `customer_onboard` Cassandra table.
+
+To verify the pipeline is working simply watch the console log as the app runs. 
+The output should look like similar to the following:
+----
+TO RABBIT user_signup => Signup[signupTier=ENTERPRISE, firstName=Samuel, lastName=Weiss, email=samuel.weiss@robutenia.eu, signupTimestamp=1673236049021]
+FROM PULSAR user-signup => Signup[signupTier=ENTERPRISE, firstName=Samuel, lastName=Weiss, email=samuel.weiss@robutenia.eu, signupTimestamp=1673236049021]
+FROM PULSAR customer-onboard => Customer[firstName=Samuel, lastName=Weiss, email=samuel.weiss@robutenia.eu, signupTimestamp=1673236049021]
+FROM CASSANDRA => latest (5/18) emails: carson.maddox@interdemconsulting.biz, aria.burke@interdemassociates.biz, layla.burks@memortech.com, joshua.chandler@furbainc.com, abigail.cooley@quickerinc.com...
+
+TO RABBIT user_signup => Signup[signupTier=BASIC, firstName=Arianna, lastName=Edwards, email=arianna.edwards@robutenia.eu, signupTimestamp=1673236054031]
+FROM PULSAR user-signup => Signup[signupTier=BASIC, firstName=Arianna, lastName=Edwards, email=arianna.edwards@robutenia.eu, signupTimestamp=1673236054031]
+
+TO RABBIT user_signup => Signup[signupTier=STANDARD, firstName=Kylie, lastName=Raymond, email=kylie.raymond@yrsa.eu, signupTimestamp=1673236059038]
+FROM PULSAR user-signup => Signup[signupTier=STANDARD, firstName=Kylie, lastName=Raymond, email=kylie.raymond@yrsa.eu, signupTimestamp=1673236059038]
+
+TO RABBIT user_signup => Signup[signupTier=ENTERPRISE, firstName=Nolan, lastName=Floyd, email=nolan.floyd@flyhighassociates.eu, signupTimestamp=1673236064045]
+FROM PULSAR user-signup => Signup[signupTier=ENTERPRISE, firstName=Nolan, lastName=Floyd, email=nolan.floyd@flyhighassociates.eu, signupTimestamp=1673236064045]
+FROM PULSAR customer-onboard => Customer[firstName=Nolan, lastName=Floyd, email=nolan.floyd@flyhighassociates.eu, signupTimestamp=1673236064045]
+FROM CASSANDRA => latest (5/19) emails: carson.maddox@interdemconsulting.biz, nolan.floyd@flyhighassociates.eu, aria.burke@interdemassociates.biz, layla.burks@memortech.com, joshua.chandler@furbainc.com...
+202
+----
+
+.View Pulsar function logs by executing the following command
+----
+docker logs pulsar
+----
+.which should contain signup logs such as
+----
+Processing Signup(signupTier=ENTERPRISE, firstName=Gavin, lastName=Wilson, email=gavin.wilson@beans.eu, signupTimestamp=1673196872351)
+    ENTERPRISE signup count: 1
+Converting to Signup(signupTier=ENTERPRISE, firstName=Gavin, lastName=Wilson, email=gavin.wilson@beans.eu, signupTimestamp=1673196872351)
+Processing Signup(signupTier=FREE, firstName=Nevaeh, lastName=Sexton, email=nevaeh.sexton@linger.eu, signupTimestamp=1673196877357)
+    FREE signup count: 1
+Processing Signup(signupTier=ENTERPRISE, firstName=Charlotte, lastName=Beach, email=charlotte.beach@quickerconsulting.eu, signupTimestamp=1673196882364)
+    ENTERPRISE signup count: 2
+Converting to Signup(signupTier=ENTERPRISE, firstName=Charlotte, lastName=Beach, email=charlotte.beach@quickerconsulting.eu, signupTimestamp=1673196882364)
+----
+
+==== Select from Cassandra
+Each `ENTERPRISE` signup should result in a record in the Cassandra table.
+To inspect all customer onboard records you can query the Cassandra table.
+
+.Invoke the `CQLSH` utility on the cassandra container w/ the following command
+----
+docker exec -it cassandra cqlsh cassandra
+----
+.From the `cqlsh>` prompt execute the following
+----
+use sample_pulsar_functions_keyspace;
+select * from customer_onboard;
+exit;
+----
+.which should produce output similar to
+----
+ customer_email                       | customer_details
+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------
+               molly.mckay@morsem.com |                   {"firstName":"Molly","lastName":"Mckay","email":"molly.mckay@morsem.com","signupTimestamp":1673196862339}
+                gavin.wilson@beans.eu |                   {"firstName":"Gavin","lastName":"Wilson","email":"gavin.wilson@beans.eu","signupTimestamp":1673196872351}
+               ryan.ramsey@felics.biz |                   {"firstName":"Ryan","lastName":"Ramsey","email":"ryan.ramsey@felics.biz","signupTimestamp":1673196892373}
+----
+
+=== Stop app and services
+Stop the sample app by entering `CTRL-C` in terminal it is running in.
+
+Stop all running services using Docker Compose with the following command:
+----
+docker-compose down -v
+----
+
+== Useful commands
+
+.Details about source
+    docker exec -ti pulsar bin/pulsar-admin sources get --name UserSignupRabbitSource
+
+.Details about sink
+    docker exec -ti pulsar bin/pulsar-admin sinks get --name CustomerOnboardCassandraSink
+
+.Details about function
+    docker exec -ti pulsar bin/pulsar-admin functions get --name UserSignupFunction
+
+.Consume messages from output topic of Signup function
+    docker exec -ti pulsar bin/pulsar-client consume customer_onboard -s "co-sub1" -p "Earliest" -n 100
