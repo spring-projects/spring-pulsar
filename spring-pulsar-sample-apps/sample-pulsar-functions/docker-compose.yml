@@ -1,0 +1,53 @@
+version: '3.5'
+
+services:
+  pulsar:
+    image: kezhenxu94/pulsar:latest
+    command: bin/pulsar standalone
+    ports:
+      - "6650:6650"
+      - "8080:8080"
+    container_name: pulsar
+    hostname: pulsar
+    environment:
+      PULSAR_MEM: " -Xms512m -Xmx512m -XX:MaxDirectMemorySize=1g"
+    volumes:
+      - ./connectors:/pulsar/connectors
+      - pulsardata:/pulsar/data
+      - pulsarconf:/pulsar/conf
+    restart: on-failure
+    networks:
+      - demo_pulsar_pipeline
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: on-failure
+    networks:
+      - demo_pulsar_pipeline
+
+  cassandra:
+    image: cassandra:latest
+    command: sh /cassandra-init.sh
+    ports:
+      - "9042:9042"
+    container_name: cassandra
+    hostname: cassandra
+    volumes:
+      - ./cassandra-init.sh:/cassandra-init.sh
+    restart: on-failure
+    networks:
+      - demo_pulsar_pipeline
+
+networks:
+  demo_pulsar_pipeline:
+    name: demo_pulsar_pipeline
+    driver: bridge
+
+volumes:
+  pulsardata:
+  pulsarconf:

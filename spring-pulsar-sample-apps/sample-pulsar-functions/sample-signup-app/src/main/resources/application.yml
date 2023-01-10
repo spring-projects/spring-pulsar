@@ -1,0 +1,5 @@
+spring:
+  cassandra:
+    contact-points: localhost
+    keyspace-name: sample_pulsar_functions_keyspace
+    local-datacenter: datacenter1

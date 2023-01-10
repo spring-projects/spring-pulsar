@@ -69,6 +69,28 @@ The action that occurs during the create/update operation is dependent on path "
 === Built-in Source and Sinks
 Apache Pulsar provides many source and sink connectors out-of-the-box, aka built-in connectors. To use a built-in connector simply set the `archive` to `builtin://<connector-type>` (eg `builtin://rabbit`).
 
+== Custom functions
+The details on how to develop and package custom functions can be found in the https://pulsar.apache.org/docs/2.10.x/functions-develop[Pulsar docs].
+However, at a high-level, the requirements are as follows:
+
+* Code uses Java8
+* Code implements either `java.util.Function` or `org.apache.pulsar.functions.api.Function`
+* Packaged as uber jar
+
+Once the function is built and packaged, there are several ways to make it available for function registration.
+
+=== file://
+The jar file can be uploaded to the server and then referenced via `file://` in the `jar` property of the function config
+
+=== local
+The jar file can remain local and then referenced via the local path in the `jar` property of the function config.
+
+=== http://
+The jar file can be made available via HTTP server and then referenced via `http(s)://` in the `jar` property of the function config
+
+=== function://
+The jar file can be uploaded to the Pulsar package manager and then referenced via `function://` in the `jar` property of the function config
+
 == Examples
 
 Here are some examples that show how to configure a `PulsarSource` bean which results in the `PulsarFunctionAdministration` auto-creating the backing Pulsar source connector.
