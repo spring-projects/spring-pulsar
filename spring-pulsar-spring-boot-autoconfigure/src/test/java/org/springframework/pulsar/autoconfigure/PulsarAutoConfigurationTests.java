@@ -254,18 +254,21 @@ class PulsarAutoConfigurationTests {
 			// NOTE: hasNoNullFieldsOrProperties() ensures object providers set
 			contextRunner.run(context -> assertThat(context).hasNotFailed().getBean(PulsarFunctionAdministration.class)
 					.hasFieldOrPropertyWithValue("failFast", Boolean.TRUE)
-					.hasFieldOrPropertyWithValue("propagateFailures", Boolean.TRUE).hasNoNullFieldsOrProperties()
+					.hasFieldOrPropertyWithValue("propagateFailures", Boolean.TRUE)
+					.hasFieldOrPropertyWithValue("propagateStopFailures", Boolean.FALSE).hasNoNullFieldsOrProperties()
 					.extracting("pulsarAdministration").isSameAs(context.getBean(PulsarAdministration.class)));
 		}
 
 		@Test
 		void functionSupportCanBeConfigured() {
 			contextRunner
-					.withPropertyValues("spring.pulsar.fu,nction.fail-fast=false",
-							"spring.pulsar.function.propagate-failures=false")
+					.withPropertyValues("spring.pulsar.function.fail-fast=false",
+							"spring.pulsar.function.propagate-failures=false",
+							"spring.pulsar.function.propagate-stop-failures=true")
 					.run(context -> assertThat(context).hasNotFailed().getBean(PulsarFunctionAdministration.class)
 							.hasFieldOrPropertyWithValue("failFast", Boolean.FALSE)
-							.hasFieldOrPropertyWithValue("propagateFailures", Boolean.FALSE));
+							.hasFieldOrPropertyWithValue("propagateFailures", Boolean.FALSE)
+							.hasFieldOrPropertyWithValue("propagateStopFailures", Boolean.TRUE));
 		}
 
 		@Test

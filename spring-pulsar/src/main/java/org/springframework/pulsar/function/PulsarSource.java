@@ -23,15 +23,22 @@ import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.common.functions.UpdateOptions;
 import org.apache.pulsar.common.io.SourceConfig;
 
+import org.springframework.pulsar.PulsarException;
+
 /**
  * Represents a Pulsar Source backed by a {@link SourceConfig}.
  * @param config the source details
+ * @param stopPolicy the action to take on the source when the server is stopped
  * @param updateOptions the options to use during an update operation (optional)
  *
  * @author Chris Bono
  */
-public record PulsarSource(SourceConfig config,
+public record PulsarSource(SourceConfig config, FunctionStopPolicy stopPolicy,
 		@Nullable UpdateOptions updateOptions) implements PulsarFunctionOperations<SourceConfig> {
+
+	public PulsarSource(SourceConfig config, @Nullable UpdateOptions updateOptions) {
+		this(config, FunctionStopPolicy.DELETE, updateOptions);
+	}
 
 	@Override
 	public String name() {
@@ -71,5 +78,25 @@ public record PulsarSource(SourceConfig config,
 	@Override
 	public void create(PulsarAdmin admin) throws PulsarAdminException {
 		admin.sources().createSource(config(), archive());
+	}
+
+	@Override
+	public void stop(PulsarAdmin admin) {
+		try {
+			admin.sources().stopSource(config().getTenant(), config().getNamespace(), config().getName());
+		}
+		catch (PulsarAdminException e) {
+			throw new PulsarException(e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void delete(PulsarAdmin admin) {
+		try {
+			admin.sources().deleteSource(config().getTenant(), config().getNamespace(), config().getName());
+		}
+		catch (PulsarAdminException e) {
+			throw new PulsarException(e.getMessage(), e);
+		}
 	}
 }

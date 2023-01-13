@@ -1669,9 +1669,16 @@ public class PulsarProperties {
 		private Boolean failFast = Boolean.TRUE;
 
 		/**
-		 * Whether to throw an exception if any failure is encountered during processing.
+		 * Whether to throw an exception if any failure is encountered during server
+		 * startup while creating/updating functions.
 		 */
 		private Boolean propagateFailures = Boolean.TRUE;
+
+		/**
+		 * Whether to throw an exception if any failure is encountered during server
+		 * shutdown while enforcing stop policy on functions.
+		 */
+		private Boolean propagateStopFailures = Boolean.FALSE;
 
 		public Boolean getFailFast() {
 			return this.failFast;
@@ -1687,6 +1694,14 @@ public class PulsarProperties {
 
 		public void setPropagateFailures(Boolean propagateFailures) {
 			this.propagateFailures = propagateFailures;
+		}
+
+		public Boolean getPropagateStopFailures() {
+			return this.propagateStopFailures;
+		}
+
+		public void setPropagateStopFailures(Boolean propagateStopFailures) {
+			this.propagateStopFailures = propagateStopFailures;
 		}
 
 	}

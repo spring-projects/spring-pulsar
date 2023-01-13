@@ -462,14 +462,17 @@ public class PulsarPropertiesTests {
 			// check defaults
 			assertThat(properties.getFunction().getFailFast()).isTrue();
 			assertThat(properties.getFunction().getPropagateFailures()).isTrue();
+			assertThat(properties.getFunction().getPropagateStopFailures()).isFalse();
 
 			// set values and verify
 			props.put("spring.pulsar.function.fail-fast", "false");
 			props.put("spring.pulsar.function.propagate-failures", "false");
+			props.put("spring.pulsar.function.propagate-stop-failures", "true");
 			bind(props);
 
 			assertThat(properties.getFunction().getFailFast()).isFalse();
 			assertThat(properties.getFunction().getPropagateFailures()).isFalse();
+			assertThat(properties.getFunction().getPropagateStopFailures()).isTrue();
 		}
 
 	}

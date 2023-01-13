@@ -27,13 +27,15 @@ By default, the application tries to connect to a local Pulsar instance at `http
 However, because it leverages the already configured `PulsarAdministration`, see <<pulsar-admin.adoc#pulsar-admin-client,Pulsar Admin Client>> for available client options (including authentication). Other available application properties can be found in the <<application-properties.adoc#appendix.application-properties.pulsar-function,Appendix>> prefixed by `spring.pulsar.function`.
 
 == Automatic Function Management
-On initialization, the framework finds all `PulsarFunction`, `PulsarSink`, and `PulsarSource` beans in the application context.
+On application startup, the framework finds all `PulsarFunction`, `PulsarSink`, and `PulsarSource` beans in the application context.
 For each bean, the corresponding Pulsar function is either created or updated.
 The proper API is called based on function type, function config, and whether the function already exists.
 
 NOTE: The `PulsarFunction`, `PulsarSink`, and `PulsarSource` beans are simple wrappers around the Apache Pulsar config objects `FunctionConfig`, `SinkConfig`, and `SourceConfig`, respectively.
 Due to the large number of supported connectors (and their varied configurations) the framework does not attempt to create a configuration properties hierarchy to mirror the varied Apache Pulsar connectors.
 Instead, the burden is on the user to supply the full config object and then the framework handles the management (create/update) using the supplied config.
+
+On application shutdown, all functions that were processed during application startup have their stop policy enforced and are either left alone, stopped, or deleted from the Pulsar server.
 
 == Limitations
 
@@ -148,3 +150,5 @@ PulsarSource rabbitSourceWithBootProps(RabbitProperties props) {
 }
 ----
 ====
+
+TIP: For a more elaborate example see the link:{github}/blob/main/spring-pulsar-sample-apps/sample-pulsar-functions/README.adoc[Sample Stream Pipeline with Pulsar Functions] sample app

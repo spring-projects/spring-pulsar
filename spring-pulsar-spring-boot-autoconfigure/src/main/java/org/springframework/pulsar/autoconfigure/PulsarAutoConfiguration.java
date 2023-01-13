@@ -124,7 +124,8 @@ public class PulsarAutoConfiguration {
 			ObjectProvider<PulsarFunction> pulsarFunctions, ObjectProvider<PulsarSink> pulsarSinks,
 			ObjectProvider<PulsarSource> pulsarSources) {
 		return new PulsarFunctionAdministration(pulsarAdministration, pulsarFunctions, pulsarSinks, pulsarSources,
-				this.properties.getFunction().getFailFast(), this.properties.getFunction().getPropagateFailures());
+				this.properties.getFunction().getFailFast(), this.properties.getFunction().getPropagateFailures(),
+				this.properties.getFunction().getPropagateStopFailures());
 	}
 
 }
