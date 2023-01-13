@@ -23,15 +23,22 @@ import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.common.functions.UpdateOptions;
 import org.apache.pulsar.common.io.SinkConfig;
 
+import org.springframework.pulsar.PulsarException;
+
 /**
  * Represents a Pulsar Sink backed by a {@link SinkConfig}.
  * @param config the sink details
+ * @param stopPolicy the action to take on the sink when the server is stopped
  * @param updateOptions the options to use during an update operation (optional)
  *
  * @author Chris Bono
  */
-public record PulsarSink(SinkConfig config,
+public record PulsarSink(SinkConfig config, FunctionStopPolicy stopPolicy,
 		@Nullable UpdateOptions updateOptions) implements PulsarFunctionOperations<SinkConfig> {
+
+	public PulsarSink(SinkConfig config, @Nullable UpdateOptions updateOptions) {
+		this(config, FunctionStopPolicy.DELETE, updateOptions);
+	}
 
 	@Override
 	public String name() {
@@ -71,5 +78,25 @@ public record PulsarSink(SinkConfig config,
 	@Override
 	public void create(PulsarAdmin admin) throws PulsarAdminException {
 		admin.sinks().createSink(config(), archive());
+	}
+
+	@Override
+	public void stop(PulsarAdmin admin) {
+		try {
+			admin.sinks().stopSink(config().getTenant(), config().getNamespace(), config().getName());
+		}
+		catch (PulsarAdminException e) {
+			throw new PulsarException(e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void delete(PulsarAdmin admin) {
+		try {
+			admin.sinks().deleteSink(config().getTenant(), config().getNamespace(), config().getName());
+		}
+		catch (PulsarAdminException e) {
+			throw new PulsarException(e.getMessage(), e);
+		}
 	}
 }

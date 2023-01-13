@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.function.PulsarFunction;
+import org.springframework.pulsar.function.PulsarFunctionOperations.FunctionStopPolicy;
 import org.springframework.pulsar.function.PulsarSink;
 import org.springframework.pulsar.function.PulsarSource;
 import org.springframework.pulsar.sample.signup.model.SignupGenerator;
@@ -59,7 +60,7 @@ class AppConfig {
 		SourceConfig sourceConfig = SourceConfig.builder().tenant("public").namespace("default")
 				.name("UserSignupRabbitSource").archive("builtin://rabbitmq").topicName("user-signup").configs(configs)
 				.build();
-		return new PulsarSource(sourceConfig, null);
+		return new PulsarSource(sourceConfig, FunctionStopPolicy.DELETE, null);
 	}
 
 	@Bean
@@ -74,7 +75,7 @@ class AppConfig {
 		FunctionConfig functionConfig = FunctionConfig.builder().tenant("public").namespace("default")
 				.name("UserSignupFunction").className("org.springframework.pulsar.sample.signup.SignupFunction")
 				.jar(absPathToFunctionJar).inputs(List.of("user-signup")).build();
-		return new PulsarFunction(functionConfig, null);
+		return new PulsarFunction(functionConfig, FunctionStopPolicy.DELETE, null);
 	}
 
 	@Bean
@@ -88,7 +89,7 @@ class AppConfig {
 		SinkConfig sinkConfig = SinkConfig.builder().tenant("public").namespace("default")
 				.name("CustomerOnboardCassandraSink").archive("builtin://cassandra").inputs(List.of("customer-onboard"))
 				.configs(configs).build();
-		return new PulsarSink(sinkConfig, null);
+		return new PulsarSink(sinkConfig, FunctionStopPolicy.DELETE, null);
 	}
 
 }

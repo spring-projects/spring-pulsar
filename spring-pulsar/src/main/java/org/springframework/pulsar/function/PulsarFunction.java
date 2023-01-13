@@ -23,15 +23,22 @@ import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.common.functions.FunctionConfig;
 import org.apache.pulsar.common.functions.UpdateOptions;
 
+import org.springframework.pulsar.PulsarException;
+
 /**
  * Represents a user-defined Pulsar Function backed by a {@link FunctionConfig}.
  * @param config the function details
+ * @param stopPolicy the action to take on the function when the server is stopped
  * @param updateOptions the options to use during an update operation (optional)
  *
  * @author Chris Bono
  */
-public record PulsarFunction(FunctionConfig config,
+public record PulsarFunction(FunctionConfig config, FunctionStopPolicy stopPolicy,
 		@Nullable UpdateOptions updateOptions) implements PulsarFunctionOperations<FunctionConfig> {
+
+	public PulsarFunction(FunctionConfig config, @Nullable UpdateOptions updateOptions) {
+		this(config, FunctionStopPolicy.DELETE, updateOptions);
+	}
 
 	@Override
 	public String name() {
@@ -71,5 +78,25 @@ public record PulsarFunction(FunctionConfig config,
 	@Override
 	public void create(PulsarAdmin admin) throws PulsarAdminException {
 		admin.functions().createFunction(config(), archive());
+	}
+
+	@Override
+	public void stop(PulsarAdmin admin) {
+		try {
+			admin.functions().stopFunction(config().getTenant(), config().getNamespace(), config().getName());
+		}
+		catch (PulsarAdminException e) {
+			throw new PulsarException(e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void delete(PulsarAdmin admin) {
+		try {
+			admin.functions().deleteFunction(config().getTenant(), config().getNamespace(), config().getName());
+		}
+		catch (PulsarAdminException e) {
+			throw new PulsarException(e.getMessage(), e);
+		}
 	}
 }

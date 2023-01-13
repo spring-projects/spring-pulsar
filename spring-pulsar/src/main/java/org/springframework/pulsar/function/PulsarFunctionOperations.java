@@ -26,6 +26,7 @@ import org.apache.pulsar.common.io.SinkConfig;
 import org.apache.pulsar.common.io.SourceConfig;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.PulsarException;
 
 /**
  * Provides operations for a particular function type.
@@ -73,47 +74,16 @@ public interface PulsarFunctionOperations<T> {
 	String archive();
 
 	/**
-	 * Gets the configuration details for an existing function.
-	 * @param admin the admin client
-	 * @return the current config of the existing function
-	 * @throws NotFoundException if function does not exist
-	 * @throws PulsarAdminException if anything else goes wrong
+	 * Gets the action to take on the function when the server is stopped.
+	 * @return the function stop policy
 	 */
-	T get(PulsarAdmin admin) throws PulsarAdminException;
-
-	/**
-	 * Updates the function using the url-based update api.
-	 * @param admin the admin client
-	 * @throws PulsarAdminException if anything else goes wrong
-	 */
-	void updateWithUrl(PulsarAdmin admin) throws PulsarAdminException;
-
-	/**
-	 * Updates the function using the file-based update api.
-	 * @param admin the admin client
-	 * @throws PulsarAdminException if anything else goes wrong
-	 */
-	void update(PulsarAdmin admin) throws PulsarAdminException;
-
-	/**
-	 * Creates the function using the url-based create api.
-	 * @param admin the admin client
-	 * @throws PulsarAdminException if anything else goes wrong
-	 */
-	void createWithUrl(PulsarAdmin admin) throws PulsarAdminException;
-
-	/**
-	 * Creates the function using the file-based create api.
-	 * @param admin the admin client
-	 * @throws PulsarAdminException if anything else goes wrong
-	 */
-	void create(PulsarAdmin admin) throws PulsarAdminException;
+	FunctionStopPolicy stopPolicy();
 
 	/**
 	 * Determines if a function already exists.
 	 * @param admin the admin client
 	 * @return {@code true} if function already exists
-	 * @throws PulsarAdminException if anything else goes wrong
+	 * @throws PulsarAdminException if anything goes wrong
 	 */
 	default boolean functionExists(PulsarAdmin admin) throws PulsarAdminException {
 		return getIfExists(admin).isPresent();
@@ -137,6 +107,57 @@ public interface PulsarFunctionOperations<T> {
 	}
 
 	/**
+	 * Gets the configuration details for an existing function.
+	 * @param admin the admin client
+	 * @return the current config of the existing function
+	 * @throws NotFoundException if function does not exist
+	 * @throws PulsarAdminException if anything else goes wrong
+	 */
+	T get(PulsarAdmin admin) throws PulsarAdminException;
+
+	/**
+	 * Creates the function using the file-based create api.
+	 * @param admin the admin client
+	 * @throws PulsarAdminException if anything goes wrong
+	 */
+	void create(PulsarAdmin admin) throws PulsarAdminException;
+
+	/**
+	 * Creates the function using the url-based create api.
+	 * @param admin the admin client
+	 * @throws PulsarAdminException if anything goes wrong
+	 */
+	void createWithUrl(PulsarAdmin admin) throws PulsarAdminException;
+
+	/**
+	 * Updates the function using the file-based update api.
+	 * @param admin the admin client
+	 * @throws PulsarAdminException if anything goes wrong
+	 */
+	void update(PulsarAdmin admin) throws PulsarAdminException;
+
+	/**
+	 * Updates the function using the url-based update api.
+	 * @param admin the admin client
+	 * @throws PulsarAdminException if anything goes wrong
+	 */
+	void updateWithUrl(PulsarAdmin admin) throws PulsarAdminException;
+
+	/**
+	 * Stops the function.
+	 * @param admin the admin client
+	 * @throws PulsarException if anything goes wrong
+	 */
+	void stop(PulsarAdmin admin);
+
+	/**
+	 * Deletes the function.
+	 * @param admin the admin client
+	 * @throws PulsarException if anything goes wrong
+	 */
+	void delete(PulsarAdmin admin);
+
+	/**
 	 * The type of function the operations handle.
 	 */
 	enum FunctionType {
@@ -149,6 +170,22 @@ public interface PulsarFunctionOperations<T> {
 
 		/** A Pulsar source connector. */
 		SOURCE
+
+	}
+
+	/**
+	 * The action to take on the function when the server stops.
+	 */
+	enum FunctionStopPolicy {
+
+		/** Do nothing - leave the function alone. */
+		NONE,
+
+		/** Stop the function if running. */
+		STOP,
+
+		/** Delete the function. */
+		DELETE
 
 	}
 

@@ -39,6 +39,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarFunctionAdministration.PulsarFunctionException;
 import org.springframework.pulsar.function.PulsarFunctionOperations;
+import org.springframework.pulsar.function.PulsarFunctionOperations.FunctionStopPolicy;
 import org.springframework.pulsar.function.PulsarSource;
 
 /**
@@ -105,7 +106,7 @@ class PulsarFunctionTests implements PulsarTestContainerSupport {
 			SourceConfig sourceConfig = SourceConfig.builder().tenant("public").namespace("default")
 					.name("rabbit-test-source").archive("builtin://rabbitmq").topicName("incoming_rabbit")
 					.configs(configs).build();
-			return new PulsarSource(sourceConfig, null);
+			return new PulsarSource(sourceConfig, FunctionStopPolicy.NONE, null);
 		}
 
 	}
