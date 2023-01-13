@@ -33,6 +33,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
+import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -72,13 +73,14 @@ class PulsarFunctionTests implements PulsarTestContainerSupport {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		// Again, this is a temp solution to verification of this feature
-		PulsarFunctionException thrown = catchThrowableOfType(
+		ApplicationContextException thrown = catchThrowableOfType(
 				() -> app.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 						"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
 						"--spring.rabbitmq.host=" + rabbit.getHost(), "--spring.rabbitmq.port=" + rabbit.getAmqpPort()),
-				PulsarFunctionException.class);
-
-		Map<PulsarFunctionOperations<?>, Exception> failures = thrown.getFailures();
+				ApplicationContextException.class);
+		assertThat(thrown).hasCauseInstanceOf(PulsarFunctionException.class);
+		PulsarFunctionException cause = (PulsarFunctionException) thrown.getCause();
+		Map<PulsarFunctionOperations<?>, Exception> failures = cause.getFailures();
 		assertThat(failures).hasSize(1);
 		Map.Entry<PulsarFunctionOperations<?>, Exception> failureEntry = failures.entrySet().iterator().next();
 		assertThat(failureEntry.getKey()).isInstanceOf(PulsarSource.class)
