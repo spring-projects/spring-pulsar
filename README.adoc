@@ -43,15 +43,22 @@ You also need JDK 17.
 ./gradlew publishToMavenLocal
 ----
 
-This will build all of the jars and documentation and publish them to your local Maven cache.
+This will build all jars and documentation and publish them to your local Maven cache.
 It won't run any of the tests.
-If you want to build everything, use the `build` task:
+If you want to build everything and run tests, use the `build` task:
 
 [source,shell]
 ----
-./gradlew build
+./gradlew clean build
 ----
 
+This will build everything and run all tests except the `PulsarFunctionAdministrationIntegrationTests` which requires the _Pulsar RabbitMQ Connector_ to be downloaded prior to running.
+To download the connector (one time only) and run the integration test, add a system property to the task as follows:
+
+[source,shell]
+----
+./gradlew clean build -DdownloadRabbitConnector=true
+----
 
 
 == Modules
@@ -77,6 +84,9 @@ Provides a dependency descriptor that can be included in your application to eas
 
 === spring-pulsar-reactive-spring-boot-starter
 Provides a dependency descriptor that can be included in your application to easily start using Spring Pulsar in Reactive and imperative fashions.
+
+=== spring-pulsar-spring-cloud-stream-binder
+Provides a Spring Cloud Stream Binder implementation for Apache Pulsar.
 
 === spring-pulsar-sample-apps
 Provides sample applications to illustrate Spring Pulsar functionality as well as provide ability for quick manual verification during development.
