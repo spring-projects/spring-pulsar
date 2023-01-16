@@ -9,4 +9,5 @@
     </root>
     <logger name="org.testcontainers" level="ERROR"/>
     <logger name="com.github.dockerjava" level="ERROR"/>
+	<logger name="org.springframework.pulsar.function" level="DEBUG"/>
 </configuration>

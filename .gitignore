@@ -15,4 +15,5 @@ build
 build.log
 out
 target
+**/connectors/
 .DS_Store

@@ -31,8 +31,7 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers(disabledWithoutDocker = true)
 public interface PulsarTestContainerSupport {
 
-	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(
-			isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage()).withFunctionsWorker();
+	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(getPulsarImage());
 
 	@BeforeAll
 	static void startContainer() {
@@ -43,8 +42,8 @@ public interface PulsarTestContainerSupport {
 		return PULSAR_CONTAINER.getPulsarBrokerUrl();
 	}
 
-	static String getHttpServiceUrl() {
-		return PULSAR_CONTAINER.getHttpServiceUrl();
+	static DockerImageName getPulsarImage() {
+		return isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage();
 	}
 
 	private static boolean isRunningOnMacM1() {

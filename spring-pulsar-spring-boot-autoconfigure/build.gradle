@@ -1,6 +1,7 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
 	id 'org.springframework.pulsar.configuration-properties'
+	id "de.undercouch.download" version "5.3.0"
 }
 
 description = 'Spring Pulsar Spring Boot Auto-configuration'
@@ -23,8 +24,31 @@ dependencies {
 	testImplementation 'org.testcontainers:pulsar'
 	// used by PulsarFunctionTests
 	testImplementation 'org.testcontainers:rabbitmq'
+	testImplementation 'org.springframework.boot:spring-boot-starter-amqp'
 }
 
 test {
 	testLogging.showStandardStreams = true
+}
+
+task downloadRabbitConnector {
+	onlyIf {
+		System.getProperty("downloadRabbitConnector") == "true"
+	}
+	doLast {
+		try {
+			download.run {
+				println "Downloading Rabbit connector to 'src/test/resources/connectors/' (one time only if not already downloaded)..."
+				src 'https://archive.apache.org/dist/pulsar/pulsar-2.10.2/connectors/pulsar-io-rabbitmq-2.10.2.nar'
+				dest "$buildDir/../src/test/resources/connectors/pulsar-io-rabbitmq-2.10.2.nar"
+				overwrite false
+			}
+		} catch (Exception ex) {
+			println "Failed to download rabbit connector: $ex"
+		}
+	}
+}
+
+project.afterEvaluate {
+	compileTestJava.dependsOn downloadRabbitConnector
 }
