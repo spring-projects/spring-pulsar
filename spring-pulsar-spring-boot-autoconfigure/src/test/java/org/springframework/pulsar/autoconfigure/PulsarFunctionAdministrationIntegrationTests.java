@@ -111,8 +111,8 @@ class PulsarFunctionAdministrationIntegrationTests {
 				"--spring.rabbitmq.host=" + RABBITMQ_CONTAINER.getHost(),
 				"--spring.rabbitmq.port=" + RABBITMQ_CONTAINER.getAmqpPort())) {
 
-			// Give source 10s to get ready before sending messages to rabbit
-			Thread.sleep(10000);
+			// Give source time to get ready
+			Thread.sleep(20000);
 
 			// Send messages to rabbit and wait for them to come through the rabbit source
 			RabbitTemplate rabbitTemplate = context.getBean(RabbitTemplate.class);
@@ -134,8 +134,8 @@ class PulsarFunctionAdministrationIntegrationTests {
 				"--spring.rabbitmq.host=" + RABBITMQ_CONTAINER.getHost(),
 				"--spring.rabbitmq.port=" + RABBITMQ_CONTAINER.getAmqpPort())) {
 
-			// Give the source a few seconds to get ready
-			Thread.sleep(10000);
+			// Give source time to get ready
+			Thread.sleep(20000);
 
 			// Verify the sources are up and running
 			try (PulsarAdmin admin = getAdmin()) {
