@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 import org.apache.pulsar.client.impl.schema.ProtobufSchema;
+import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
@@ -44,7 +45,7 @@ import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
-import org.springframework.pulsar.core.SchemaUtils;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
@@ -148,6 +149,12 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
 		PulsarContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
 		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
+		SchemaResolver schemaResolver = pulsarContainerProperties.getSchemaResolver();
+
+		// TODO refactor this all out later to SchemaResolver
+		// ResolvableType messageType = resolvableType(messageParameter);
+		// Schema<?> schema = schemaResolver.getSchema(schemaType, messageType);
+
 		if (schemaType != SchemaType.NONE) {
 			switch (schemaType) {
 				case STRING -> pulsarContainerProperties.setSchema(Schema.STRING);
@@ -179,15 +186,23 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 					pulsarContainerProperties.setSchema(messageSchema);
 				}
 				case KEY_VALUE -> {
-					Schema<?> messageSchema = getMessageKeyValueSchema(messageParameter);
+					Schema<?> messageSchema = getMessageKeyValueSchema(schemaResolver, messageParameter);
 					pulsarContainerProperties.setSchema(messageSchema);
 				}
 			}
 		}
 		else {
 			if (messageParameter != null) {
-				Schema<?> messageSchema = getMessageSchema(messageParameter,
-						(messageClass) -> SchemaUtils.getSchema(messageClass, false));
+
+				Schema<?> messageSchema = null;
+				ResolvableType type = resolvableType(messageParameter);
+				if (KeyValue.class.isAssignableFrom(type.getRawClass())) {
+					messageSchema = getMessageKeyValueSchema(schemaResolver, messageParameter);
+				}
+				else {
+					messageSchema = getMessageSchema(messageParameter,
+							(messageClass) -> schemaResolver.getSchema(messageClass, false));
+				}
 				if (messageSchema != null) {
 					pulsarContainerProperties.setSchema(messageSchema);
 				}
@@ -210,12 +225,12 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		return schemaFactory.apply(messageClass);
 	}
 
-	private Schema<?> getMessageKeyValueSchema(MethodParameter messageParameter) {
+	private Schema<?> getMessageKeyValueSchema(SchemaResolver schemaResolver, MethodParameter messageParameter) {
 		ResolvableType messageType = resolvableType(messageParameter);
 		Class<?> keyClass = messageType.resolveGeneric(0);
 		Class<?> valueClass = messageType.resolveGeneric(1);
-		Schema<? extends Class<?>> keySchema = SchemaUtils.getSchema(keyClass);
-		Schema<? extends Class<?>> valueSchema = SchemaUtils.getSchema(valueClass);
+		Schema<? extends Class<?>> keySchema = schemaResolver.getSchema(keyClass);
+		Schema<? extends Class<?>> valueSchema = schemaResolver.getSchema(valueClass);
 		return Schema.KeyValue(keySchema, valueSchema, KeyValueEncodingType.INLINE);
 	}
 

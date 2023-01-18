@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.pulsar.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -58,6 +59,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	@Nullable
 	private final List<ProducerInterceptor> interceptors;
 
+	private final SchemaResolver schemaResolver;
+
 	@Nullable
 	private final ObservationRegistry observationRegistry;
 
@@ -70,37 +73,40 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	private Schema<T> schema;
 
 	/**
-	 * Construct a template instance.
+	 * Construct a template instance without interceptors that uses the default schema
+	 * resolver.
 	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory) {
-		this(producerFactory, null);
+		this(producerFactory, Collections.emptyList());
 	}
 
 	/**
-	 * Construct a template instance with optional interceptors.
+	 * Construct a template instance with interceptors that uses the default schema
+	 * resolver.
 	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 * @param interceptors the interceptors to add to the producer.
 	 */
-	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, @Nullable List<ProducerInterceptor> interceptors) {
-		this(producerFactory, interceptors, null, null);
+	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
+		this(producerFactory, interceptors, new DefaultSchemaResolver(), null, null);
 	}
 
 	/**
-	 * Construct a template instance with optional interceptors and observation
-	 * configuration.
+	 * Construct a template instance with optional observation configuration.
 	 * @param producerFactory the factory used to create the backing Pulsar producers
-	 * @param interceptors the optional list of interceptors to add to the producer
+	 * @param interceptors the list of interceptors to add to the producer
+	 * @param schemaResolver the schema resolver to use
 	 * @param observationRegistry the registry to record observations with or {@code null}
 	 * to not record observations
 	 * @param observationConvention the optional custom observation convention to use when
 	 * recording observations
 	 */
-	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, @Nullable List<ProducerInterceptor> interceptors,
-			@Nullable ObservationRegistry observationRegistry,
+	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors,
+			SchemaResolver schemaResolver, @Nullable ObservationRegistry observationRegistry,
 			@Nullable PulsarTemplateObservationConvention observationConvention) {
 		this.producerFactory = producerFactory;
 		this.interceptors = interceptors;
+		this.schemaResolver = schemaResolver;
 		this.observationRegistry = observationRegistry;
 		this.observationConvention = observationConvention;
 	}
@@ -204,7 +210,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	private Producer<T> prepareProducerForSend(@Nullable String topic, T message,
 			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
 			throws PulsarClientException {
-		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
+		Schema<T> schema = this.schema != null ? this.schema : this.schemaResolver.getSchema(message);
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(this.interceptors)) {
 			customizers.add(builder -> this.interceptors.forEach(builder::intercept));

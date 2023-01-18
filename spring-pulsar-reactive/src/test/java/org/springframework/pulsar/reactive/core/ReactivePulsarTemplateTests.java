@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -39,6 +41,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
 
 import reactor.core.publisher.Flux;
@@ -52,12 +55,12 @@ import reactor.core.publisher.Mono;
 class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
-	void sendMessagesWithSpecificSchemaTest() throws Exception {
-		String topic = "smt-specific-schema-topic-reactive";
+	void sendMessagesWithSpecificSchema() throws Exception {
+		String topic = "smt-specific-schema-reactive-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
 			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("test-specific-schema-subscription").subscribe()) {
+					.subscriptionName("smt-specific-schema-reactive-sub").subscribe()) {
 				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
 				senderSpec.setTopicName(topic);
 				org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory<Foo> producerFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory<>(
@@ -76,6 +79,42 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3))
 							.extracting(Message::getValue).isEqualTo(foos.get(i));
 				}
+			}
+		}
+	}
+
+	@Test
+	void sendMessagesWithSpecificSchemaAndCustomTypeMappings() throws Exception {
+		String topic = "smt-specific-schema-custom-reactive-topic";
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
+					.subscriptionName("smt-specific-schema-custom-reactive-sub").subscribe()) {
+				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
+				senderSpec.setTopicName(topic);
+				org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory<Foo> producerFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory<>(
+						client, senderSpec, null);
+				// Custom schema resolver allows not calling setSchema on template
+				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver(
+						Collections.singletonMap(Foo.class, Schema.JSON(Foo.class)));
+				org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<Foo> pulsarTemplate = new org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<>(
+						producerFactory, schemaResolver);
+
+				List<Foo> foos = new ArrayList<>();
+				for (int i = 0; i < 10; i++) {
+					foos.add(new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID()));
+				}
+				pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
+
+				// TODO figure out why ordering is not preserved when template does not
+				// have schema set
+				List<Foo> foos2 = new ArrayList<>();
+				for (int i = 0; i < 10; i++) {
+					CompletableFuture<Message<Foo>> receiveFuture = consumer.receiveAsync();
+					assertThat(receiveFuture).succeedsWithin(Duration.ofSeconds(3));
+					foos2.add(receiveFuture.get().getValue());
+				}
+				assertThat(foos).containsExactlyInAnyOrderElementsOf(foos2);
 			}
 		}
 	}

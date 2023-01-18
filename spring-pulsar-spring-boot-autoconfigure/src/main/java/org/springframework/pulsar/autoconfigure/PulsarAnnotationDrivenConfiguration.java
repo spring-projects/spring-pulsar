@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.unit.DataSize;
@@ -55,9 +56,11 @@ public class PulsarAnnotationDrivenConfiguration {
 	ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
 			ObjectProvider<PulsarConsumerFactory<Object>> consumerFactoryProvider,
 			ObjectProvider<ObservationRegistry> observationRegistryProvider,
-			ObjectProvider<PulsarListenerObservationConvention> observationConventionProvider) {
+			ObjectProvider<PulsarListenerObservationConvention> observationConventionProvider,
+			SchemaResolver schemaResolver) {
 
 		PulsarContainerProperties containerProperties = new PulsarContainerProperties();
+		containerProperties.setSchemaResolver(schemaResolver);
 		containerProperties.setSubscriptionType(this.pulsarProperties.getConsumer().getSubscriptionType());
 		containerProperties.setObservationConvention(observationConventionProvider.getIfUnique());
 

@@ -33,10 +33,12 @@ import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.function.PulsarFunction;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarSink;
@@ -65,26 +67,26 @@ public class PulsarAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarClientConfiguration.class)
+	@ConditionalOnMissingBean
 	public PulsarClientConfiguration pulsarClientConfiguration() {
 		return new PulsarClientConfiguration(this.properties.buildClientProperties());
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarClientFactoryBean.class)
+	@ConditionalOnMissingBean
 	public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
 		return new PulsarClientFactoryBean(pulsarClientConfiguration);
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarProducerFactory.class)
+	@ConditionalOnMissingBean
 	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "false")
 	public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient) {
 		return new DefaultPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties());
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarProducerFactory.class)
+	@ConditionalOnMissingBean
 	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "true", matchIfMissing = true)
 	public PulsarProducerFactory<?> cachingPulsarProducerFactory(PulsarClient pulsarClient) {
 		return new CachingPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties(),
@@ -94,31 +96,37 @@ public class PulsarAutoConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarTemplate.class)
+	@ConditionalOnMissingBean
 	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory,
-			ObjectProvider<ProducerInterceptor> interceptorsProvider,
+			ObjectProvider<ProducerInterceptor> interceptorsProvider, SchemaResolver schemaResolver,
 			ObjectProvider<ObservationRegistry> observationRegistryProvider,
 			ObjectProvider<PulsarTemplateObservationConvention> observationConventionProvider) {
 		return new PulsarTemplate<>(pulsarProducerFactory, interceptorsProvider.orderedStream().toList(),
-				this.properties.getTemplate().isObservationsEnabled() ? observationRegistryProvider.getIfUnique()
-						: null,
+				schemaResolver, this.properties.getTemplate().isObservationsEnabled()
+						? observationRegistryProvider.getIfUnique() : null,
 				observationConventionProvider.getIfUnique());
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarConsumerFactory.class)
+	@ConditionalOnMissingBean
+	public SchemaResolver schemaResolver() {
+		return new DefaultSchemaResolver();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
 	public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
 		return new DefaultPulsarConsumerFactory<>(pulsarClient, this.properties.buildConsumerProperties());
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarAdministration.class)
+	@ConditionalOnMissingBean
 	public PulsarAdministration pulsarAdministration() {
 		return new PulsarAdministration(this.properties.buildAdminProperties());
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(PulsarFunctionAdministration.class)
+	@ConditionalOnMissingBean
 	@ConditionalOnProperty(name = "spring.pulsar.function.enabled", havingValue = "true", matchIfMissing = true)
 	public PulsarFunctionAdministration pulsarFunctionAdministration(PulsarAdministration pulsarAdministration,
 			ObjectProvider<PulsarFunction> pulsarFunctions, ObjectProvider<PulsarSink> pulsarSinks,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
@@ -46,9 +47,11 @@ public class PulsarReactiveAnnotationDrivenConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(name = "reactivePulsarListenerContainerFactory")
 	DefaultReactivePulsarListenerContainerFactory<?> reactivePulsarListenerContainerFactory(
-			ObjectProvider<ReactivePulsarConsumerFactory<Object>> consumerFactoryProvider) {
+			ObjectProvider<ReactivePulsarConsumerFactory<Object>> consumerFactoryProvider,
+			SchemaResolver schemaResolver) {
 
 		ReactivePulsarContainerProperties<Object> containerProperties = new ReactivePulsarContainerProperties<>();
+		containerProperties.setSchemaResolver(schemaResolver);
 		containerProperties.setSubscriptionType(this.properties.getConsumer().getSubscriptionType());
 
 		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
