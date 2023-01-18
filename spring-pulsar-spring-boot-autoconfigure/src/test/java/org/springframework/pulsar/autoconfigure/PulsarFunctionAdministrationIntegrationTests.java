@@ -79,17 +79,26 @@ class PulsarFunctionAdministrationIntegrationTests {
 	private static final String PULSAR_TOPIC = "pft_foo-topic";
 
 	private static final PulsarContainer PULSAR_CONTAINER = new PulsarContainer(
-			PulsarTestContainerSupport.getPulsarImage()).withFunctionsWorker()
-					.withClasspathResourceMapping("/connectors/", "/pulsar/connectors", BindMode.READ_ONLY);
+			PulsarTestContainerSupport.getPulsarImage());
 
-	private static final RabbitMQContainer RABBITMQ_CONTAINER = new RabbitMQContainer("rabbitmq")
-			.withNetworkAliases("rabbitmq").withExposedPorts(5672, 15672).withStartupTimeout(Duration.ofMinutes(1));
+	private static final RabbitMQContainer RABBITMQ_CONTAINER = new RabbitMQContainer("rabbitmq");
 
 	@BeforeAll
 	static void startContainers() {
 		Network sharedNetwork = Network.newNetwork();
-		PULSAR_CONTAINER.withNetwork(sharedNetwork).start();
-		RABBITMQ_CONTAINER.withNetwork(sharedNetwork).start();
+		// @formatter:off
+		PULSAR_CONTAINER
+				.withNetwork(sharedNetwork)
+				.withFunctionsWorker()
+				.withClasspathResourceMapping("/connectors/", "/pulsar/connectors", BindMode.READ_ONLY)
+				.start();
+		RABBITMQ_CONTAINER
+				.withNetwork(sharedNetwork)
+				.withNetworkAliases("rabbitmq")
+				.withExposedPorts(5672, 15672)
+				.withStartupTimeout(Duration.ofMinutes(1))
+				.start();
+		// @formatter:on
 	}
 
 	private static final CountDownLatch RECEIVED_MESSAGE_LATCH = new CountDownLatch(10);
