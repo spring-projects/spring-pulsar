@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,11 +89,34 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
 			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("test-specific-schema-subscription").subscribe()) {
+					.subscriptionName("smt-specific-schema-subscription").subscribe()) {
 				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
 						Collections.singletonMap("topicName", topic));
 				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
+				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+				pulsarTemplate.send(foo);
+				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
+						.isEqualTo(foo);
+			}
+		}
+	}
+
+	@Test
+	void sendMessageWithSpecificSchemaAndCustomTypeMappings() throws Exception {
+		String topic = "smt-specific-schema-custom-topic";
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
+					.subscriptionName("smt-specific-schema-custom-subscription").subscribe()) {
+				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+						Collections.singletonMap("topicName", topic));
+				// Custom schema resolver allows not calling setSchema on template
+				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver(
+						Collections.singletonMap(Foo.class, Schema.JSON(Foo.class)));
+				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
+						schemaResolver, null, null);
+
 				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 				pulsarTemplate.send(foo);
 				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)

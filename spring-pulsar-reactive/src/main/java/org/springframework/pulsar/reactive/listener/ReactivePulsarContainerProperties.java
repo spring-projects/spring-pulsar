@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
+import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.SchemaResolver;
+
 /**
  * Contains runtime properties for a reactive listener container.
  *
@@ -43,6 +46,8 @@ public class ReactivePulsarContainerProperties<T> {
 	private Schema<T> schema;
 
 	private SchemaType schemaType;
+
+	private SchemaResolver schemaResolver = new DefaultSchemaResolver();
 
 	private ReactivePulsarMessageHandler messageHandler;
 
@@ -82,6 +87,14 @@ public class ReactivePulsarContainerProperties<T> {
 
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
+	}
+
+	public SchemaResolver getSchemaResolver() {
+		return this.schemaResolver;
+	}
+
+	public void setSchemaResolver(SchemaResolver schemaResolver) {
+		this.schemaResolver = schemaResolver;
 	}
 
 	public Collection<String> getTopics() {

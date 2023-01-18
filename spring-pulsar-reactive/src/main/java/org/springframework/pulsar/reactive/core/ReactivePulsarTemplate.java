@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.reactivestreams.Publisher;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.pulsar.core.SchemaUtils;
+import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.SchemaResolver;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,15 +45,29 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	private final ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory;
 
+	private final SchemaResolver schemaResolver;
+
+	@Nullable
 	private Schema<T> schema;
 
 	/**
-	 * Construct a template instance with observation configuration.
+	 * Construct a template instance that uses the default schema resolver.
 	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
 	 * reactive senders
 	 */
 	public ReactivePulsarTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
+		this(reactiveMessageSenderFactory, new DefaultSchemaResolver());
+	}
+
+	/**
+	 * Construct a template instance with a custom schema resolver.
+	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
+	 * @param schemaResolver the schema resolver to use reactive senders
+	 */
+	public ReactivePulsarTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory,
+			SchemaResolver schemaResolver) {
 		this.reactiveMessageSenderFactory = reactiveMessageSenderFactory;
+		this.schemaResolver = schemaResolver;
 	}
 
 	@Override
@@ -106,10 +122,10 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 		if (this.schema != null) {
 			/*
 			 * If the template has a schema, we can create the message sender right away
-			 * and use ReactiveMessageSender::sendMany to send them as a stream. Otherwise
-			 * we need to wait to get a message to create it and we can't share it between
-			 * messages. So we create one each time and use ReactiveMessageSender::sendOne
-			 * to send messages individually.
+			 * and use ReactiveMessageSender::sendMany to send them as a stream.
+			 * Otherwise, we need to wait to get a message to create it and we can't share
+			 * it between messages. So we create one each time and use
+			 * ReactiveMessageSender::sendOne to send messages individually.
 			 */
 			ReactiveMessageSender<T> sender = createMessageSender(topic, null, null);
 			return messages.map(MessageSpec::of).as(sender::sendMany)
@@ -134,7 +150,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	private ReactiveMessageSender<T> createMessageSender(String topic, T message,
 			ReactiveMessageSenderBuilderCustomizer<T> customizer) {
-		Schema<T> schema = this.schema != null ? this.schema : SchemaUtils.getSchema(message);
+		Schema<T> schema = this.schema != null ? this.schema : this.schemaResolver.getSchema(message);
 		return this.reactiveMessageSenderFactory.createSender(topic, schema,
 				customizer == null ? Collections.emptyList() : Collections.singletonList(customizer));
 	}

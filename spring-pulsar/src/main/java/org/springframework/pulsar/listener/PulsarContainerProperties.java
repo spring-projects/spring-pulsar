@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.Assert;
 
@@ -32,6 +34,7 @@ import org.springframework.util.Assert;
  *
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class PulsarContainerProperties {
 
@@ -50,6 +53,8 @@ public class PulsarContainerProperties {
 	private Schema<?> schema;
 
 	private SchemaType schemaType;
+
+	private SchemaResolver schemaResolver;
 
 	private Object messageListener;
 
@@ -72,11 +77,13 @@ public class PulsarContainerProperties {
 	public PulsarContainerProperties(String... topics) {
 		this.topics = topics.clone();
 		this.topicsPattern = null;
+		this.schemaResolver = new DefaultSchemaResolver();
 	}
 
 	public PulsarContainerProperties(String topicPattern) {
 		this.topicsPattern = topicPattern;
 		this.topics = null;
+		this.schemaResolver = new DefaultSchemaResolver();
 	}
 
 	public Object getMessageListener() {
@@ -169,14 +176,6 @@ public class PulsarContainerProperties {
 		this.consumerStartTimeout = consumerStartTimeout;
 	}
 
-	public Schema<?> getSchema() {
-		return this.schema;
-	}
-
-	public void setSchema(Schema<?> schema) {
-		this.schema = schema;
-	}
-
 	public String[] getTopics() {
 		return this.topics;
 	}
@@ -201,12 +200,28 @@ public class PulsarContainerProperties {
 		this.subscriptionName = subscriptionName;
 	}
 
+	public Schema<?> getSchema() {
+		return this.schema;
+	}
+
+	public void setSchema(Schema<?> schema) {
+		this.schema = schema;
+	}
+
 	public SchemaType getSchemaType() {
 		return this.schemaType;
 	}
 
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
+	}
+
+	public SchemaResolver getSchemaResolver() {
+		return this.schemaResolver;
+	}
+
+	public void setSchemaResolver(SchemaResolver schemaResolver) {
+		this.schemaResolver = schemaResolver;
 	}
 
 	public Properties getPulsarConsumerProperties() {

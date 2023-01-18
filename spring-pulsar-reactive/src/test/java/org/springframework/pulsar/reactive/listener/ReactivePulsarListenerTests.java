@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,13 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
@@ -72,6 +74,7 @@ import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListe
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.User2;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -435,6 +438,189 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		}
 
+		static class User {
+
+			private String name;
+
+			private int age;
+
+			User() {
+
+			}
+
+			User(String name, int age) {
+				this.name = name;
+				this.age = age;
+			}
+
+			public String getName() {
+				return name;
+			}
+
+			public void setName(String name) {
+				this.name = name;
+			}
+
+			public int getAge() {
+				return age;
+			}
+
+			public void setAge(int age) {
+				this.age = age;
+			}
+
+			@Override
+			public boolean equals(Object o) {
+				if (this == o) {
+					return true;
+				}
+				if (o == null || getClass() != o.getClass()) {
+					return false;
+				}
+				User user = (User) o;
+				return age == user.age && Objects.equals(name, user.name);
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(name, age);
+			}
+
+			@Override
+			public String toString() {
+				return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.class)
+	class SchemaCustomMappingsTestCases {
+
+		static CountDownLatch jsonLatch = new CountDownLatch(3);
+		static CountDownLatch avroLatch = new CountDownLatch(3);
+		static CountDownLatch keyvalueLatch = new CountDownLatch(3);
+		static CountDownLatch protobufLatch = new CountDownLatch(3);
+
+		@Test
+		void jsonSchema() throws Exception {
+			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setSchema(JSONSchema.of(User2.class));
+
+			for (int i = 0; i < 3; i++) {
+				template.send("json-custom-schema-topic", new User2("Jason", i));
+			}
+			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void avroSchema() throws Exception {
+			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setSchema(AvroSchema.of(User.class));
+
+			for (int i = 0; i < 3; i++) {
+				template.send("avro-custom-schema-topic", new User("Avi", i));
+			}
+			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void keyvalueSchema() throws Exception {
+			PulsarProducerFactory<KeyValue<String, User2>> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient, Collections.emptyMap());
+			PulsarTemplate<KeyValue<String, User2>> template = new PulsarTemplate<>(pulsarProducerFactory);
+			Schema<KeyValue<String, User2>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(User2.class),
+					KeyValueEncodingType.INLINE);
+			template.setSchema(kvSchema);
+
+			for (int i = 0; i < 3; i++) {
+				template.send("keyvalue-custom-schema-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)));
+			}
+			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void protobufSchema() throws Exception {
+			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setSchema(ProtobufSchema.of(Proto.Person.class));
+
+			for (int i = 0; i < 3; i++) {
+				template.send("protobuf-custom-schema-topic",
+						Proto.Person.newBuilder().setId(i).setName("Paul").build());
+			}
+			assertThat(protobufLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnableReactivePulsar
+		@Configuration
+		static class SchemaCustomMappingsTestConfig {
+
+			@Bean
+			SchemaResolver customSchemaResolver() {
+				Map<Class<?>, Schema<?>> customMappings = new HashMap<>();
+				customMappings.put(User.class, Schema.AVRO(User.class));
+				customMappings.put(User2.class, Schema.JSON(User2.class));
+				customMappings.put(Proto.Person.class, Schema.PROTOBUF(Proto.Person.class));
+				return new DefaultSchemaResolver(customMappings);
+			}
+
+			@Bean
+			ReactivePulsarListenerContainerFactory<String> reactivePulsarListenerContainerFactory(
+					ReactivePulsarConsumerFactory<String> pulsarConsumerFactory, SchemaResolver schemaResolver) {
+				ReactivePulsarContainerProperties<String> containerProps = new ReactivePulsarContainerProperties<>();
+				containerProps.setSchemaResolver(schemaResolver);
+				return new DefaultReactivePulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
+			}
+
+			@ReactivePulsarListener(id = "jsonListener", topics = "json-custom-schema-topic",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenJson(User2 message) {
+				jsonLatch.countDown();
+				return Mono.empty();
+			}
+
+			@ReactivePulsarListener(id = "avroListener", topics = "avro-custom-schema-topic",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenAvro(User message) {
+				avroLatch.countDown();
+				return Mono.empty();
+			}
+
+			@ReactivePulsarListener(id = "keyvalueListener", topics = "keyvalue-custom-schema-topic",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenKeyvalue(KeyValue<String, User2> message) {
+				keyvalueLatch.countDown();
+				return Mono.empty();
+			}
+
+			@ReactivePulsarListener(id = "protobufListener", topics = "protobuf-custom-schema-topic",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenProtobuf(Proto.Person message) {
+				protobufLatch.countDown();
+				return Mono.empty();
+			}
+
+			@Bean
+			ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
+				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
+			}
+
+			record User2(String name, int age) {
+			}
+
+		}
+
+		/**
+		 * Do not convert this to a Record as Avro does not seem to work well w/ records.
+		 */
 		static class User {
 
 			private String name;
