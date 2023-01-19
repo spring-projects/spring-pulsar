@@ -37,6 +37,7 @@ import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
  * Tests for {@link PulsarListener}.

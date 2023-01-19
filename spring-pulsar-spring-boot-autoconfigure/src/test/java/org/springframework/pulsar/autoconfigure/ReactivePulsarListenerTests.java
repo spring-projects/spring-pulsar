@@ -43,6 +43,7 @@ import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
