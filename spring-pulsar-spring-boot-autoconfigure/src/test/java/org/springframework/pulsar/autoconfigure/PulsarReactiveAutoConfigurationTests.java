@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
@@ -125,6 +126,23 @@ class PulsarReactiveAutoConfigurationTests {
 				.run((context) -> assertThat(context).hasNotFailed().getBean(beanClass).isSameAs(bean));
 	}
 
+	@SuppressWarnings("rawtypes")
+	@Test
+	void beansAreInjectedInReactivePulsarListenerContainerFactory() {
+		ReactivePulsarConsumerFactory<?> consumerFactory = mock(ReactivePulsarConsumerFactory.class);
+		SchemaResolver schemaResolver = mock(SchemaResolver.class);
+		this.contextRunner
+				.withBean("customReactivePulsarConsumerFactory", ReactivePulsarConsumerFactory.class,
+						() -> consumerFactory)
+				.withBean("schemaResolver", SchemaResolver.class, () -> schemaResolver).run((context -> {
+					AbstractObjectAssert<? extends AbstractObjectAssert<?, DefaultReactivePulsarListenerContainerFactory>, DefaultReactivePulsarListenerContainerFactory> containerFactory = assertThat(
+							context).hasNotFailed().getBean(DefaultReactivePulsarListenerContainerFactory.class);
+					containerFactory.extracting("consumerFactory").isSameAs(consumerFactory);
+					containerFactory.extracting(DefaultReactivePulsarListenerContainerFactory::getContainerProperties)
+							.extracting(ReactivePulsarContainerProperties::getSchemaResolver).isSameAs(schemaResolver);
+				}));
+	}
+
 	@Test
 	void customReactivePulsarListenerContainerFactoryIsRespected() {
 		ReactivePulsarListenerContainerFactory<String> listenerContainerFactory = mock(
@@ -150,14 +168,18 @@ class PulsarReactiveAutoConfigurationTests {
 	}
 
 	@Test
+	@SuppressWarnings("rawtypes")
 	void beansAreInjectedInReactivePulsarTemplate() {
 		ReactivePulsarSenderFactory<?> senderFactory = mock(ReactivePulsarSenderFactory.class);
+		SchemaResolver schemaResolver = mock(SchemaResolver.class);
 		this.contextRunner
 				.withBean("customReactivePulsarSenderFactory", ReactivePulsarSenderFactory.class, () -> senderFactory)
-				.run((context -> assertThat(context).hasNotFailed().getBean(ReactivePulsarTemplate.class)
-						.extracting("reactiveMessageSenderFactory")
-						.asInstanceOf(InstanceOfAssertFactories.type(ReactivePulsarSenderFactory.class))
-						.isSameAs(senderFactory)));
+				.withBean("schemaResolver", SchemaResolver.class, () -> schemaResolver).run((context -> {
+					AbstractObjectAssert<? extends AbstractObjectAssert<?, ReactivePulsarTemplate>, ReactivePulsarTemplate> template = assertThat(
+							context).hasNotFailed().getBean(ReactivePulsarTemplate.class);
+					template.extracting("reactiveMessageSenderFactory").isSameAs(senderFactory);
+					template.extracting("schemaResolver").isSameAs(schemaResolver);
+				}));
 	}
 
 	@Test

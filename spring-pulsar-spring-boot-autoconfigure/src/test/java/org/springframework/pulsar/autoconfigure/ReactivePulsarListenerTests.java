@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,31 @@ package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.MessageResult;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
+import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -49,7 +57,11 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 	private static final CountDownLatch LATCH1 = new CountDownLatch(1);
 
-	private static final CountDownLatch LATCH2 = new CountDownLatch(10);
+	private static final CountDownLatch LATCH2 = new CountDownLatch(1);
+
+	private static final CountDownLatch LATCH3 = new CountDownLatch(1);
+
+	private static final CountDownLatch LATCH4 = new CountDownLatch(10);
 
 	@Test
 	void basicListener() throws Exception {
@@ -59,9 +71,38 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
-			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.send("rplt-topic1", "John Doe");
+			ReactivePulsarTemplate<String> pulsarTemplate = context.getBean(ReactivePulsarTemplate.class);
+			pulsarTemplate.send("rplt-topic1", "John Doe").block();
 			assertThat(LATCH1.await(20, TimeUnit.SECONDS)).isTrue();
+		}
+	}
+
+	@Test
+	void basicListenerCustomType() throws Exception {
+		SpringApplication app = new SpringApplication(BasicListenerCustomTypeConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+
+		try (ConfigurableApplicationContext context = app
+				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			@SuppressWarnings("unchecked")
+			ReactivePulsarTemplate<Foo> pulsarTemplate = context.getBean(ReactivePulsarTemplate.class);
+			pulsarTemplate.setSchema(Schema.JSON(Foo.class));
+			pulsarTemplate.send("rplt-custom-topic1", new Foo("John Doe")).block();
+			assertThat(LATCH2.await(20, TimeUnit.SECONDS)).isTrue();
+		}
+	}
+
+	@Test
+	void basicListenerCustomTypeWithTypeMapping() throws Exception {
+		SpringApplication app = new SpringApplication(BasicListenerCustomTypeWithTypeMappingConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+
+		try (ConfigurableApplicationContext context = app
+				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			@SuppressWarnings("unchecked")
+			ReactivePulsarTemplate<Foo> pulsarTemplate = context.getBean(ReactivePulsarTemplate.class);
+			pulsarTemplate.send("rplt-custom-topic2", new Foo("John Doe")).block();
+			assertThat(LATCH3.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
@@ -75,17 +116,18 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("rplt-topic2", "John Doe");
+				pulsarTemplate.send("rplt-batch-topic", "John Doe");
 			}
-			assertThat(LATCH2.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(LATCH4.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
-	@Configuration(proxyBeanMethods = false)
-	@Import({ PulsarAutoConfiguration.class, PulsarReactiveAutoConfiguration.class, ConsumerCustomizerConfig.class })
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(ConsumerCustomizerConfig.class)
 	static class BasicListenerConfig {
 
-		@ReactivePulsarListener(subscriptionName = "rplt-subscription1", topics = "rplt-topic1",
+		@ReactivePulsarListener(subscriptionName = "rplt-sub1", topics = "rplt-topic1",
 				consumerCustomizer = "consumerCustomizer")
 		public Mono<Void> listen(String foo) {
 			LATCH1.countDown();
@@ -94,14 +136,48 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 	}
 
-	@Configuration(proxyBeanMethods = false)
-	@Import({ PulsarAutoConfiguration.class, PulsarReactiveAutoConfiguration.class, ConsumerCustomizerConfig.class })
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(ConsumerCustomizerConfig.class)
+	static class BasicListenerCustomTypeConfig {
+
+		@ReactivePulsarListener(subscriptionName = "rplt-custom-sub1", topics = "rplt-custom-topic1",
+				schemaType = SchemaType.JSON, consumerCustomizer = "consumerCustomizer")
+		public Mono<Void> listen(Foo foo) {
+			LATCH2.countDown();
+			return Mono.empty();
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(ConsumerCustomizerConfig.class)
+	static class BasicListenerCustomTypeWithTypeMappingConfig {
+
+		@Bean
+		SchemaResolver customSchemaResolver() {
+			return new DefaultSchemaResolver(Collections.singletonMap(Foo.class, Schema.JSON(Foo.class)));
+		}
+
+		@ReactivePulsarListener(subscriptionName = "rplt-custom-sub2", topics = "rplt-custom-topic2",
+				consumerCustomizer = "consumerCustomizer")
+		public Mono<Void> listen(Foo foo) {
+			LATCH3.countDown();
+			return Mono.empty();
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(ConsumerCustomizerConfig.class)
 	static class FluxListenerConfig {
 
-		@ReactivePulsarListener(subscriptionName = "rplt-subscription2", topics = "rplt-topic2", stream = true,
+		@ReactivePulsarListener(subscriptionName = "rplt-batch-sub", topics = "rplt-batch-topic", stream = true,
 				consumerCustomizer = "consumerCustomizer")
 		public Flux<MessageResult<Void>> listen(Flux<Message<String>> messages) {
-			return messages.doOnNext(t -> LATCH2.countDown()).map(MessageResult::acknowledge);
+			return messages.doOnNext(t -> LATCH4.countDown()).map(MessageResult::acknowledge);
 		}
 
 	}
@@ -114,6 +190,9 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 		}
 
+	}
+
+	record Foo(String value) {
 	}
 
 }

@@ -47,10 +47,12 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -102,7 +104,9 @@ class PulsarAutoConfigurationTests {
 						.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
 						.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
 						.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
-						.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class));
+						.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class)
+						.hasSingleBean(SchemaResolver.class).getBean(SchemaResolver.class)
+						.isInstanceOf(DefaultSchemaResolver.class));
 	}
 
 	@Test
@@ -143,6 +147,20 @@ class PulsarAutoConfigurationTests {
 	}
 
 	@Test
+	@SuppressWarnings("rawtypes")
+	void beansAreInjectedInPulsarTemplate() {
+		PulsarProducerFactory<?> producerFactory = mock(PulsarProducerFactory.class);
+		SchemaResolver schemaResolver = mock(SchemaResolver.class);
+		this.contextRunner.withBean("customPulsarProducerFactory", PulsarProducerFactory.class, () -> producerFactory)
+				.withBean("schemaResolver", SchemaResolver.class, () -> schemaResolver).run((context -> {
+					AbstractObjectAssert<? extends AbstractObjectAssert<?, PulsarTemplate>, PulsarTemplate> template = assertThat(
+							context).hasNotFailed().getBean(PulsarTemplate.class);
+					template.extracting("producerFactory").isSameAs(producerFactory);
+					template.extracting("schemaResolver").isSameAs(schemaResolver);
+				}));
+	}
+
+	@Test
 	void customPulsarConsumerFactoryIsRespected() {
 		PulsarConsumerFactory<String> consumerFactory = mock(PulsarConsumerFactory.class);
 		this.contextRunner.withBean("customPulsarConsumerFactory", PulsarConsumerFactory.class, () -> consumerFactory)
@@ -166,6 +184,21 @@ class PulsarAutoConfigurationTests {
 						() -> listenerContainerFactory)
 				.run((context) -> assertThat(context).hasNotFailed().getBean(PulsarListenerContainerFactory.class)
 						.isSameAs(listenerContainerFactory));
+	}
+
+	@Test
+	@SuppressWarnings("rawtypes")
+	void beansAreInjectedInPulsarListenerContainerFactory() {
+		PulsarConsumerFactory<?> consumerFactory = mock(PulsarConsumerFactory.class);
+		SchemaResolver schemaResolver = mock(SchemaResolver.class);
+		this.contextRunner.withBean("customPulsarConsumerFactory", PulsarConsumerFactory.class, () -> consumerFactory)
+				.withBean("schemaResolver", SchemaResolver.class, () -> schemaResolver).run((context -> {
+					AbstractObjectAssert<? extends AbstractObjectAssert<?, ConcurrentPulsarListenerContainerFactory>, ConcurrentPulsarListenerContainerFactory> containerFactory = assertThat(
+							context).hasNotFailed().getBean(ConcurrentPulsarListenerContainerFactory.class);
+					containerFactory.extracting("consumerFactory").isSameAs(consumerFactory);
+					containerFactory.extracting(ConcurrentPulsarListenerContainerFactory::getContainerProperties)
+							.extracting(PulsarContainerProperties::getSchemaResolver).isSameAs(schemaResolver);
+				}));
 	}
 
 	@Test
