@@ -5,7 +5,7 @@ plugins {
 description = 'Spring Cloud Stream Binder for Apache Pulsar'
 
 dependencies {
-    api project (':spring-pulsar')
+    implementation project(':spring-pulsar-spring-boot-starter')
     api('org.springframework.cloud:spring-cloud-stream') {
         exclude group: 'javax.activation', module: 'javax.activation-api'
         exclude group: 'javax.annotation', module: 'javax.annotation-api'

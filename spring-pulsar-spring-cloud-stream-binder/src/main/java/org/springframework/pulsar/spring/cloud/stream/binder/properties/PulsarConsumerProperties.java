@@ -16,11 +16,52 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
+import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.common.schema.SchemaType;
+
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+
 /**
  * Pulsar consumer properties used by the binder.
  *
  * @author Soby Chacko
  */
 public class PulsarConsumerProperties {
+
+	@NonNull
+	private String subscriptionName = "DEFAULT-SUBSCRIPTION-TODO-CHANGE-THIS";
+
+	@Nullable
+	private SchemaType schemaType;
+
+	@Nullable
+	private SubscriptionType subscriptionType;
+
+	public String getSubscriptionName() {
+		return this.subscriptionName;
+	}
+
+	public void setSubscriptionName(String subscriptionName) {
+		this.subscriptionName = subscriptionName;
+	}
+
+	@Nullable
+	public SchemaType getSchemaType() {
+		return this.schemaType;
+	}
+
+	public void setSchemaType(SchemaType schemaType) {
+		this.schemaType = schemaType;
+	}
+
+	@Nullable
+	public SubscriptionType getSubscriptionType() {
+		return this.subscriptionType;
+	}
+
+	public void setSubscriptionType(SubscriptionType subscriptionType) {
+		this.subscriptionType = subscriptionType;
+	}
 
 }
