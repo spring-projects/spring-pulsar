@@ -1,0 +1,10 @@
+====
+[source,java,subs="attributes,verbatim"]
+----
+@ReactivePulsarListener(topics = "user-topic")
+Mono<Void> listen(User user) {
+    System.out.println(user);
+    return Mono.empty();
+}
+----
+====
