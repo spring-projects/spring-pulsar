@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
 import org.springframework.pulsar.listener.PulsarBatchMessageListener;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
  * @author Soby Chacko

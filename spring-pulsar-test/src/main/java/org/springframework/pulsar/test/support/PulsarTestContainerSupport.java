@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.core;
+package org.springframework.pulsar.test.support;
 
 import java.util.Locale;
 
@@ -31,8 +31,7 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers(disabledWithoutDocker = true)
 public interface PulsarTestContainerSupport {
 
-	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(
-			isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage());
+	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(getPulsarImage());
 
 	@BeforeAll
 	static void startContainer() {
@@ -41,6 +40,10 @@ public interface PulsarTestContainerSupport {
 
 	static String getPulsarBrokerUrl() {
 		return PULSAR_CONTAINER.getPulsarBrokerUrl();
+	}
+
+	static DockerImageName getPulsarImage() {
+		return isRunningOnMacM1() ? getMacM1PulsarImage() : getStandardPulsarImage();
 	}
 
 	static String getHttpServiceUrl() {

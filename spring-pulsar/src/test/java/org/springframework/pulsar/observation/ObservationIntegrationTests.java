@@ -45,8 +45,8 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.PulsarTestContainerSupport;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.tck.MeterRegistryAssert;

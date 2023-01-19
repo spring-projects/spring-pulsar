@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.pulsar.autoconfigure.SpringPulsarBootAppSanityTests.SpringPulsarBootTestApp;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.bind.annotation.GetMapping;

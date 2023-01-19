@@ -22,6 +22,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
+	testImplementation project(':spring-pulsar-test')
 	// used by PulsarFunctionTests
 	testImplementation 'org.testcontainers:rabbitmq'
 	testImplementation 'org.springframework.boot:spring-boot-starter-amqp'

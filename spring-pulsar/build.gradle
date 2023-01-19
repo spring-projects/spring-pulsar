@@ -35,8 +35,7 @@ dependencies {
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
 	testImplementation 'org.springframework.boot:spring-boot-test'
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:pulsar'
+	testImplementation project(':spring-pulsar-test')
 }
 
 test {

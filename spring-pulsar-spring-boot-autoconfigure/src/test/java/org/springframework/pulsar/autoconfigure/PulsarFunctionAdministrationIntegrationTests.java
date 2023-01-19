@@ -62,6 +62,7 @@ import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarFunctionOperations.FunctionStopPolicy;
 import org.springframework.pulsar.function.PulsarSource;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
  * Integration tests for {@link PulsarFunctionAdministration}.

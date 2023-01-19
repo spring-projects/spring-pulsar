@@ -10,5 +10,6 @@ dependencies {
         exclude group: 'javax.activation', module: 'javax.activation-api'
         exclude group: 'javax.annotation', module: 'javax.annotation-api'
     }
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
 }
