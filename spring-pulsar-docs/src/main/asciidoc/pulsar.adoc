@@ -86,20 +86,8 @@ template.newMessage(msg)
 ----
 ====
 
-=== Specifying Schema Information
-If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
-However, if you use any complex types (such as `JSON`, `AVRO`, `PROTOBUF`, and others), you need to set the proper schema type on the `PulsarTemplate` before invoking any send operations, as the following example shows for JSON:
-
-====
-[source, java]
-----
-pulsarTemplate.setSchema(Schema.JSON(Foo.class));
-----
-====
-
-IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
-
-See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>> for Pulsar producer properties.
+:template-class: PulsarTemplate
+include::schema-info/schema-info-template.adoc[leveloffset=+1]
 
 [[pulsar-producer-factory]]
 === Pulsar Producer Factory
@@ -320,13 +308,8 @@ void listen(String message) {
 
 TIP: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` application configuration properties
 
-
-=== Specifying Schema Information
-
-As indicated earlier, for Java primitives, the Spring Pulsar framework can infer the proper Schema to use on the `PulsarListener`.
-However, for more complex types (such as JSON or AVRO), you need to specify the schema type on the annotation.
-
-IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
+:listener-class: PulsarListener
+include::schema-info/schema-info-listener.adoc[leveloffset=+1]
 
 === Accessing the Pulsar Consumer Object
 Sometimes, you need direct access to the Pulsar Consumer object.

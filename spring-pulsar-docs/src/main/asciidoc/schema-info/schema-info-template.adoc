@@ -1,0 +1,38 @@
+== Specifying Schema Information
+If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
+However, if you use any complex types (such as `JSON`, `AVRO`, `PROTOBUF`, and others), you need to set the proper schema type on the `{template-class}` before invoking any send operations, as the following example shows for JSON:
+
+====
+[source, java]
+----
+template.setSchema(Schema.JSON(Foo.class));
+----
+====
+
+IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
+
+=== Custom Schema Resolver
+As an alternative to specifying the schema on the `{template-class}` for complex types, a custom schema resolver can be configured with mappings for the types.
+This removes the need to set the schema on the template as the framework consults the resolver using the outgoing message type.
+
+The following example shows a custom resolver with mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
+====
+[source, java]
+----
+@Bean
+public SchemaResolver customSchemaResolver() {
+    Map<Class<?>, Schema<?>> customMappings = new HashMap<>();
+    customMappings.put(User.class, Schema.AVRO(User.class));
+    customMappings.put(Address.class, Schema.JSON(Address.class));
+    return new DefaultSchemaResolver(customMappings);
+}
+----
+====
+With this configuration in place, there is no need to set the schema on the template, for example:
+====
+[source, java]
+----
+template.send("user-topic", someUserObject);
+template.send("address-topic", someAddressObject);
+----
+====
