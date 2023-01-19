@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    function:
+      definition: supplier;consumer
+    stream:
+      bindings:
+        consumer-in-0:
+          destination: supplier-out-0
+          consumer:
+            use-native-decoding: true
+      pulsar:
+        bindings:
+          consumer-in-0:
+            consumer:
+              subscription-name: my-scst-sub1
+              schema-type: STRING

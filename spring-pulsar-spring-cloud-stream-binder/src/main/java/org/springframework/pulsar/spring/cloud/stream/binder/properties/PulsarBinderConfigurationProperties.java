@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,9 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
-import org.apache.pulsar.common.schema.SchemaType;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/**
- * Pulsar producer properties used by the binder.
- *
- * @author Soby Chacko
- */
-public class PulsarProducerProperties {
-
-	private SchemaType schemaType;
-
-	public SchemaType getSchemaType() {
-		return this.schemaType;
-	}
-
-	public void setSchemaType(SchemaType schemaType) {
-		this.schemaType = schemaType;
-	}
+@ConfigurationProperties(prefix = "spring.cloud.stream.pulsar.binder")
+public class PulsarBinderConfigurationProperties {
 
 }
