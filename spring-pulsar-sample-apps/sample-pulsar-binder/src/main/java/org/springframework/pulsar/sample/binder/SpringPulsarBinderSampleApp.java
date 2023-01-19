@@ -36,12 +36,12 @@ public class SpringPulsarBinderSampleApp {
 	}
 
 	@Bean
-	public Supplier<String> supplier() {
+	public Supplier<String> timeSupplier() {
 		return () -> String.valueOf(System.currentTimeMillis());
 	}
 
 	@Bean
-	public Consumer<String> consumer() {
+	public Consumer<String> timeLogger() {
 		return s -> this.logger.info("Hello binder: " + s);
 	}
 

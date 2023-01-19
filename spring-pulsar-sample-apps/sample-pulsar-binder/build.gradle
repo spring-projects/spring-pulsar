@@ -3,7 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.0.0'
 }
 
-description = 'Spring Pulsar Sample Application (Send and Receive)'
+description = 'Spring Cloud Stream Binder for Pulsar Sample Application'
 
 dependencies {
 	implementation project(':spring-pulsar-spring-cloud-stream-binder')
