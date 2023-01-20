@@ -86,10 +86,6 @@ import org.springframework.util.backoff.FixedBackOff;
 @DirtiesContext
 public class PulsarListenerTests implements PulsarTestContainerSupport {
 
-	static CountDownLatch latch = new CountDownLatch(1);
-	static CountDownLatch latch1 = new CountDownLatch(3);
-	static CountDownLatch latch2 = new CountDownLatch(3);
-
 	@Autowired
 	PulsarTemplate<String> pulsarTemplate;
 
@@ -153,8 +149,12 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
 	class PulsarListenerBasicTestCases {
 
+		static CountDownLatch latch = new CountDownLatch(1);
+		static CountDownLatch latch1 = new CountDownLatch(3);
+		static CountDownLatch latch2 = new CountDownLatch(3);
+
 		@Test
-		void testPulsarListenerWithTopicsPattern(@Autowired PulsarListenerEndpointRegistry registry) throws Exception {
+		void pulsarListenerWithTopicsPattern(@Autowired PulsarListenerEndpointRegistry registry) throws Exception {
 			PulsarMessageListenerContainer baz = registry.getListenerContainer("baz");
 			PulsarContainerProperties containerProperties = baz.getContainerProperties();
 			assertThat(containerProperties.getTopicsPattern()).isEqualTo("persistent://public/default/pattern.*");
@@ -167,7 +167,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		}
 
 		@Test
-		void testPulsarListenerProvidedConsumerProperties(@Autowired PulsarListenerEndpointRegistry registry)
+		void pulsarListenerProvidedConsumerProperties(@Autowired PulsarListenerEndpointRegistry registry)
 				throws Exception {
 
 			PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("foo")

@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
@@ -29,11 +28,6 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.impl.schema.AvroSchema;
-import org.apache.pulsar.client.impl.schema.JSONSchema;
-import org.apache.pulsar.client.impl.schema.ProtobufSchema;
-import org.apache.pulsar.common.schema.KeyValue;
-import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.MethodParameter;
@@ -60,8 +54,6 @@ import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
 
-import com.google.protobuf.GeneratedMessageV3;
-
 /**
  * A {@link PulsarListenerEndpoint} providing the method to invoke to process an incoming
  * message for this endpoint.
@@ -69,6 +61,7 @@ import com.google.protobuf.GeneratedMessageV3;
  * @param <V> Message payload type
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpoint<V> {
 
@@ -148,90 +141,24 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 		ConcurrentPulsarMessageListenerContainer<?> containerInstance = (ConcurrentPulsarMessageListenerContainer<?>) container;
 		PulsarContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
-		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		SchemaResolver schemaResolver = pulsarContainerProperties.getSchemaResolver();
-
-		// TODO refactor this all out later to SchemaResolver
-		// ResolvableType messageType = resolvableType(messageParameter);
-		// Schema<?> schema = schemaResolver.getSchema(schemaType, messageType);
-
-		if (schemaType != SchemaType.NONE) {
-			switch (schemaType) {
-				case STRING -> pulsarContainerProperties.setSchema(Schema.STRING);
-				case BYTES -> pulsarContainerProperties.setSchema(Schema.BYTES);
-				case INT8 -> pulsarContainerProperties.setSchema(Schema.INT8);
-				case INT16 -> pulsarContainerProperties.setSchema(Schema.INT16);
-				case INT32 -> pulsarContainerProperties.setSchema(Schema.INT32);
-				case INT64 -> pulsarContainerProperties.setSchema(Schema.INT64);
-				case BOOLEAN -> pulsarContainerProperties.setSchema(Schema.BOOL);
-				case DATE -> pulsarContainerProperties.setSchema(Schema.DATE);
-				case DOUBLE -> pulsarContainerProperties.setSchema(Schema.DOUBLE);
-				case FLOAT -> pulsarContainerProperties.setSchema(Schema.FLOAT);
-				case INSTANT -> pulsarContainerProperties.setSchema(Schema.INSTANT);
-				case LOCAL_DATE -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE);
-				case LOCAL_DATE_TIME -> pulsarContainerProperties.setSchema(Schema.LOCAL_DATE_TIME);
-				case LOCAL_TIME -> pulsarContainerProperties.setSchema(Schema.LOCAL_TIME);
-				case JSON -> {
-					Schema<?> messageSchema = getMessageSchema(messageParameter, JSONSchema::of);
-					pulsarContainerProperties.setSchema(messageSchema);
-				}
-				case AVRO -> {
-					Schema<?> messageSchema = getMessageSchema(messageParameter, AvroSchema::of);
-					pulsarContainerProperties.setSchema(messageSchema);
-				}
-				case PROTOBUF -> {
-					@SuppressWarnings("unchecked")
-					Schema<?> messageSchema = getMessageSchema(messageParameter,
-							(c -> ProtobufSchema.of((Class<? extends GeneratedMessageV3>) c)));
-					pulsarContainerProperties.setSchema(messageSchema);
-				}
-				case KEY_VALUE -> {
-					Schema<?> messageSchema = getMessageKeyValueSchema(schemaResolver, messageParameter);
-					pulsarContainerProperties.setSchema(messageSchema);
-				}
-			}
+		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
+		ResolvableType messageType = resolvableType(messageParameter);
+		Schema<?> schema = schemaResolver.getSchema(schemaType, messageType);
+		if (schema != null) {
+			pulsarContainerProperties.setSchema(schema);
 		}
-		else {
-			if (messageParameter != null) {
-
-				Schema<?> messageSchema = null;
-				ResolvableType type = resolvableType(messageParameter);
-				if (KeyValue.class.isAssignableFrom(type.getRawClass())) {
-					messageSchema = getMessageKeyValueSchema(schemaResolver, messageParameter);
-				}
-				else {
-					messageSchema = getMessageSchema(messageParameter,
-							(messageClass) -> schemaResolver.getSchema(messageClass, false));
-				}
-				if (messageSchema != null) {
-					pulsarContainerProperties.setSchema(messageSchema);
-				}
-			}
+		// Make sure the schemaType is updated to match the current schema
+		if (pulsarContainerProperties.getSchema() != null) {
+			SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
+			pulsarContainerProperties.setSchemaType(type);
 		}
-		SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
-		pulsarContainerProperties.setSchemaType(type);
-
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
 		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
 		container.setPulsarConsumerErrorHandler(this.pulsarConsumerErrorHandler);
 
 		return messageListener;
-	}
-
-	private Schema<?> getMessageSchema(MethodParameter messageParameter, Function<Class<?>, Schema<?>> schemaFactory) {
-		ResolvableType messageType = resolvableType(messageParameter);
-		Class<?> messageClass = messageType.getRawClass();
-		return schemaFactory.apply(messageClass);
-	}
-
-	private Schema<?> getMessageKeyValueSchema(SchemaResolver schemaResolver, MethodParameter messageParameter) {
-		ResolvableType messageType = resolvableType(messageParameter);
-		Class<?> keyClass = messageType.resolveGeneric(0);
-		Class<?> valueClass = messageType.resolveGeneric(1);
-		Schema<? extends Class<?>> keySchema = schemaResolver.getSchema(keyClass);
-		Schema<? extends Class<?>> valueSchema = schemaResolver.getSchema(valueClass);
-		return Schema.KeyValue(keySchema, valueSchema, KeyValueEncodingType.INLINE);
 	}
 
 	private ResolvableType resolvableType(MethodParameter methodParameter) {

@@ -17,7 +17,9 @@
 package org.springframework.pulsar.core;
 
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.common.schema.SchemaType;
 
+import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 
 /**
@@ -60,5 +62,15 @@ public interface SchemaResolver {
 	 */
 	@Nullable
 	<T> Schema<T> getSchema(Class<?> messageType, boolean returnDefault);
+
+	/**
+	 * Get the schema to use given a schema type and a message type.
+	 * @param <T> the schema type
+	 * @param schemaType the schema type
+	 * @param messageType the message type
+	 * @return the schema to use
+	 */
+	@Nullable
+	<T> Schema<T> getSchema(SchemaType schemaType, @Nullable ResolvableType messageType);
 
 }
