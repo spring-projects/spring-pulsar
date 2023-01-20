@@ -565,11 +565,11 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@Bean
 			SchemaResolver customSchemaResolver() {
-				Map<Class<?>, Schema<?>> customMappings = new HashMap<>();
-				customMappings.put(User.class, Schema.AVRO(User.class));
-				customMappings.put(User2.class, Schema.JSON(User2.class));
-				customMappings.put(Proto.Person.class, Schema.PROTOBUF(Proto.Person.class));
-				return new DefaultSchemaResolver(customMappings);
+				DefaultSchemaResolver resolver = new DefaultSchemaResolver();
+				resolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
+				resolver.addCustomSchemaMapping(User2.class, Schema.JSON(User2.class));
+				resolver.addCustomSchemaMapping(Proto.Person.class, Schema.PROTOBUF(Proto.Person.class));
+				return resolver;
 			}
 
 			@Bean

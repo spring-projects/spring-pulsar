@@ -18,7 +18,6 @@ package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -158,7 +157,9 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		SchemaResolver customSchemaResolver() {
-			return new DefaultSchemaResolver(Collections.singletonMap(Foo.class, Schema.JSON(Foo.class)));
+			DefaultSchemaResolver resolver = new DefaultSchemaResolver();
+			resolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
+			return resolver;
 		}
 
 		@ReactivePulsarListener(subscriptionName = "rplt-custom-sub2", topics = "rplt-custom-topic2",

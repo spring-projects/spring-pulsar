@@ -5,21 +5,21 @@ However, for more complex types (such as JSON or AVRO), you need to specify the 
 
 IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
 
-=== Custom Schema Resolver
-As an alternative to specifying the schema on the `{listener-class}` for complex types, a custom schema resolver can be configured with mappings for the types.
+=== Custom Schema Mapping
+As an alternative to specifying the schema on the `{listener-class}` for complex types, the schema resolver can be configured with mappings for the types.
 This removes the need to set the schema on the listener as the framework consults the resolver using the incoming message type.
 
-The following example shows a custom resolver with mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
+The following example shows a schema resolver customizer that adds mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
 
 ====
 [source, java]
 ----
 @Bean
-public SchemaResolver customSchemaResolver() {
-    Map<Class<?>, Schema<?>> customMappings = new HashMap<>();
-    customMappings.put(User.class, Schema.AVRO(User.class));
-    customMappings.put(Address.class, Schema.JSON(Address.class));
-    return new DefaultSchemaResolver(customMappings);
+public DefaultSchemaResolverCustomizer schemaResolverCustomizer() {
+	return (schemaResolver) -> {
+		schemaResolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
+		schemaResolver.addCustomSchemaMapping(Address.class, Schema.JSON(Address.class));
+	}
 }
 ----
 ====

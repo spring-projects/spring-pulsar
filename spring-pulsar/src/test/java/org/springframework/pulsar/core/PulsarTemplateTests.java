@@ -113,8 +113,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
 						Collections.singletonMap("topicName", topic));
 				// Custom schema resolver allows not calling setSchema on template
-				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver(
-						Collections.singletonMap(Foo.class, Schema.JSON(Foo.class)));
+				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
+				schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
 				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
 						schemaResolver, null, null);
 
