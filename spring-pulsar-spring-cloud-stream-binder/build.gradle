@@ -11,5 +11,9 @@ dependencies {
         exclude group: 'javax.annotation', module: 'javax.annotation-api'
     }
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation project(':spring-pulsar-test')
+    testImplementation 'org.testcontainers:pulsar'
+    testImplementation 'org.awaitility:awaitility'
+    testImplementation 'org.testcontainers:junit-jupiter'
 
 }
