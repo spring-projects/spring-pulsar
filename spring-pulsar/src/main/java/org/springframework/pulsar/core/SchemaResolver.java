@@ -73,4 +73,22 @@ public interface SchemaResolver {
 	@Nullable
 	<T> Schema<T> getSchema(SchemaType schemaType, @Nullable ResolvableType messageType);
 
+	/**
+	 * Callback interface that can be implemented by beans wishing to customize the schema
+	 * resolver before it is fully initialized, in particular to tune its configuration.
+	 *
+	 * @param <T> the type of the {@link SchemaResolver}
+	 * @author Chris Bono
+	 */
+	@FunctionalInterface
+	interface SchemaResolverCustomizer<T extends SchemaResolver> {
+
+		/**
+		 * Customize the schema resolver.
+		 * @param schemaResolver the schema resolver to customize
+		 */
+		void customize(T schemaResolver);
+
+	}
+
 }

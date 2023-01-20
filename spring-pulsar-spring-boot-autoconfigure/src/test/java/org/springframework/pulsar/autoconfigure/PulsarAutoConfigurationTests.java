@@ -49,12 +49,12 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
-import org.springframework.pulsar.core.DefaultSchemaResolverCustomizer;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -144,8 +144,9 @@ class PulsarAutoConfigurationTests {
 	void defaultSchemaResolverCanBeCustomized() {
 		record Foo() {
 		}
-		DefaultSchemaResolverCustomizer customizer = (sr) -> sr.addCustomSchemaMapping(Foo.class, Schema.STRING);
-		this.contextRunner.withBean("schemaResolverCustomizer", DefaultSchemaResolverCustomizer.class, () -> customizer)
+		SchemaResolverCustomizer<DefaultSchemaResolver> customizer = (sr) -> sr.addCustomSchemaMapping(Foo.class,
+				Schema.STRING);
+		this.contextRunner.withBean("schemaResolverCustomizer", SchemaResolverCustomizer.class, () -> customizer)
 				.run((context) -> assertThat(context).hasNotFailed().getBean(DefaultSchemaResolver.class)
 						.extracting(DefaultSchemaResolver::getCustomSchemaMappings, InstanceOfAssertFactories.MAP)
 						.containsEntry(Foo.class, Schema.STRING));
