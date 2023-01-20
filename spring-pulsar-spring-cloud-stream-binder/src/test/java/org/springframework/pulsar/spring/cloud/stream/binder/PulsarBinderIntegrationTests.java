@@ -75,7 +75,7 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void springCloudStreamConversionForNonTextTypes(CapturedOutput output) {
+	void basicProducerConsumerBindingEndToEndWithNonTextPayloadType(CapturedOutput output) {
 		SpringApplication app = new SpringApplication(PiStreamConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
 		try (ConfigurableApplicationContext ignored = app.run(
