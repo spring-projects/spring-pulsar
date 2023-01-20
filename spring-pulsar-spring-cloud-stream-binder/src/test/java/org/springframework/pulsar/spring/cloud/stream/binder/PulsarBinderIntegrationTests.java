@@ -36,6 +36,9 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
+/**
+ * @author Soby Chacko
+ */
 @ExtendWith(OutputCaptureExtension.class)
 class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
@@ -48,7 +51,8 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 				"--spring.cloud.function.definition=textSupplier;textLogger",
 				"--spring.cloud.stream.bindings.textLogger-in-0.destination=textSupplier-out-0",
 				"--spring.cloud.stream.pulsar.bindings.textLogger-in-0.consumer.subscription-name=basic-scenario-sub-1")) {
-			Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> output.toString().contains("Hello binder: test-basic-scenario"));
+			Awaitility.await().atMost(Duration.ofSeconds(10))
+					.until(() -> output.toString().contains("Hello binder: test-basic-scenario"));
 		}
 	}
 
