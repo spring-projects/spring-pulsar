@@ -26,6 +26,7 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -46,8 +47,8 @@ import com.google.protobuf.GeneratedMessageV3;
  * Default schema resolver capable of handling basic message types.
  *
  * <p>
- * Additional message types can be configured with the {@link #DefaultSchemaResolver(Map)}
- * constructor.
+ * Additional message types can be configured with
+ * {@link #addCustomSchemaMapping(Class, Schema)}.
  *
  * @author Soby Chacko
  * @author Alexander Preuß
@@ -85,21 +86,37 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		BASE_SCHEMA_MAPPINGS.put(LocalTime.class, Schema.LOCAL_TIME);
 	}
 
-	private final Map<Class<?>, Schema<?>> customSchemaMappings;
+	private final Map<Class<?>, Schema<?>> customSchemaMappings = new LinkedHashMap<>();
 
 	/**
-	 * Constructs a resolver with no custom type mappings.
+	 * Adds a custom mapping from message type to schema.
+	 * @param messageType the message type
+	 * @param schema the schema to use for messages of type {@code messageType}
+	 * @return the previously mapped schema or {@code null} if there was no mapping for
+	 * {@code messageType}.
 	 */
-	public DefaultSchemaResolver() {
-		this(Collections.emptyMap());
+	@Nullable
+	public Schema<?> addCustomSchemaMapping(Class<?> messageType, Schema<?> schema) {
+		return this.customSchemaMappings.put(messageType, schema);
 	}
 
 	/**
-	 * Constructs a resolver with custom type mappings.
-	 * @param customTypeSchemaMappings additional type to schema mappings to use
+	 * Removes the custom mapping from message type to schema.
+	 * @param messageType the message type
+	 * @return the previously mapped schema or {@code null} if there was no mapping for
+	 * {@code messageType}.
 	 */
-	public DefaultSchemaResolver(Map<Class<?>, Schema<?>> customTypeSchemaMappings) {
-		this.customSchemaMappings = Objects.requireNonNull(customTypeSchemaMappings);
+	@Nullable
+	public Schema<?> removeCustomMapping(Class<?> messageType) {
+		return this.customSchemaMappings.remove(messageType);
+	}
+
+	/**
+	 * Gets the currently registered custom mappings from message type to schema.
+	 * @return unmodifiable map of custom mappings
+	 */
+	public Map<Class<?>, Schema<?>> getCustomSchemaMappings() {
+		return Collections.unmodifiableMap(this.customSchemaMappings);
 	}
 
 	@Override

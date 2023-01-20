@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
@@ -48,6 +49,7 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultSchemaResolverCustomizer;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
@@ -105,8 +107,7 @@ class PulsarAutoConfigurationTests {
 						.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
 						.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
 						.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class)
-						.hasSingleBean(SchemaResolver.class).getBean(SchemaResolver.class)
-						.isInstanceOf(DefaultSchemaResolver.class));
+						.hasSingleBean(DefaultSchemaResolver.class));
 	}
 
 	@Test
@@ -129,6 +130,25 @@ class PulsarAutoConfigurationTests {
 				.run((context) -> assertThat(context)
 						.getBean("&customPulsarClientFactoryBean", PulsarClientFactoryBean.class)
 						.isSameAs(clientFactoryBean));
+	}
+
+	@Test
+	void customSchemaResolverIsRespected() {
+		SchemaResolver customSchemaResolver = mock(SchemaResolver.class);
+		this.contextRunner.withBean("customSchemaResolver", SchemaResolver.class, () -> customSchemaResolver)
+				.run((context) -> assertThat(context).hasNotFailed().getBean(SchemaResolver.class)
+						.isSameAs(customSchemaResolver));
+	}
+
+	@Test
+	void defaultSchemaResolverCanBeCustomized() {
+		record Foo() {
+		}
+		DefaultSchemaResolverCustomizer customizer = (sr) -> sr.addCustomSchemaMapping(Foo.class, Schema.STRING);
+		this.contextRunner.withBean("schemaResolverCustomizer", DefaultSchemaResolverCustomizer.class, () -> customizer)
+				.run((context) -> assertThat(context).hasNotFailed().getBean(DefaultSchemaResolver.class)
+						.extracting(DefaultSchemaResolver::getCustomSchemaMappings, InstanceOfAssertFactories.MAP)
+						.containsEntry(Foo.class, Schema.STRING));
 	}
 
 	@Test

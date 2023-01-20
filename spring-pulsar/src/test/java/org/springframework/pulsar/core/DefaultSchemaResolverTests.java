@@ -28,10 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.pulsar.client.api.Schema;
@@ -62,6 +59,38 @@ import org.springframework.pulsar.listener.Proto.Person;
 class DefaultSchemaResolverTests {
 
 	private DefaultSchemaResolver resolver = new DefaultSchemaResolver();
+
+	@Nested
+	class CustomSchemaMappingsAPI {
+
+		@Test
+		void noMappingsByDefault() {
+			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
+		}
+
+		@Test
+		void addMappings() {
+			Schema<?> previouslyMappedSchema = resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
+			assertThat(previouslyMappedSchema).isNull();
+			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
+					.containsEntry(Foo.class, Schema.STRING);
+			previouslyMappedSchema = resolver.addCustomSchemaMapping(Foo.class, Schema.BOOL);
+			assertThat(previouslyMappedSchema).isEqualTo(Schema.STRING);
+			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
+					.containsEntry(Foo.class, Schema.BOOL);
+		}
+
+		@Test
+		void removeMappings() {
+			Schema<?> previouslyMappedSchema = resolver.removeCustomMapping(Foo.class);
+			assertThat(previouslyMappedSchema).isNull();
+			resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
+			previouslyMappedSchema = resolver.removeCustomMapping(Foo.class);
+			assertThat(previouslyMappedSchema).isEqualTo(Schema.STRING);
+			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
+		}
+
+	}
 
 	@Nested
 	class SchemaByMessageInstance {
@@ -106,10 +135,8 @@ class DefaultSchemaResolverTests {
 		@Test
 		void customTypeMessages() {
 			Schema<?> fooSchema = Schema.AVRO(Foo.class);
-			Map<Class<?>, Schema<?>> customTypes = new HashMap<>();
-			customTypes.put(Foo.class, fooSchema);
-			customTypes.put(Bar.class, Schema.STRING);
-			DefaultSchemaResolver resolver = new DefaultSchemaResolver(customTypes);
+			resolver.addCustomSchemaMapping(Foo.class, fooSchema);
+			resolver.addCustomSchemaMapping(Bar.class, Schema.STRING);
 			assertThat(resolver.getSchema(new Foo("foo1"))).isSameAs(fooSchema);
 			assertThat(resolver.getSchema(new Bar<>("bar1"))).isEqualTo(Schema.STRING);
 			assertThat(resolver.getSchema(new Zaa("zaa1"))).isEqualTo(Schema.BYTES); // default
@@ -163,7 +190,7 @@ class DefaultSchemaResolverTests {
 		void customMessageTypes() {
 			assertThat(resolver.getSchema(Foo.class, false)).isNull();
 			assertThat(resolver.getSchema(Foo.class, true)).isEqualTo(Schema.BYTES);
-			resolver = new DefaultSchemaResolver(Collections.singletonMap(Foo.class, Schema.STRING));
+			resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 			assertThat(resolver.getSchema(Foo.class, false)).isEqualTo(Schema.STRING);
 			assertThat(resolver.getSchema(Bar.class, false)).isNull();
 			assertThat(resolver.getSchema(Bar.class, true)).isEqualTo(Schema.BYTES);
@@ -259,7 +286,7 @@ class DefaultSchemaResolverTests {
 			@Test
 			void customMessageType() {
 				assertThat(resolver.getSchema(SchemaType.NONE, ResolvableType.forType(Foo.class))).isNull();
-				resolver = new DefaultSchemaResolver(Collections.singletonMap(Foo.class, Schema.STRING));
+				resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 				assertThat(resolver.getSchema(SchemaType.NONE, ResolvableType.forType(Foo.class)))
 						.isEqualTo(Schema.STRING);
 			}
@@ -293,10 +320,8 @@ class DefaultSchemaResolverTests {
 			void customKeyValueMessageTypeWithCustomTypeMappings() {
 				Schema<?> fooSchema = mock(Schema.class);
 				Schema<?> barSchema = mock(Schema.class);
-				Map<Class<?>, Schema<?>> customTypes = new HashMap<>();
-				customTypes.put(Foo.class, fooSchema);
-				customTypes.put(Bar.class, barSchema);
-				resolver = new DefaultSchemaResolver(customTypes);
+				resolver.addCustomSchemaMapping(Foo.class, fooSchema);
+				resolver.addCustomSchemaMapping(Bar.class, barSchema);
 				ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Bar.class);
 				assertThat(resolver.getSchema(SchemaType.NONE, kvType))
 						.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))

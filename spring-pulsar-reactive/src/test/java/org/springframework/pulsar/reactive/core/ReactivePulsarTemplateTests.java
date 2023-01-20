@@ -22,7 +22,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -95,8 +94,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory<Foo> producerFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory<>(
 						client, senderSpec, null);
 				// Custom schema resolver allows not calling setSchema on template
-				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver(
-						Collections.singletonMap(Foo.class, Schema.JSON(Foo.class)));
+				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
+				schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
 				org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<Foo> pulsarTemplate = new org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<>(
 						producerFactory, schemaResolver);
 
