@@ -15,7 +15,7 @@ The following example shows a schema resolver customizer that adds mappings for 
 [source, java]
 ----
 @Bean
-public DefaultSchemaResolverCustomizer schemaResolverCustomizer() {
+public SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer() {
 	return (schemaResolver) -> {
 		schemaResolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
 		schemaResolver.addCustomSchemaMapping(Address.class, Schema.JSON(Address.class));

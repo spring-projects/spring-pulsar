@@ -36,12 +36,12 @@ import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
-import org.springframework.pulsar.core.DefaultSchemaResolverCustomizer;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
 import org.springframework.pulsar.function.PulsarFunction;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarSink;
@@ -112,7 +112,8 @@ public class PulsarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean(SchemaResolver.class)
-	public DefaultSchemaResolver schemaResolver(Optional<DefaultSchemaResolverCustomizer> schemaResolverCustomizer) {
+	public DefaultSchemaResolver schemaResolver(
+			Optional<SchemaResolverCustomizer<DefaultSchemaResolver>> schemaResolverCustomizer) {
 		DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 		schemaResolverCustomizer.ifPresent((customizer) -> customizer.customize(schemaResolver));
 		return schemaResolver;
