@@ -8,9 +8,15 @@ spring:
           destination: timeSupplier-out-0
           consumer:
             use-native-decoding: true
+        timeSupplier-out-0:
+          producer:
+            use-native-encoding: true
       pulsar:
         bindings:
           timeLogger-in-0:
             consumer:
               subscription-name: my-scst-sub1
+              schema-type: STRING
+          timeSupplier-out-0:
+            producer:
               schema-type: STRING

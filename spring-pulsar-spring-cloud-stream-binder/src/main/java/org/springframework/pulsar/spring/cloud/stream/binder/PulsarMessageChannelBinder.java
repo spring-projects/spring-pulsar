@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
+import java.util.Objects;
+
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -36,6 +38,7 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -58,19 +61,27 @@ public class PulsarMessageChannelBinder extends
 
 	private final PulsarConsumerFactory<?> pulsarConsumerFactory;
 
+	private final SchemaResolver schemaResolver;
+
 	private PulsarExtendedBindingProperties extendedBindingProperties = new PulsarExtendedBindingProperties();
 
 	public PulsarMessageChannelBinder(PulsarTopicProvisioner provisioningProvider,
-			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<?> pulsarConsumerFactory) {
+			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<?> pulsarConsumerFactory,
+			SchemaResolver schemaResolver) {
 		super(null, provisioningProvider);
 		this.pulsarTemplate = pulsarTemplate;
 		this.pulsarConsumerFactory = pulsarConsumerFactory;
+		this.schemaResolver = schemaResolver;
 	}
 
 	@Override
 	protected MessageHandler createProducerMessageHandler(ProducerDestination destination,
 			ExtendedProducerProperties<PulsarProducerProperties> producerProperties, MessageChannel errorChannel) {
-
+		SchemaType schemaType = producerProperties.getExtension().getSchemaType();
+		if (producerProperties.isUseNativeEncoding() && schemaType != null) {
+			Schema<Object> schema = Objects.requireNonNull(this.schemaResolver.getSchema(schemaType, null));
+			this.pulsarTemplate.setSchema(schema);
+		}
 		return message -> {
 			try {
 				PulsarMessageChannelBinder.this.pulsarTemplate.sendAsync(destination.getName(), message.getPayload());
@@ -79,13 +90,11 @@ public class PulsarMessageChannelBinder extends
 				// deal later
 			}
 		};
-
 	}
 
 	@Override
 	protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group,
 			ExtendedConsumerProperties<PulsarConsumerProperties> properties) {
-
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setTopics(new String[] { destination.getName() });
 		PulsarMessageDrivenChannelAdapter pulsarMessageDrivenChannelAdapter = new PulsarMessageDrivenChannelAdapter();
@@ -94,8 +103,9 @@ public class PulsarMessageChannelBinder extends
 			pulsarMessageDrivenChannelAdapter.send(message);
 		});
 		SchemaType schemaType = properties.getExtension().getSchemaType();
-		if (schemaType != null) {
-			pulsarContainerProperties.setSchema(toSchema(schemaType));
+		if (properties.isUseNativeDecoding() && schemaType != null) {
+			pulsarContainerProperties
+					.setSchema(Objects.requireNonNull(this.schemaResolver.getSchema(schemaType, null)));
 		}
 		else {
 			pulsarContainerProperties.setSchema(Schema.BYTES);
@@ -105,15 +115,6 @@ public class PulsarMessageChannelBinder extends
 				this.pulsarConsumerFactory, pulsarContainerProperties);
 		pulsarMessageDrivenChannelAdapter.setMessageListenerContainer(container);
 		return pulsarMessageDrivenChannelAdapter;
-	}
-
-	// This is just a place-holder impl
-	public Schema<?> toSchema(SchemaType schemaType) {
-		return switch (schemaType) {
-			case STRING -> Schema.STRING;
-			case INT32 -> Schema.INT32;
-			default -> Schema.BYTES;
-		};
 	}
 
 	@Override
