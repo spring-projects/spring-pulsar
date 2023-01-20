@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.autoconfigure.PulsarProperties;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.spring.cloud.stream.binder.PulsarMessageChannelBinder;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
@@ -41,9 +42,9 @@ public class PulsarBinderConfiguration {
 	@Bean
 	public PulsarMessageChannelBinder pulsarMessageChannelBinder(PulsarTopicProvisioner pulsarTopicProvisioner,
 			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<byte[]> pulsarConsumerFactory,
-			PulsarExtendedBindingProperties pulsarExtendedBindingProperties) {
+			PulsarExtendedBindingProperties pulsarExtendedBindingProperties, SchemaResolver schemaResolver) {
 		PulsarMessageChannelBinder pulsarMessageChannelBinder = new PulsarMessageChannelBinder(pulsarTopicProvisioner,
-				pulsarTemplate, pulsarConsumerFactory);
+				pulsarTemplate, pulsarConsumerFactory, schemaResolver);
 		pulsarMessageChannelBinder.setExtendedBindingProperties(pulsarExtendedBindingProperties);
 		return pulsarMessageChannelBinder;
 	}

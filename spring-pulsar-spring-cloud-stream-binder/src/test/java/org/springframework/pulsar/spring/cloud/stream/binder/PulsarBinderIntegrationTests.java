@@ -46,13 +46,46 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 	void basicProducerConsumerBindingEndToEnd(CapturedOutput output) {
 		SpringApplication app = new SpringApplication(BasicScenarioConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-		try (ConfigurableApplicationContext context = app.run(
+		try (ConfigurableApplicationContext ignored = app.run(
 				"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 				"--spring.cloud.function.definition=textSupplier;textLogger",
 				"--spring.cloud.stream.bindings.textLogger-in-0.destination=textSupplier-out-0",
 				"--spring.cloud.stream.pulsar.bindings.textLogger-in-0.consumer.subscription-name=basic-scenario-sub-1")) {
 			Awaitility.await().atMost(Duration.ofSeconds(10))
 					.until(() -> output.toString().contains("Hello binder: test-basic-scenario"));
+		}
+	}
+
+	@Test
+	void useNativeEncodingDecodingWorkAsExpected(CapturedOutput output) {
+		SpringApplication app = new SpringApplication(PiStreamConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+		try (ConfigurableApplicationContext ignored = app.run(
+				"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+				"--spring.cloud.function.definition=piSupplier;piLogger",
+				"--spring.cloud.stream.bindings.piLogger-in-0.destination=piSupplier-out-0",
+				"--spring.cloud.stream.bindings.piSupplier-out-0.producer.use-native-encoding=true",
+				"--spring.cloud.stream.bindings.piLogger-in-0.consumer.use-native-decoding=true",
+				"--spring.cloud.stream.pulsar.bindings.piLogger-in-0.consumer.schema-type=FLOAT",
+				"--spring.cloud.stream.pulsar.bindings.piSupplier-out-0.producer.schema-type=FLOAT",
+				"--spring.cloud.stream.pulsar.bindings.piLogger-in-0.consumer.subscription-name=native-encoding-decoding-sub-1")) {
+			Awaitility.await().atMost(Duration.ofSeconds(10))
+					.until(() -> output.toString().contains("Hello binder: 3.14"));
+		}
+	}
+
+	@Test
+	void springCloudStreamConversionForNonTextTypes(CapturedOutput output) {
+		SpringApplication app = new SpringApplication(PiStreamConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+		try (ConfigurableApplicationContext ignored = app.run(
+				"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+				"--spring.cloud.function.definition=piSupplier;piLogger",
+				"--spring.cloud.stream.bindings.piSupplier-out-0.destination=pi-stream",
+				"--spring.cloud.stream.bindings.piLogger-in-0.destination=pi-stream",
+				"--spring.cloud.stream.pulsar.bindings.piLogger-in-0.consumer.subscription-name=native-encoding-decoding-sub-2")) {
+			Awaitility.await().atMost(Duration.ofSeconds(10))
+					.until(() -> output.toString().contains("Hello binder: 3.14"));
 		}
 	}
 
@@ -70,6 +103,24 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 		@Bean
 		public Consumer<String> textLogger() {
 			return s -> this.logger.info("Hello binder: " + s);
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	static class PiStreamConfig {
+
+		private final Logger logger = LoggerFactory.getLogger(BasicScenarioConfig.class);
+
+		@Bean
+		public Supplier<Float> piSupplier() {
+			return () -> 3.14f;
+		}
+
+		@Bean
+		public Consumer<Float> piLogger() {
+			return f -> this.logger.info("Hello binder: " + f);
 		}
 
 	}
