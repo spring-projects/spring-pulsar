@@ -22,21 +22,34 @@ import org.springframework.cloud.stream.binder.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.autoconfigure.PulsarProperties;
+import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.spring.cloud.stream.binder.PulsarMessageChannelBinder;
+import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
 
+/**
+ * Pulsar binder {@link Configuration}.
+ *
+ * @author Soby Chacko
+ */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnMissingBean(Binder.class)
 @EnableConfigurationProperties({ PulsarProperties.class, PulsarExtendedBindingProperties.class })
 public class PulsarBinderConfiguration {
 
 	@Bean
-	public PulsarTopicProvisioner pulsarTopicProvisioner() {
-		return new PulsarTopicProvisioner();
+	public PulsarBinderConfigurationProperties pulsarBinderConfigurationProperties() {
+		return new PulsarBinderConfigurationProperties();
+	}
+
+	@Bean
+	public PulsarTopicProvisioner pulsarTopicProvisioner(PulsarAdministration pulsarAdministration,
+			PulsarBinderConfigurationProperties pulsarBinderConfigurationProperties) {
+		return new PulsarTopicProvisioner(pulsarAdministration, pulsarBinderConfigurationProperties);
 	}
 
 	@Bean

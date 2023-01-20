@@ -25,6 +25,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 
+/**
+ * @author Soby Chacko
+ */
 public class PulsarBinderUtilsTests {
 
 	@Test

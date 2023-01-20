@@ -47,6 +47,8 @@ public class PulsarConsumerProperties {
 	@Nullable
 	private Class<?> messageValueType;
 
+	private int partitionCount = 1;
+
 	@Nullable
 	public String getSubscriptionName() {
 		return this.subscriptionName;
@@ -99,6 +101,14 @@ public class PulsarConsumerProperties {
 
 	public void setMessageValueType(@Nullable Class<?> messageValueType) {
 		this.messageValueType = messageValueType;
+	}
+
+	public int getPartitionCount() {
+		return this.partitionCount;
+	}
+
+	public void setPartitionCount(int partitionCount) {
+		this.partitionCount = partitionCount;
 	}
 
 }
