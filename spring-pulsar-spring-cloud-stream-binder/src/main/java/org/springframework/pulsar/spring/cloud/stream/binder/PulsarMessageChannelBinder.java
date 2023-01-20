@@ -110,7 +110,8 @@ public class PulsarMessageChannelBinder extends
 		else {
 			pulsarContainerProperties.setSchema(Schema.BYTES);
 		}
-		pulsarContainerProperties.setSubscriptionName(properties.getExtension().getSubscriptionName());
+		String subscriptionName = PulsarBinderUtils.subscriptionName(properties.getExtension(), destination);
+		pulsarContainerProperties.setSubscriptionName(subscriptionName);
 		DefaultPulsarMessageListenerContainer<?> container = new DefaultPulsarMessageListenerContainer<>(
 				this.pulsarConsumerFactory, pulsarContainerProperties);
 		pulsarMessageDrivenChannelAdapter.setMessageListenerContainer(container);

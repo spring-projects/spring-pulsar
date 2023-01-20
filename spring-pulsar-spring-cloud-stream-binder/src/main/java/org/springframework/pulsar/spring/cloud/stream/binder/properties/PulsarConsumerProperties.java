@@ -19,7 +19,6 @@ package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -29,8 +28,8 @@ import org.springframework.lang.Nullable;
  */
 public class PulsarConsumerProperties {
 
-	@NonNull
-	private String subscriptionName = "DEFAULT-SUBSCRIPTION-TODO-CHANGE-THIS";
+	@Nullable
+	private String subscriptionName;
 
 	@Nullable
 	private SchemaType schemaType;
@@ -38,6 +37,7 @@ public class PulsarConsumerProperties {
 	@Nullable
 	private SubscriptionType subscriptionType;
 
+	@Nullable
 	public String getSubscriptionName() {
 		return this.subscriptionName;
 	}

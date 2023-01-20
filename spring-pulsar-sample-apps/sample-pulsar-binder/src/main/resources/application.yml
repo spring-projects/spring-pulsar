@@ -15,7 +15,6 @@ spring:
         bindings:
           timeLogger-in-0:
             consumer:
-              subscription-name: my-scst-sub1
               schema-type: STRING
           timeSupplier-out-0:
             producer:
