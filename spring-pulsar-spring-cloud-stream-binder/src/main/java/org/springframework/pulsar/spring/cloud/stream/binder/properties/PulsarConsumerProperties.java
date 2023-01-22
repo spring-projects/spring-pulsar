@@ -25,6 +25,7 @@ import org.springframework.lang.Nullable;
  * Pulsar consumer properties used by the binder.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarConsumerProperties {
 
@@ -32,10 +33,19 @@ public class PulsarConsumerProperties {
 	private String subscriptionName;
 
 	@Nullable
+	private SubscriptionType subscriptionType;
+
+	@Nullable
 	private SchemaType schemaType;
 
 	@Nullable
-	private SubscriptionType subscriptionType;
+	private Class<?> messageType;
+
+	@Nullable
+	private Class<?> messageKeyType;
+
+	@Nullable
+	private Class<?> messageValueType;
 
 	@Nullable
 	public String getSubscriptionName() {
@@ -47,21 +57,48 @@ public class PulsarConsumerProperties {
 	}
 
 	@Nullable
-	public SchemaType getSchemaType() {
-		return this.schemaType;
-	}
-
-	public void setSchemaType(SchemaType schemaType) {
-		this.schemaType = schemaType;
-	}
-
-	@Nullable
 	public SubscriptionType getSubscriptionType() {
 		return this.subscriptionType;
 	}
 
 	public void setSubscriptionType(SubscriptionType subscriptionType) {
 		this.subscriptionType = subscriptionType;
+	}
+
+	@Nullable
+	public SchemaType getSchemaType() {
+		return this.schemaType;
+	}
+
+	public void setSchemaType(@Nullable SchemaType schemaType) {
+		this.schemaType = schemaType;
+	}
+
+	@Nullable
+	public Class<?> getMessageType() {
+		return this.messageType;
+	}
+
+	public void setMessageType(@Nullable Class<?> messageType) {
+		this.messageType = messageType;
+	}
+
+	@Nullable
+	public Class<?> getMessageKeyType() {
+		return this.messageKeyType;
+	}
+
+	public void setMessageKeyType(@Nullable Class<?> messageKeyType) {
+		this.messageKeyType = messageKeyType;
+	}
+
+	@Nullable
+	public Class<?> getMessageValueType() {
+		return this.messageValueType;
+	}
+
+	public void setMessageValueType(@Nullable Class<?> messageValueType) {
+		this.messageValueType = messageValueType;
 	}
 
 }
