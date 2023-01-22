@@ -17,6 +17,7 @@
 package org.springframework.pulsar.sample.binder;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class SpringPulsarBinderSampleApp {
 
-	private final Logger logger = LoggerFactory.getLogger(SpringPulsarBinderSampleApp.class);
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringPulsarBinderSampleApp.class, args);
@@ -41,8 +42,16 @@ public class SpringPulsarBinderSampleApp {
 	}
 
 	@Bean
-	public Consumer<String> timeLogger() {
-		return s -> this.logger.info("Hello binder: " + s);
+	public Function<String, EnhancedTime> timeProcessor() {
+		return (rawTime) -> new EnhancedTime(rawTime, "5150");
+	}
+
+	@Bean
+	public Consumer<EnhancedTime> timeLogger() {
+		return (time) -> this.logger.info("TIME -> {}", time);
+	}
+
+	record EnhancedTime(String time, String extra) {
 	}
 
 }

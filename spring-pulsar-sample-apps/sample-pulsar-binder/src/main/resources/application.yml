@@ -1,21 +1,37 @@
 spring:
   cloud:
     function:
-      definition: timeSupplier;timeLogger
+      definition: timeSupplier;timeProcessor;timeLogger;
     stream:
       bindings:
-        timeLogger-in-0:
-          destination: timeSupplier-out-0
-          consumer:
-            use-native-decoding: true
         timeSupplier-out-0:
           producer:
             use-native-encoding: true
+        timeProcessor-in-0:
+          destination: timeSupplier-out-0
+          consumer:
+            use-native-decoding: true
+        timeProcessor-out-0:
+          destination: timeProcessor-out-0
+          producer:
+            use-native-encoding: true
+        timeLogger-in-0:
+          destination: timeProcessor-out-0
+          consumer:
+            use-native-decoding: true
       pulsar:
         bindings:
-          timeLogger-in-0:
-            consumer:
-              schema-type: STRING
           timeSupplier-out-0:
             producer:
               schema-type: STRING
+          timeProcessor-in-0:
+            consumer:
+              schema-type: STRING
+          timeProcessor-out-0:
+            producer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
+          timeLogger-in-0:
+            consumer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
