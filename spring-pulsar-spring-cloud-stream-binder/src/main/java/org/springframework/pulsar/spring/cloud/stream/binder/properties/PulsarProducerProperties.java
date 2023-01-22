@@ -24,6 +24,7 @@ import org.springframework.lang.Nullable;
  * Pulsar producer properties used by the binder.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarProducerProperties {
 
@@ -31,12 +32,48 @@ public class PulsarProducerProperties {
 	private SchemaType schemaType;
 
 	@Nullable
+	private Class<?> messageType;
+
+	@Nullable
+	private Class<?> messageKeyType;
+
+	@Nullable
+	private Class<?> messageValueType;
+
+	@Nullable
 	public SchemaType getSchemaType() {
 		return this.schemaType;
 	}
 
-	public void setSchemaType(SchemaType schemaType) {
+	public void setSchemaType(@Nullable SchemaType schemaType) {
 		this.schemaType = schemaType;
+	}
+
+	@Nullable
+	public Class<?> getMessageType() {
+		return this.messageType;
+	}
+
+	public void setMessageType(@Nullable Class<?> messageType) {
+		this.messageType = messageType;
+	}
+
+	@Nullable
+	public Class<?> getMessageKeyType() {
+		return this.messageKeyType;
+	}
+
+	public void setMessageKeyType(@Nullable Class<?> messageKeyType) {
+		this.messageKeyType = messageKeyType;
+	}
+
+	@Nullable
+	public Class<?> getMessageValueType() {
+		return this.messageValueType;
+	}
+
+	public void setMessageValueType(@Nullable Class<?> messageValueType) {
+		this.messageValueType = messageValueType;
 	}
 
 }
