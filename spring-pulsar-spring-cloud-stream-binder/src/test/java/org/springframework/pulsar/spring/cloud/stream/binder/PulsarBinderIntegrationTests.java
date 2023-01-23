@@ -65,18 +65,13 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
 					"--spring.cloud.function.definition=textSupplier;textLogger",
 					"--spring.cloud.stream.bindings.textLogger-in-0.destination=textSupplier-out-0",
 					"--spring.cloud.stream.pulsar.bindings.textLogger-in-0.consumer.subscription-name=pbit-text-sub1")) {
 
-				logger.info("TEST-CONTAINER-LOGS BEFORE: " + PulsarTestContainerSupport.PULSAR_CONTAINER.getLogs());
-
-				// Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
-				// .until(() -> output.toString().contains("Hello binder:
-				// test-basic-scenario"));
-
-				Thread.sleep(10_000);
-				logger.info("TEST-CONTAINER-LOGS AFTER: " + PulsarTestContainerSupport.PULSAR_CONTAINER.getLogs());
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: test-basic-scenario"));
 
 			}
 		}
@@ -87,7 +82,7 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
-					"--spring.cloud.function.definition=piSupplier;piLogger",
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
 					"--spring.cloud.stream.bindings.piSupplier-out-0.destination=pi-stream",
 					"--spring.cloud.stream.bindings.piLogger-in-0.destination=pi-stream",
 					"--spring.cloud.stream.pulsar.bindings.piLogger-in-0.consumer.subscription-name=pbit-float-sub1")) {
