@@ -53,14 +53,14 @@ public class PulsarTopicProvisionerTests {
 		verifyAndAssert(pulsarAdministration, producerDestination.getName(), "foo", 1);
 	}
 
-	private static void verifyAndAssert(PulsarAdministration pulsarAdministration, String producerDestination,
-			String foo, int expected) {
+	private static void verifyAndAssert(PulsarAdministration pulsarAdministration, String actualProducerDestination,
+			String expectedProducerDestination, int expectedPartitionCount) {
 		ArgumentCaptor<PulsarTopic> pulsarTopicArgumentCaptor = ArgumentCaptor.forClass(PulsarTopic.class);
 		verify(pulsarAdministration, times(1)).createOrModifyTopics(pulsarTopicArgumentCaptor.capture());
-		assertThat(producerDestination).isEqualTo(foo);
+		assertThat(actualProducerDestination).isEqualTo(expectedProducerDestination);
 		PulsarTopic pulsarTopic = pulsarTopicArgumentCaptor.getValue();
-		assertThat(pulsarTopic.topicName()).isEqualTo(foo);
-		assertThat(pulsarTopic.numberOfPartitions()).isEqualTo(expected);
+		assertThat(pulsarTopic.topicName()).isEqualTo(expectedProducerDestination);
+		assertThat(pulsarTopic.numberOfPartitions()).isEqualTo(expectedPartitionCount);
 	}
 
 	@Test
