@@ -52,6 +52,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
 	private static int AWAIT_DURATION = 30;
+
 	@Nested
 	class DefaultEncoding {
 
