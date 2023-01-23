@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -39,7 +38,6 @@ import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.Pulsar
 /**
  * @author Soby Chacko
  */
-@Disabled
 public class PulsarTopicProvisionerTests {
 
 	@Test

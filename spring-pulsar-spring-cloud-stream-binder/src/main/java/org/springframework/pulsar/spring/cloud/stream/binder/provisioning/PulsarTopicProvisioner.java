@@ -57,7 +57,7 @@ public class PulsarTopicProvisioner implements
 			partitionCount = partitionCountOnBinding;
 		}
 		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
-		// this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
+		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
@@ -72,7 +72,7 @@ public class PulsarTopicProvisioner implements
 			partitionCount = partitionCountOnBinding;
 		}
 		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
-		// this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
+		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
