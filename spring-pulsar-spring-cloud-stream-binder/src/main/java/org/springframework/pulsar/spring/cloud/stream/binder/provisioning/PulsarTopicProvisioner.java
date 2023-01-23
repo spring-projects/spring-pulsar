@@ -58,12 +58,6 @@ public class PulsarTopicProvisioner implements
 		}
 		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
 		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
-		try {
-			Thread.sleep(30_000);
-		}
-		catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
@@ -79,12 +73,6 @@ public class PulsarTopicProvisioner implements
 		}
 		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
 		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
-		try {
-			Thread.sleep(30_000);
-		}
-		catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
