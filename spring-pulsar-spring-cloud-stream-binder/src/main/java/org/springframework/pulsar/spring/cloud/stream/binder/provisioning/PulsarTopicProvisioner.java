@@ -48,12 +48,11 @@ public class PulsarTopicProvisioner implements
 
 	@Override
 	public ProducerDestination provisionProducerDestination(String name,
-			ExtendedProducerProperties<PulsarProducerProperties> properties) throws ProvisioningException {
+			ExtendedProducerProperties<PulsarProducerProperties> pulsarProducerProperties)
+			throws ProvisioningException {
 
 		int partitionCount = this.pulsarBinderConfigurationProperties.partitionCount();
-		int partitionCountOnBinding = properties.getPartitionCount(); // leverage the
-																		// partition count
-																		// from core
+		int partitionCountOnBinding = pulsarProducerProperties.getPartitionCount();
 		if (partitionCountOnBinding > 1) {
 			partitionCount = partitionCountOnBinding;
 		}
@@ -64,15 +63,11 @@ public class PulsarTopicProvisioner implements
 
 	@Override
 	public ConsumerDestination provisionConsumerDestination(String name, String group,
-			ExtendedConsumerProperties<PulsarConsumerProperties> properties) throws ProvisioningException {
+			ExtendedConsumerProperties<PulsarConsumerProperties> pulsarConsumerProperties)
+			throws ProvisioningException {
 		int partitionCount = this.pulsarBinderConfigurationProperties.partitionCount();
 
-		int partitionCountOnBinding = properties.getExtension().getPartitionCount(); // partition
-																						// count
-																						// from
-																						// Pulsar
-																						// consumer
-																						// binding
+		int partitionCountOnBinding = pulsarConsumerProperties.getExtension().getPartitionCount();
 		if (partitionCountOnBinding > 1) {
 			partitionCount = partitionCountOnBinding;
 		}

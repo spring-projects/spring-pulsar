@@ -26,6 +26,8 @@ import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 
 /**
+ * Unit tests for {@link PulsarBinderUtils}.
+ *
  * @author Soby Chacko
  */
 public class PulsarBinderUtilsTests {

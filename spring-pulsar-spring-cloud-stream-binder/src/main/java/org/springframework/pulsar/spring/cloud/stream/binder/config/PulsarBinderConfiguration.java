@@ -38,13 +38,9 @@ import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.Pulsar
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnMissingBean(Binder.class)
-@EnableConfigurationProperties({ PulsarProperties.class, PulsarExtendedBindingProperties.class })
+@EnableConfigurationProperties({ PulsarProperties.class, PulsarExtendedBindingProperties.class,
+		PulsarBinderConfigurationProperties.class })
 public class PulsarBinderConfiguration {
-
-	@Bean
-	public PulsarBinderConfigurationProperties pulsarBinderConfigurationProperties() {
-		return new PulsarBinderConfigurationProperties();
-	}
 
 	@Bean
 	public PulsarTopicProvisioner pulsarTopicProvisioner(PulsarAdministration pulsarAdministration,
