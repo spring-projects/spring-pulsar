@@ -18,7 +18,22 @@ package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * {@link ConfigurationProperties} for Pulsar binder configuration.
+ *
+ * @author Soby Chacko
+ */
 @ConfigurationProperties(prefix = "spring.cloud.stream.pulsar.binder")
 public class PulsarBinderConfigurationProperties {
+
+	private int partitionCount = 1;
+
+	public int partitionCount() {
+		return this.partitionCount;
+	}
+
+	public void setPartitionCount(int numberOfPartitions) {
+		this.partitionCount = numberOfPartitions;
+	}
 
 }
