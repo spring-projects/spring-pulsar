@@ -36,7 +36,7 @@ jobs:
 
       - name: Run Gradle build
         run: |
-          ./gradlew clean build -DdownloadRabbitConnector=false --continue --scan -x test  && ./gradlew spring-pulsar-spring-cloud-stream-binder:build
+          ./gradlew clean build -DdownloadRabbitConnector=false --continue --scan
 
       - name: Capture Test Results
         if: failure()
