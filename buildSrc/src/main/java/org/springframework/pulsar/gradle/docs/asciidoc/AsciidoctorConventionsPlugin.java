@@ -38,8 +38,7 @@ import org.springframework.util.StringUtils;
  * the plugin is applied:
  *
  * <ul>
- * <li>The {@code https://repo.spring.io/release} Maven repository is configured and
- * limited to dependencies in the following groups:
+ * <li>The Maven Central repository is configured and limited to dependencies in the following groups:
  * <ul>
  * <li>{@code io.spring.asciidoctor}
  * <li>{@code io.spring.asciidoctor.backends}
@@ -87,7 +86,7 @@ public class AsciidoctorConventionsPlugin implements Plugin<Project> {
 
 	private void configureDocumentationDependenciesRepository(Project project) {
 		project.getRepositories().maven((mavenRepo) -> {
-			mavenRepo.setUrl(URI.create("https://repo.spring.io/release"));
+			mavenRepo.setUrl(URI.create("https://repo.maven.apache.org/maven2"));
 			mavenRepo.mavenContent((mavenContent) -> {
 				mavenContent.includeGroup("io.spring.asciidoctor");
 				mavenContent.includeGroup("io.spring.asciidoctor.backends");
