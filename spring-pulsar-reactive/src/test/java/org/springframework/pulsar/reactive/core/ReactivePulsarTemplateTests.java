@@ -35,10 +35,10 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
@@ -50,29 +50,37 @@ import reactor.core.publisher.Mono;
  * Tests for {@link org.springframework.pulsar.reactive.core.ReactivePulsarTemplate}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
-	@Test
-	void sendMessagesWithSpecificSchema() throws Exception {
-		String topic = "smt-specific-schema-reactive-topic";
+	@ParameterizedTest
+	@ValueSource(booleans = { true, false })
+	void sendMessagesWithSpecificSchema(boolean useSimpleApi) throws Exception {
+		String topic = "rptt-sendMessagesWithSpecificSchema-" + useSimpleApi + "-topic";
+		String sub = "rptt-sendMessagesWithSpecificSchema-" + useSimpleApi + "-sub";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("smt-specific-schema-reactive-sub").subscribe()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic).subscriptionName(sub)
+					.subscribe()) {
 				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
 				senderSpec.setTopicName(topic);
-				org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory<Foo> producerFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory<>(
-						client, senderSpec, null);
-				org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<Foo> pulsarTemplate = new org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<>(
-						producerFactory);
-				pulsarTemplate.setSchema(Schema.JSON(Foo.class));
+				ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client,
+						senderSpec, null);
+				ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory);
 
 				List<Foo> foos = new ArrayList<>();
 				for (int i = 0; i < 10; i++) {
 					foos.add(new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID()));
 				}
-				pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
+
+				if (useSimpleApi) {
+					pulsarTemplate.send(Flux.fromIterable(foos), Schema.JSON(Foo.class)).subscribe();
+				}
+				else {
+					pulsarTemplate.newMessages(Flux.fromIterable(foos)).withSchema(Schema.JSON(Foo.class)).sendMany()
+							.subscribe();
+				}
 
 				for (int i = 0; i < 10; i++) {
 					assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3))
@@ -82,31 +90,39 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		}
 	}
 
-	@Test
-	void sendMessagesWithSpecificSchemaAndCustomTypeMappings() throws Exception {
-		String topic = "smt-specific-schema-custom-reactive-topic";
+	@ParameterizedTest
+	@ValueSource(booleans = { true, false })
+	void sendMessagesWithInferredSchema(boolean useSimpleApi) throws Exception {
+		String topic = "rptt-sendMessagesWithInferredSchema-" + useSimpleApi + "-topic";
+		String sub = "rptt-sendMessagesWithInferredSchema-" + useSimpleApi + "-sub";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("smt-specific-schema-custom-reactive-sub").subscribe()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic).subscriptionName(sub)
+					.subscribe()) {
 				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
 				senderSpec.setTopicName(topic);
-				org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory<Foo> producerFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory<>(
-						client, senderSpec, null);
-				// Custom schema resolver allows not calling setSchema on template
+				ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client,
+						senderSpec, null);
+				// Custom schema resolver allows not specifying the schema when sending
 				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 				schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
-				org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<Foo> pulsarTemplate = new org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<>(
-						producerFactory, schemaResolver);
+				ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory,
+						schemaResolver);
 
 				List<Foo> foos = new ArrayList<>();
 				for (int i = 0; i < 10; i++) {
 					foos.add(new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID()));
 				}
-				pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
 
-				// TODO figure out why ordering is not preserved when template does not
-				// have schema set
+				if (useSimpleApi) {
+					pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
+				}
+				else {
+					pulsarTemplate.newMessages(Flux.fromIterable(foos)).sendMany().subscribe();
+				}
+
+				// TODO figure out if expected to not be ordered when schema not set on
+				// template
 				List<Foo> foos2 = new ArrayList<>();
 				for (int i = 0; i < 10; i++) {
 					CompletableFuture<Message<Foo>> receiveFuture = consumer.receiveAsync();
@@ -126,38 +142,48 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		String subscription = topic + "-sub";
 		String msgPayload = topic + "-msg";
 		MessageSpecBuilderCustomizer<String> messageCustomizer = null;
-		if (testArgs.useMessageCustomizer) {
+		if (testArgs.messageCustomizer) {
 			messageCustomizer = (mb) -> mb.key("foo-key");
 		}
 		ReactiveMessageSenderBuilderCustomizer<String> senderCustomizer = null;
-		if (testArgs.useSenderCustomizer) {
-			senderCustomizer = (sb) -> sb.producerName("foo-producer");
+		if (testArgs.senderCustomizer) {
+			senderCustomizer = (sb) -> sb.producerName("foo-sender");
 		}
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
 			try (Consumer<String> consumer = client.newConsumer(Schema.STRING).topic(topic)
 					.subscriptionName(subscription).subscribe()) {
+
 				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
-				if (!testArgs.useSpecificTopic) {
+				if (!testArgs.explicitTopic) {
 					senderSpec.setTopicName(topic);
 				}
 				ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
 						senderSpec, null);
-				org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<String> pulsarTemplate = new org.springframework.pulsar.reactive.core.ReactivePulsarTemplate<>(
-						senderFactory);
+				ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 				Mono<MessageId> sendResponse;
-				if (testArgs.useTemplateSchema) {
-					pulsarTemplate.setSchema(Schema.STRING);
-				}
-				if (testArgs.useSimpleApi) {
-					sendResponse = testArgs.useSpecificTopic ? pulsarTemplate.send(topic, msgPayload)
-							: pulsarTemplate.send(msgPayload);
+				if (testArgs.simpleApi) {
+					if (testArgs.explicitSchema && testArgs.explicitTopic) {
+						sendResponse = pulsarTemplate.send(topic, msgPayload, Schema.STRING);
+					}
+					else if (testArgs.explicitSchema) {
+						sendResponse = pulsarTemplate.send(msgPayload, Schema.STRING);
+					}
+					else if (testArgs.explicitTopic) {
+						sendResponse = pulsarTemplate.send(topic, msgPayload);
+					}
+					else {
+						sendResponse = pulsarTemplate.send(msgPayload);
+					}
 				}
 				else {
 					ReactivePulsarTemplate.SendMessageBuilderImpl<String> messageBuilder = pulsarTemplate
 							.newMessage(msgPayload);
-					if (testArgs.useSpecificTopic) {
+					if (testArgs.explicitTopic) {
 						messageBuilder = messageBuilder.withTopic(topic);
+					}
+					if (testArgs.explicitSchema) {
+						messageBuilder = messageBuilder.withSchema(Schema.STRING);
 					}
 					if (messageCustomizer != null) {
 						messageBuilder = messageBuilder.withMessageCustomizer(messageCustomizer);
@@ -177,7 +203,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					assertThat(msg.getKey()).isEqualTo("foo-key");
 				}
 				if (senderCustomizer != null) {
-					assertThat(msg.getProducerName()).isEqualTo("foo-producer");
+					assertThat(msg.getProducerName()).isEqualTo("foo-sender");
 				}
 				// Make sure the producer was closed by the template (albeit indirectly as
 				// client removes closed producers)
@@ -188,67 +214,61 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	}
 
 	private static Stream<Arguments> sendMessageTestProvider() {
-		return Stream.of(arguments("sendReactiveMessageToDefaultTopic", SendTestArgs.useSpecificTopic(false)),
-				arguments("sendReactiveMessageToDefaultTopicWithSimpleApi",
-						SendTestArgs.useSpecificTopic(false).useSimpleApi()),
-				arguments("sendReactiveMessageToDefaultTopicWithSimpleApiAndTemplateSchema",
-						SendTestArgs.useSpecificTopic(false).useSimpleApi().useTemplateSchema()),
-				arguments("sendReactiveMessageToDefaultTopicWithMessageCustomizer",
-						SendTestArgs.useSpecificTopic(false).useMessageCustomizer()),
-				arguments("sendReactiveMessageToDefaultTopicWithProducerCustomizer",
-						SendTestArgs.useSpecificTopic(false).useSenderCustomizer()),
-				arguments("sendReactiveMessageToDefaultTopicWithAllOptions",
-						SendTestArgs.useSpecificTopic(false).useMessageCustomizer().useSenderCustomizer()),
-				arguments("sendReactiveMessageToSpecificTopic", SendTestArgs.useSpecificTopic(true)),
-				arguments("sendReactiveMessageToSpecificTopicWithSimpleApi",
-						SendTestArgs.useSpecificTopic(true).useSimpleApi()),
-				arguments("sendReactiveMessageToSpecificTopicWithSimpleApiAndTemplateSchema",
-						SendTestArgs.useSpecificTopic(true).useSimpleApi().useTemplateSchema()),
-				arguments("sendReactiveMessageToSpecificTopicWithMessageCustomizer",
-						SendTestArgs.useSpecificTopic(true).useMessageCustomizer()),
-				arguments("sendReactiveMessageToSpecificTopicWithProducerCustomizer",
-						SendTestArgs.useSpecificTopic(true).useSenderCustomizer()),
-				arguments("sendReactiveMessageToSpecificTopicWithAllOptions",
-						SendTestArgs.useSpecificTopic(true).useMessageCustomizer().useSenderCustomizer()));
+		return Stream.of(arguments("simpleReactiveSend", SendTestArgs.simple()),
+				arguments("simpleReactiveSendWithTopic", SendTestArgs.simple().topic()),
+				arguments("simpleReactiveSendWithSchema", SendTestArgs.simple().schema()),
+				arguments("simpleReactiveSendWithTopicAndSchema", SendTestArgs.simple().topic().schema()),
+				arguments("fluentReactiveSend", SendTestArgs.fluent()),
+				arguments("fluentReactiveSendWithSchema", SendTestArgs.fluent().schema()),
+				arguments("fluentReactiveSendWithTopic", SendTestArgs.fluent().topic()),
+				arguments("fluentReactiveSendWithMessageCustomizer", SendTestArgs.fluent().messageCustomizer()),
+				arguments("fluentReactiveSendWithSenderCustomizer", SendTestArgs.fluent().senderCustomizer()),
+				arguments("fluentReactiveSendWithTopicAndSchema", SendTestArgs.fluent().topic().schema()),
+				arguments("fluentReactiveSendWithTopicAndSchemaAndCustomizers",
+						SendTestArgs.fluent().topic().schema().messageCustomizer().senderCustomizer()));
 	}
 
 	static final class SendTestArgs {
 
-		private final boolean useSpecificTopic;
+		private boolean simpleApi;
 
-		private boolean useMessageCustomizer;
+		private boolean explicitTopic;
 
-		private boolean useSenderCustomizer;
+		private boolean explicitSchema;
 
-		private boolean useSimpleApi;
+		private boolean messageCustomizer;
 
-		private boolean useTemplateSchema;
+		private boolean senderCustomizer;
 
-		private SendTestArgs(boolean useSpecificTopic) {
-			this.useSpecificTopic = useSpecificTopic;
+		private SendTestArgs(boolean simpleApi) {
+			this.simpleApi = simpleApi;
 		}
 
-		static SendTestArgs useSpecificTopic(boolean useSpecificTopic) {
-			return new SendTestArgs(useSpecificTopic);
+		static SendTestArgs simple() {
+			return new SendTestArgs(true);
 		}
 
-		SendTestArgs useMessageCustomizer() {
-			this.useMessageCustomizer = true;
+		static SendTestArgs fluent() {
+			return new SendTestArgs(false);
+		}
+
+		SendTestArgs topic() {
+			this.explicitTopic = true;
 			return this;
 		}
 
-		SendTestArgs useSenderCustomizer() {
-			this.useSenderCustomizer = true;
+		SendTestArgs schema() {
+			this.explicitSchema = true;
 			return this;
 		}
 
-		SendTestArgs useSimpleApi() {
-			this.useSimpleApi = true;
+		SendTestArgs messageCustomizer() {
+			this.messageCustomizer = true;
 			return this;
 		}
 
-		SendTestArgs useTemplateSchema() {
-			this.useTemplateSchema = true;
+		SendTestArgs senderCustomizer() {
+			this.senderCustomizer = true;
 			return this;
 		}
 

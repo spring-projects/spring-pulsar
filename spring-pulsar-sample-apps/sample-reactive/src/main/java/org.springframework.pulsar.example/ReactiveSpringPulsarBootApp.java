@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,9 +88,10 @@ public class ReactiveSpringPulsarBootApp {
 
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {
-			this.reactivePulsarTemplate.setSchema(Schema.JSON(Foo.class));
+			Schema<Foo> schema = Schema.JSON(Foo.class);
 			Flux.range(0, 10).map((i) -> new Foo("Foo-" + i, "Bar-" + i))
-					.as(messages -> this.reactivePulsarTemplate.send("sample-reactive-topic2", messages)).subscribe();
+					.as(messages -> this.reactivePulsarTemplate.send("sample-reactive-topic2", messages, schema))
+					.subscribe();
 		}
 
 		@ReactivePulsarListener(subscriptionName = "sample-reactive-sub2", topics = "sample-reactive-topic2",

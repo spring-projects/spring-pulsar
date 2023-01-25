@@ -55,6 +55,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.Pulsar
  * {@link Binder} implementation for Apache Pulsar.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarMessageChannelBinder extends
 		AbstractMessageChannelBinder<ExtendedConsumerProperties<PulsarConsumerProperties>, ExtendedProducerProperties<PulsarProducerProperties>, PulsarTopicProvisioner>
@@ -80,21 +81,24 @@ public class PulsarMessageChannelBinder extends
 	@Override
 	protected MessageHandler createProducerMessageHandler(ProducerDestination destination,
 			ExtendedProducerProperties<PulsarProducerProperties> producerProperties, MessageChannel errorChannel) {
-
+		final Schema<Object> schema;
 		if (producerProperties.isUseNativeEncoding()) {
-			Schema<Object> schema = resolveSchema(producerProperties.getExtension().getSchemaType(),
+			schema = resolveSchema(producerProperties.getExtension().getSchemaType(),
 					producerProperties.getExtension().getMessageType(),
 					producerProperties.getExtension().getMessageKeyType(),
 					producerProperties.getExtension().getMessageValueType());
-			this.pulsarTemplate.setSchema(
-					Objects.requireNonNull(schema, "Could not determine producer schema for " + destination.getName()));
+			Objects.requireNonNull(schema, "Could not determine producer schema for " + destination.getName());
+		}
+		else {
+			schema = null;
 		}
 		return message -> {
 			try {
-				PulsarMessageChannelBinder.this.pulsarTemplate.sendAsync(destination.getName(), message.getPayload());
+				PulsarMessageChannelBinder.this.pulsarTemplate.sendAsync(destination.getName(), message.getPayload(),
+						schema);
 			}
-			catch (PulsarClientException e) {
-				// deal later
+			catch (PulsarClientException ex) {
+				this.logger.trace("Failed to send message to destination: " + destination.getName(), ex);
 			}
 		};
 	}
@@ -109,7 +113,6 @@ public class PulsarMessageChannelBinder extends
 			Message<Object> message = MessageBuilder.withPayload(msg.getValue()).build();
 			pulsarMessageDrivenChannelAdapter.send(message);
 		});
-
 		if (properties.isUseNativeDecoding()) {
 			Schema<Object> schema = resolveSchema(properties.getExtension().getSchemaType(),
 					properties.getExtension().getMessageType(), properties.getExtension().getMessageKeyType(),
@@ -120,7 +123,6 @@ public class PulsarMessageChannelBinder extends
 		else {
 			pulsarContainerProperties.setSchema(Schema.BYTES);
 		}
-
 		String subscriptionName = PulsarBinderUtils.subscriptionName(properties.getExtension(), destination);
 		pulsarContainerProperties.setSubscriptionName(subscriptionName);
 		DefaultPulsarMessageListenerContainer<?> container = new DefaultPulsarMessageListenerContainer<>(

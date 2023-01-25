@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.pulsar.client.api.MessageId;
@@ -42,7 +43,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
- * A thread-safe template for executing high-level Pulsar operations.
+ * A template for executing high-level Pulsar operations.
  *
  * @param <T> the message payload type
  * @author Soby Chacko
@@ -56,7 +57,6 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	private final PulsarProducerFactory<T> producerFactory;
 
-	@Nullable
 	private final List<ProducerInterceptor> interceptors;
 
 	private final SchemaResolver schemaResolver;
@@ -68,9 +68,6 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	private final PulsarTemplateObservationConvention observationConvention;
 
 	private String beanName = "";
-
-	@Nullable
-	private Schema<T> schema;
 
 	/**
 	 * Construct a template instance without interceptors that uses the default schema
@@ -113,22 +110,43 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	@Override
 	public MessageId send(T message) throws PulsarClientException {
-		return doSend(null, null, message, null, null);
+		return doSend(null, message, null, null, null, null);
+	}
+
+	@Override
+	public MessageId send(T message, @Nullable Schema<T> schema) throws PulsarClientException {
+		return doSend(null, message, schema, null, null, null);
 	}
 
 	@Override
 	public MessageId send(@Nullable String topic, T message) throws PulsarClientException {
-		return doSend(topic, null, message, null, null);
+		return doSend(topic, message, null, null, null, null);
+	}
+
+	@Override
+	public MessageId send(@Nullable String topic, T message, @Nullable Schema<T> schema) throws PulsarClientException {
+		return doSend(topic, message, schema, null, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
-		return doSendAsync(null, null, message, null, null);
+		return doSendAsync(null, message, null, null, null, null);
+	}
+
+	@Override
+	public CompletableFuture<MessageId> sendAsync(T message, @Nullable Schema<T> schema) throws PulsarClientException {
+		return doSendAsync(null, message, schema, null, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException {
-		return doSendAsync(topic, null, message, null, null);
+		return doSendAsync(topic, message, null, null, null, null);
+	}
+
+	@Override
+	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message, @Nullable Schema<T> schema)
+			throws PulsarClientException {
+		return doSendAsync(topic, message, schema, null, null, null);
 	}
 
 	@Override
@@ -141,27 +159,21 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		this.beanName = beanName;
 	}
 
-	/**
-	 * Set the schema to use on this template.
-	 * @param schema provides the {@link Schema} used on this template
-	 */
-	public void setSchema(Schema<T> schema) {
-		this.schema = schema;
-	}
-
-	private MessageId doSend(@Nullable String topic, @Nullable Collection<String> encryptionKeys, T message,
+	private MessageId doSend(@Nullable String topic, T message, @Nullable Schema<T> schema,
+			@Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		try {
-			return doSendAsync(topic, encryptionKeys, message, typedMessageBuilderCustomizer, producerCustomizer).get();
+			return doSendAsync(topic, message, schema, encryptionKeys, typedMessageBuilderCustomizer,
+					producerCustomizer).get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);
 		}
 	}
 
-	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic,
-			@Nullable Collection<String> encryptionKeys, T message,
+	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, T message, @Nullable Schema<T> schema,
+			@Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
@@ -171,7 +183,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		Observation observation = newObservation(senderContext);
 		try {
 			observation.start();
-			Producer<T> producer = prepareProducerForSend(topic, message, encryptionKeys, producerCustomizer);
+			Producer<T> producer = prepareProducerForSend(topic, message, schema, encryptionKeys, producerCustomizer);
 			TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
 			if (typedMessageBuilderCustomizer != null) {
 				typedMessageBuilderCustomizer.customize(messageBuilder);
@@ -207,10 +219,13 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
-	private Producer<T> prepareProducerForSend(@Nullable String topic, T message,
+	private Producer<T> prepareProducerForSend(@Nullable String topic, T message, @Nullable Schema<T> schema,
 			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
 			throws PulsarClientException {
-		Schema<T> schema = this.schema != null ? this.schema : this.schemaResolver.getSchema(message);
+		if (schema == null) {
+			schema = Objects.requireNonNull(this.schemaResolver.getSchema(message),
+					"Schema must not be null - expecting at least a default schema");
+		}
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(this.interceptors)) {
 			customizers.add(builder -> this.interceptors.forEach(builder::intercept));
@@ -231,6 +246,9 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		private String topic;
 
 		@Nullable
+		private Schema<T> schema;
+
+		@Nullable
 		private Collection<String> encryptionKeys;
 
 		@Nullable
@@ -247,6 +265,12 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		@Override
 		public SendMessageBuilder<T> withTopic(String topic) {
 			this.topic = topic;
+			return this;
+		}
+
+		@Override
+		public SendMessageBuilder<T> withSchema(Schema<T> schema) {
+			this.schema = schema;
 			return this;
 		}
 
@@ -270,14 +294,14 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 		@Override
 		public MessageId send() throws PulsarClientException {
-			return this.template.doSend(this.topic, this.encryptionKeys, this.message, this.messageCustomizer,
-					this.producerCustomizer);
+			return this.template.doSend(this.topic, this.message, this.schema, this.encryptionKeys,
+					this.messageCustomizer, this.producerCustomizer);
 		}
 
 		@Override
 		public CompletableFuture<MessageId> sendAsync() throws PulsarClientException {
-			return this.template.doSendAsync(this.topic, this.encryptionKeys, this.message, this.messageCustomizer,
-					this.producerCustomizer);
+			return this.template.doSendAsync(this.topic, this.message, this.schema, this.encryptionKeys,
+					this.messageCustomizer, this.producerCustomizer);
 		}
 
 	}

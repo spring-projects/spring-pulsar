@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
 
@@ -42,6 +43,16 @@ public interface PulsarOperations<T> {
 	MessageId send(T message) throws PulsarClientException;
 
 	/**
+	 * Sends a message to the default topic in a blocking manner.
+	 * @param message the message to send
+	 * @param schema the schema to use or {@code null} to send using the default schema
+	 * resolution
+	 * @return the id assigned by the broker to the published message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	MessageId send(T message, @Nullable Schema<T> schema) throws PulsarClientException;
+
+	/**
 	 * Sends a message to the specified topic in a blocking manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the
 	 * default topic
@@ -52,12 +63,34 @@ public interface PulsarOperations<T> {
 	MessageId send(@Nullable String topic, T message) throws PulsarClientException;
 
 	/**
+	 * Sends a message to the specified topic in a blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the
+	 * default topic
+	 * @param message the message to send
+	 * @param schema the schema to use or {@code null} to send using the default schema
+	 * resolution
+	 * @return the id assigned by the broker to the published message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	MessageId send(@Nullable String topic, T message, @Nullable Schema<T> schema) throws PulsarClientException;
+
+	/**
 	 * Sends a message to the default topic in a non-blocking manner.
 	 * @param message the message to send
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
 	CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException;
+
+	/**
+	 * Sends a message to the default topic in a non-blocking manner.
+	 * @param message the message to send
+	 * @param schema the schema to use or {@code null} to send using the default schema
+	 * resolution
+	 * @return a future that holds the id assigned by the broker to the published message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	CompletableFuture<MessageId> sendAsync(T message, @Nullable Schema<T> schema) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a non-blocking manner.
@@ -68,6 +101,19 @@ public interface PulsarOperations<T> {
 	 * @throws PulsarClientException if an error occurs
 	 */
 	CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException;
+
+	/**
+	 * Sends a message to the specified topic in a non-blocking manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the
+	 * default topic
+	 * @param message the message to send
+	 * @param schema the schema to use or {@code null} to send using the default schema
+	 * resolution
+	 * @return a future that holds the id assigned by the broker to the published message
+	 * @throws PulsarClientException if an error occurs
+	 */
+	CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message, @Nullable Schema<T> schema)
+			throws PulsarClientException;
 
 	/**
 	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message.
@@ -90,6 +136,13 @@ public interface PulsarOperations<T> {
 		 * @return the current builder with the destination topic specified
 		 */
 		SendMessageBuilder<T> withTopic(String topic);
+
+		/**
+		 * Specify the schema to use when sending the message.
+		 * @param schema the schema to use
+		 * @return the current builder with the schema specified
+		 */
+		SendMessageBuilder<T> withSchema(Schema<T> schema);
 
 		/**
 		 * Specify the encryption keys to use.

@@ -87,6 +87,7 @@ import reactor.core.publisher.Mono;
  * Tests for {@link ReactivePulsarListener} annotation.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 @SpringJUnitConfig
 @DirtiesContext
@@ -199,13 +200,13 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@ReactivePulsarListener(id = "id-1", topics = "topic-1", subscriptionName = "subscription-1",
 					consumerCustomizer = "consumerCustomizer")
-			Mono<Void> listen1(String message) {
+			Mono<Void> listen1(String ignored) {
 				latch1.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(consumerCustomizer = "listen2Customizer")
-			Mono<Void> listen2(String message) {
+			Mono<Void> listen2(String ignored) {
 				latch2.countDown();
 				return Mono.empty();
 			}
@@ -218,7 +219,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@ReactivePulsarListener(id = "id-3", topicPattern = "persistent://public/default/pattern.*",
 					subscriptionName = "subscription-3", consumerCustomizer = "consumerCustomizer")
-			Mono<Void> listen3(String message) {
+			Mono<Void> listen3(String ignored) {
 				latch3.countDown();
 				return Mono.empty();
 			}
@@ -350,10 +351,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(JSONSchema.of(User.class));
-
 			for (int i = 0; i < 3; i++) {
-				template.send("json-topic", new User("Jason", i));
+				template.send("json-topic", new User("Jason", i), JSONSchema.of(User.class));
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -363,10 +362,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(AvroSchema.of(User.class));
-
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-topic", new User("Avi", i));
+				template.send("avro-topic", new User("Avi", i), AvroSchema.of(User.class));
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -378,10 +375,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarTemplate<KeyValue<String, Integer>> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<KeyValue<String, Integer>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.INT32,
 					KeyValueEncodingType.INLINE);
-			template.setSchema(kvSchema);
-
 			for (int i = 0; i < 3; i++) {
-				template.send("keyvalue-topic", new KeyValue<>("Kevin", i));
+				template.send("keyvalue-topic", new KeyValue<>("Kevin", i), kvSchema);
 			}
 			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -391,10 +386,9 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(ProtobufSchema.of(Proto.Person.class));
-
 			for (int i = 0; i < 3; i++) {
-				template.send("protobuf-topic", Proto.Person.newBuilder().setId(i).setName("Paul").build());
+				template.send("protobuf-topic", Proto.Person.newBuilder().setId(i).setName("Paul").build(),
+						ProtobufSchema.of(Proto.Person.class));
 			}
 			assertThat(protobufLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -405,28 +399,28 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@ReactivePulsarListener(id = "jsonListener", topics = "json-topic", schemaType = SchemaType.JSON,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenJson(User message) {
+			Mono<Void> listenJson(User ignored) {
 				jsonLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "avroListener", topics = "avro-topic", schemaType = SchemaType.AVRO,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenAvro(User message) {
+			Mono<Void> listenAvro(User ignored) {
 				avroLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "keyvalueListener", topics = "keyvalue-topic",
 					schemaType = SchemaType.KEY_VALUE, consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenKeyvalue(KeyValue<String, Integer> message) {
+			Mono<Void> listenKeyvalue(KeyValue<String, Integer> ignored) {
 				keyvalueLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "protobufListener", topics = "protobuf-topic",
 					schemaType = SchemaType.PROTOBUF, consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenProtobuf(Proto.Person message) {
+			Mono<Void> listenProtobuf(Proto.Person ignored) {
 				protobufLatch.countDown();
 				return Mono.empty();
 			}
@@ -509,10 +503,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(JSONSchema.of(User2.class));
-
 			for (int i = 0; i < 3; i++) {
-				template.send("json-custom-schema-topic", new User2("Jason", i));
+				template.send("json-custom-schema-topic", new User2("Jason", i), JSONSchema.of(User2.class));
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -522,10 +514,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(AvroSchema.of(User.class));
-
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-custom-schema-topic", new User("Avi", i));
+				template.send("avro-custom-schema-topic", new User("Avi", i), AvroSchema.of(User.class));
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -537,10 +527,9 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarTemplate<KeyValue<String, User2>> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<KeyValue<String, User2>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(User2.class),
 					KeyValueEncodingType.INLINE);
-			template.setSchema(kvSchema);
-
 			for (int i = 0; i < 3; i++) {
-				template.send("keyvalue-custom-schema-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)));
+				template.send("keyvalue-custom-schema-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)),
+						kvSchema);
 			}
 			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -550,11 +539,10 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(ProtobufSchema.of(Proto.Person.class));
-
 			for (int i = 0; i < 3; i++) {
 				template.send("protobuf-custom-schema-topic",
-						Proto.Person.newBuilder().setId(i).setName("Paul").build());
+						Proto.Person.newBuilder().setId(i).setName("Paul").build(),
+						ProtobufSchema.of(Proto.Person.class));
 			}
 			assertThat(protobufLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -582,28 +570,28 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@ReactivePulsarListener(id = "jsonListener", topics = "json-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenJson(User2 message) {
+			Mono<Void> listenJson(User2 ignored) {
 				jsonLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "avroListener", topics = "avro-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenAvro(User message) {
+			Mono<Void> listenAvro(User ignored) {
 				avroLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "keyvalueListener", topics = "keyvalue-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenKeyvalue(KeyValue<String, User2> message) {
+			Mono<Void> listenKeyvalue(KeyValue<String, User2> ignored) {
 				keyvalueLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "protobufListener", topics = "protobuf-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenProtobuf(Proto.Person message) {
+			Mono<Void> listenProtobuf(Proto.Person ignored) {
 				protobufLatch.countDown();
 				return Mono.empty();
 			}
@@ -827,7 +815,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 			@ReactivePulsarListener(topics = "pulsarListenerConcurrency", consumerCustomizer = "consumerCustomizer",
 					concurrency = "100")
-			Mono<Void> listen1(String message) {
+			Mono<Void> listen1(String ignored) {
 				latch.countDown();
 				// if messages are not handled concurrently, this will make the latch
 				// await timeout.
