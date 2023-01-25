@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -32,7 +33,7 @@ final class ReactiveMessageSenderUtils {
 	private ReactiveMessageSenderUtils() {
 	}
 
-	static <T> String resolveTopicName(String userSpecifiedTopic,
+	static <T> String resolveTopicName(@Nullable String userSpecifiedTopic,
 			ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
 		ReactiveMessageSenderSpec reactiveMessageSenderSpec = reactiveMessageSenderFactory
 				.getReactiveMessageSenderSpec();

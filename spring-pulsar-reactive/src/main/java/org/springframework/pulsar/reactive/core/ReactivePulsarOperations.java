@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@
 package org.springframework.pulsar.reactive.core;
 
 import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.Schema;
 import org.reactivestreams.Publisher;
+
+import org.springframework.lang.Nullable;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,6 +30,7 @@ import reactor.core.publisher.Mono;
  *
  * @param <T> the message payload type
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public interface ReactivePulsarOperations<T> {
 
@@ -38,13 +42,33 @@ public interface ReactivePulsarOperations<T> {
 	Mono<MessageId> send(T message);
 
 	/**
+	 * Sends a message to the specified topic in a reactive manner. default topic
+	 * @param message the message to send
+	 * @param schema the schema to use or {@code null} to use the default schema
+	 * resolution
+	 * @return the id assigned by the broker to the published message
+	 */
+	Mono<MessageId> send(T message, @Nullable Schema<T> schema);
+
+	/**
 	 * Sends a message to the specified topic in a reactive manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the
 	 * default topic
 	 * @param message the message to send
 	 * @return the id assigned by the broker to the published message
 	 */
-	Mono<MessageId> send(String topic, T message);
+	Mono<MessageId> send(@Nullable String topic, T message);
+
+	/**
+	 * Sends a message to the specified topic in a reactive manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the
+	 * default topic
+	 * @param message the message to send
+	 * @param schema the schema to use or {@code null} to use the default schema
+	 * resolution
+	 * @return the id assigned by the broker to the published message
+	 */
+	Mono<MessageId> send(@Nullable String topic, T message, @Nullable Schema<T> schema);
 
 	/**
 	 * Sends multiple messages to the default topic in a reactive manner.
@@ -55,6 +79,16 @@ public interface ReactivePulsarOperations<T> {
 	Flux<MessageId> send(Publisher<T> messages);
 
 	/**
+	 * Sends multiple messages to the default topic in a reactive manner.
+	 * @param messages the messages to send
+	 * @param schema the schema to use or {@code null} to use the default schema
+	 * resolution
+	 * @return the ids assigned by the broker to the published messages in the same order
+	 * as they were sent
+	 */
+	Flux<MessageId> send(Publisher<T> messages, @Nullable Schema<T> schema);
+
+	/**
 	 * Sends multiple messages to the specified topic in a reactive manner.
 	 * @param topic the topic to send the message to or {@code null} to send to the
 	 * default topic
@@ -62,7 +96,19 @@ public interface ReactivePulsarOperations<T> {
 	 * @return the ids assigned by the broker to the published messages in the same order
 	 * as they were sent
 	 */
-	Flux<MessageId> send(String topic, Publisher<T> messages);
+	Flux<MessageId> send(@Nullable String topic, Publisher<T> messages);
+
+	/**
+	 * Sends multiple messages to the specified topic in a reactive manner.
+	 * @param topic the topic to send the message to or {@code null} to send to the
+	 * default topic
+	 * @param messages the messages to send
+	 * @param schema the schema to use or {@code null} to use the default schema
+	 * resolution
+	 * @return the ids assigned by the broker to the published messages in the same order
+	 * as they were sent
+	 */
+	Flux<MessageId> send(@Nullable String topic, Publisher<T> messages, @Nullable Schema<T> schema);
 
 	/**
 	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message
@@ -71,6 +117,14 @@ public interface ReactivePulsarOperations<T> {
 	 * @return the builder to configure and send the message
 	 */
 	SendMessageBuilder<T> newMessage(T message);
+
+	/**
+	 * Create a {@link SendMessageBuilder builder} for configuring and sending multiple
+	 * messages reactively.
+	 * @param messages the messages to send
+	 * @return the builder to configure and send the message
+	 */
+	SendMessageBuilder<T> newMessages(Publisher<T> messages);
 
 	/**
 	 * Builder that can be used to configure and send a message. Provides more options
@@ -86,6 +140,13 @@ public interface ReactivePulsarOperations<T> {
 		 * @return the current builder with the destination topic specified
 		 */
 		SendMessageBuilder<T> withTopic(String topic);
+
+		/**
+		 * Specify the schema to use when sending the message.
+		 * @param schema the schema to use
+		 * @return the current builder with the schema specified
+		 */
+		SendMessageBuilder<T> withSchema(Schema<T> schema);
 
 		/**
 		 * Specifies the message customizer to use to further configure the message.
@@ -108,6 +169,13 @@ public interface ReactivePulsarOperations<T> {
 		 * @return the id assigned by the broker to the published message
 		 */
 		Mono<MessageId> send();
+
+		/**
+		 * Send the messages in a reactive manner using the configured specification.
+		 * @return the ids assigned by the broker to the published messages in the same
+		 * order as they were sent
+		 */
+		Flux<MessageId> sendMany();
 
 	}
 

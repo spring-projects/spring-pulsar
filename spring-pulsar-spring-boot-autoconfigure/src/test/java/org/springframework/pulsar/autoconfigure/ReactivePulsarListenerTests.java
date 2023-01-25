@@ -86,8 +86,7 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			ReactivePulsarTemplate<Foo> pulsarTemplate = context.getBean(ReactivePulsarTemplate.class);
-			pulsarTemplate.setSchema(Schema.JSON(Foo.class));
-			pulsarTemplate.send("rplt-custom-topic1", new Foo("John Doe")).block();
+			pulsarTemplate.send("rplt-custom-topic1", new Foo("John Doe"), Schema.JSON(Foo.class)).block();
 			assertThat(LATCH2.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
@@ -129,7 +128,7 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@ReactivePulsarListener(subscriptionName = "rplt-sub1", topics = "rplt-topic1",
 				consumerCustomizer = "consumerCustomizer")
-		public Mono<Void> listen(String foo) {
+		public Mono<Void> listen(String ignored) {
 			LATCH1.countDown();
 			return Mono.empty();
 		}
@@ -143,7 +142,7 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@ReactivePulsarListener(subscriptionName = "rplt-custom-sub1", topics = "rplt-custom-topic1",
 				schemaType = SchemaType.JSON, consumerCustomizer = "consumerCustomizer")
-		public Mono<Void> listen(Foo foo) {
+		public Mono<Void> listen(Foo ignored) {
 			LATCH2.countDown();
 			return Mono.empty();
 		}
@@ -164,7 +163,7 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@ReactivePulsarListener(subscriptionName = "rplt-custom-sub2", topics = "rplt-custom-topic2",
 				consumerCustomizer = "consumerCustomizer")
-		public Mono<Void> listen(Foo foo) {
+		public Mono<Void> listen(Foo ignored) {
 			LATCH3.countDown();
 			return Mono.empty();
 		}

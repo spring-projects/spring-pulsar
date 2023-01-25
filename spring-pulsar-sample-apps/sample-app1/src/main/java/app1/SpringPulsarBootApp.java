@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,11 +93,10 @@ public class SpringPulsarBootApp {
 
 		String topic = "hello-pulsar-exclusive-3";
 		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-		pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 		return args -> {
 			for (int i = 0; i < 10; i++) {
 				Foo foo = new Foo(i + "-" + "Foo-" + UUID.randomUUID(), i + "-" + "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(topic, foo);
+				pulsarTemplate.send(topic, foo, Schema.JSON(Foo.class));
 			}
 		};
 	}
@@ -139,11 +138,10 @@ public class SpringPulsarBootApp {
 
 		String topic = "hello-pulsar-exclusive-5";
 		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-		pulsarTemplate.setSchema(Schema.JSON(Foo.class));
 		return args -> {
 			for (int i = 0; i < 100; i++) {
 				Foo foo = new Foo(i + "-" + "Foo-" + UUID.randomUUID(), i + "-" + "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(topic, foo);
+				pulsarTemplate.send(topic, foo, Schema.JSON(Foo.class));
 			}
 		};
 	}

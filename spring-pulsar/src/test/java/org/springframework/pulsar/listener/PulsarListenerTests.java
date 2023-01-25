@@ -81,6 +81,7 @@ import org.springframework.util.backoff.FixedBackOff;
 /**
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 @SpringJUnitConfig
 @DirtiesContext
@@ -230,26 +231,26 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		static class TestPulsarListenersForBasicScenario {
 
 			@PulsarListener(id = "foo", properties = { "subscriptionName=subscription-1", "topicNames=foo-1" })
-			void listen1(String message) {
+			void listen1(String ignored) {
 				latch.countDown();
 			}
 
 			@PulsarListener(id = "bar", topics = "concurrency-on-pl", subscriptionName = "subscription-2",
 					subscriptionType = SubscriptionType.Failover, concurrency = "3")
-			void listen2(String message) {
+			void listen2(String ignored) {
 				latch1.countDown();
 			}
 
 			@PulsarListener(id = "baz", topicPattern = "persistent://public/default/pattern.*",
 					subscriptionName = "subscription-3",
 					properties = { "patternAutoDiscoveryPeriod=5", "subscriptionInitialPosition=Earliest" })
-			void listen3(String message) {
+			void listen3(String ignored) {
 				latch2.countDown();
 			}
 
 			@PulsarListener(id = "ackMode-test-id", subscriptionName = "ackModeTest-sub", topics = "ackModeTest-topic",
 					ackMode = AckMode.RECORD)
-			void ackModeTestListener(String message) {
+			void ackModeTestListener(String ignored) {
 			}
 
 		}
@@ -263,8 +264,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		static CountDownLatch nackRedeliveryBackoffLatch = new CountDownLatch(5);
 
 		@Test
-		void pulsarListenerWithNackRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
-				throws Exception {
+		void pulsarListenerWithNackRedeliveryBackoff() throws Exception {
 			pulsarTemplate.send("withNegRedeliveryBackoff-test-topic", "hello john doe");
 			assertThat(nackRedeliveryBackoffLatch.await(15, TimeUnit.SECONDS)).isTrue();
 		}
@@ -298,8 +298,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		static CountDownLatch ackTimeoutRedeliveryBackoffLatch = new CountDownLatch(5);
 
 		@Test
-		void pulsarListenerWithAckTimeoutRedeliveryBackoff(@Autowired PulsarListenerEndpointRegistry registry)
-				throws Exception {
+		void pulsarListenerWithAckTimeoutRedeliveryBackoff() throws Exception {
 			pulsarTemplate.send("withAckTimeoutRedeliveryBackoff-test-topic", "hello john doe");
 			assertThat(ackTimeoutRedeliveryBackoffLatch.await(60, TimeUnit.SECONDS)).isTrue();
 		}
@@ -313,7 +312,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					topics = "withAckTimeoutRedeliveryBackoff-test-topic",
 					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff",
 					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1000" })
-			void listen(String msg) {
+			void listen(String ignored) {
 				ackTimeoutRedeliveryBackoffLatch.countDown();
 				throw new RuntimeException();
 			}
@@ -399,7 +398,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@PulsarListener(id = "dlqListener", topics = "dlpt-dlq-topic")
-			void listenDlq(String msg) {
+			void listenDlq(String ignored) {
 				dlqLatch.countDown();
 			}
 
@@ -428,7 +427,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "foobar", topics = "concurrency-on-pl", subscriptionName = "subscription-3",
 					concurrency = "3")
-			void listen3(String message) {
+			void listen3(String ignored) {
 			}
 
 		}
@@ -453,10 +452,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(JSONSchema.of(User.class));
-
+			Schema<User> schema = JSONSchema.of(User.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("json-topic", new User("Jason", i));
+				template.send("json-topic", new User("Jason", i), schema);
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(jsonBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -467,10 +465,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(AvroSchema.of(User.class));
-
+			Schema<User> schema = AvroSchema.of(User.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-topic", new User("Avi", i));
+				template.send("avro-topic", new User("Avi", i), schema);
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(avroBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -483,10 +480,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarTemplate<KeyValue<String, Integer>> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<KeyValue<String, Integer>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.INT32,
 					KeyValueEncodingType.INLINE);
-			template.setSchema(kvSchema);
-
 			for (int i = 0; i < 3; i++) {
-				template.send("keyvalue-topic", new KeyValue<>("Kevin", i));
+				template.send("keyvalue-topic", new KeyValue<>("Kevin", i), kvSchema);
 			}
 			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(keyvalueBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -497,10 +492,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(ProtobufSchema.of(Proto.Person.class));
-
+			Schema<Proto.Person> schema = ProtobufSchema.of(Proto.Person.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("protobuf-topic", Proto.Person.newBuilder().setId(i).setName("Paul").build());
+				template.send("protobuf-topic", Proto.Person.newBuilder().setId(i).setName("Paul").build(), schema);
 			}
 			assertThat(protobufLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(protobufBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -512,7 +506,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "jsonListener", topics = "json-topic", subscriptionName = "subscription-4",
 					schemaType = SchemaType.JSON, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenJson(User message) {
+			void listenJson(User ignored) {
 				jsonLatch.countDown();
 			}
 
@@ -524,7 +518,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "avroListener", topics = "avro-topic", subscriptionName = "subscription-6",
 					schemaType = SchemaType.AVRO, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenAvro(User message) {
+			void listenAvro(User ignored) {
 				avroLatch.countDown();
 			}
 
@@ -536,7 +530,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "keyvalueListener", topics = "keyvalue-topic", subscriptionName = "subscription-8",
 					schemaType = SchemaType.KEY_VALUE, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenKeyvalue(KeyValue<String, Integer> message) {
+			void listenKeyvalue(KeyValue<String, Integer> ignored) {
 				keyvalueLatch.countDown();
 			}
 
@@ -549,7 +543,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "protobufListener", topics = "protobuf-topic", subscriptionName = "subscription-10",
 					schemaType = SchemaType.PROTOBUF, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenProtobuf(Proto.Person message) {
+			void listenProtobuf(Proto.Person ignored) {
 				protobufLatch.countDown();
 			}
 
@@ -635,10 +629,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(Schema.JSON(User2.class));
-
+			Schema<User2> schema = Schema.JSON(User2.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("json-custom-mappings-topic", new User2("Jason", i));
+				template.send("json-custom-mappings-topic", new User2("Jason", i), schema);
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -648,10 +641,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(AvroSchema.of(User.class));
-
+			Schema<User> schema = AvroSchema.of(User.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-custom-mappings-topic", new User("Avi", i));
+				template.send("avro-custom-mappings-topic", new User("Avi", i), schema);
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -663,10 +655,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarTemplate<KeyValue<String, User2>> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<KeyValue<String, User2>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(User2.class),
 					KeyValueEncodingType.INLINE);
-			template.setSchema(kvSchema);
-
 			for (int i = 0; i < 3; i++) {
-				template.send("keyvalue-custom-mappings-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)));
+				template.send("keyvalue-custom-mappings-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)),
+						kvSchema);
 			}
 			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -676,11 +667,10 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Collections.emptyMap());
 			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setSchema(ProtobufSchema.of(Proto.Person.class));
-
+			Schema<Proto.Person> schema = ProtobufSchema.of(Proto.Person.class);
 			for (int i = 0; i < 3; i++) {
 				template.send("protobuf-custom-mappings-topic",
-						Proto.Person.newBuilder().setId(i).setName("Paul").build());
+						Proto.Person.newBuilder().setId(i).setName("Paul").build(), schema);
 			}
 			assertThat(protobufLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -710,25 +700,25 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@PulsarListener(id = "jsonListener", topics = "json-custom-mappings-topic",
 					subscriptionName = "subscription-4", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenJson(User2 message) {
+			void listenJson(User2 ignored) {
 				jsonLatch.countDown();
 			}
 
 			@PulsarListener(id = "avroListener", topics = "avro-custom-mappings-topic",
 					subscriptionName = "subscription-6", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenAvro(User message) {
+			void listenAvro(User ignored) {
 				avroLatch.countDown();
 			}
 
 			@PulsarListener(id = "keyvalueListener", topics = "keyvalue-custom-mappings-topic",
 					subscriptionName = "subscription-8", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenKeyvalue(KeyValue<String, User2> message) {
+			void listenKeyvalue(KeyValue<String, User2> ignored) {
 				keyvalueLatch.countDown();
 			}
 
 			@PulsarListener(id = "protobufListener", topics = "protobuf-custom-mappings-topic",
 					subscriptionName = "subscription-10", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenProtobuf(Proto.Person message) {
+			void listenProtobuf(Proto.Person ignored) {
 				protobufLatch.countDown();
 			}
 
