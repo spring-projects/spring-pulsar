@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.spring.gradle.convention;
+package io.spring.gradle.convention
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -63,16 +63,6 @@ class RepositoryConventionPlugin implements Plugin<Project> {
 					}
 					url = 'https://repo.spring.io/milestone/'
 				}
-			}
-			maven {
-				name = 'artifactory-release'
-				if (project.hasProperty('artifactoryUsername')) {
-					credentials {
-						username project.artifactoryUsername
-						password project.artifactoryPassword
-					}
-				}
-				url = 'https://repo.spring.io/release/'
 			}
 		}
 	}
