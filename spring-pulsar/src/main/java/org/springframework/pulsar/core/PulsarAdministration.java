@@ -163,10 +163,10 @@ public class PulsarAdministration
 	private void doCreateOrModifyTopicsIfNeeded(PulsarAdmin admin, Collection<PulsarTopic> topics) {
 		Map<String, List<PulsarTopic>> topicsPerNamespace = getTopicsPerNamespace(topics);
 
-		Set<PulsarTopic> topicsToCreate = new HashSet<>();
-		Set<PulsarTopic> topicsToModify = new HashSet<>();
-
 		topicsPerNamespace.forEach((namespace, requestedTopics) -> {
+			Set<PulsarTopic> topicsToCreate = new HashSet<>();
+			Set<PulsarTopic> topicsToModify = new HashSet<>();
+
 			try {
 				List<String> existingTopicsInNamespace = admin.topics().getList(namespace);
 
