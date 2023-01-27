@@ -58,7 +58,7 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  * @author Christophe Bornet
  */
-public class ListenerEndpointRegistry<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
+public class GenericListenerEndpointRegistry<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
 		implements PulsarListenerContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
 		ApplicationListener<ContextRefreshedEvent> {
 
@@ -75,7 +75,7 @@ public class ListenerEndpointRegistry<C extends MessageListenerContainer, E exte
 	private volatile boolean running;
 
 	@SuppressWarnings("unchecked")
-	protected ListenerEndpointRegistry(Class<?> type) {
+	protected GenericListenerEndpointRegistry(Class<?> type) {
 		this.type = (Class<? extends C>) type;
 	}
 

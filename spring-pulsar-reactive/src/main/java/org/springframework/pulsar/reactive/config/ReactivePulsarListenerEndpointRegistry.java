@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.springframework.pulsar.reactive.config;
 
-import org.springframework.pulsar.config.ListenerEndpointRegistry;
+import org.springframework.pulsar.config.GenericListenerEndpointRegistry;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListenerContainer;
 
 /**
@@ -36,8 +36,8 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListene
  * @param <T> Message payload type.
  * @author Christophe Bornet
  */
-public class ReactivePulsarListenerEndpointRegistry<T>
-		extends ListenerEndpointRegistry<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
+public class ReactivePulsarListenerEndpointRegistry<T> extends
+		GenericListenerEndpointRegistry<ReactivePulsarMessageListenerContainer<T>, ReactivePulsarListenerEndpoint<T>> {
 
 	public ReactivePulsarListenerEndpointRegistry() {
 		super(ReactivePulsarMessageListenerContainer.class);

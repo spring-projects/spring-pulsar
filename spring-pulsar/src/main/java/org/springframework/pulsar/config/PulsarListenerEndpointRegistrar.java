@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.springframework.util.Assert;
 
 /**
  * Helper bean for registering {@link ListenerEndpoint} with a
- * {@link ListenerEndpointRegistry}.
+ * {@link GenericListenerEndpointRegistry}.
  *
  * @author Soby Chacko
  * @author Christophe Bornet
@@ -39,7 +39,7 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 	private final List<PulsarListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
 
-	private ListenerEndpointRegistry endpointRegistry;
+	private GenericListenerEndpointRegistry endpointRegistry;
 
 	private ListenerContainerFactory<?, ?> containerFactory;
 
@@ -53,12 +53,12 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		this.type = type;
 	}
 
-	public void setEndpointRegistry(ListenerEndpointRegistry endpointRegistry) {
+	public void setEndpointRegistry(GenericListenerEndpointRegistry endpointRegistry) {
 		this.endpointRegistry = endpointRegistry;
 	}
 
 	@Nullable
-	public ListenerEndpointRegistry getEndpointRegistry() {
+	public GenericListenerEndpointRegistry getEndpointRegistry() {
 		return this.endpointRegistry;
 	}
 
