@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
@@ -49,6 +48,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  * @author Alexander Preuß
  * @author Chris Bono
+ * @author Kirill Merkushev
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -62,28 +62,6 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 	@Autowired
 	private PulsarAdministration pulsarAdministration;
 
-    private void assertThatTopicsExist(List<PulsarTopic> expected) throws PulsarAdminException {
-        assertThatTopicsExistIn(expected, NAMESPACE);
-    }
-
-    private void assertThatTopicsExistIn(List<PulsarTopic> expected, String namespace) throws PulsarAdminException {
-        List<String> expectedTopics = expectedTopics(expected);
-        assertThat(pulsarAdminClient.topics().getList(namespace)).containsAll(expectedTopics);
-    }
-
-    static List<String> expectedTopics(List<PulsarTopic> expected) {
-        return expected.stream().<String>mapMulti((topic, consumer) -> {
-            if (topic.isPartitioned()) {
-                for (int i = 0; i < topic.numberOfPartitions(); i++) {
-                    consumer.accept(topic.getFullyQualifiedTopicName() + "-partition-" + i);
-                }
-            } else {
-                consumer.accept(topic.getFullyQualifiedTopicName());
-            }
-
-        }).toList();
-    }
-
 	@Test
 	void constructorRespectsAuthenticationProps() {
 		Map<String, Object> props = new HashMap<>();
@@ -95,6 +73,26 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 				.asInstanceOf(type(ClientConfigurationData.class))
 				.extracting(ClientConfigurationData::getAuthentication).isInstanceOf(AuthenticationBasic.class)
 				.hasFieldOrPropertyWithValue("userId", "foo").hasFieldOrPropertyWithValue("password", "bar");
+	}
+
+	private void assertThatTopicsExist(List<PulsarTopic> expected) throws PulsarAdminException {
+		assertThatTopicsExistIn(expected, NAMESPACE);
+	}
+
+	private void assertThatTopicsExistIn(List<PulsarTopic> expectedTopics, String namespace)
+			throws PulsarAdminException {
+		List<String> expectedFullyQualifiedTopicNames = expectedTopics.stream().<String>mapMulti((topic, consumer) -> {
+			if (topic.isPartitioned()) {
+				for (int i = 0; i < topic.numberOfPartitions(); i++) {
+					consumer.accept(topic.getFullyQualifiedTopicName() + "-partition-" + i);
+				}
+			}
+			else {
+				consumer.accept(topic.getFullyQualifiedTopicName());
+			}
+
+		}).toList();
+		assertThat(pulsarAdminClient.topics().getList(namespace)).containsAll(expectedFullyQualifiedTopicNames);
 	}
 
 	@Configuration(proxyBeanMethods = false)
@@ -142,55 +140,52 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 
 		}
 
-    }
+	}
 
-    @Nested
-    @ContextConfiguration(classes = CreateMissingTopicsInSeparateNamespacesTest.CreateMissingTopicsConfig.class)
-    class CreateMissingTopicsInSeparateNamespacesTest {
+	@Nested
+	@ContextConfiguration(classes = CreateMissingTopicsInSeparateNamespacesTest.CreateMissingTopicsConfig.class)
+	class CreateMissingTopicsInSeparateNamespacesTest {
 
-        @Test
-        void topicsExist(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
-            assertThatTopicsExistIn(expectedTopics.stream().filter(topic -> topic.topicName().contains(CreateMissingTopicsConfig.PUBLIC_BLUE_NAMESPACE)).toList(), CreateMissingTopicsConfig.PUBLIC_BLUE_NAMESPACE);
-            assertThatTopicsExistIn(expectedTopics.stream().filter(topic -> topic.topicName().contains(CreateMissingTopicsConfig.PUBLIC_GREEN_NAMESPACE)).toList(), CreateMissingTopicsConfig.PUBLIC_GREEN_NAMESPACE);
-        }
+		@Test
+		void topicsExist(@Autowired PulsarTopic partitionedGreenTopic, @Autowired PulsarTopic partitionedBlueTopic)
+				throws PulsarAdminException {
+			assertThatTopicsExistIn(Collections.singletonList(partitionedGreenTopic),
+					CreateMissingTopicsConfig.PUBLIC_GREEN_NAMESPACE);
+			assertThatTopicsExistIn(Collections.singletonList(partitionedBlueTopic),
+					CreateMissingTopicsConfig.PUBLIC_BLUE_NAMESPACE);
+		}
 
+		@Configuration(proxyBeanMethods = false)
+		static class CreateMissingTopicsConfig {
 
-        @Configuration(proxyBeanMethods = false)
-        static class CreateMissingTopicsConfig {
+			public static final String PUBLIC_GREEN_NAMESPACE = "public/green";
 
-            public static final String PUBLIC_GREEN_NAMESPACE = "public/green";
+			public static final String PUBLIC_BLUE_NAMESPACE = "public/blue";
 
-            public static final String PUBLIC_BLUE_NAMESPACE = "public/blue";
+			static {
+				try (var pulsarAdmin = PulsarAdmin.builder()
+						.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()).build()) {
+					pulsarAdmin.namespaces().createNamespace(PUBLIC_GREEN_NAMESPACE);
+					pulsarAdmin.namespaces().createNamespace(PUBLIC_BLUE_NAMESPACE);
+				}
+				catch (PulsarClientException | PulsarAdminException e) {
+					throw new RuntimeException(e);
+				}
+			}
 
-            static {
-                var pulsarAdminBuilder = PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl());
-                try (var pulsarAdmin = pulsarAdminBuilder.build()) {
-                    Set.of(PUBLIC_GREEN_NAMESPACE, PUBLIC_BLUE_NAMESPACE)
-                            .forEach(ns -> {
-                                try {
-                                    pulsarAdmin.namespaces().createNamespace(ns);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
+			@Bean
+			PulsarTopic partitionedGreenTopic() {
+				return PulsarTopic.builder("persistent://%s/partitioned-1".formatted(PUBLIC_GREEN_NAMESPACE))
+						.numberOfPartitions(2).build();
+			}
 
-            @Bean
-            PulsarTopic partitionedGreenTopic() {
-                return PulsarTopic.builder("persistent://%s/partitioned-1".formatted(PUBLIC_GREEN_NAMESPACE))
-                        .numberOfPartitions(2).build();
-            }
+			@Bean
+			PulsarTopic partitionedBlueTopic() {
+				return PulsarTopic.builder("persistent://%s/partitioned-1".formatted(PUBLIC_BLUE_NAMESPACE))
+						.numberOfPartitions(2).build();
+			}
 
-            @Bean
-            PulsarTopic partitionedBlueTopic() {
-                return PulsarTopic.builder("persistent://%s/partitioned-1".formatted(PUBLIC_BLUE_NAMESPACE))
-                        .numberOfPartitions(2).build();
-            }
-
-        }
+		}
 
 	}
 

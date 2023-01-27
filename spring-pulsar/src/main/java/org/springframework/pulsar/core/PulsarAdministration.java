@@ -47,6 +47,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Alexander Preuß
  * @author Chris Bono
+ * @author Kirill Merkushev
  */
 public class PulsarAdministration
 		implements ApplicationContextAware, SmartInitializingSingleton, PulsarAdministrationOperations {
