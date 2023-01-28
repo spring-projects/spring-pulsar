@@ -23,10 +23,12 @@ spring:
         bindings:
           timeSupplier-out-0:
             producer:
-              schema-type: STRING
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
           timeProcessor-in-0:
             consumer:
-              schema-type: STRING
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
           timeProcessor-out-0:
             producer:
               schema-type: JSON

@@ -37,21 +37,28 @@ public class SpringPulsarBinderSampleApp {
 	}
 
 	@Bean
-	public Supplier<String> timeSupplier() {
-		return () -> String.valueOf(System.currentTimeMillis());
+	public Supplier<Time> timeSupplier() {
+		return () -> new Time(String.valueOf(System.currentTimeMillis()));
 	}
 
 	@Bean
-	public Function<String, EnhancedTime> timeProcessor() {
-		return (rawTime) -> new EnhancedTime(rawTime, "5150");
+	public Function<Time, EnhancedTime> timeProcessor() {
+		return (time) -> {
+			EnhancedTime enhancedTime = new EnhancedTime(time, "5150");
+			this.logger.info("PROCESSOR: {} --> {}", time, enhancedTime);
+			return enhancedTime;
+		};
 	}
 
 	@Bean
 	public Consumer<EnhancedTime> timeLogger() {
-		return (time) -> this.logger.info("TIME -> {}", time);
+		return (time) -> this.logger.info("SINK:      {}", time);
 	}
 
-	record EnhancedTime(String time, String extra) {
+	record Time(String time) {
+	}
+
+	record EnhancedTime(Time time, String extra) {
 	}
 
 }
