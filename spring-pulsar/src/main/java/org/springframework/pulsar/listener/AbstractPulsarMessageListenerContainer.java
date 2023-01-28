@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> imple
 	protected final Object lifecycleMonitor = new Object();
 
 	private volatile boolean running = false;
+
+	private volatile boolean paused;
 
 	protected RedeliveryBackoff negativeAckRedeliveryBackoff;
 
@@ -221,6 +223,20 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> imple
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
 		this.pulsarConsumerErrorHandler = pulsarConsumerErrorHandler;
+	}
+
+	@Override
+	public void pause() {
+		this.paused = true;
+	}
+
+	@Override
+	public void resume() {
+		this.paused = false;
+	}
+
+	protected boolean isPaused() {
+		return this.paused;
 	}
 
 }

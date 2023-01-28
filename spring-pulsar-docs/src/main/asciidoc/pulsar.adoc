@@ -1100,6 +1100,70 @@ On retry, the container sends a new batch of messages, starting with the failed 
 If it fails again, it is retried, until the retries are exhausted, at which point the message is sent to the DLT.
 At that point, the message is acknowledged by the container, and the listener is handed over with the subsequent messages in the original batch.
 
+=== Pausing and Resuming Message Listener Containers
+
+There are situations in which an application might want to pause message consumption temporarily and then resume later.
+Spring for Apache Pulsar provides the ability to pause and resume the underlying message listener containers.
+When the Pulsar message listener container is paused, any polling done by the container to receive data from the Pulsar consumer will be paused.
+Similarly, when the container is resumed, the next poll starts returning data if the topic has any new records added while paused.
+The container provided pause and resume features sit a level atop of the similar capabilities provided by the Pulsar consumer which means that in addition to pausing and resuming the Pulsar consumer, the container will not even invoke the `receive` method on the consumer while it is paused.
+
+In order for applications to pause and resume the listener container, they need to inject a special bean called `PulsarListenerEndpointRegistry`.
+Once the application gets a handle on this bean, then it can query for the listener container by its id and then invoke pause and resume operations.
+
+Here is an example.
+
+====
+[source, java]
+----
+@Bean
+ApplicationRunner runner1(PulsarTemplate<String> pulsarTemplate, PulsarListenerEndpointRegistry   pulsarListenerEndpointRegistry) {
+
+    String topic = "hello-pulsar";
+
+    return args -> {
+        for (int i = 0; i < 5; i++) {
+            pulsarTemplate.send(topic, "This is message " + (i + 1));
+        };
+        Thread.sleep(10_000);
+        PulsarMessageListenerContainer listenerContainer = pulsarListenerEndpointRegistry.getListenerContainer("consumer-pause-resume-listener");
+        System.out.println("Pausing and sleeping for 10 seconds");
+        listenerContainer.pause();
+        Thread.sleep(10_000);
+        for (int i = 5; i < 10; i++) {
+            pulsarTemplate.send(topic, "This is message " + (i + 1));
+        }
+        Thread.sleep(10_000);
+        System.out.println("Slept for 10 seconds and resuming");
+        listenerContainer.resume();
+    };
+}
+
+@PulsarListener(id = "consumer-pause-resume-listener", subscriptionName = "my-subscription", topics = "hello-pulsar")
+void listen1(String message) {
+    System.out.println(message);
+}
+
+----
+====
+
+When running this app, you will see the following output:
+
+```
+This is message 1
+This is message 2
+This is message 3
+This is message 4
+This is message 5
+Pausing and sleeping for 10 seconds
+Slept for 10 seconds and resuming
+This is message 6
+This is message 7
+This is message 8
+This is message 9
+This is message 10
+```
+
 == Publishing and Consuming Partitioned Topics
 
 In the following example, we publish to a topic called `hello-pulsar-partitioned`.

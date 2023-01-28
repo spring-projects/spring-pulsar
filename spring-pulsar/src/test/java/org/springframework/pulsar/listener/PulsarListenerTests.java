@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +48,7 @@ import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -949,6 +951,55 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				batchTopicNames = topicNames;
 				batchFooValues = fooValues;
 				pulsarMessagesBatchListenerLatch.countDown();
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = ConsumerPauseTest.ConsumerPauseConfig.class)
+	class ConsumerPauseTest {
+
+		private static final CountDownLatch latch = new CountDownLatch(10);
+
+		@Autowired
+		PulsarListenerEndpointRegistry pulsarListenerEndpointRegistry;
+
+		@Test
+		void containerPauseAndResumeSuccessfully() throws Exception {
+			for (int i = 0; i < 3; i++) {
+				pulsarTemplate.send("consumer-pause-topic", "hello-" + i);
+			}
+			// wait until all 3 messages are received by the listener
+			Awaitility.await().timeout(Duration.ofSeconds(10)).until(() -> latch.getCount() == 7);
+			PulsarMessageListenerContainer container = pulsarListenerEndpointRegistry
+					.getListenerContainer("consumerPauseListener");
+			if (container != null) {
+				container.pause();
+			}
+			Thread.sleep(1000);
+			for (int i = 3; i < 10; i++) {
+				pulsarTemplate.send("consumer-pause-topic", "hello-" + i);
+			}
+			Thread.sleep(1000);
+			assertThat(latch.getCount()).isEqualTo(7);
+
+			if (container != null) {
+				container.resume();
+			}
+			// All latch must be received by now
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class ConsumerPauseConfig {
+
+			@PulsarListener(id = "consumerPauseListener", subscriptionName = "consumer-pause-subscription",
+					topics = "consumer-pause-topic", properties = { "receiverQueueSize=1" })
+			void listen(String msg) {
+				latch.countDown();
 			}
 
 		}
