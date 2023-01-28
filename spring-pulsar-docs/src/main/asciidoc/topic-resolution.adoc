@@ -1,0 +1,57 @@
+[appendix]
+[[appendix.topic-resolution]]
+= Topic Resolution
+
+A destination topic is needed when producing or consuming messages.
+The framework looks in the following ordered locations to determine a topic (stopping at the first find):
+
+* User specified
+* Message type default
+* Global default
+
+When a topic is found via one of the default mechanisms, there is no need to specify the topic on the produce or consume API.
+
+When a topic is not found, the API will throw an exception accordingly.
+
+== User specified
+A topic passed into the API being used has the highest precedence (eg. `PulsarTemplate.send("my-topic", myMessage)` or `@PulsarListener(topics = "my-topic"`).
+
+== Message type default
+When no topic is passed into the API, the system looks for a message type to topic mapping configured for the type of the message being produced or consumed.
+
+Mappings can be configured with the `spring.pulsar.defaults.type-mappings` property.
+The following example uses `application.yml` to configure default topics to use when consuming or producing `Foo` or `Bar` messages:
+
+[source,yaml,indent=0,subs="verbatim"]
+----
+spring:
+  pulsar:
+    defaults:
+      type-mappings:
+        - message-type: com.acme.Foo
+          topic-name: foo-topic
+        - message-type: com.acme.Bar
+          topic-name: bar-topic
+----
+
+NOTE: The `message-type` is the fully-qualified name of the message class.
+
+=== Custom topic resolver
+The preferred method of adding mappings is via the property mentioned above.
+However, if more control is needed you can replace the default resolver by proving your own implementation, for example:
+
+[source,java,indent=0,subs="verbatim"]
+----
+@Bean
+public MyTopicResolver topicResolver() {
+	return new MyTopicResolver();
+}
+----
+
+== Producer global default
+The final location consulted (when producing) is the system-wide producer default topic.
+It is configured via the `spring.pulsar.producer.topic-name` property when using the imperative API and the `spring.pulsar.reactive.sender.topic-name` property when using the reactive API.
+
+== Consumer global default
+The final location consulted (when consuming) is the system-wide consumer default topic.
+It is configured via the `spring.pulsar.consumer.topics` or `spring.pulsar.consumer.topics-pattern` property when using the imperative API and one of the `spring.pulsar.reactive.consumer.topics` or `spring.pulsar.reactive.consumer.topics-pattern` property when using the reactive API.
