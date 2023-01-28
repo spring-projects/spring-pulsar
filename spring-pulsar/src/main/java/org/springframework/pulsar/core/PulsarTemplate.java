@@ -61,6 +61,8 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	private final SchemaResolver schemaResolver;
 
+	private final TopicResolver topicResolver;
+
 	@Nullable
 	private final ObservationRegistry observationRegistry;
 
@@ -80,12 +82,12 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	/**
 	 * Construct a template instance with interceptors that uses the default schema
-	 * resolver.
+	 * resolver and default topic resolver.
 	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 * @param interceptors the interceptors to add to the producer.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
-		this(producerFactory, interceptors, new DefaultSchemaResolver(), null, null);
+		this(producerFactory, interceptors, new DefaultSchemaResolver(), new DefaultTopicResolver(), null, null);
 	}
 
 	/**
@@ -93,17 +95,20 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	 * @param producerFactory the factory used to create the backing Pulsar producers
 	 * @param interceptors the list of interceptors to add to the producer
 	 * @param schemaResolver the schema resolver to use
+	 * @param topicResolver the topic resolver to use
 	 * @param observationRegistry the registry to record observations with or {@code null}
 	 * to not record observations
 	 * @param observationConvention the optional custom observation convention to use when
 	 * recording observations
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors,
-			SchemaResolver schemaResolver, @Nullable ObservationRegistry observationRegistry,
+			SchemaResolver schemaResolver, TopicResolver topicResolver,
+			@Nullable ObservationRegistry observationRegistry,
 			@Nullable PulsarTemplateObservationConvention observationConvention) {
 		this.producerFactory = producerFactory;
 		this.interceptors = interceptors;
 		this.schemaResolver = schemaResolver;
+		this.topicResolver = topicResolver;
 		this.observationRegistry = observationRegistry;
 		this.observationConvention = observationConvention;
 	}
@@ -176,14 +181,17 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 			@Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
-		String topicName = ProducerUtils.resolveTopicName(topic, this.producerFactory);
+		String defaultTopic = Objects.toString(this.producerFactory.getProducerConfig().get("topicName"), null);
+		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow(
+				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
 		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
 
 		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
 		Observation observation = newObservation(senderContext);
 		try {
 			observation.start();
-			Producer<T> producer = prepareProducerForSend(topic, message, schema, encryptionKeys, producerCustomizer);
+			Producer<T> producer = prepareProducerForSend(topicName, message, schema, encryptionKeys,
+					producerCustomizer);
 			TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
 			if (typedMessageBuilderCustomizer != null) {
 				typedMessageBuilderCustomizer.customize(messageBuilder);

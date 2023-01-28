@@ -33,6 +33,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarReaderFactory;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory;
@@ -115,8 +116,8 @@ public class PulsarReactiveAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public ReactivePulsarTemplate<?> pulsarReactiveTemplate(ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory,
-			SchemaResolver schemaResolver) {
-		return new ReactivePulsarTemplate<>(reactivePulsarSenderFactory, schemaResolver);
+			SchemaResolver schemaResolver, TopicResolver topicResolver) {
+		return new ReactivePulsarTemplate<>(reactivePulsarSenderFactory, schemaResolver, topicResolver);
 	}
 
 }

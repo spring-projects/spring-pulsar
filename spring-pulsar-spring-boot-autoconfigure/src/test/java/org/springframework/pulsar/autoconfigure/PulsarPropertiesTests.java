@@ -49,6 +49,7 @@ import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import org.springframework.pulsar.autoconfigure.PulsarProperties.TypeMapping;
 
 /**
  * Unit tests for {@link PulsarProperties}.
@@ -293,6 +294,31 @@ public class PulsarPropertiesTests {
 			bind(props);
 			assertThatIllegalArgumentException().isThrownBy(properties::buildAdminProperties).withMessageContaining(
 					"Cannot set both spring.pulsar.administration.authParams and spring.pulsar.administration.authentication.*");
+		}
+
+	}
+
+	@Nested
+	class DefaultsPropertiesTests {
+
+		@Test
+		void defaultsTypeMappingsEmptyByDefault() {
+			assertThat(properties.getDefaults().getTypeMappings()).isEmpty();
+		}
+
+		@Test
+		void defaultsTypeMappings() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.defaults.type-mappings[0].message-type", Foo.class.getName());
+			props.put("spring.pulsar.defaults.type-mappings[0].topic-name", "foo-topic");
+			props.put("spring.pulsar.defaults.type-mappings[1].message-type", String.class.getName());
+			props.put("spring.pulsar.defaults.type-mappings[1].topic-name", "string-topic");
+			bind(props);
+			assertThat(properties.getDefaults().getTypeMappings()).hasSize(2).containsExactly(
+					new TypeMapping(Foo.class, "foo-topic"), new TypeMapping(String.class, "string-topic"));
+		}
+
+		record Foo(String value) {
 		}
 
 	}

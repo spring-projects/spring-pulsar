@@ -37,8 +37,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
@@ -61,13 +63,14 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 	private static final CountDownLatch LATCH3 = new CountDownLatch(1);
 
-	private static final CountDownLatch LATCH4 = new CountDownLatch(10);
+	private static final CountDownLatch LATCH4 = new CountDownLatch(1);
+
+	private static final CountDownLatch LATCH5 = new CountDownLatch(10);
 
 	@Test
 	void basicListener() throws Exception {
 		SpringApplication app = new SpringApplication(BasicListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
@@ -81,7 +84,6 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	void basicListenerCustomType() throws Exception {
 		SpringApplication app = new SpringApplication(BasicListenerCustomTypeConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
@@ -95,7 +97,6 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	void basicListenerCustomTypeWithTypeMapping() throws Exception {
 		SpringApplication app = new SpringApplication(BasicListenerCustomTypeWithTypeMappingConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
@@ -106,10 +107,22 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
+	void basicPulsarListenerWithTopicMapping() throws Exception {
+		SpringApplication app = new SpringApplication(BasicListenerWithTopicMappingConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+		try (ConfigurableApplicationContext context = app
+				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			@SuppressWarnings("unchecked")
+			ReactivePulsarTemplate<Foo> pulsarTemplate = context.getBean(ReactivePulsarTemplate.class);
+			pulsarTemplate.send("rplt-topicMapping-topic1", new Foo("Crazy8z"), Schema.JSON(Foo.class)).block();
+			assertThat(LATCH4.await(20, TimeUnit.SECONDS)).isTrue();
+		}
+	}
+
+	@Test
 	void fluxListener() throws Exception {
 		SpringApplication app = new SpringApplication(FluxListenerConfig.class);
 		app.setWebApplicationType(WebApplicationType.NONE);
-
 		try (ConfigurableApplicationContext context = app
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
@@ -117,7 +130,7 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			for (int i = 0; i < 10; i++) {
 				pulsarTemplate.send("rplt-batch-topic", "John Doe");
 			}
-			assertThat(LATCH4.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(LATCH5.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
@@ -173,12 +186,33 @@ class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	@EnableAutoConfiguration
 	@SpringBootConfiguration
 	@Import(ConsumerCustomizerConfig.class)
+	static class BasicListenerWithTopicMappingConfig {
+
+		@Bean
+		TopicResolver customTopicResolver() {
+			DefaultTopicResolver resolver = new DefaultTopicResolver();
+			resolver.addCustomTopicMapping(Foo.class, "rplt-topicMapping-topic1");
+			return resolver;
+		}
+
+		@ReactivePulsarListener(subscriptionName = "rplt-topicMapping-sub", schemaType = SchemaType.JSON,
+				consumerCustomizer = "consumerCustomizer")
+		public Mono<Void> listen(Foo ignored) {
+			LATCH4.countDown();
+			return Mono.empty();
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(ConsumerCustomizerConfig.class)
 	static class FluxListenerConfig {
 
 		@ReactivePulsarListener(subscriptionName = "rplt-batch-sub", topics = "rplt-batch-topic", stream = true,
 				consumerCustomizer = "consumerCustomizer")
 		public Flux<MessageResult<Void>> listen(Flux<Message<String>> messages) {
-			return messages.doOnNext(t -> LATCH4.countDown()).map(MessageResult::acknowledge);
+			return messages.doOnNext(t -> LATCH5.countDown()).map(MessageResult::acknowledge);
 		}
 
 	}

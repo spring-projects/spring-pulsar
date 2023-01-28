@@ -127,6 +127,16 @@ public interface ReactivePulsarOperations<T> {
 	SendMessageBuilder<T> newMessages(Publisher<T> messages);
 
 	/**
+	 * Create a {@link SendMessageBuilder builder} for configuring and sending multiple
+	 * messages reactively.
+	 * @param messages the messages to send
+	 * @param messageType the type of messages being sent - helpful for topic resolution
+	 * when schema is not specified during a {@code sendMany} operation
+	 * @return the builder to configure and send the message
+	 */
+	SendMessageBuilder<T> newMessages(Publisher<T> messages, Class<T> messageType);
+
+	/**
 	 * Builder that can be used to configure and send a message. Provides more options
 	 * than the send methods provided by {@link ReactivePulsarOperations}.
 	 *

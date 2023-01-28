@@ -18,10 +18,10 @@ package org.springframework.pulsar.reactive.config;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
@@ -31,7 +31,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
@@ -39,6 +38,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
@@ -51,6 +51,7 @@ import org.springframework.pulsar.reactive.listener.adapter.PulsarReactiveStream
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
 
 import reactor.core.publisher.Flux;
 
@@ -63,8 +64,6 @@ import reactor.core.publisher.Flux;
  * @author Chris Bono
  */
 public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePulsarListenerEndpoint<V> {
-
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
 	private Object bean;
 
@@ -149,6 +148,15 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 			pulsarContainerProperties.setSchemaType(type);
 		}
 
+		// If no topic info is set on endpoint attempt to resolve via message type
+		TopicResolver topicResolver = pulsarContainerProperties.getTopicResolver();
+		boolean hasTopicInfo = pulsarContainerProperties.getTopicsPattern() != null
+				|| !ObjectUtils.isEmpty(pulsarContainerProperties.getTopics());
+		if (!hasTopicInfo) {
+			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
+					.ifPresent((topic) -> pulsarContainerProperties.setTopics(Collections.singleton(topic)));
+		}
+
 		ReactiveMessageConsumerBuilderCustomizer<V> customizer1 = b -> b.deadLetterPolicy(this.deadLetterPolicy);
 		container.setConsumerCustomizer(b -> {
 			if (this.consumerCustomizer != null) {
@@ -191,10 +199,10 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 		PulsarMessagingMessageListenerAdapter<V> listener;
 		if (isFluxListener()) {
-			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<V>(this.bean, this.method);
+			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(this.bean, this.method);
 		}
 		else {
-			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<V>(this.bean, this.method);
+			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(this.bean, this.method);
 		}
 
 		if (messageConverter instanceof PulsarRecordMessageConverter) {

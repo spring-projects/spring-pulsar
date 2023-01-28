@@ -9,6 +9,7 @@
 	<suppress files="PulsarFunctionAdministrationIntegrationTests" checks="Regexp" />
 	<suppress files="PulsarMessageChannelBinderResolveSchemaTests" checks="AvoidStaticImport" />
 	<suppress files="DefaultSchemaResolverTests" checks="AvoidStaticImport|MethodParamPad" />
+	<suppress files="DefaultTopicResolverTests" checks="AvoidStaticImport" />
 	<suppress files="Proto" checks=".*"/>
 	<suppress files="ReactiveSpringPulsarBootApp" checks="HideUtilityClassConstructor"/>
 	<suppress files="[\\/]spring-pulsar-docs[\\/]" checks="JavadocPackage|JavadocType|JavadocVariable|SpringDeprecatedCheck" />

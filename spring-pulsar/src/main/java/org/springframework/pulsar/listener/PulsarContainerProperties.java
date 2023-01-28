@@ -25,7 +25,9 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.Assert;
 
@@ -56,6 +58,8 @@ public class PulsarContainerProperties {
 
 	private SchemaResolver schemaResolver;
 
+	private TopicResolver topicResolver;
+
 	private Object messageListener;
 
 	private AsyncTaskExecutor consumerTaskExecutor;
@@ -78,12 +82,14 @@ public class PulsarContainerProperties {
 		this.topics = topics.clone();
 		this.topicsPattern = null;
 		this.schemaResolver = new DefaultSchemaResolver();
+		this.topicResolver = new DefaultTopicResolver();
 	}
 
 	public PulsarContainerProperties(String topicPattern) {
 		this.topicsPattern = topicPattern;
 		this.topics = null;
 		this.schemaResolver = new DefaultSchemaResolver();
+		this.topicResolver = new DefaultTopicResolver();
 	}
 
 	public Object getMessageListener() {
@@ -222,6 +228,14 @@ public class PulsarContainerProperties {
 
 	public void setSchemaResolver(SchemaResolver schemaResolver) {
 		this.schemaResolver = schemaResolver;
+	}
+
+	public TopicResolver getTopicResolver() {
+		return this.topicResolver;
+	}
+
+	public void setTopicResolver(TopicResolver topicResolver) {
+		this.topicResolver = topicResolver;
 	}
 
 	public Properties getPulsarConsumerProperties() {

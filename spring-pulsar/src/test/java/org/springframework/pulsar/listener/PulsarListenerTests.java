@@ -65,12 +65,14 @@ import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.annotation.DirtiesContext;
@@ -615,6 +617,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 	}
 
+	record User2(String name, int age) {
+	}
+
 	@Nested
 	@ContextConfiguration(classes = SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.class)
 	class SchemaCustomMappingsTestCases {
@@ -724,7 +729,72 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		}
 
-		record User2(String name, int age) {
+	}
+
+	@Nested
+	@ContextConfiguration(classes = TopicCustomMappingsTestCases.TopicCustomMappingsTestConfig.class)
+	class TopicCustomMappingsTestCases {
+
+		static CountDownLatch userLatch = new CountDownLatch(3);
+		static CountDownLatch stringLatch = new CountDownLatch(3);
+
+		@Test
+		void complexMessageTypeTopicMapping() throws Exception {
+			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
+			Schema<User2> schema = Schema.JSON(User2.class);
+			for (int i = 0; i < 3; i++) {
+				template.send("plt-topicMapping-user-topic", new User2("Jason", i), schema);
+			}
+			assertThat(userLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void primitiveMessageTypeTopicMapping() throws Exception {
+			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<String> template = new PulsarTemplate<>(pulsarProducerFactory);
+			for (int i = 0; i < 3; i++) {
+				template.send("plt-topicMapping-string-topic", "Susan " + i, Schema.STRING);
+			}
+			assertThat(stringLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class TopicCustomMappingsTestConfig {
+
+			@Bean
+			TopicResolver topicResolver() {
+				DefaultTopicResolver resolver = new DefaultTopicResolver();
+				resolver.addCustomTopicMapping(User2.class, "plt-topicMapping-user-topic");
+				resolver.addCustomTopicMapping(String.class, "plt-topicMapping-string-topic");
+				return resolver;
+			}
+
+			@Bean
+			PulsarListenerContainerFactory pulsarListenerContainerFactory(
+					PulsarConsumerFactory<Object> pulsarConsumerFactory, TopicResolver topicResolver) {
+				PulsarContainerProperties containerProps = new PulsarContainerProperties();
+				containerProps.setTopicResolver(topicResolver);
+				ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
+						pulsarConsumerFactory, containerProps, null);
+				return pulsarListenerContainerFactory;
+			}
+
+			@PulsarListener(id = "userListener", schemaType = SchemaType.JSON, subscriptionName = "sub1",
+					properties = { "subscriptionInitialPosition=Earliest" })
+			void listenUser(User2 ignored) {
+				userLatch.countDown();
+			}
+
+			@PulsarListener(id = "stringListener", subscriptionName = "sub2",
+					properties = { "subscriptionInitialPosition=Earliest" })
+			void listenString(String ignored) {
+				stringLatch.countDown();
+			}
+
 		}
 
 	}

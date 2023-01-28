@@ -29,6 +29,7 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.unit.DataSize;
@@ -57,10 +58,11 @@ public class PulsarAnnotationDrivenConfiguration {
 			ObjectProvider<PulsarConsumerFactory<Object>> consumerFactoryProvider,
 			ObjectProvider<ObservationRegistry> observationRegistryProvider,
 			ObjectProvider<PulsarListenerObservationConvention> observationConventionProvider,
-			SchemaResolver schemaResolver) {
+			SchemaResolver schemaResolver, TopicResolver topicResolver) {
 
 		PulsarContainerProperties containerProperties = new PulsarContainerProperties();
 		containerProperties.setSchemaResolver(schemaResolver);
+		containerProperties.setTopicResolver(topicResolver);
 		containerProperties.setSubscriptionType(this.pulsarProperties.getConsumer().getSubscriptionType());
 		containerProperties.setObservationConvention(observationConventionProvider.getIfUnique());
 

@@ -46,6 +46,7 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
@@ -187,8 +188,8 @@ public class ObservationTests implements PulsarTestContainerSupport {
 		@Bean(name = "observationTestsTemplate")
 		PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory,
 				ObservationRegistry observationRegistry) {
-			return new PulsarTemplate<>(pulsarProducerFactory, null, new DefaultSchemaResolver(), observationRegistry,
-					new DefaultPulsarTemplateObservationConvention() {
+			return new PulsarTemplate<>(pulsarProducerFactory, null, new DefaultSchemaResolver(),
+					new DefaultTopicResolver(), observationRegistry, new DefaultPulsarTemplateObservationConvention() {
 						@Override
 						public KeyValues getLowCardinalityKeyValues(PulsarMessageSenderContext context) {
 							return super.getLowCardinalityKeyValues(context).and(SENDER_EXTRA_TAG,
