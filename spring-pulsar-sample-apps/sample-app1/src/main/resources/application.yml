@@ -1,0 +1,8 @@
+spring:
+  pulsar:
+    defaults:
+      type-mappings:
+        - message-type: app1.SpringPulsarBootApp$CustomSchemaAndTopicMappingConfig$Bar
+          topic-name: bar-topic
+        - message-type: app1.SpringPulsarBootApp$CustomSchemaAndTopicMappingConfig$Zaa
+          topic-name: zaa-topic

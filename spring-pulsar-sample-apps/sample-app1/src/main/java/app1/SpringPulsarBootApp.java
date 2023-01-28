@@ -28,15 +28,18 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
 
 @SpringBootApplication
 public class SpringPulsarBootApp {
 
-	private final Logger logger = LoggerFactory.getLogger(SpringPulsarBootApp.class);
+	private static final Logger logger = LoggerFactory.getLogger(SpringPulsarBootApp.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringPulsarBootApp.class, args);
@@ -60,7 +63,7 @@ public class SpringPulsarBootApp {
 
 	@PulsarListener(subscriptionName = "subscription-1", topics = "hello-pulsar-exclusive-1")
 	void listen1(String message) {
-		this.logger.info(message);
+		logger.info(message);
 	}
 
 	/*
@@ -81,7 +84,7 @@ public class SpringPulsarBootApp {
 
 	@PulsarListener(subscriptionName = "subscription-2", topics = "hello-pulsar-exclusive-2")
 	void listen2(Integer message) {
-		this.logger.info("Message received :" + message);
+		logger.info("Message received :" + message);
 	}
 
 	/*
@@ -104,7 +107,7 @@ public class SpringPulsarBootApp {
 	@PulsarListener(subscriptionName = "subscription-3", topics = "hello-pulsar-exclusive-3",
 			schemaType = SchemaType.JSON)
 	void listen3(Foo message) {
-		this.logger.info("Message received :" + message);
+		logger.info("Message received :" + message);
 	}
 
 	/*
@@ -127,7 +130,7 @@ public class SpringPulsarBootApp {
 
 	@PulsarListener(subscriptionName = "subscription-4", topics = "hello-pulsar-partitioned-4")
 	void listen4(String message) {
-		this.logger.info("Message received from partitioned-topic : " + message);
+		logger.info("Message received from partitioned-topic : " + message);
 	}
 
 	/*
@@ -149,17 +152,54 @@ public class SpringPulsarBootApp {
 	@PulsarListener(subscriptionName = "subscription-5", topics = "hello-pulsar-exclusive-5",
 			schemaType = SchemaType.JSON, batch = true)
 	void listen5(List<Foo> messages) {
-		this.logger.info("records received :" + messages.size());
+		logger.info("records received :" + messages.size());
 		for (Foo message : messages) {
-			this.logger.info("record : " + message);
+			logger.info("record : " + message);
 		}
 	}
 
 	record Foo(String foo, String bar) {
-		@Override
-		public String toString() {
-			return "Foo{" + "foo='" + this.foo + '\'' + ", bar='" + this.bar + '\'' + '}';
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class CustomSchemaAndTopicMappingConfig {
+
+		// The topic mappings are in test/resources/application.yml
+
+		@Bean
+		SchemaResolverCustomizer<DefaultSchemaResolver> schemaMappingsCustomizer() {
+			return (schemaResolver) -> {
+				schemaResolver.addCustomSchemaMapping(Bar.class, Schema.JSON(Bar.class));
+				schemaResolver.addCustomSchemaMapping(Zaa.class, Schema.JSON(Zaa.class));
+			};
 		}
+
+		@Bean
+		ApplicationRunner sendBarWithoutTopicOrSchema(PulsarTemplate<Bar> template) {
+			return args -> template.send(new Bar("hello bar"));
+		}
+
+		@Bean
+		ApplicationRunner sendZaaWithoutTopicOrSchema(PulsarTemplate<Zaa> template) {
+			return args -> template.send(new Zaa("hello zaa"));
+		}
+
+		@PulsarListener
+		void listenBarWithoutTopicOrSchema(Bar message) {
+			logger.info("BAR LISTENER -> " + message);
+		}
+
+		@PulsarListener
+		void listenZaaWithoutTopicOrSchema(Zaa message) {
+			logger.info("ZAA LISTENER -> " + message);
+		}
+
+		public record Bar(String value) {
+		}
+
+		public record Zaa(String value) {
+		}
+
 	}
 
 }
