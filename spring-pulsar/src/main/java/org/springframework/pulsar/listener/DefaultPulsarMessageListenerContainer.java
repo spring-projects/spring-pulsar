@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,24 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 	}
 
+	@Override
+	public void pause() {
+		super.pause();
+		DefaultPulsarMessageListenerContainer<T>.Listener consumer = this.listenerConsumer;
+		if (consumer != null) {
+			consumer.pause();
+		}
+	}
+
+	@Override
+	public void resume() {
+		DefaultPulsarMessageListenerContainer<T>.Listener consumer = this.listenerConsumer;
+		if (consumer != null) {
+			consumer.resume();
+		}
+		super.resume();
+	}
+
 	private final class Listener implements SchedulingAwareRunnable {
 
 		private final PulsarRecordMessageListener<T> listener;
@@ -338,7 +356,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				try {
 					if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
 						DefaultPulsarMessageListenerContainer.this.receiveInProgress.set(true);
-						messages = this.consumer.batchReceive();
+						if (!isPaused()) {
+							messages = this.consumer.batchReceive();
+						}
 					}
 				}
 				catch (PulsarClientException e) {
@@ -600,6 +620,18 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private void handleAck(Message<T> message) {
 			AbstractAcknowledgement.handleAckByMessageId(this.consumer, message.getMessageId());
+		}
+
+		public void pause() {
+			if (this.consumer != null) {
+				this.consumer.pause();
+			}
+		}
+
+		public void resume() {
+			if (this.consumer != null) {
+				this.consumer.resume();
+			}
 		}
 
 	}
