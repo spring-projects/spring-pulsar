@@ -19,6 +19,7 @@ package org.springframework.pulsar.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,6 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
@@ -42,6 +46,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.ConsumerTestUtils;
@@ -49,6 +54,7 @@ import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * @author Soby Chacko
@@ -76,6 +82,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
+
 		Map<String, Object> prodConfig = new HashMap<>();
 		prodConfig.put("topicName", "dpmlct-012");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
@@ -83,6 +90,76 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		pulsarTemplate.sendAsync("hello john doe");
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		container.stop();
+		pulsarClient.close();
+	}
+
+	@Test
+	void containerPauseAndResumeFeatureUsingWaitAndNotify() throws Exception {
+		HashSet<String> topics = new HashSet<>();
+		topics.add("containerPauseResumeWaitNotify-topic");
+		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName",
+				"containerPauseResumeWaitNotify-sub");
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+		});
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+
+		Lock reentrantLock = new ReentrantLock();
+		Condition lockCondition = reentrantLock.newCondition();
+
+		Lock spyLock = spy(reentrantLock);
+		Condition spyCondition = spy(lockCondition);
+
+		ReflectionTestUtils.setField(container, "lockOnPause", spyLock);
+		ReflectionTestUtils.setField(container, "pausedCondition", spyCondition);
+
+		CountDownLatch latchOnLockInvocation = new CountDownLatch(2);
+		CountDownLatch latchOnUnlockInvocation = new CountDownLatch(2);
+		CountDownLatch latchOnAwaitInvocation = new CountDownLatch(1);
+		CountDownLatch latchOnSignalInvocation = new CountDownLatch(1);
+
+		doAnswer(invocation -> {
+			latchOnLockInvocation.countDown();
+			return invocation.callRealMethod();
+		}).when(spyLock).lock();
+
+		doAnswer(invocation -> {
+			latchOnUnlockInvocation.countDown();
+			return invocation.callRealMethod();
+		}).when(spyLock).unlock();
+
+		doAnswer(invocation -> {
+			latchOnAwaitInvocation.countDown();
+			return invocation.callRealMethod();
+		}).when(spyCondition).await();
+
+		doAnswer(invocation -> {
+			latchOnSignalInvocation.countDown();
+			return invocation.callRealMethod();
+		}).when(spyCondition).signal();
+
+		container.start();
+
+		container.pause();
+
+		Awaitility.await().until(container::isPaused);
+
+		container.resume();
+
+		Awaitility.await().until(() -> !container.isPaused());
+
+		assertThat(latchOnLockInvocation.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(latchOnUnlockInvocation.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(latchOnAwaitInvocation.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(latchOnSignalInvocation.await(10, TimeUnit.SECONDS)).isTrue();
+
 		container.stop();
 		pulsarClient.close();
 	}

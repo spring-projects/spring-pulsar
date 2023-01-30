@@ -30,6 +30,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -90,6 +93,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	private final AtomicReference<Thread> listenerConsumerThread = new AtomicReference<>();
 
 	private final AtomicBoolean receiveInProgress = new AtomicBoolean();
+
+	private final Lock lockOnPause = new ReentrantLock();
+
+	private final Condition pausedCondition = this.lockOnPause.newCondition();
 
 	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
 			PulsarContainerProperties pulsarContainerProperties) {
@@ -207,6 +214,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			consumer.resume();
 		}
 		setPaused(false);
+		this.lockOnPause.lock();
+		try {
+			// signal the lock's condition to continue.
+			this.pausedCondition.signal();
+		}
+		finally {
+			this.lockOnPause.unlock();
+		}
 	}
 
 	private final class Listener implements SchedulingAwareRunnable {
@@ -437,6 +452,21 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					// All the records are processed at this point. Handle acks.
 					if (this.ackMode.equals(AckMode.BATCH)) {
 						handleAcks(messages);
+					}
+				}
+				if (isPaused()) {
+					try {
+						// try acquiring the lock.
+						DefaultPulsarMessageListenerContainer.this.lockOnPause.lock();
+						// Waiting on lock's condition.
+						DefaultPulsarMessageListenerContainer.this.pausedCondition.await();
+					}
+					catch (InterruptedException e) {
+						throw new IllegalStateException(
+								"Exception occurred trying to wake up the paused listener thread.");
+					}
+					finally {
+						DefaultPulsarMessageListenerContainer.this.lockOnPause.unlock();
 					}
 				}
 			}
