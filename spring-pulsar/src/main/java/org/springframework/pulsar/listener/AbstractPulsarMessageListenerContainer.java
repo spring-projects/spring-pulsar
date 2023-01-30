@@ -227,16 +227,28 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> imple
 
 	@Override
 	public void pause() {
-		this.paused = true;
+		synchronized (this.lifecycleMonitor) {
+			doPause();
+		}
 	}
 
 	@Override
 	public void resume() {
-		this.paused = false;
+		synchronized (this.lifecycleMonitor) {
+			doResume();
+		}
 	}
 
 	protected boolean isPaused() {
 		return this.paused;
 	}
+
+	protected void setPaused(boolean paused) {
+		this.paused = paused;
+	}
+
+	protected abstract void doPause();
+
+	protected abstract void doResume();
 
 }
