@@ -36,12 +36,14 @@ import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.function.PulsarFunction;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarSink;
@@ -102,10 +104,10 @@ public class PulsarAutoConfiguration {
 	@ConditionalOnMissingBean
 	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory,
 			ObjectProvider<ProducerInterceptor> interceptorsProvider, SchemaResolver schemaResolver,
-			ObjectProvider<ObservationRegistry> observationRegistryProvider,
+			TopicResolver topicResolver, ObjectProvider<ObservationRegistry> observationRegistryProvider,
 			ObjectProvider<PulsarTemplateObservationConvention> observationConventionProvider) {
 		return new PulsarTemplate<>(pulsarProducerFactory, interceptorsProvider.orderedStream().toList(),
-				schemaResolver, this.properties.getTemplate().isObservationsEnabled()
+				schemaResolver, topicResolver, this.properties.getTemplate().isObservationsEnabled()
 						? observationRegistryProvider.getIfUnique() : null,
 				observationConventionProvider.getIfUnique());
 	}
@@ -117,6 +119,17 @@ public class PulsarAutoConfiguration {
 		DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 		schemaResolverCustomizer.ifPresent((customizer) -> customizer.customize(schemaResolver));
 		return schemaResolver;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(TopicResolver.class)
+	public DefaultTopicResolver topicResolver(PulsarProperties pulsarProperties) {
+		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
+		if (pulsarProperties.getDefaults().getTypeMappings() != null) {
+			pulsarProperties.getDefaults().getTypeMappings()
+					.forEach((tm) -> topicResolver.addCustomTopicMapping(tm.messageType(), tm.topicName()));
+		}
+		return topicResolver;
 	}
 
 	@Bean

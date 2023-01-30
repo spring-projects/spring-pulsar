@@ -18,6 +18,8 @@ include::application-properties/pulsar-producer.adoc[]
 
 include::application-properties/pulsar-consumer.adoc[]
 
+include::application-properties/pulsar-defaults.adoc[]
+
 include::application-properties/pulsar-function.adoc[]
 
 include::application-properties/pulsar-administration.adoc[]

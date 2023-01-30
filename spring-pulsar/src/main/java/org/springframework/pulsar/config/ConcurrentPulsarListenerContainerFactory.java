@@ -59,6 +59,7 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
+		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
 
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
 			properties.setTopics(endpoint.getTopics().toArray(new String[0]));

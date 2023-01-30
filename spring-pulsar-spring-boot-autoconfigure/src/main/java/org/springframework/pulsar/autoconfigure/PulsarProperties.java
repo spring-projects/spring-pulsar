@@ -17,8 +17,10 @@
 package org.springframework.pulsar.autoconfigure;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -77,6 +79,8 @@ public class PulsarProperties {
 
 	private final Admin admin = new Admin();
 
+	private final Defaults defaults = new Defaults();
+
 	public Consumer getConsumer() {
 		return this.consumer;
 	}
@@ -103,6 +107,10 @@ public class PulsarProperties {
 
 	public Admin getAdministration() {
 		return this.admin;
+	}
+
+	public Defaults getDefaults() {
+		return this.defaults;
 	}
 
 	public Map<String, Object> buildConsumerProperties() {
@@ -2065,6 +2073,33 @@ public class PulsarProperties {
 			return properties;
 		}
 
+	}
+
+	public static class Defaults {
+
+		/**
+		 * List of mappings from message type to topic name to use as a default topic when
+		 * a topic is not explicitly specified when producing or consuming messages of the
+		 * mapped type.
+		 */
+		private List<TypeMapping> typeMappings = new ArrayList<>();
+
+		public List<TypeMapping> getTypeMappings() {
+			return this.typeMappings;
+		}
+
+		public void setTypeMappings(List<TypeMapping> typeMappings) {
+			this.typeMappings = typeMappings;
+		}
+
+	}
+
+	/**
+	 * A mapping from message type to topic and schema - used as defaults for the type.
+	 * @param messageType the message type
+	 * @param topicName the default topic name to use for the type
+	 */
+	record TypeMapping(Class<?> messageType, String topicName) {
 	}
 
 	private static class Properties extends HashMap<String, Object> {

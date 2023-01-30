@@ -17,6 +17,7 @@
 package org.springframework.pulsar.reactive.core;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Schema;
@@ -28,7 +29,9 @@ import org.reactivestreams.Publisher;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,24 +50,29 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	private final SchemaResolver schemaResolver;
 
+	private final TopicResolver topicResolver;
+
 	/**
-	 * Construct a template instance that uses the default schema resolver.
+	 * Construct a template instance that uses the default schema resolver and topic
+	 * resolver.
 	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
 	 * reactive senders
 	 */
 	public ReactivePulsarTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory) {
-		this(reactiveMessageSenderFactory, new DefaultSchemaResolver());
+		this(reactiveMessageSenderFactory, new DefaultSchemaResolver(), new DefaultTopicResolver());
 	}
 
 	/**
 	 * Construct a template instance with a custom schema resolver.
 	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
 	 * @param schemaResolver the schema resolver to use reactive senders
+	 * @param topicResolver the topic resolver to use
 	 */
 	public ReactivePulsarTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory,
-			SchemaResolver schemaResolver) {
+			SchemaResolver schemaResolver, TopicResolver topicResolver) {
 		this.reactiveMessageSenderFactory = reactiveMessageSenderFactory;
 		this.schemaResolver = schemaResolver;
+		this.topicResolver = topicResolver;
 	}
 
 	@Override
@@ -94,17 +102,17 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	@Override
 	public Flux<MessageId> send(Publisher<T> messages, @Nullable Schema<T> schema) {
-		return doSendMany(null, Flux.from(messages), schema);
+		return doSendMany(null, Flux.from(messages), null, schema);
 	}
 
 	@Override
 	public Flux<MessageId> send(@Nullable String topic, Publisher<T> messages) {
-		return doSendMany(topic, Flux.from(messages), null);
+		return doSendMany(topic, Flux.from(messages), null, null);
 	}
 
 	@Override
 	public Flux<MessageId> send(@Nullable String topic, Publisher<T> messages, @Nullable Schema<T> schema) {
-		return doSendMany(topic, Flux.from(messages), schema);
+		return doSendMany(topic, Flux.from(messages), null, schema);
 	}
 
 	@Override
@@ -114,17 +122,20 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	@Override
 	public SendMessageBuilder<T> newMessages(Publisher<T> messages) {
-		return new SendMessageBuilderImpl<>(this, messages);
+		return new SendMessageBuilderImpl<>(this, messages, null);
+	}
+
+	@Override
+	public SendMessageBuilder<T> newMessages(Publisher<T> messages, Class<T> messageType) {
+		return new SendMessageBuilderImpl<>(this, messages, messageType);
 	}
 
 	private Mono<MessageId> doSend(@Nullable String topic, T message, @Nullable Schema<T> schema,
 			@Nullable MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
 			@Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer) {
-		String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
-		this.logger.trace(() -> String.format("Sending reactive message to '%s' topic", topicName));
-		// NOTE: We do not pass the resolved topic name from above as it handles the
-		// resolve itself
-		ReactiveMessageSender<T> sender = createMessageSender(topic, message, schema, customizer);
+		String topicName = resolveTopic(topic, message.getClass());
+		this.logger.trace(() -> String.format("Sending reactive msg to '%s' topic", topicName));
+		ReactiveMessageSender<T> sender = createMessageSender(topicName, message, schema, customizer);
 		// @formatter:off
 		return sender.sendOne(getMessageSpec(messageSpecBuilderCustomizer, message))
 				.doOnError(ex -> this.logger.error(ex, () -> String.format("Failed to send message to '%s' topic", topicName)))
@@ -132,10 +143,8 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 		// @formatter:on
 	}
 
-	private Flux<MessageId> doSendMany(@Nullable String topic, Flux<T> messages, @Nullable Schema<T> schema) {
-		String topicName = ReactiveMessageSenderUtils.resolveTopicName(topic, this.reactiveMessageSenderFactory);
-		this.logger.trace(() -> String.format("Sending reactive messages to '%s' topic", topicName));
-
+	private Flux<MessageId> doSendMany(@Nullable String topic, Flux<T> messages, @Nullable Class<T> messageType,
+			@Nullable Schema<T> schema) {
 		if (schema != null) {
 			/*
 			 * If schema specified we can create the message sender right away and use
@@ -144,16 +153,28 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 			 * between messages. So we create one each time and use
 			 * ReactiveMessageSender::sendOne to send messages individually.
 			 */
-			// NOTE: We do not pass the resolved topic name from above as it handles the
-			// resolve itself
-			ReactiveMessageSender<T> sender = createMessageSender(topic, null, schema, null);
+			String topicName = resolveTopic(topic, messageType);
+			ReactiveMessageSender<T> sender = createMessageSender(topicName, null, schema, null);
 			return messages.map(MessageSpec::of).as(sender::sendMany)
 					.doOnError(ex -> this.logger.error(ex,
 							() -> String.format("Failed to send messages to '%s' topic", topicName)))
 					.doOnNext(
 							msgId -> this.logger.trace(() -> String.format("Sent messages to '%s' topic", topicName)));
 		}
-		return messages.flatMapSequential(message -> doSend(topic, message, schema, null, null));
+		return messages.flatMapSequential(message -> doSend(topic, message, null, null, null));
+	}
+
+	private String resolveTopic(@Nullable String topic, @Nullable Class<?> messageType) {
+		String defaultTopic = this.reactiveMessageSenderFactory.getReactiveMessageSenderSpec().getTopicName();
+		Optional<String> resolvedTopic;
+		if (messageType == null) {
+			resolvedTopic = this.topicResolver.resolveTopic(topic, () -> defaultTopic);
+		}
+		else {
+			resolvedTopic = this.topicResolver.resolveTopic(topic, messageType, () -> defaultTopic);
+		}
+		return resolvedTopic.orElseThrow(
+				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
 	}
 
 	private static <T> MessageSpec<T> getMessageSpec(
@@ -182,6 +203,9 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 		private final Publisher<T> messages;
 
+		@Nullable
+		private Class<T> messageType;
+
 		private String topic;
 
 		private Schema<T> schema;
@@ -194,12 +218,15 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 			this.template = template;
 			this.message = message;
 			this.messages = null;
+			this.messageType = null;
 		}
 
-		SendMessageBuilderImpl(ReactivePulsarTemplate<T> template, Publisher<T> messages) {
+		SendMessageBuilderImpl(ReactivePulsarTemplate<T> template, Publisher<T> messages,
+				@Nullable Class<T> messageType) {
 			this.template = template;
 			this.message = null;
 			this.messages = messages;
+			this.messageType = messageType;
 		}
 
 		@Override
@@ -235,7 +262,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 		@Override
 		public Flux<MessageId> sendMany() {
-			return this.template.doSendMany(this.topic, Flux.from(this.messages), this.schema);
+			return this.template.doSendMany(this.topic, Flux.from(this.messages), this.messageType, this.schema);
 		}
 
 	}

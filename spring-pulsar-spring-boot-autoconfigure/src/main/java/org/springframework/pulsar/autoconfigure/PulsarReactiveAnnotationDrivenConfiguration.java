@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.config.PulsarListenerBeanNames;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
@@ -48,10 +49,11 @@ public class PulsarReactiveAnnotationDrivenConfiguration {
 	@ConditionalOnMissingBean(name = "reactivePulsarListenerContainerFactory")
 	DefaultReactivePulsarListenerContainerFactory<?> reactivePulsarListenerContainerFactory(
 			ObjectProvider<ReactivePulsarConsumerFactory<Object>> consumerFactoryProvider,
-			SchemaResolver schemaResolver) {
+			SchemaResolver schemaResolver, TopicResolver topicResolver) {
 
 		ReactivePulsarContainerProperties<Object> containerProperties = new ReactivePulsarContainerProperties<>();
 		containerProperties.setSchemaResolver(schemaResolver);
+		containerProperties.setTopicResolver(topicResolver);
 		containerProperties.setSubscriptionType(this.properties.getConsumer().getSubscriptionType());
 
 		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();

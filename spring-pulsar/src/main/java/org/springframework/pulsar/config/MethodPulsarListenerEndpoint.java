@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
@@ -32,7 +31,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
@@ -40,6 +38,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
@@ -53,6 +52,8 @@ import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * A {@link PulsarListenerEndpoint} providing the method to invoke to process an incoming
@@ -64,8 +65,6 @@ import org.springframework.util.Assert;
  * @author Chris Bono
  */
 public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpoint<V> {
-
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
 
 	private Object bean;
 
@@ -153,6 +152,16 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
 			pulsarContainerProperties.setSchemaType(type);
 		}
+
+		// If no topic info is set on endpoint attempt to resolve via message type
+		TopicResolver topicResolver = pulsarContainerProperties.getTopicResolver();
+		boolean hasTopicInfo = !ObjectUtils.isEmpty(pulsarContainerProperties.getTopics())
+				|| StringUtils.hasText(pulsarContainerProperties.getTopicsPattern());
+		if (!hasTopicInfo) {
+			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
+					.ifPresent((topic) -> pulsarContainerProperties.setTopics(new String[] { topic }));
+		}
+
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
 		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
@@ -192,7 +201,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 		PulsarMessagingMessageListenerAdapter<V> listener;
 		if (isBatchListener()) {
-			PulsarBatchMessagingMessageListenerAdapter<V> messageListener = new PulsarBatchMessagingMessageListenerAdapter<V>(
+			PulsarBatchMessagingMessageListenerAdapter<V> messageListener = new PulsarBatchMessagingMessageListenerAdapter<>(
 					this.bean, this.method);
 			if (messageConverter instanceof PulsarBatchMessageConverter) {
 				messageListener.setBatchMessageConverter((PulsarBatchMessageConverter) messageConverter);
@@ -200,7 +209,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			listener = messageListener;
 		}
 		else {
-			PulsarRecordMessagingMessageListenerAdapter<V> messageListener = new PulsarRecordMessagingMessageListenerAdapter<V>(
+			PulsarRecordMessagingMessageListenerAdapter<V> messageListener = new PulsarRecordMessagingMessageListenerAdapter<>(
 					this.bean, this.method);
 			if (messageConverter instanceof PulsarRecordMessageConverter) {
 				messageListener.setMessageConverter((PulsarRecordMessageConverter) messageConverter);

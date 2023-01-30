@@ -22,10 +22,12 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -41,6 +43,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
 
 import reactor.core.publisher.Flux;
@@ -56,7 +59,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@ParameterizedTest
 	@ValueSource(booleans = { true, false })
-	void sendMessagesWithSpecificSchema(boolean useSimpleApi) throws Exception {
+	void sendManyWithSpecificSchema(boolean useSimpleApi) throws Exception {
 		String topic = "rptt-sendMessagesWithSpecificSchema-" + useSimpleApi + "-topic";
 		String sub = "rptt-sendMessagesWithSpecificSchema-" + useSimpleApi + "-sub";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
@@ -92,7 +95,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@ParameterizedTest
 	@ValueSource(booleans = { true, false })
-	void sendMessagesWithInferredSchema(boolean useSimpleApi) throws Exception {
+	void sendManyWithInferredSchema(boolean useSimpleApi) throws Exception {
 		String topic = "rptt-sendMessagesWithInferredSchema-" + useSimpleApi + "-topic";
 		String sub = "rptt-sendMessagesWithInferredSchema-" + useSimpleApi + "-sub";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
@@ -107,7 +110,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 				schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
 				ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory,
-						schemaResolver);
+						schemaResolver, new DefaultTopicResolver());
 
 				List<Foo> foos = new ArrayList<>();
 				for (int i = 0; i < 10; i++) {
@@ -132,6 +135,71 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				assertThat(foos).containsExactlyInAnyOrderElementsOf(foos2);
 			}
 		}
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("sendManyWithInferredTopicProvider")
+	void sendManyWithInferredTopic(String testName, boolean shouldPass,
+			BiConsumer<List<String>, ReactivePulsarTemplate<String>> sendHandler) throws Exception {
+		String topic = "rptt-" + testName + "-topic";
+		String sub = "rptt-" + testName + "-sub";
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
+			try (Consumer<String> consumer = client.newConsumer(Schema.STRING).topic(topic).subscriptionName(sub)
+					.subscribe()) {
+				MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
+				senderSpec.setTopicName(topic + "-fake");
+				ReactivePulsarSenderFactory<String> producerFactory = new DefaultReactivePulsarSenderFactory<>(client,
+						senderSpec, null);
+
+				// Topic mappings allows not specifying the topic when sending (nor having
+				// default on sender)
+				DefaultTopicResolver topicResolver = new DefaultTopicResolver();
+				topicResolver.addCustomTopicMapping(String.class, topic);
+				ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory,
+						new DefaultSchemaResolver(), topicResolver);
+
+				String theSingleFoo = "Foo-" + UUID.randomUUID();
+
+				sendHandler.accept(Collections.singletonList(theSingleFoo), pulsarTemplate);
+
+				if (shouldPass) {
+					assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3))
+							.extracting(Message::getValue).isEqualTo(theSingleFoo);
+				}
+				else {
+					assertThat(consumer.receive(3, TimeUnit.SECONDS)).isNull();
+				}
+			}
+		}
+	}
+
+	static Stream<Arguments> sendManyWithInferredTopicProvider() {
+		// NOTE: Topic resolution requires in ReactivePulsarTemplate.sendMany requires
+		// the messageType to be set when the schema is specified as it creates the
+		// message sender spec before it subscribes to the publisher of messages (iow
+		// it does not have access to a message to determine message type in this case
+		return Stream.of(
+				arguments("simpleApiNoSchemaPasses", true,
+						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
+								.send(Flux.fromIterable(data)).subscribe()),
+				arguments("simpleApiWithSchemaAlwaysFails", false,
+						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
+								.send(Flux.fromIterable(data), Schema.STRING).subscribe()),
+				arguments("fluentApiNoSchemaWithMsgTypePasses", true,
+						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
+								.newMessages(Flux.fromIterable(data), String.class).sendMany().subscribe()),
+				arguments("fluentApiNoSchemaNoMsgTypePasses", true,
+						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
+								.newMessages(Flux.fromIterable(data)).sendMany().subscribe()),
+				arguments("fluentApiWithSchemaWithMsgTypePasses", true,
+						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
+								.newMessages(Flux.fromIterable(data), String.class).withSchema(Schema.STRING).sendMany()
+								.subscribe()),
+				arguments("fluentApiWithSchemaNoMsgTypeFails", false,
+						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
+								.newMessages(Flux.fromIterable(data)).withSchema(Schema.STRING).sendMany()
+								.subscribe()));
 	}
 
 	@ParameterizedTest(name = "{0}")

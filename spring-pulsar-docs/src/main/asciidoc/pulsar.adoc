@@ -28,11 +28,10 @@ They return the `MessageId` of the message that was published once the message i
 The `sendAsync` method calls are asynchronous calls that are non-blocking.
 They return a `CompletableFuture`, which you can use to asynchronously receive the message ID once the messages are published.
 
-==== Simple API
-The template provides a handful of methods ({javadocs}/org/springframework/pulsar/core/PulsarOperations.html[prefixed with _'send'_]) for simple send requests that contain only a message or a destination topic. For more complicated send requests, a fluent API lets you configure more options.
+NOTE: For the API variants that do not include a topic parameter, a <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> is used to determine the destination topic.
 
-TIP: Both `send` and `sendAsync` methods have a variety that allows publishing with only the message.
-When you do that, the application must provide the topic name by setting the property `spring.pulsar.producer.topic-name`.
+==== Simple API
+The template provides a handful of methods ({javadocs}/org/springframework/pulsar/core/PulsarOperations.html[prefixed with _'send'_]) for simple send requests. For more complicated send requests, a fluent API lets you configure more options.
 
 ==== Fluent API
 The template provides a {javadocs}/org/springframework/pulsar/core/PulsarOperations.html#newMessage(T)[fluent builder] to handle more complicated send requests.
@@ -93,6 +92,8 @@ include::schema-info/schema-info-template.adoc[leveloffset=+1]
 === Pulsar Producer Factory
 The `PulsarTemplate` relies on a `PulsarProducerFactory` to actually create the underlying producer. Spring Boot auto-configuration also provides this producer factory. Additionally, you can configure the factory by specifying any of the available producer-centric application properties.
 See the <<application-properties.adoc#appendix.application-properties.pulsar-producer,Appendix>>.
+
+NOTE: If topic information is not specified when using the producer factory APIs directly, the same <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> used by the `PulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
 [[producer-caching]]
 ==== Pulsar Producer Caching
@@ -169,9 +170,12 @@ In this most basic form, you must provide the following two properties with thei
 [source,yaml,indent=0,subs="verbatim"]
 ----
 spring.pulsar.consumer:
-  topic-names: hello-pulsar
+  topics: hello-pulsar
   subscription-name: hello-pulsar-subscription
 ----
+
+NOTE: If the topic information is not directly provided, a <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> is used to determine the destination topic.
+
 
 In the `PulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
@@ -409,6 +413,8 @@ DefaultPulsarMessageListenerContainer<String> pulsarListenerContainer = new Defa
 return pulsarListenerContainer;
 ----
 ====
+
+NOTE: If topic information is not specified when using the listener containers directly, the same <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> used by the `PulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
 
 `DefaultPulsarMessageListenerContainer` creates only a single consumer.
 If you want to have multiple consumers managed through multiple threads, you need to use `ConcurrentPulsarMessageListenerContainer`.

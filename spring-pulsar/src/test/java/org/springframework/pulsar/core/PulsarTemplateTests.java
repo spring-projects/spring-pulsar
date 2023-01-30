@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
@@ -197,11 +198,11 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
 	void sendMessageWithSpecificSchema() throws Exception {
-		String topic = "smt-specific-schema-topic";
+		String topic = "ptt-specificSchema-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
 			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("smt-specific-schema-subscription").subscribe()) {
+					.subscriptionName("ptt-specificSchema-subs").subscribe()) {
 				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
 						Collections.singletonMap("topicName", topic));
 				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
@@ -215,18 +216,18 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
 	void sendMessageWithSpecificSchemaInferredByCustomTypeMappings() throws Exception {
-		String topic = "smt-specific-schema-custom-topic";
+		String topic = "ptt-schemaInferred-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
 			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("smt-specific-schema-custom-subscription").subscribe()) {
+					.subscriptionName("ptt-schemaInferred-subs").subscribe()) {
 				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
 						Collections.singletonMap("topicName", topic));
 				// Custom schema resolver allows not specifying the schema when sending
 				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 				schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
 				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
-						schemaResolver, null, null);
+						schemaResolver, new DefaultTopicResolver(), null, null);
 
 				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 				pulsarTemplate.send(foo);
@@ -236,10 +237,36 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		}
 	}
 
+	@ParameterizedTest
+	@ValueSource(booleans = { true, false })
+	void sendMessageTopicInferredByCustomTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
+		String topic = "ptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
+					.subscriptionName("ptt-topicInferred-subs").subscribe()) {
+				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+						producerFactoryHasDefaultTopic ? Collections.singletonMap("topicName", "fake-topic")
+								: Collections.emptyMap());
+				// Topic mappings allows not specifying the topic when sending (nor having
+				// default on producer)
+				DefaultTopicResolver topicResolver = new DefaultTopicResolver();
+				topicResolver.addCustomTopicMapping(Foo.class, topic);
+				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
+						new DefaultSchemaResolver(), topicResolver, null, null);
+
+				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+				pulsarTemplate.send(foo, Schema.JSON(Foo.class));
+				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
+						.isEqualTo(foo);
+			}
+		}
+	}
+
 	@Test
 	@SuppressWarnings("unchecked")
 	void sendMessageWithEncryptionKeys() throws Exception {
-		String topic = "smt-encryption-keys-topic";
+		String topic = "ptt-encryptionKeys-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
 			PulsarProducerFactory<String> producerFactory = mock(PulsarProducerFactory.class);

@@ -25,7 +25,9 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 
 /**
  * Contains runtime properties for a reactive listener container.
@@ -48,6 +50,8 @@ public class ReactivePulsarContainerProperties<T> {
 	private SchemaType schemaType;
 
 	private SchemaResolver schemaResolver = new DefaultSchemaResolver();
+
+	private TopicResolver topicResolver = new DefaultTopicResolver();
 
 	private ReactivePulsarMessageHandler messageHandler;
 
@@ -95,6 +99,14 @@ public class ReactivePulsarContainerProperties<T> {
 
 	public void setSchemaResolver(SchemaResolver schemaResolver) {
 		this.schemaResolver = schemaResolver;
+	}
+
+	public TopicResolver getTopicResolver() {
+		return this.topicResolver;
+	}
+
+	public void setTopicResolver(TopicResolver topicResolver) {
+		this.topicResolver = topicResolver;
 	}
 
 	public Collection<String> getTopics() {

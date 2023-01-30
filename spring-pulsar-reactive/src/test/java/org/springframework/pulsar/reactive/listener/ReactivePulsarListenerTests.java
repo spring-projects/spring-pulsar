@@ -56,16 +56,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTestContainerSupport;
 import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
@@ -149,6 +152,11 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Bean
 		PulsarTopic partitionedTopic() {
 			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
+		}
+
+		@Bean
+		ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
+			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 		}
 
 	}
@@ -261,12 +269,14 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class TestPulsarListenersForStreaming {
 
-			@ReactivePulsarListener(topics = "streaming-1", stream = true, consumerCustomizer = "consumerCustomizer")
+			@ReactivePulsarListener(topics = "streaming-1", stream = true,
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
 			Flux<MessageResult<Void>> listen1(Flux<Message<String>> messages) {
 				return messages.doOnNext(m -> latch1.countDown()).map(MessageResult::acknowledge);
 			}
 
-			@ReactivePulsarListener(topics = "streaming-2", stream = true, consumerCustomizer = "consumerCustomizer")
+			@ReactivePulsarListener(topics = "streaming-2", stream = true,
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
 			Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<String>> messages) {
 				return messages.doOnNext(m -> latch2.countDown()).map(m -> {
 					Object mId = m.getHeaders().get(PulsarHeaders.MESSAGE_ID);
@@ -277,11 +287,6 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 						throw new RuntimeException("Missing message Id");
 					}
 				}).map(MessageResult::acknowledge);
-			}
-
-			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
-				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 		}
@@ -423,11 +428,6 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			Mono<Void> listenProtobuf(Proto.Person ignored) {
 				protobufLatch.countDown();
 				return Mono.empty();
-			}
-
-			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
-				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 		}
@@ -596,11 +596,6 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 				return Mono.empty();
 			}
 
-			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
-				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
-			}
-
 			record User2(String name, int age) {
 			}
 
@@ -660,6 +655,73 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			@Override
 			public String toString() {
 				return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = TopicCustomMappingsTestCases.TopicCustomMappingsTestConfig.class)
+	class TopicCustomMappingsTestCases {
+
+		static CountDownLatch userLatch = new CountDownLatch(3);
+		static CountDownLatch stringLatch = new CountDownLatch(3);
+
+		@Test
+		void complexMessageTypeTopicMapping() throws Exception {
+			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
+			Schema<User2> schema = Schema.JSON(User2.class);
+			for (int i = 0; i < 3; i++) {
+				template.send("rplt-topicMapping-user-topic", new User2("Jason", i), schema);
+			}
+			assertThat(userLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void primitiveMessageTypeTopicMapping() throws Exception {
+			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Collections.emptyMap());
+			PulsarTemplate<String> template = new PulsarTemplate<>(pulsarProducerFactory);
+			for (int i = 0; i < 3; i++) {
+				template.send("rplt-topicMapping-string-topic", "Susan " + i, Schema.STRING);
+			}
+			assertThat(stringLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class TopicCustomMappingsTestConfig {
+
+			@Bean
+			TopicResolver topicResolver() {
+				DefaultTopicResolver resolver = new DefaultTopicResolver();
+				resolver.addCustomTopicMapping(User2.class, "rplt-topicMapping-user-topic");
+				resolver.addCustomTopicMapping(String.class, "rplt-topicMapping-string-topic");
+				return resolver;
+			}
+
+			@Bean
+			ReactivePulsarListenerContainerFactory<String> reactivePulsarListenerContainerFactory(
+					ReactivePulsarConsumerFactory<String> pulsarConsumerFactory, TopicResolver topicResolver) {
+				ReactivePulsarContainerProperties<String> containerProps = new ReactivePulsarContainerProperties<>();
+				containerProps.setTopicResolver(topicResolver);
+				return new DefaultReactivePulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
+			}
+
+			@ReactivePulsarListener(id = "userListener", schemaType = SchemaType.JSON,
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenUser(User2 ignored) {
+				userLatch.countDown();
+				return Mono.empty();
+			}
+
+			@ReactivePulsarListener(id = "stringListener", consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenString(String ignored) {
+				stringLatch.countDown();
+				return Mono.empty();
 			}
 
 		}
@@ -774,11 +836,6 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 				return Mono.empty();
 			}
 
-			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
-				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
-			}
-
 		}
 
 	}
@@ -813,8 +870,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class TestPulsarListenersForConcurrency {
 
-			@ReactivePulsarListener(topics = "pulsarListenerConcurrency", consumerCustomizer = "consumerCustomizer",
-					concurrency = "100")
+			@ReactivePulsarListener(topics = "pulsarListenerConcurrency",
+					consumerCustomizer = "subscriptionInitialPositionEarliest", concurrency = "100")
 			Mono<Void> listen1(String ignored) {
 				latch.countDown();
 				// if messages are not handled concurrently, this will make the latch
@@ -823,7 +880,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@ReactivePulsarListener(topics = "pulsarListenerWithConcurrencyKeyOrdered",
-					consumerCustomizer = "consumerCustomizer", concurrency = "100", useKeyOrderedProcessing = "true")
+					consumerCustomizer = "subscriptionInitialPositionEarliest", concurrency = "100",
+					useKeyOrderedProcessing = "true")
 			Mono<Void> listen2(String message) {
 				if (message.equals("first")) {
 					// if message processing is not ordered by keys, "first" will be added
@@ -832,11 +890,6 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 				}
 				queue.add(message);
 				return Mono.empty();
-			}
-
-			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
-				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 		}

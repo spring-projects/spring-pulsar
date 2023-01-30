@@ -34,8 +34,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
@@ -52,7 +54,9 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 
 	private static final CountDownLatch LATCH_3 = new CountDownLatch(1);
 
-	private static final CountDownLatch LATCH_4 = new CountDownLatch(10);
+	private static final CountDownLatch LATCH_4 = new CountDownLatch(1);
+
+	private static final CountDownLatch LATCH_5 = new CountDownLatch(10);
 
 	@Test
 	void basicPulsarListener() throws Exception {
@@ -63,7 +67,7 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.send("plt-topic1", "John Doe");
+			pulsarTemplate.send("plt-basic-topic", "John Doe");
 			assertThat(LATCH_1.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
@@ -77,7 +81,7 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<Foo> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.send("plt-custom-topic1", new Foo("John Doe"), Schema.JSON(Foo.class));
+			pulsarTemplate.send("plt-foo-topic1", new Foo("John Doe"), Schema.JSON(Foo.class));
 			assertThat(LATCH_2.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
@@ -91,8 +95,22 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<Foo> pulsarTemplate = context.getBean(PulsarTemplate.class);
-			pulsarTemplate.send("plt-custom-topic2", new Foo("John Doe"));
+			pulsarTemplate.send("plt-foo-topic2", new Foo("John Doe"));
 			assertThat(LATCH_3.await(20, TimeUnit.SECONDS)).isTrue();
+		}
+	}
+
+	@Test
+	void basicPulsarListenerWithTopicMapping() throws Exception {
+		SpringApplication app = new SpringApplication(BasicListenerWithTopicMappingConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+
+		try (ConfigurableApplicationContext context = app
+				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			@SuppressWarnings("unchecked")
+			PulsarTemplate<Foo> pulsarTemplate = context.getBean(PulsarTemplate.class);
+			pulsarTemplate.send("plt-topicMapping-topic", new Foo("Crazy8z"), Schema.JSON(Foo.class));
+			assertThat(LATCH_4.await(20, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
@@ -106,9 +124,9 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.send("plt-topic2", "John Doe");
+				pulsarTemplate.send("plt-batch-topic", "John Doe");
 			}
-			assertThat(LATCH_4.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(LATCH_5.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 	}
 
@@ -116,7 +134,7 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 	@SpringBootConfiguration
 	static class BasicListenerConfig {
 
-		@PulsarListener(subscriptionName = "plt-sub1", topics = "plt-topic1")
+		@PulsarListener(subscriptionName = "plt-basic-sub", topics = "plt-basic-topic")
 		public void listen(String ignored) {
 			LATCH_1.countDown();
 		}
@@ -127,8 +145,7 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 	@SpringBootConfiguration
 	static class BasicListenerCustomTypeConfig {
 
-		@PulsarListener(subscriptionName = "plt-custom-sub1", topics = "plt-custom-topic1",
-				schemaType = SchemaType.JSON)
+		@PulsarListener(subscriptionName = "plt-foo-sub1", topics = "plt-foo-topic1", schemaType = SchemaType.JSON)
 		public void listen(Foo ignored) {
 			LATCH_2.countDown();
 		}
@@ -146,7 +163,7 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 			return resolver;
 		}
 
-		@PulsarListener(subscriptionName = "plt-custom-sub2", topics = "plt-custom-topic2")
+		@PulsarListener(subscriptionName = "plt-foo-sub2", topics = "plt-foo-topic2")
 		public void listen(Foo ignored) {
 			LATCH_3.countDown();
 		}
@@ -155,11 +172,29 @@ class PulsarListenerTests implements PulsarTestContainerSupport {
 
 	@EnableAutoConfiguration
 	@SpringBootConfiguration
+	static class BasicListenerWithTopicMappingConfig {
+
+		@Bean
+		TopicResolver customTopicResolver() {
+			DefaultTopicResolver resolver = new DefaultTopicResolver();
+			resolver.addCustomTopicMapping(Foo.class, "plt-topicMapping-topic");
+			return resolver;
+		}
+
+		@PulsarListener(subscriptionName = "plt-topicMapping-sub", schemaType = SchemaType.JSON)
+		public void listen(Foo ignored) {
+			LATCH_4.countDown();
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
 	static class BatchListenerConfig {
 
-		@PulsarListener(subscriptionName = "plt-batch-sub", topics = "plt-topic2", batch = true)
+		@PulsarListener(subscriptionName = "plt-batch-sub", topics = "plt-batch-topic", batch = true)
 		public void listen(List<String> foo) {
-			foo.forEach(t -> LATCH_4.countDown());
+			foo.forEach(t -> LATCH_5.countDown());
 		}
 
 	}

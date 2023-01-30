@@ -86,6 +86,7 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 
 		ReactivePulsarContainerProperties<T> properties = new ReactivePulsarContainerProperties<>();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
+		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
 
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
 			properties.setTopics(endpoint.getTopics());
