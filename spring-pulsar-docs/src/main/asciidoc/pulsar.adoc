@@ -1146,7 +1146,7 @@ void listen1(String message) {
 ----
 ====
 
-TIP: The id parameter is the value of the @PulsarListener id attribute (when pausing a @PulsarListener).
+TIP: The id parameter is the value of the `@PulsarListener` id attribute (when pausing a `@PulsarListener`).
 
 When running the above app, you will see the following output:
 
