@@ -192,8 +192,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	}
 
 	@Override
-	public void pause() {
-		super.pause();
+	public void doPause() {
+		setPaused(true);
 		DefaultPulsarMessageListenerContainer<T>.Listener consumer = this.listenerConsumer;
 		if (consumer != null) {
 			consumer.pause();
@@ -201,12 +201,12 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	}
 
 	@Override
-	public void resume() {
+	public void doResume() {
 		DefaultPulsarMessageListenerContainer<T>.Listener consumer = this.listenerConsumer;
 		if (consumer != null) {
 			consumer.resume();
 		}
-		super.resume();
+		setPaused(false);
 	}
 
 	private final class Listener implements SchedulingAwareRunnable {

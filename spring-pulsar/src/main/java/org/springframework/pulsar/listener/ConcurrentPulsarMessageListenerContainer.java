@@ -135,17 +135,17 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	}
 
 	@Override
-	public void pause() {
-		synchronized (this.lifecycleMonitor) {
-			super.pause();
+	public void doPause() {
+		if (!isPaused()) {
+			setPaused(true);
 			this.containers.forEach(AbstractPulsarMessageListenerContainer::pause);
 		}
 	}
 
 	@Override
-	public void resume() {
-		synchronized (this.lifecycleMonitor) {
-			super.resume();
+	public void doResume() {
+		if (isPaused()) {
+			setPaused(false);
 			this.containers.forEach(AbstractPulsarMessageListenerContainer::resume);
 		}
 	}
