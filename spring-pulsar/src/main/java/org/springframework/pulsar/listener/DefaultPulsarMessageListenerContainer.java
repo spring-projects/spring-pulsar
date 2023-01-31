@@ -367,6 +367,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			Messages<T> messages = null;
 			List<Message<T>> messageList = null;
 			while (isRunning()) {
+				checkIfPausedAndHandleAccordingly();
 				// Always receive messages in batch mode.
 				try {
 					if (!inRetryMode.get() && !messagesPendingInBatch.get()) {
@@ -454,20 +455,22 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						handleAcks(messages);
 					}
 				}
-				if (isPaused()) {
-					try {
-						// try acquiring the lock.
-						DefaultPulsarMessageListenerContainer.this.lockOnPause.lock();
-						// Waiting on lock's condition.
-						DefaultPulsarMessageListenerContainer.this.pausedCondition.await();
-					}
-					catch (InterruptedException e) {
-						throw new IllegalStateException(
-								"Exception occurred trying to wake up the paused listener thread.");
-					}
-					finally {
-						DefaultPulsarMessageListenerContainer.this.lockOnPause.unlock();
-					}
+			}
+		}
+
+		private void checkIfPausedAndHandleAccordingly() {
+			if (isPaused()) {
+				// try acquiring the lock.
+				DefaultPulsarMessageListenerContainer.this.lockOnPause.lock();
+				try {
+					// Waiting on lock's condition.
+					DefaultPulsarMessageListenerContainer.this.pausedCondition.await();
+				}
+				catch (InterruptedException e) {
+					throw new IllegalStateException("Exception occurred trying to wake up the paused listener thread.");
+				}
+				finally {
+					DefaultPulsarMessageListenerContainer.this.lockOnPause.unlock();
 				}
 			}
 		}

@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -96,8 +97,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void containerPauseAndResumeFeatureUsingWaitAndNotify() throws Exception {
-		HashSet<String> topics = new HashSet<>();
-		topics.add("containerPauseResumeWaitNotify-topic");
+		Set<String> topics = Collections.singleton("containerPauseResumeWaitNotify-topic");
 		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName",
 				"containerPauseResumeWaitNotify-sub");
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
