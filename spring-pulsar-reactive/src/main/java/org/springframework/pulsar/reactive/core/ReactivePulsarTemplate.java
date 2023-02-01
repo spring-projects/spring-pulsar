@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.reactive.core;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.pulsar.client.api.MessageId;
@@ -191,8 +190,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 		if (schema == null) {
 			schema = this.schemaResolver.getSchema(message);
 		}
-		return this.reactiveMessageSenderFactory.createSender(topic, schema,
-				customizer == null ? Collections.emptyList() : Collections.singletonList(customizer));
+		return this.reactiveMessageSenderFactory.createSender(schema, topic, customizer);
 	}
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {

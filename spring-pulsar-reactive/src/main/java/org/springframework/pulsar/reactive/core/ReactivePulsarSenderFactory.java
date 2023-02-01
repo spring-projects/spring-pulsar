@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,34 +22,53 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
+import org.springframework.lang.Nullable;
+
 /**
  * The strategy to create a {@link ReactiveMessageSender} instance(s).
  *
  * @param <T> reactive message sender payload type
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public interface ReactivePulsarSenderFactory<T> {
 
 	/**
-	 * Create a reactive message sender.
-	 * @param topic the topic the reactive message sender will send messages to or
-	 * {@code null} to use the default topic
+	 * Create a reactive message sender that will send messages to the default topic.
 	 * @param schema the schema of the messages to be sent
 	 * @return the reactive message sender
 	 */
-	ReactiveMessageSender<T> createSender(String topic, Schema<T> schema);
+	ReactiveMessageSender<T> createSender(Schema<T> schema);
 
 	/**
 	 * Create a reactive message sender.
-	 * @param topic the topic the reactive message sender will send messages to or
-	 * {@code null} to use the default topic
+	 * @param topic the topic to send messages to or {@code null} to use the default topic
 	 * @param schema the schema of the messages to be sent
+	 * @return the reactive message sender
+	 */
+	ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic);
+
+	/**
+	 * Create a reactive message sender.
+	 * @param schema the schema of the messages to be sent
+	 * @param topic the topic to send messages to or {@code null} to use the default topic
+	 * @param customizer the optional customizer to apply to the reactive message sender
+	 * builder
+	 * @return the reactive message sender
+	 */
+	ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic,
+			@Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer);
+
+	/**
+	 * Create a reactive message sender.
+	 * @param schema the schema of the messages to be sent
+	 * @param topic the topic to send messages to or {@code null} to use the default topic
 	 * @param customizers the optional list of customizers to apply to the reactive
 	 * message sender builder
 	 * @return the reactive message sender
 	 */
-	ReactiveMessageSender<T> createSender(String topic, Schema<T> schema,
-			List<ReactiveMessageSenderBuilderCustomizer<T>> customizers);
+	ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic,
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers);
 
 	/**
 	 * Return the ReactiveMessageSenderSpec to use when creating reactive senders.

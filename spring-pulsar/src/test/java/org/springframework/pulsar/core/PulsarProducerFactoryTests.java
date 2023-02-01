@@ -17,8 +17,9 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -36,7 +37,9 @@ import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
@@ -67,80 +70,57 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	}
 
 	@Test
-	void createProducerWithSpecificTopic() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		try (Producer<String> producer = producerFactory.createProducer(schema, "topic1")) {
-			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic1", schema, Collections.emptySet());
-		}
-	}
-
-	@Test
-	void createProducerWithDefaultTopic() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
-				Collections.singletonMap("topicName", "topic0"));
-		try (Producer<String> producer = producerFactory.createProducer(schema, null)) {
-			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic0", schema, Collections.emptySet());
-		}
-	}
-
-	@Test
-	void createProducerWithDefaultEncryptionKeys() throws PulsarClientException {
-		Set<String> encryptionKeys = Set.of("key");
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient,
-				Collections.singletonMap("encryptionKeys", encryptionKeys));
-		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0")) {
-			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic0", schema, encryptionKeys);
-		}
-	}
-
-	@Test
-	void createProducerWithSpecificEncryptionKeys() throws PulsarClientException {
-		Set<String> encryptionKeys = Set.of("key");
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0", encryptionKeys, null)) {
-			assertProducerHasTopicSchemaAndEncryptionKeys(producer, "topic0", schema, encryptionKeys);
-		}
-	}
-
-	@Test
 	@SuppressWarnings("unchecked")
-	void createProducerWithSingleProducerCustomizer() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		ProducerBuilderCustomizer<String> producerCustomizer = mock(ProducerBuilderCustomizer.class);
-		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0", null,
-				Collections.singletonList(producerCustomizer))) {
-			verify(producerCustomizer).customize(any(ProducerBuilder.class));
+	void createProducerWithAllOptions() throws PulsarClientException {
+		var keys = Set.of("key");
+		ProducerBuilderCustomizer<String> customizer1 = mock(ProducerBuilderCustomizer.class);
+		var producerFactory = newProducerFactory();
+		try (var producer = producerFactory.createProducer(schema, "topic0", keys,
+				Collections.singletonList(customizer1))) {
+			assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
+			assertThatProducerHasEncryptionKeys(producer, keys);
+			verify(customizer1).customize(any(ProducerBuilder.class));
 		}
 	}
 
-	@Test
-	@SuppressWarnings("unchecked")
-	void createProducerWithMultipleProducerCustomizers() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		ProducerBuilderCustomizer<String> producerCustomizer1 = mock(ProducerBuilderCustomizer.class);
-		ProducerBuilderCustomizer<String> producerCustomizer2 = mock(ProducerBuilderCustomizer.class);
-		try (Producer<String> producer = producerFactory.createProducer(schema, "topic0", null,
-				Arrays.asList(producerCustomizer1, producerCustomizer2))) {
-			verify(producerCustomizer1).customize(any(ProducerBuilder.class));
-			verify(producerCustomizer2).customize(any(ProducerBuilder.class));
-		}
+	private void assertThatProducerHasSchemaAndTopic(Producer<String> producer, Schema<String> expectedSchema,
+			String expectedTopic) {
+		producer = actualProducer(producer);
+		assertThat(producer).hasFieldOrPropertyWithValue("schema", expectedSchema);
+		assertThat(producer.getTopic()).isEqualTo(expectedTopic);
 	}
 
-	@Test
-	void createProducerWithNoTopic() {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		assertThatThrownBy(() -> producerFactory.createProducer(schema, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("Topic must be specified when no default topic is configured");
+	private void assertThatProducerHasTopic(Producer<String> producer, String expectedTopic) {
+		producer = actualProducer(producer);
+		assertThat(producer.getTopic()).isEqualTo(expectedTopic);
 	}
 
-	protected void assertProducerHasTopicSchemaAndEncryptionKeys(Producer<String> producer, String topic,
-			Schema<String> schema, Set<String> encryptionKeys) {
-		assertThat(producer.getTopic()).isEqualTo(topic);
-		assertThat(producer).hasFieldOrPropertyWithValue("schema", schema);
+	protected void assertThatProducerHasEncryptionKeys(Producer<String> producer, Set<String> encryptionKeys) {
+		producer = actualProducer(producer);
 		assertThat(producer).extracting("conf")
 				.asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
 				.extracting(ProducerConfigurationData::getEncryptionKeys).isEqualTo(encryptionKeys);
+	}
+
+	protected PulsarProducerFactory<String> newProducerFactory() {
+		return producerFactory(pulsarClient, Collections.emptyMap());
+	}
+
+	protected PulsarProducerFactory<String> newProducerFactoryWithDefaultTopic(String defaultTopic) {
+		return producerFactory(pulsarClient, Collections.singletonMap("topicName", defaultTopic));
+	}
+
+	private PulsarProducerFactory<String> newProducerFactoryWithDefaultKeys(Set<String> defaultKeys) {
+		return producerFactory(pulsarClient, Collections.singletonMap("encryptionKeys", defaultKeys));
+	}
+
+	/**
+	 * By default, echoes the specified producer back to the caller, but subclasses can
+	 * override to provide the actual producer if the specified producer is wrapped.
+	 * @return the actual producer if the specified producer is wrapped
+	 */
+	protected Producer<String> actualProducer(Producer<String> producer) {
+		return producer;
 	}
 
 	/**
@@ -151,5 +131,125 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	 */
 	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			Map<String, Object> producerConfig);
+
+	@Nested
+	class CreateProducerSchemaOnlyApi {
+
+		@Test
+		void withDefaultTopic() throws PulsarClientException {
+			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
+			try (var producer = producerFactory.createProducer(schema)) {
+				assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
+			}
+		}
+
+		@Test
+		void withoutDefaultTopic() {
+			assertThatIllegalArgumentException().isThrownBy(() -> newProducerFactory().createProducer(schema))
+					.withMessageContaining("Topic must be specified when no default topic is configured");
+		}
+
+	}
+
+	@Nested
+	class CreateProducerSchemaAndTopicApi {
+
+		@Test
+		void topicSpecifiedWithDefaultTopic() throws PulsarClientException {
+			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
+			try (var producer = producerFactory.createProducer(schema, "topic1")) {
+				assertThatProducerHasSchemaAndTopic(producer, schema, "topic1");
+			}
+		}
+
+		@Test
+		void topicSpecifiedWithoutDefaultTopic() throws PulsarClientException {
+			try (var producer = newProducerFactory().createProducer(schema, "topic1")) {
+				assertThatProducerHasTopic(producer, "topic1");
+			}
+		}
+
+		@Test
+		void noTopicSpecifiedWithDefaultTopic() throws PulsarClientException {
+			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
+			try (var producer = producerFactory.createProducer(schema, null)) {
+				assertThatProducerHasTopic(producer, "topic0");
+			}
+		}
+
+		@Test
+		void noTopicSpecifiedWithoutDefaultTopic() {
+			assertThatIllegalArgumentException().isThrownBy(() -> newProducerFactory().createProducer(schema, null))
+					.withMessageContaining("Topic must be specified when no default topic is configured");
+		}
+
+	}
+
+	@Nested
+	@SuppressWarnings("unchecked")
+	class CreateProducerCustomizerApi {
+
+		private ProducerBuilderCustomizer<String> customizer1 = mock(ProducerBuilderCustomizer.class);
+
+		private ProducerBuilderCustomizer<String> customizer2 = mock(ProducerBuilderCustomizer.class);
+
+		@Test
+		void singleCustomizer() throws PulsarClientException {
+			try (var producer = newProducerFactory().createProducer(schema, "topic0", customizer1)) {
+				assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
+				verify(customizer1).customize(any(ProducerBuilder.class));
+			}
+		}
+
+		@Test
+		void singleCustomizerViaListApi() throws PulsarClientException {
+			try (var producer = newProducerFactory().createProducer(schema, "topic0", null,
+					Collections.singletonList(customizer1))) {
+				assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
+				verify(customizer1).customize(any(ProducerBuilder.class));
+			}
+		}
+
+		@Test
+		void multipleCustomizers() throws PulsarClientException {
+			try (var ignored = newProducerFactory().createProducer(schema, "topic0", null,
+					Arrays.asList(customizer1, customizer2))) {
+				InOrder inOrder = inOrder(customizer1, customizer2);
+				inOrder.verify(customizer1).customize(any(ProducerBuilder.class));
+				inOrder.verify(customizer2).customize(any(ProducerBuilder.class));
+			}
+		}
+
+		@Test
+		void customizerThatSetsTopicHasNoEffect() throws PulsarClientException {
+			try (var producer = newProducerFactory().createProducer(schema, "topic1", (b) -> b.topic("topic-5150"))) {
+				assertThatProducerHasTopic(producer, "topic1");
+			}
+		}
+
+	}
+
+	@Nested
+	class CreateProducerEncryptionKeysApi {
+
+		@Test
+		void withDefaultEncryptionKeys() throws PulsarClientException {
+			var keys = Set.of("key");
+			var producerFactory = newProducerFactoryWithDefaultKeys(keys);
+			try (var producer = producerFactory.createProducer(schema, "topic0")) {
+				assertThatProducerHasEncryptionKeys(producer, keys);
+			}
+		}
+
+		@Test
+		void specificEncryptionKeys() throws PulsarClientException {
+			var keys = Set.of("key");
+			var producerFactory = newProducerFactory();
+			try (var producer = producerFactory.createProducer(schema, "topic0", keys, null)) {
+				assertThatProducerHasEncryptionKeys(producer, keys);
+			}
+		}
+
+	}
 
 }

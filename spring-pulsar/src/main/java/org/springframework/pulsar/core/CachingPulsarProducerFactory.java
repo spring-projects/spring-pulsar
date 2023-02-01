@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerStats;
@@ -65,7 +64,7 @@ import com.github.benmanes.caffeine.cache.Scheduler;
  */
 public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T> implements DisposableBean {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final Cache<ProducerCacheKey<T>, Producer<T>> producerCache;
 
@@ -95,8 +94,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	@Override
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
-		String topicName = ProducerUtils.resolveTopicName(topic, this);
-		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, topicName,
+		String resolveTopicName = ProducerUtils.resolveTopicName(topic, this);
+		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, resolveTopicName,
 				encryptionKeys == null ? null : new HashSet<>(encryptionKeys), customizers);
 		return this.producerCache.get(producerCacheKey,
 				(st) -> createCacheableProducer(st.schema, st.topic, st.encryptionKeys, customizers));
@@ -124,7 +123,6 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		});
 	}
 
-	@SuppressWarnings("unchecked")
 	private void closeProducer(Producer<T> producer) {
 		Producer<T> actualProducer = null;
 		if (producer instanceof ProducerWithCloseCallback<T> wrappedProducer) {
