@@ -60,21 +60,32 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 				.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				config);
-		CountDownLatch latch = new CountDownLatch(3);
+
+		CountDownLatch latch1 = new CountDownLatch(1);
+		CountDownLatch latch2 = new CountDownLatch(1);
+		CountDownLatch latch3 = new CountDownLatch(1);
+
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch1.countDown());
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
 		pulsarContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
 		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container1.start();
+
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch2.countDown());
 		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container2.start();
+
+		pulsarContainerProperties
+				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch3.countDown());
+		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container3.start();
+
 		Map<String, Object> prodConfig = Map.of("topicName", "my-part-topic-1", "messageRoutingMode",
 				MessageRoutingMode.CustomPartition);
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
@@ -88,8 +99,13 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		pulsarTemplate.newMessage("hello buzz doe")
 				.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter())).sendAsync();
 
-		boolean await = latch.await(10, TimeUnit.SECONDS);
-		assertThat(await).isTrue();
+		boolean await1 = latch1.await(10, TimeUnit.SECONDS);
+		boolean await2 = latch2.await(10, TimeUnit.SECONDS);
+		boolean await3 = latch3.await(10, TimeUnit.SECONDS);
+
+		assertThat(await1).isTrue();
+		assertThat(await2).isTrue();
+		assertThat(await3).isTrue();
 	}
 
 	static class FooRouter implements MessageRouter {
