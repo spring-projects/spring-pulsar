@@ -19,8 +19,7 @@ package org.springframework.pulsar.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.Serial;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -54,11 +53,9 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		int numPartitions = 3;
 		admin.topics().createPartitionedTopic(topicName, numPartitions);
 
-		Map<String, Object> config = new HashMap<>();
-		HashSet<String> topics = new HashSet<>();
-		topics.add("my-part-topic-1");
-		config.put("topicNames", topics);
-		config.put("subscriptionName", "my-part-subscription-1");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("my-part-topic-1"), "subscriptionName",
+				"my-part-subscription-1");
+
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
@@ -78,9 +75,8 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container2.start();
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "my-part-topic-1");
-		prodConfig.put("messageRoutingMode", MessageRoutingMode.CustomPartition);
+		Map<String, Object> prodConfig = Map.of("topicName", "my-part-topic-1", "messageRoutingMode",
+				MessageRoutingMode.CustomPartition);
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
