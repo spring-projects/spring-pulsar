@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
+import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
@@ -31,73 +30,124 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.assertj.core.api.ThrowingConsumer;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for
- * {@link org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory}
+ * Unit tests for {@link DefaultReactivePulsarSenderFactory}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 class DefaultReactiveMessageSenderFactoryTests {
 
 	protected final Schema<String> schema = Schema.STRING;
 
 	@Test
-	void createSenderWithSpecificTopic() {
-		testCreateSender(null, null, "topic1", null, "topic1");
-	}
-
-	@Test
-	void createSenderWithDefaultTopic() {
-		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
-		senderSpec.setTopicName("topic0");
-
-		testCreateSender(senderSpec, null, null, null, "topic0");
-	}
-
-	@Test
-	void createSenderWithSingleSenderCustomizer() {
-		testCreateSender(null, null, "topic1", Collections.singletonList(builder -> builder.topic("topic1")), "topic1");
-	}
-
-	@Test
-	void createSenderWithMultipleSenderCustomizer() {
-		org.springframework.pulsar.reactive.core.ReactiveMessageSenderBuilderCustomizer<String> customizer1 = builder -> builder
-				.topic("topic1");
-		ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache();
-		org.springframework.pulsar.reactive.core.ReactiveMessageSenderBuilderCustomizer<String> customizer2 = builder -> builder
-				.cache(cache);
-
-		ReactiveMessageSender<String> sender = testCreateSender(null, null, "topic0",
-				Arrays.asList(customizer1, customizer2), "topic1");
-		assertThat(sender).extracting("producerCache").isSameAs(cache);
-	}
-
-	@Test
-	void createSenderWithNoTopic() {
-		org.springframework.pulsar.reactive.core.ReactivePulsarSenderFactory<String> senderFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory<>(
-				(PulsarClient) null, null, null);
-		assertThatIllegalArgumentException().isThrownBy(() -> senderFactory.createSender(null, schema))
-				.withMessageContaining("Topic must be specified when no default topic is configured");
-	}
-
-	@Test
 	void createSenderWithCache() {
 		ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache();
-		ReactiveMessageSender<String> sender = testCreateSender(null, cache, "topic1", null, "topic1");
+		var sender = newSenderFactoryWithCache(cache).createSender(schema, "topic1");
 		assertThat(sender).extracting("producerCache").isSameAs(cache);
 	}
 
-	private ReactiveMessageSender<String> testCreateSender(ReactiveMessageSenderSpec spec,
-			ReactiveMessageSenderCache cache, String topic,
-			List<ReactiveMessageSenderBuilderCustomizer<String>> customizers, String expectedTopic) {
-		ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(
-				(PulsarClient) null, spec, cache);
-		ReactiveMessageSender<String> sender = senderFactory.createSender(topic, schema, customizers);
+	private void assertThatSenderHasTopic(ReactiveMessageSender<String> sender, String expectedTopic) {
+		assertThatSenderSpecSatisfies(sender, (senderSpec) -> assertThat(senderSpec)
+				.extracting(ReactiveMessageSenderSpec::getTopicName).isEqualTo(expectedTopic));
+	}
+
+	private void assertThatSenderSpecSatisfies(ReactiveMessageSender<String> sender,
+			ThrowingConsumer<ReactiveMessageSenderSpec> specConsumer) {
 		assertThat(sender).extracting("senderSpec", InstanceOfAssertFactories.type(ReactiveMessageSenderSpec.class))
-				.extracting(ReactiveMessageSenderSpec::getTopicName).isEqualTo(expectedTopic);
-		return sender;
+				.satisfies(specConsumer);
+	}
+
+	private ReactivePulsarSenderFactory<String> newSenderFactory() {
+		return new DefaultReactivePulsarSenderFactory<>((PulsarClient) null, null, null);
+	}
+
+	private ReactivePulsarSenderFactory<String> newSenderFactoryWithDefaultTopic(String defaultTopic) {
+		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
+		senderSpec.setTopicName(defaultTopic);
+		return new DefaultReactivePulsarSenderFactory<>((PulsarClient) null, senderSpec, null);
+	}
+
+	private ReactivePulsarSenderFactory<String> newSenderFactoryWithCache(ReactiveMessageSenderCache cache) {
+		return new DefaultReactivePulsarSenderFactory<>((PulsarClient) null, null, cache);
+	}
+
+	@Nested
+	class CreateSenderSchemaOnlyApi {
+
+		@Test
+		void withDefaultTopic() {
+			var sender = newSenderFactoryWithDefaultTopic("topic0").createSender(schema);
+			assertThatSenderHasTopic(sender, "topic0");
+		}
+
+		@Test
+		void withoutDefaultTopic() {
+			assertThatIllegalArgumentException().isThrownBy(() -> newSenderFactory().createSender(schema))
+					.withMessageContaining("Topic must be specified when no default topic is configured");
+		}
+
+	}
+
+	@Nested
+	class CreateSenderSchemaAndTopicApi {
+
+		@Test
+		void topicSpecifiedWithDefaultTopic() {
+			var sender = newSenderFactoryWithDefaultTopic("topic0").createSender(schema, "topic1");
+			assertThatSenderHasTopic(sender, "topic1");
+		}
+
+		@Test
+		void topicSpecifiedWithoutDefaultTopic() {
+			var sender = newSenderFactory().createSender(schema, "topic1");
+			assertThatSenderHasTopic(sender, "topic1");
+		}
+
+		@Test
+		void noTopicSpecifiedWithDefaultTopic() {
+			var sender = newSenderFactoryWithDefaultTopic("topic0").createSender(schema, null);
+			assertThatSenderHasTopic(sender, "topic0");
+		}
+
+		@Test
+		void noTopicSpecifiedWithoutDefaultTopic() {
+			assertThatIllegalArgumentException().isThrownBy(() -> newSenderFactory().createSender(schema, null))
+					.withMessageContaining("Topic must be specified when no default topic is configured");
+		}
+
+	}
+
+	@Nested
+	class CreateSenderCustomizersApi {
+
+		@Test
+		void singleCustomizer() {
+			var sender = newSenderFactory().createSender(schema, "topic1", (b) -> b.producerName("fooProducer"));
+			assertThatSenderSpecSatisfies(sender,
+					(senderSpec) -> assertThat(senderSpec.getProducerName()).isEqualTo("fooProducer"));
+		}
+
+		@Test
+		void multipleCustomizers() {
+			var sender = newSenderFactory().createSender(schema, "topic1",
+					Arrays.asList((b) -> b.producerName("fooProducer"), (b) -> b.compressionType(CompressionType.LZ4)));
+			assertThatSenderSpecSatisfies(sender, (senderSpec) -> {
+				assertThat(senderSpec.getProducerName()).isEqualTo("fooProducer");
+				assertThat(senderSpec.getCompressionType()).isEqualTo(CompressionType.LZ4);
+			});
+		}
+
+		@Test
+		void customizerThatSetsTopicHasNoEffect() {
+			var sender = newSenderFactory().createSender(schema, "topic1", (b) -> b.topic("topic-5150"));
+			assertThatSenderHasTopic(sender, "topic1");
+		}
+
 	}
 
 }

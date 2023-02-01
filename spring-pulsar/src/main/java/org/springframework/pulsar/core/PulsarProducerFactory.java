@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.springframework.lang.Nullable;
 public interface PulsarProducerFactory<T> {
 
 	/**
-	 * Create a producer.
+	 * Create a producer that will send messages to the default topic.
 	 * @param schema the schema of the messages to be sent
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
@@ -55,6 +55,18 @@ public interface PulsarProducerFactory<T> {
 	 * @throws PulsarClientException if any error occurs
 	 */
 	Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException;
+
+	/**
+	 * Create a producer.
+	 * @param schema the schema of the messages to be sent
+	 * @param topic the topic the producer will send messages to or {@code null} to use
+	 * the default topic
+	 * @param customizer optional producer builder customizer
+	 * @return the producer
+	 * @throws PulsarClientException if any error occurs
+	 */
+	Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
+			@Nullable ProducerBuilderCustomizer<T> customizer) throws PulsarClientException;
 
 	/**
 	 * Create a producer.

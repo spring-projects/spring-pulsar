@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,12 +76,11 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Test
 	void createProducerMultipleCalls() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		ProducerCacheKey<String> cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
-
-		Producer<String> producer1 = producerFactory.createProducer(schema, "topic1");
-		Producer<String> producer2 = producerFactory.createProducer(new StringSchema(), "topic1");
-		Producer<String> producer3 = producerFactory.createProducer(new StringSchema(), "topic1");
+		var producerFactory = newProducerFactory();
+		var cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
+		var producer1 = producerFactory.createProducer(schema, "topic1");
+		var producer2 = producerFactory.createProducer(new StringSchema(), "topic1");
+		var producer3 = producerFactory.createProducer(new StringSchema(), "topic1");
 		assertThat(producer1).isSameAs(producer2).isSameAs(producer3);
 
 		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
@@ -92,10 +91,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Test
 	void cachedProducerIsCloseSafeWrapper() throws PulsarClientException {
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-
-		Producer<String> wrappedProducer = producerFactory.createProducer(schema, "topic1");
-		Producer<String> actualProducer = actualProducerFrom(wrappedProducer);
+		var producerFactory = newProducerFactory();
+		var wrappedProducer = producerFactory.createProducer(schema, "topic1");
+		var actualProducer = actualProducer(wrappedProducer);
 
 		assertThat(actualProducer.isConnected()).isTrue();
 		wrappedProducer.close();
@@ -104,18 +102,18 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		assertThat(actualProducer.isConnected()).isFalse();
 	}
 
+	@SuppressWarnings("resource")
 	@Test
 	void createProducerWithMatrixOfCacheKeys() throws PulsarClientException {
 		String topic1 = "topic1";
 		String topic2 = "topic2";
-		Schema<String> schema1 = new StringSchema();
-		Schema<String> schema2 = new StringSchema();
+		var schema1 = new StringSchema();
+		var schema2 = new StringSchema();
 		List<ProducerBuilderCustomizer<String>> customizers1 = List.of(p -> p.property("key", "value"));
 		List<ProducerBuilderCustomizer<String>> customizers2 = List.of(p -> p.property("key", "value"));
-		Set<String> encryptionKeys1 = Set.of("key1");
-		Set<String> encryptionKeys2 = Set.of("key2");
-
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
+		var encryptionKeys1 = Set.of("key1");
+		var encryptionKeys2 = Set.of("key2");
+		var producerFactory = newProducerFactory();
 
 		// ask for the same 21 unique combos 3x - should end up w/ only 21 entries in
 		// cache
@@ -172,14 +170,11 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	@Test
 	void factoryDestroyCleansUpCacheAndClosesProducers() throws PulsarClientException {
 		CachingPulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
-		ProducerCacheKey<String> cacheKey1 = new ProducerCacheKey<>(schema, "topic1", null, null);
-		ProducerCacheKey<String> cacheKey2 = new ProducerCacheKey<>(schema, "topic2", null, null);
-
-		Producer<String> actualProducer1 = actualProducerFrom(producerFactory.createProducer(schema, "topic1"));
-		Producer<String> actualProducer2 = actualProducerFrom(producerFactory.createProducer(schema, "topic2"));
-
-		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
-				Arrays.asList(cacheKey1, cacheKey2));
+		var actualProducer1 = actualProducer(producerFactory.createProducer(schema, "topic1"));
+		var actualProducer2 = actualProducer(producerFactory.createProducer(schema, "topic2"));
+		var cacheKey1 = new ProducerCacheKey<>(schema, "topic1", null, null);
+		var cacheKey2 = new ProducerCacheKey<>(schema, "topic2", null, null);
+		var producerCache = getAssertedProducerCache(producerFactory, Arrays.asList(cacheKey1, cacheKey2));
 		producerFactory.destroy();
 		Awaitility.await().timeout(Duration.ofSeconds(5L)).untilAsserted(() -> {
 			assertThat(producerCache.asMap()).isEmpty();
@@ -192,12 +187,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	void producerEvictedFromCache() throws PulsarClientException {
 		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient,
 				Collections.emptyMap(), Duration.ofSeconds(3L), 10L, 2);
-		ProducerCacheKey<String> cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
-
-		Producer<String> actualProducer = actualProducerFrom(producerFactory.createProducer(schema, "topic1"));
-
-		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
-				Collections.singletonList(cacheKey));
+		var actualProducer = actualProducer(producerFactory.createProducer(schema, "topic1"));
+		var cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
+		var producerCache = getAssertedProducerCache(producerFactory, Collections.singletonList(cacheKey));
 		Awaitility.await().pollDelay(Duration.ofSeconds(5L)).timeout(Duration.ofSeconds(10L)).untilAsserted(() -> {
 			assertThat(producerCache.asMap()).isEmpty();
 			assertThat(actualProducer.isConnected()).isFalse();
@@ -208,23 +200,10 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	void createProducerEncountersException() {
 		pulsarClient = spy(pulsarClient);
 		when(this.pulsarClient.newProducer(schema)).thenThrow(new RuntimeException("5150"));
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
+		var producerFactory = producerFactory(pulsarClient, Collections.emptyMap());
 		assertThatThrownBy(() -> producerFactory.createProducer(schema, "topic1")).isInstanceOf(RuntimeException.class)
 				.hasMessage("5150");
 		getAssertedProducerCache(producerFactory, Collections.emptyList());
-	}
-
-	@Override
-	protected void assertProducerHasTopicSchemaAndEncryptionKeys(Producer<String> producer, String topic,
-			Schema<String> schema, Set<String> encryptionKeys) {
-		super.assertProducerHasTopicSchemaAndEncryptionKeys(actualProducerFrom(producer), topic, schema,
-				encryptionKeys);
-	}
-
-	@SuppressWarnings("unchecked")
-	private Producer<String> actualProducerFrom(Producer<String> wrappedProducer) {
-		assertThat(wrappedProducer).isInstanceOf(ProducerWithCloseCallback.class);
-		return ((ProducerWithCloseCallback) wrappedProducer).getActualProducer();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -242,11 +221,18 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		return producerCache;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Producer<String> actualProducer(Producer<String> wrappedProducer) {
+		assertThat(wrappedProducer).isInstanceOf(ProducerWithCloseCallback.class);
+		return ((ProducerWithCloseCallback) wrappedProducer).getActualProducer();
+	}
+
 	@Override
 	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			Map<String, Object> producerConfig) {
-		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient,
-				producerConfig, Duration.ofMinutes(5L), 30L, 2);
+		var producerFactory = new CachingPulsarProducerFactory<String>(pulsarClient, producerConfig,
+				Duration.ofMinutes(5L), 30L, 2);
 		producerFactories.add(producerFactory);
 		return producerFactory;
 	}
@@ -276,10 +262,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		}
 
 		static Stream<Arguments> equalsAndHashCodeTestProvider() {
-			Set<String> encryptionKeys1 = Set.of("key1");
+			var encryptionKeys1 = Set.of("key1");
 			List<ProducerBuilderCustomizer<String>> customizers1 = List.of(p -> p.property("key", "value"));
-			ProducerCacheKey<String> key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
-					customizers1);
+			var key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1);
 			return Stream
 					.of(arguments(Named.of("differentClass", key1), "someStrangeObject", false),
 							arguments(Named.of("null", key1), null, false),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.reactive.core;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.pulsar.client.api.PulsarClient;
@@ -30,6 +31,7 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -37,6 +39,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @param <T> reactive sender type.
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSenderFactory<T> {
 
@@ -65,18 +68,31 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	}
 
 	@Override
-	public ReactiveMessageSender<T> createSender(String topic, Schema<T> schema) {
-		return doCreateReactiveMessageSender(topic, schema, null);
+	public ReactiveMessageSender<T> createSender(Schema<T> schema) {
+		return doCreateReactiveMessageSender(schema, null, null);
 	}
 
 	@Override
-	public ReactiveMessageSender<T> createSender(String topic, Schema<T> schema,
-			List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
-		return doCreateReactiveMessageSender(topic, schema, customizers);
+	public ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic) {
+		return doCreateReactiveMessageSender(schema, topic, null);
 	}
 
-	private ReactiveMessageSender<T> doCreateReactiveMessageSender(String topic, Schema<T> schema,
-			List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
+	@Override
+	public ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic,
+			@Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer) {
+		return doCreateReactiveMessageSender(schema, topic,
+				customizer != null ? Collections.singletonList(customizer) : null);
+	}
+
+	@Override
+	public ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic,
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
+		return doCreateReactiveMessageSender(schema, topic, customizers);
+	}
+
+	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
+
 		String resolvedTopic = ReactiveMessageSenderUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating reactive message sender for '%s' topic", resolvedTopic));
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
@@ -88,6 +104,9 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(sender));
 		}
+		// make sure the customizer do not override the topic
+		sender.topic(resolvedTopic);
+
 		return sender.build();
 	}
 

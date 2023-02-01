@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.BatcherBuilder;
 import org.apache.pulsar.client.api.CryptoKeyReader;
 import org.apache.pulsar.client.api.MessageRouter;
@@ -47,7 +46,7 @@ import org.springframework.util.CollectionUtils;
  */
 public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T> {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final Map<String, Object> producerConfig;
 
@@ -66,6 +65,13 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException {
 		return doCreateProducer(schema, topic, null, null);
+	}
+
+	@Override
+	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
+			@Nullable ProducerBuilderCustomizer<T> customizer) throws PulsarClientException {
+		return doCreateProducer(schema, topic, Collections.emptyList(),
+				customizer != null ? Collections.singletonList(customizer) : null);
 	}
 
 	@Override
@@ -108,6 +114,9 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(producerBuilder));
 		}
+		// make sure the customizer do not override the topic
+		producerBuilder.topic(resolvedTopic);
+
 		return producerBuilder.create();
 	}
 
