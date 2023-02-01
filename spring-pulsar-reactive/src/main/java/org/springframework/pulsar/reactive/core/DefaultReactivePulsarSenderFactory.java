@@ -49,18 +49,19 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 
 	private final ReactiveMessageSenderSpec reactiveMessageSenderSpec;
 
+	@Nullable
 	private final ReactiveMessageSenderCache reactiveMessageSenderCache;
 
 	public DefaultReactivePulsarSenderFactory(PulsarClient pulsarClient,
-			ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			ReactiveMessageSenderCache reactiveMessageSenderCache) {
+			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
+			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache) {
 		this(AdaptedReactivePulsarClientFactory.create(pulsarClient), reactiveMessageSenderSpec,
 				reactiveMessageSenderCache);
 	}
 
 	public DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient,
-			ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			ReactiveMessageSenderCache reactiveMessageSenderCache) {
+			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
+			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache) {
 		this.reactivePulsarClient = reactivePulsarClient;
 		this.reactiveMessageSenderSpec = new ImmutableReactiveMessageSenderSpec(
 				reactiveMessageSenderSpec != null ? reactiveMessageSenderSpec : new MutableReactiveMessageSenderSpec());
