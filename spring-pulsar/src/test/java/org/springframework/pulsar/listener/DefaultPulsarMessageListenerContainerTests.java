@@ -27,10 +27,8 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -65,8 +63,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void basicDefaultConsumer() throws Exception {
-		Set<String> topics = Collections.singleton("dpmlct-012");
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName", "dpmlct-sb-012");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-012"), "subscriptionName",
+				"dpmlct-sb-012");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -81,8 +79,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "dpmlct-012");
+		Map<String, Object> prodConfig = Map.of("topicName", "dpmlct-012");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -94,9 +91,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void containerPauseAndResumeFeatureUsingWaitAndNotify() throws Exception {
-		Set<String> topics = Collections.singleton("containerPauseResumeWaitNotify-topic");
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName",
-				"containerPauseResumeWaitNotify-sub");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("containerPauseResumeWaitNotify-topic"),
+				"subscriptionName", "containerPauseResumeWaitNotify-sub");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -164,9 +160,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void subscriptionInitialPositionEarliest() throws Exception {
-		Set<String> topics = Collections.singleton("dpmlct-013");
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName", "dpmlct-sb-013",
-				"subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-013"), "subscriptionName",
+				"dpmlct-sb-013", "subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -180,8 +175,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "dpmlct-013");
+		Map<String, Object> prodConfig = Map.of("topicName", "dpmlct-013");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -197,8 +191,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void subscriptionInitialPositionDefaultLatest() throws Exception {
-		Set<String> topics = Collections.singleton("dpmlct-014");
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName", "dpmlct-sb-014");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-014"), "subscriptionName",
+				"dpmlct-sb-014");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -212,8 +206,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "dpmlct-014");
+		Map<String, Object> prodConfig = Map.of("topicName", "dpmlct-014");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -232,11 +225,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void negativeAckRedeliveryBackoff() throws Exception {
-		Set<String> topics = Collections.singleton("dpmlct-015");
 		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
 				.maxDelayMs(5 * 1000).build();
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName", "dpmlct-sb-015",
-				"negativeAckRedeliveryBackoff", redeliveryBackoff);
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-015"), "subscriptionName",
+				"dpmlct-sb-015", "negativeAckRedeliveryBackoff", redeliveryBackoff);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -280,11 +272,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void deadLetterPolicyDefault() throws Exception {
-		Set<String> topics = Collections.singleton("dpmlct-016");
 		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(1)
 				.deadLetterTopic("dpmlct-016-dlq-topic").build();
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName", "dpmlct-sb-016",
-				"ackTimeoutMillis", 1, "deadLetterPolicy", deadLetterPolicy);
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-016"), "subscriptionName",
+				"dpmlct-sb-016", "ackTimeoutMillis", 1, "deadLetterPolicy", deadLetterPolicy);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -336,11 +327,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void deadLetterPolicyCustom() throws Exception {
-		Set<String> topics = Collections.singleton("dpmlct-017");
 		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(5).deadLetterTopic("dlq-topic")
 				.build();
-		Map<String, Object> config = Map.of("topicNames", topics, "subscriptionName", "dpmlct-sb-016",
-				"ackTimeoutMillis", 1, "deadLetterPolicy", deadLetterPolicy);
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-017"), "subscriptionName",
+				"dpmlct-sb-016", "ackTimeoutMillis", 1, "deadLetterPolicy", deadLetterPolicy);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();

@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,9 +56,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void happyPathErrorHandlingForRecordMessageListener() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-1"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-1");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-1"),
+				"subscriptionName", "default-error-handler-tests-sub-1");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -76,8 +74,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		pulsarContainerProperties.setMessageListener(messageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-1");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-1");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -108,9 +105,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void errorHandlingForRecordMessageListenerWithTransientError() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-2"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-2");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-2"),
+				"subscriptionName", "default-error-handler-tests-sub-2");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -131,8 +127,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		pulsarContainerProperties.setMessageListener(messageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-2");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-2");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -157,9 +152,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void everyOtherRecordThrowsNonTransientExceptionsRecordMessageListener() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-3"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-3");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-3"),
+				"subscriptionName", "default-error-handler-tests-sub-3");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -180,8 +174,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		pulsarContainerProperties.setMessageListener(messageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-3");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-3");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -216,9 +209,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerFirstOneOnlyErrorAndRecover() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-4"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-4");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-4"),
+				"subscriptionName", "default-error-handler-tests-sub-4");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -260,8 +252,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-4");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-4");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -288,9 +279,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsInTheMiddle() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-5"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-5");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-5"),
+				"subscriptionName", "default-error-handler-tests-sub-5");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -331,8 +321,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-5");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-5");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -358,9 +347,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsTwiceInTheMiddle() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-6"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-6");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-6"),
+				"subscriptionName", "default-error-handler-tests-sub-6");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -401,8 +389,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-6");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-6");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -428,9 +415,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsInTheMiddleButTransientError() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-7"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-7");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-7"),
+				"subscriptionName", "default-error-handler-tests-sub-7");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -477,8 +463,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-7");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-7");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
@@ -497,9 +482,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchListenerFailsTransientErrorFollowedByNonTransient() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("topicNames", Collections.singleton("default-error-handler-tests-8"));
-		config.put("subscriptionName", "default-error-handler-tests-sub-8");
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-8"),
+				"subscriptionName", "default-error-handler-tests-sub-8");
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -549,8 +533,7 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = new HashMap<>();
-		prodConfig.put("topicName", "default-error-handler-tests-8");
+		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-8");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);

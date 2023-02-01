@@ -103,8 +103,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			Map<String, Object> config = new HashMap<>();
-			config.put("topicName", "foo-1");
+			Map<String, Object> config = Map.of("topicName", "foo-1");
 			return new DefaultPulsarProducerFactory<>(pulsarClient, config);
 		}
 
