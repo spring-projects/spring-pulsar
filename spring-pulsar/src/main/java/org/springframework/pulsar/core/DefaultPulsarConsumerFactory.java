@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,46 +50,36 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 
 	private final PulsarClient pulsarClient;
 
-	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient) {
-		this(pulsarClient, Collections.emptyMap());
-	}
-
+	/**
+	 * Construct a consumer factory instance.
+	 * @param pulsarClient the client used to consume
+	 * @param consumerConfig default configuration to apply to the created consumer or
+	 * empty map to use no default configuration
+	 */
 	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient, Map<String, Object> consumerConfig) {
 		this.pulsarClient = pulsarClient;
 		this.consumerConfig = Collections.unmodifiableMap(consumerConfig);
 	}
 
 	@Override
-	public Consumer<T> createConsumer(Schema<T> schema) throws PulsarClientException {
-		return createConsumer(schema, null, null, Collections.emptyList());
-	}
-
-	@Override
-	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics)
-			throws PulsarClientException {
-		return createConsumer(schema, topics, null, Collections.emptyList());
-	}
-
-	@Override
 	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
-			@Nullable Map<String, String> properties, @Nullable List<ConsumerBuilderCustomizer<T>> customizers)
-			throws PulsarClientException {
+			@Nullable String subscriptionName, @Nullable Map<String, String> metadataProperties,
+			@Nullable List<ConsumerBuilderCustomizer<T>> customizers) throws PulsarClientException {
 		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 		Map<String, Object> config = new HashMap<>(this.consumerConfig);
-
 		if (topics != null) {
 			config.put("topicNames", new HashSet<>(topics));
 		}
-		if (properties != null) {
-			config.put("properties", new TreeMap<>(properties));
+		if (metadataProperties != null) {
+			config.put("properties", new TreeMap<>(metadataProperties));
 		}
-
+		if (subscriptionName != null) {
+			config.put("subscriptionName", subscriptionName);
+		}
 		ConsumerBuilderConfigurationUtil.loadConf(consumerBuilder, config);
-
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
-
 		Consumer<T> consumer = consumerBuilder.subscribe();
 		this.consumers.add(consumer);
 		return consumer;
