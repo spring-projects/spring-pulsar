@@ -81,7 +81,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					pulsarTemplate.send(Flux.fromIterable(foos), Schema.JSON(Foo.class)).subscribe();
 				}
 				else {
-					pulsarTemplate.newMessages(Flux.fromIterable(foos)).withSchema(Schema.JSON(Foo.class)).sendMany()
+					pulsarTemplate.newMessages(Flux.fromIterable(foos)).withSchema(Schema.JSON(Foo.class)).send()
 							.subscribe();
 				}
 
@@ -121,7 +121,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
 				}
 				else {
-					pulsarTemplate.newMessages(Flux.fromIterable(foos)).sendMany().subscribe();
+					pulsarTemplate.newMessages(Flux.fromIterable(foos)).send().subscribe();
 				}
 
 				// TODO figure out if expected to not be ordered when schema not set on
@@ -180,11 +180,10 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 								.send(Flux.fromIterable(data), Schema.STRING).subscribe()),
 				arguments("fluentApiNoSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.newMessages(Flux.fromIterable(data)).sendMany().subscribe()),
+								.newMessages(Flux.fromIterable(data)).send().subscribe()),
 				arguments("fluentApiWithSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.newMessages(Flux.fromIterable(data)).withSchema(Schema.STRING).sendMany()
-								.subscribe()));
+								.newMessages(Flux.fromIterable(data)).withSchema(Schema.STRING).send().subscribe()));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -230,7 +229,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					}
 				}
 				else {
-					ReactivePulsarTemplate.SendMessageBuilderImpl<String> messageBuilder = pulsarTemplate
+					ReactivePulsarTemplate.SendOneMessageBuilder<String> messageBuilder = pulsarTemplate
 							.newMessage(msgPayload);
 					if (testArgs.explicitTopic) {
 						messageBuilder = messageBuilder.withTopic(topic);

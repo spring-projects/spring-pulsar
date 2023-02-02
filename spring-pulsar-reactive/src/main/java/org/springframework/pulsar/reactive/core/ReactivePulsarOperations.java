@@ -111,49 +111,43 @@ public interface ReactivePulsarOperations<T> {
 	Flux<MessageId> send(@Nullable String topic, Publisher<T> messages, @Nullable Schema<T> schema);
 
 	/**
-	 * Create a {@link SendMessageBuilder builder} for configuring and sending a message
-	 * reactively.
+	 * Create a {@link SendOneMessageBuilder builder} for configuring and sending a
+	 * message reactively.
 	 * @param message the payload of the message
 	 * @return the builder to configure and send the message
 	 */
-	SendMessageBuilder<T> newMessage(T message);
+	SendOneMessageBuilder<T> newMessage(T message);
 
 	/**
-	 * Create a {@link SendMessageBuilder builder} for configuring and sending multiple
-	 * messages reactively.
+	 * Create a {@link SendManyMessageBuilder builder} for configuring and sending
+	 * multiple messages reactively.
 	 * @param messages the messages to send
 	 * @return the builder to configure and send the message
 	 */
-	SendMessageBuilder<T> newMessages(Publisher<T> messages);
+	SendManyMessageBuilder<T> newMessages(Publisher<T> messages);
 
 	/**
 	 * Builder that can be used to configure and send a message. Provides more options
 	 * than the send methods provided by {@link ReactivePulsarOperations}.
 	 *
+	 * @param <O> the builder type
 	 * @param <T> the message payload type
 	 */
-	interface SendMessageBuilder<T> {
+	sealed interface SendMessageBuilder<O, T> permits SendOneMessageBuilder, SendManyMessageBuilder {
 
 		/**
 		 * Specify the topic to send the message to.
 		 * @param topic the destination topic
 		 * @return the current builder with the destination topic specified
 		 */
-		SendMessageBuilder<T> withTopic(String topic);
+		O withTopic(String topic);
 
 		/**
 		 * Specify the schema to use when sending the message.
 		 * @param schema the schema to use
 		 * @return the current builder with the schema specified
 		 */
-		SendMessageBuilder<T> withSchema(Schema<T> schema);
-
-		/**
-		 * Specifies the message customizer to use to further configure the message.
-		 * @param customizer the message customizer
-		 * @return the current builder with the message customizer specified
-		 */
-		SendMessageBuilder<T> withMessageCustomizer(MessageSpecBuilderCustomizer<T> customizer);
+		O withSchema(Schema<T> schema);
 
 		/**
 		 * Specifies the customizer to use to further configure the reactive sender
@@ -162,7 +156,18 @@ public interface ReactivePulsarOperations<T> {
 		 * @return the current builder with the reactive sender builder customizer
 		 * specified
 		 */
-		SendMessageBuilder<T> withSenderCustomizer(ReactiveMessageSenderBuilderCustomizer<T> customizer);
+		O withSenderCustomizer(ReactiveMessageSenderBuilderCustomizer<T> customizer);
+
+	}
+
+	non-sealed interface SendOneMessageBuilder<T> extends SendMessageBuilder<SendOneMessageBuilder<T>, T> {
+
+		/**
+		 * Specifies the message customizer to use to further configure the message.
+		 * @param customizer the message customizer
+		 * @return the current builder with the message customizer specified
+		 */
+		SendOneMessageBuilder<T> withMessageCustomizer(MessageSpecBuilderCustomizer<T> customizer);
 
 		/**
 		 * Send the message in a reactive manner using the configured specification.
@@ -170,12 +175,16 @@ public interface ReactivePulsarOperations<T> {
 		 */
 		Mono<MessageId> send();
 
+	}
+
+	non-sealed interface SendManyMessageBuilder<T> extends SendMessageBuilder<SendManyMessageBuilder<T>, T> {
+
 		/**
 		 * Send the messages in a reactive manner using the configured specification.
 		 * @return the ids assigned by the broker to the published messages in the same
 		 * order as they were sent
 		 */
-		Flux<MessageId> sendMany();
+		Flux<MessageId> send();
 
 	}
 
