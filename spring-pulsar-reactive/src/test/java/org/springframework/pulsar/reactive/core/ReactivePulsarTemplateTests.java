@@ -86,8 +86,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				}
 
 				for (int i = 0; i < 10; i++) {
-					assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3))
-							.extracting(Message::getValue).isEqualTo(foos.get(i));
+					assertThat(consumer.receiveAsync().thenApply(Message::getValue))
+							.succeedsWithin(Duration.ofSeconds(3)).isEqualTo(foos.get(i));
 				}
 			}
 		}
@@ -139,7 +139,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sendManyWithInferredTopicProvider")
-	void sendManyWithInferredTopic(String testName, boolean shouldPass,
+	void sendManyWithInferredTopic(String testName,
 			BiConsumer<List<String>, ReactivePulsarTemplate<String>> sendHandler) throws Exception {
 		String topic = "rptt-" + testName + "-topic";
 		String sub = "rptt-" + testName + "-sub";
@@ -163,40 +163,25 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 				sendHandler.accept(Collections.singletonList(theSingleFoo), pulsarTemplate);
 
-				if (shouldPass) {
-					assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3))
-							.extracting(Message::getValue).isEqualTo(theSingleFoo);
-				}
-				else {
-					assertThat(consumer.receive(3, TimeUnit.SECONDS)).isNull();
-				}
+				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
+						.isEqualTo(theSingleFoo);
+
 			}
 		}
 	}
 
 	static Stream<Arguments> sendManyWithInferredTopicProvider() {
-		// NOTE: Topic resolution requires in ReactivePulsarTemplate.sendMany requires
-		// the messageType to be set when the schema is specified as it creates the
-		// message sender spec before it subscribes to the publisher of messages (iow
-		// it does not have access to a message to determine message type in this case
 		return Stream.of(
-				arguments("simpleApiNoSchemaPasses", true,
+				arguments("simpleApiNoSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
 								.send(Flux.fromIterable(data)).subscribe()),
-				arguments("simpleApiWithSchemaAlwaysFails", false,
+				arguments("simpleApiWithSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
 								.send(Flux.fromIterable(data), Schema.STRING).subscribe()),
-				arguments("fluentApiNoSchemaWithMsgTypePasses", true,
-						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.newMessages(Flux.fromIterable(data), String.class).sendMany().subscribe()),
-				arguments("fluentApiNoSchemaNoMsgTypePasses", true,
+				arguments("fluentApiNoSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
 								.newMessages(Flux.fromIterable(data)).sendMany().subscribe()),
-				arguments("fluentApiWithSchemaWithMsgTypePasses", true,
-						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.newMessages(Flux.fromIterable(data), String.class).withSchema(Schema.STRING).sendMany()
-								.subscribe()),
-				arguments("fluentApiWithSchemaNoMsgTypeFails", false,
+				arguments("fluentApiWithSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
 								.newMessages(Flux.fromIterable(data)).withSchema(Schema.STRING).sendMany()
 								.subscribe()));

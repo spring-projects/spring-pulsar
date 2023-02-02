@@ -302,6 +302,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		container.setConsumerCustomizer(b -> b.deadLetterPolicy(deadLetterPolicy));
 		container.start();
 		MutableReactiveMessageSenderSpec prodConfig = new MutableReactiveMessageSenderSpec();
+		prodConfig.setBatchingEnabled(false);
 		prodConfig.setTopicName(topic);
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
 				reactivePulsarClient, prodConfig, null);
