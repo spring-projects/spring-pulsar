@@ -291,7 +291,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					builder.batchReceivePolicy(batchReceivePolicy);
 				};
 				this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
-						topicNames, properties, Collections.singletonList(customizer));
+						topicNames, this.containerProperties.getSubscriptionName(), properties,
+						Collections.singletonList(customizer));
 				Assert.state(this.consumer != null, "Unable to create a consumer");
 			}
 			catch (PulsarClientException e) {

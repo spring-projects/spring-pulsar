@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.springframework.util.backoff.BackOff;
 /**
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class ConcurrentPulsarMessageListenerContainerTests {
 
@@ -131,7 +132,6 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	}
 
 	@Test
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	void observationConfigAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
@@ -157,7 +157,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		concurrentContainer.start();
 
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(pulsarConsumerFactory, times(3))
-				.createConsumer(any(Schema.class), isNull(), isNull(), anyList()));
+				.createConsumer(any(Schema.class), isNull(), isNull(), isNull(), anyList()));
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(consumer, times(3)).batchReceive());
 	}
 
@@ -177,7 +177,8 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 			throws Exception {
 		PulsarConsumerFactory<String> consumerFactory = mock(PulsarConsumerFactory.class);
 		Consumer<String> consumer = mock(Consumer.class);
-		when(consumerFactory.createConsumer(any(Schema.class), isNull(), isNull(), anyList())).thenReturn(consumer);
+		when(consumerFactory.createConsumer(any(Schema.class), isNull(), isNull(), isNull(), anyList()))
+				.thenReturn(consumer);
 		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
