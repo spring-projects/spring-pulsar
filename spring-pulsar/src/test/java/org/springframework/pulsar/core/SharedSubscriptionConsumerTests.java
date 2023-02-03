@@ -81,6 +81,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
+		Thread.sleep(10_000); // to see if we should wait for all the containers to start
+
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.newMessage("hello alice doe").withProducerCustomizer(p -> p.enableBatching(false))
 					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).sendAsync();
