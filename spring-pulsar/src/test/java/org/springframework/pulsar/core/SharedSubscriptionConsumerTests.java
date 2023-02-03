@@ -59,19 +59,19 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		CountDownLatch latch3 = new CountDownLatch(10);
 
 		PulsarContainerProperties pulsarContainerProperties1 = pulsarContainerProperties(latch1, "hello alice doe",
-				SubscriptionType.Shared);
+				SubscriptionType.Key_Shared);
 		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties1);
 		container1.start();
 
 		PulsarContainerProperties pulsarContainerProperties2 = pulsarContainerProperties(latch2, "hello buzz doe",
-				SubscriptionType.Shared);
+				SubscriptionType.Key_Shared);
 		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties2);
 		container2.start();
 
 		PulsarContainerProperties pulsarContainerProperties3 = pulsarContainerProperties(latch3, "hello john doe",
-				SubscriptionType.Shared);
+				SubscriptionType.Key_Shared);
 		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties3);
 		container3.start();
@@ -80,6 +80,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+
+		Thread.sleep(10_000); // to see if we should wait for all the containers to start
 
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.newMessage("hello alice doe").withProducerCustomizer(p -> p.enableBatching(false))
