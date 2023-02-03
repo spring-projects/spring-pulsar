@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,6 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat;
 import org.gradle.api.tasks.testing.logging.TestLogEvent;
 import org.gradle.external.javadoc.CoreJavadocOptions;
-import org.gradle.testretry.TestRetryPlugin;
-import org.gradle.testretry.TestRetryTaskExtension;
 
 import org.springframework.boot.gradle.classpath.CheckClasspathForProhibitedDependencies;
 import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
@@ -66,8 +64,7 @@ import org.springframework.util.StringUtils;
  * <ul>
  * <li>The project is configured with source and target compatibility of 17
  * <li>{@link SpringJavaFormatPlugin Spring Java Format}, {@link CheckstylePlugin
- * Checkstyle}, {@link TestFailuresPlugin Test Failures}, and {@link TestRetryPlugin Test
- * Retry} plugins are applied
+ * Checkstyle} and {@link TestFailuresPlugin Test Failures}.
  * <li>{@link Test} tasks are configured:
  * <ul>
  * <li>to use JUnit Platform
@@ -183,17 +180,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		});
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> project.getDependencies()
 				.add(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, "org.junit.platform:junit-platform-launcher"));
-		project.getPlugins().apply(TestRetryPlugin.class);
-		project.getTasks().withType(Test.class,
-				(test) -> project.getPlugins().withType(TestRetryPlugin.class, (testRetryPlugin) -> {
-					TestRetryTaskExtension testRetry = test.getExtensions().getByType(TestRetryTaskExtension.class);
-					testRetry.getFailOnPassedAfterRetry().set(true);
-					testRetry.getMaxRetries().set(isCi() ? 3 : 0);
-				}));
-	}
-
-	private boolean isCi() {
-		return Boolean.parseBoolean(System.getenv("CI"));
 	}
 
 	private void configureJavadocConventions(Project project) {
