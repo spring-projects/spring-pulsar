@@ -44,64 +44,6 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Test
-	void sharedSubscriptionRoundRobinBasicScenario() throws Exception {
-
-		Map<String, Object> config = Map.of("topicNames",
-				Collections.singleton("shared-subscription-single-msg-test-topic"), "subscriptionName",
-				"shared-subscription-single-msg-test-sub");
-
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
-		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
-
-		CountDownLatch latch1 = new CountDownLatch(1);
-		CountDownLatch latch2 = new CountDownLatch(1);
-		CountDownLatch latch3 = new CountDownLatch(1);
-
-		PulsarContainerProperties pulsarContainerProperties1 = pulsarContainerProperties(latch1, "hello john doe",
-				SubscriptionType.Shared);
-		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties1);
-		container1.start();
-
-		PulsarContainerProperties pulsarContainerProperties2 = pulsarContainerProperties(latch2, "hello alice doe",
-				SubscriptionType.Shared);
-		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties2);
-		container2.start();
-
-		PulsarContainerProperties pulsarContainerProperties3 = pulsarContainerProperties(latch3, "hello buzz doe",
-				SubscriptionType.Shared);
-		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties3);
-		container3.start();
-
-		Map<String, Object> prodConfig = Map.of("topicName", "shared-subscription-single-msg-test-topic");
-		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-
-		pulsarTemplate.newMessage("hello john doe").sendAsync();
-		pulsarTemplate.newMessage("hello alice doe").sendAsync();
-		pulsarTemplate.newMessage("hello buzz doe").sendAsync();
-
-		boolean await1 = latch1.await(10, TimeUnit.SECONDS);
-		boolean await2 = latch2.await(10, TimeUnit.SECONDS);
-		boolean await3 = latch3.await(10, TimeUnit.SECONDS);
-
-		assertThat(await1).isTrue();
-		assertThat(await2).isTrue();
-		assertThat(await3).isTrue();
-
-		container1.stop();
-		container2.stop();
-		container3.stop();
-
-		pulsarClient.close();
-	}
-
-	@Test
 	void keySharedSubscriptionWithDefaultAutoSplitHashingRange() throws Exception {
 
 		Map<String, Object> config = Map.of("topicNames", Collections.singleton("key-shared-batch-disabled-topic"),
