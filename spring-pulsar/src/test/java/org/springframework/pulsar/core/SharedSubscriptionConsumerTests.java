@@ -18,6 +18,7 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
@@ -90,6 +92,64 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		assertThat(await1).isTrue();
 		assertThat(await2).isTrue();
 		assertThat(await3).isTrue();
+
+		container1.stop();
+		container2.stop();
+		container3.stop();
+
+		pulsarClient.close();
+	}
+
+	@Test
+	void keySharedSubscriptionWithDefaultAutoSplitHashingRange() throws Exception {
+
+		Map<String, Object> config = Map.of("topicNames", Collections.singleton("key-shared-batch-disabled-topic"),
+				"subscriptionName", "key-shared-batch-disabled-sub");
+
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				config);
+
+		CountDownLatch latch1 = new CountDownLatch(10);
+		CountDownLatch latch2 = new CountDownLatch(10);
+		CountDownLatch latch3 = new CountDownLatch(10);
+
+		PulsarContainerProperties pulsarContainerProperties1 = pulsarContainerProperties(latch1, "hello alice doe",
+				SubscriptionType.Key_Shared);
+		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties1);
+		container1.start();
+
+		PulsarContainerProperties pulsarContainerProperties2 = pulsarContainerProperties(latch2, "hello buzz doe",
+				SubscriptionType.Key_Shared);
+		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties2);
+		container2.start();
+
+		PulsarContainerProperties pulsarContainerProperties3 = pulsarContainerProperties(latch3, "hello john doe",
+				SubscriptionType.Key_Shared);
+		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties3);
+		container3.start();
+
+		Map<String, Object> prodConfig = Map.of("topicName", "key-shared-batch-disabled-topic");
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				prodConfig);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+
+		for (int i = 0; i < 10; i++) {
+			pulsarTemplate.newMessage("hello alice doe")
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).sendAsync();
+			pulsarTemplate.newMessage("hello buzz doe")
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).sendAsync();
+			pulsarTemplate.newMessage("hello john doe")
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).sendAsync();
+		}
+
+		Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> latch1.await(10, TimeUnit.SECONDS));
+		Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> latch2.await(10, TimeUnit.SECONDS));
+		Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> latch3.await(10, TimeUnit.SECONDS));
 
 		container1.stop();
 		container2.stop();
