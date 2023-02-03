@@ -54,7 +54,9 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				config);
 
-		CountDownLatch latch1 = new CountDownLatch(30);
+		CountDownLatch latch1 = new CountDownLatch(10);
+		CountDownLatch latch2 = new CountDownLatch(10);
+		CountDownLatch latch3 = new CountDownLatch(10);
 
 		PulsarContainerProperties pulsarContainerProperties1 = pulsarContainerProperties(latch1, "hello alice doe",
 				SubscriptionType.Key_Shared);
@@ -62,13 +64,13 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 				pulsarConsumerFactory, pulsarContainerProperties1);
 		container1.start();
 
-		PulsarContainerProperties pulsarContainerProperties2 = pulsarContainerProperties(latch1, "hello buzz doe",
+		PulsarContainerProperties pulsarContainerProperties2 = pulsarContainerProperties(latch2, "hello buzz doe",
 				SubscriptionType.Key_Shared);
 		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties2);
 		container2.start();
 
-		PulsarContainerProperties pulsarContainerProperties3 = pulsarContainerProperties(latch1, "hello john doe",
+		PulsarContainerProperties pulsarContainerProperties3 = pulsarContainerProperties(latch3, "hello john doe",
 				SubscriptionType.Key_Shared);
 		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties3);
@@ -91,8 +93,12 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		}
 
 		boolean await1 = latch1.await(30, TimeUnit.SECONDS);
+		boolean await2 = latch2.await(30, TimeUnit.SECONDS);
+		boolean await3 = latch3.await(30, TimeUnit.SECONDS);
 
 		assertThat(await1).isTrue();
+		assertThat(await2).isTrue();
+		assertThat(await3).isTrue();
 
 		container1.stop();
 		container2.stop();
