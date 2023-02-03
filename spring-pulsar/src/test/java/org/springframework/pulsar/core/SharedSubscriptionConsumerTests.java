@@ -18,7 +18,6 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
@@ -147,9 +145,13 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).sendAsync();
 		}
 
-		Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> latch1.await(10, TimeUnit.SECONDS));
-		Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> latch2.await(10, TimeUnit.SECONDS));
-		Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> latch3.await(10, TimeUnit.SECONDS));
+		boolean await1 = latch1.await(10, TimeUnit.SECONDS);
+		boolean await2 = latch2.await(10, TimeUnit.SECONDS);
+		boolean await3 = latch3.await(10, TimeUnit.SECONDS);
+
+		assertThat(await1).isTrue();
+		assertThat(await2).isTrue();
+		assertThat(await3).isTrue();
 
 		container1.stop();
 		container2.stop();
