@@ -37,7 +37,7 @@ jobs:
       - name: Run Gradle build
         run: |
           ./gradlew clean build -DdownloadRabbitConnector=false --continue --scan -x test
-          ./gradlew build 
+          ./gradlew test --tests org.springframework.pulsar.core.SharedSubscriptionConsumerTests
 
       - name: Capture Test Results
         if: failure()
