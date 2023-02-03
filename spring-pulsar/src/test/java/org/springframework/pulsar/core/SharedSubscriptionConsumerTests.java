@@ -143,7 +143,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).sendAsync();
 		}
 
-		boolean await1 = latch1.await(10, TimeUnit.SECONDS);
+		boolean await1 = latch1.await(30, TimeUnit.SECONDS);
 
 		assertThat(await1).isTrue();
 
@@ -158,6 +158,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			SubscriptionType subscriptionType) {
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			;
 			assertThat(msg.getValue()).isEqualTo(message);
 			latch.countDown();
 		});

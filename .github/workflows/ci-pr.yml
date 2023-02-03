@@ -36,7 +36,8 @@ jobs:
 
       - name: Run Gradle build
         run: |
-          ./gradlew clean build -DdownloadRabbitConnector=false --continue --scan
+          ./gradlew clean build -DdownloadRabbitConnector=false --continue --scan -x test
+          ./gradlew build 
 
       - name: Capture Test Results
         if: failure()
