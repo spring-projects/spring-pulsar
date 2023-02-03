@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
@@ -39,6 +40,8 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  * @author Soby Chacko
  */
 public class SharedSubscriptionConsumerTests implements PulsarTestContainerSupport {
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Test
 	void sharedSubscriptionRoundRobinBasicScenario() throws Exception {
@@ -158,7 +161,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			SubscriptionType subscriptionType) {
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			;
+			SharedSubscriptionConsumerTests.this.logger.info("message got: " + message);
 			assertThat(msg.getValue()).isEqualTo(message);
 			latch.countDown();
 		});
