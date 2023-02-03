@@ -76,19 +76,17 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 				pulsarConsumerFactory, pulsarContainerProperties3);
 		container3.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "key-shared-batch-disabled-topic", "batchingEnabled",
-				false);
+		Map<String, Object> prodConfig = Map.of("topicName", "key-shared-batch-disabled-topic");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 				prodConfig);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 		for (int i = 0; i < 10; i++) {
-			pulsarTemplate.newMessage("hello alice doe").withMessageCustomizer(messageBuilder -> {
-				messageBuilder.key("alice");
-			}).sendAsync();
-			pulsarTemplate.newMessage("hello buzz doe")
+			pulsarTemplate.newMessage("hello alice doe").withProducerCustomizer(p -> p.enableBatching(false))
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).sendAsync();
+			pulsarTemplate.newMessage("hello buzz doe").withProducerCustomizer(p -> p.enableBatching(false))
 					.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).sendAsync();
-			pulsarTemplate.newMessage("hello john doe")
+			pulsarTemplate.newMessage("hello john doe").withProducerCustomizer(p -> p.enableBatching(false))
 					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).sendAsync();
 		}
 
