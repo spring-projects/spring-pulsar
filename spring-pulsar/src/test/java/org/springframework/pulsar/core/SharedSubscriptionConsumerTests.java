@@ -83,11 +83,11 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.newMessage("hello alice doe").withProducerCustomizer(p -> p.enableBatching(false))
-					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).send();
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).sendAsync();
 			pulsarTemplate.newMessage("hello buzz doe").withProducerCustomizer(p -> p.enableBatching(false))
-					.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).send();
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).sendAsync();
 			pulsarTemplate.newMessage("hello john doe").withProducerCustomizer(p -> p.enableBatching(false))
-					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).send();
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).sendAsync();
 		}
 
 		boolean await1 = latch1.await(30, TimeUnit.SECONDS);
