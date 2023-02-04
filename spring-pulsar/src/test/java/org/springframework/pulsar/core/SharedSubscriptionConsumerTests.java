@@ -117,7 +117,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			logger.info("CONTAINER(%s) got: %s".formatted(containerName, msg.getValue()));
 			messageCountByKey.compute(msg.getKey(), (k, v) -> v != null ? v.intValue() + 1 : 1);
 			latch.countDown();
-			logger.info("CONTAINER(%s) got: %s - latch count is now %d".formatted(containerName, msg.getValue(), latch.getCount()));
+			logger.info("CONTAINER(%s) got: %s - latch count is now %d".formatted(containerName, msg.getValue(),
+					latch.getCount()));
 
 		});
 		containerProps.setSubscriptionType(SubscriptionType.Key_Shared);
