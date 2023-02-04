@@ -44,7 +44,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.core.PulsarTestContainerSupport;
+import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
