@@ -10,7 +10,7 @@ ext {
 	googleJsr305Version = '3.0.2'
 	protobufJavaVersion = '3.21.5'
 	testcontainersVersion = '1.17.3'
-	pulsarVersion = '2.10.2'
+	pulsarVersion = '2.10.3'
 	pulsarClientReactiveVersion = '0.1.0'
 	springBootVersion = '3.0.0'
 	springCloudStreamVersion = '4.0.0'
