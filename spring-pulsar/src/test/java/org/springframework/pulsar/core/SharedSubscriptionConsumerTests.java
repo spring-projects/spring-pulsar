@@ -18,19 +18,21 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
@@ -45,73 +47,80 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 
 	@Test
 	void keySharedSubscriptionWithDefaultAutoSplitHashingRange() throws Exception {
+		DefaultPulsarMessageListenerContainer<String> container1 = null;
+		DefaultPulsarMessageListenerContainer<String> container2 = null;
+		DefaultPulsarMessageListenerContainer<String> container3 = null;
+		PulsarClient pulsarClient = null;
+		try {
+			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+					Map.of("topicNames", Collections.singleton("key-shared-batch-disabled-topic"), "subscriptionName",
+							"key-shared-batch-disabled-sub"));
 
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("key-shared-batch-disabled-topic"),
-				"subscriptionName", "key-shared-batch-disabled-sub");
+			CountDownLatch latch1 = new CountDownLatch(10);
+			CountDownLatch latch2 = new CountDownLatch(10);
+			CountDownLatch latch3 = new CountDownLatch(10);
+			container1 = createAndStartContainer(consumerFactory, latch1, "hello alice doe");
+			container2 = createAndStartContainer(consumerFactory, latch2, "hello buzz doe");
+			container3 = createAndStartContainer(consumerFactory, latch3, "hello john doe");
+			logger.info("**** Containers all started - pausing 10s");
+			Thread.sleep(10_000);
 
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
-		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+			DefaultPulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					Map.of("topicName", "key-shared-batch-disabled-topic", "batchingEnabled", "false"));
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+			for (int i = 0; i < 10; i++) {
+				pulsarTemplate.newMessage("hello alice doe")
+						.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).send();
+				pulsarTemplate.newMessage("hello buzz doe")
+						.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).send();
+				pulsarTemplate.newMessage("hello john doe")
+						.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).send();
+			}
+			logger.info("**** Sent all messages");
 
-		CountDownLatch latch1 = new CountDownLatch(10);
-		CountDownLatch latch2 = new CountDownLatch(10);
-		CountDownLatch latch3 = new CountDownLatch(10);
-
-		PulsarContainerProperties pulsarContainerProperties1 = pulsarContainerProperties(latch1, "hello alice doe",
-				SubscriptionType.Key_Shared);
-		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties1);
-		container1.start();
-
-		PulsarContainerProperties pulsarContainerProperties2 = pulsarContainerProperties(latch2, "hello buzz doe",
-				SubscriptionType.Key_Shared);
-		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties2);
-		container2.start();
-
-		PulsarContainerProperties pulsarContainerProperties3 = pulsarContainerProperties(latch3, "hello john doe",
-				SubscriptionType.Key_Shared);
-		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties3);
-		container3.start();
-
-		Map<String, Object> prodConfig = Map.of("topicName", "key-shared-batch-disabled-topic");
-		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-
-		Thread.sleep(10_000); // to see if we should wait for all the containers to start
-
-		for (int i = 0; i < 10; i++) {
-			pulsarTemplate.newMessage("hello alice doe").withProducerCustomizer(p -> p.enableBatching(false))
-					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).sendAsync();
-			pulsarTemplate.newMessage("hello buzz doe").withProducerCustomizer(p -> p.enableBatching(false))
-					.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).sendAsync();
-			pulsarTemplate.newMessage("hello john doe").withProducerCustomizer(p -> p.enableBatching(false))
-					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).sendAsync();
+			Awaitility.await().atMost(Duration.ofSeconds(30)).pollDelay(Duration.ofSeconds(5)).until(() -> {
+				long count1 = latch1.getCount();
+				long count2 = latch2.getCount();
+				long count3 = latch3.getCount();
+				logger.info("**** L1 %d L2 %d L3 %d".formatted(count1, count2, count3));
+				return count1 == 0 && count2 == 0 && count3 == 0;
+			});
 		}
+		finally {
+			safeStopContainer(container1);
+			safeStopContainer(container2);
+			safeStopContainer(container3);
+			pulsarClient.close();
+		}
+	}
 
-		boolean await1 = latch1.await(30, TimeUnit.SECONDS);
-		boolean await2 = latch2.await(30, TimeUnit.SECONDS);
-		boolean await3 = latch3.await(30, TimeUnit.SECONDS);
+	private void safeStopContainer(PulsarMessageListenerContainer container) {
+		try {
+			container.stop();
+		}
+		catch (Exception ex) {
+			logger.warn(ex, "Failed to stop container %s: %s".formatted(container, ex.getMessage()));
+		}
+	}
 
-		assertThat(await1).isTrue();
-		assertThat(await2).isTrue();
-		assertThat(await3).isTrue();
-
-		container1.stop();
-		container2.stop();
-		container3.stop();
-
-		pulsarClient.close();
+	private DefaultPulsarMessageListenerContainer<String> createAndStartContainer(
+			PulsarConsumerFactory<String> consumerFactory, CountDownLatch latch, String expectedMessage) {
+		PulsarContainerProperties containerProps = pulsarContainerProperties(latch, expectedMessage,
+				SubscriptionType.Key_Shared);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				consumerFactory, containerProps);
+		container.start();
+		return container;
 	}
 
 	private PulsarContainerProperties pulsarContainerProperties(CountDownLatch latch, String message,
 			SubscriptionType subscriptionType) {
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setBatchListener(false);
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			SharedSubscriptionConsumerTests.this.logger.info("message got: " + message);
+			SharedSubscriptionConsumerTests.this.logger
+					.info("MsgListener(%s) got: %s".formatted(message, msg.getValue()));
 			assertThat(msg.getValue()).isEqualTo(message);
 			latch.countDown();
 		});
