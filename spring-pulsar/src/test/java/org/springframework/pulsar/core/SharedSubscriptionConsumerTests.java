@@ -16,8 +16,6 @@
 
 package org.springframework.pulsar.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
@@ -119,10 +117,10 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setBatchListener(false);
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			SharedSubscriptionConsumerTests.this.logger
-					.info("MsgListener(%s) got: %s".formatted(message, msg.getValue()));
-			assertThat(msg.getValue()).isEqualTo(message);
-			latch.countDown();
+			logger.info("CONTAINER(%s) got: %s".formatted(message, msg.getValue()));
+			if (msg.getValue().equals(message)) {
+				latch.countDown();
+			}
 		});
 		pulsarContainerProperties.setSubscriptionType(subscriptionType);
 		pulsarContainerProperties.setSchema(Schema.STRING);
