@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 
 import org.springframework.aop.framework.Advised;
@@ -120,7 +119,7 @@ import org.springframework.util.StringUtils;
 public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 		implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	/**
 	 * The bean name of the default {@link ReactivePulsarListenerContainerFactory}.
