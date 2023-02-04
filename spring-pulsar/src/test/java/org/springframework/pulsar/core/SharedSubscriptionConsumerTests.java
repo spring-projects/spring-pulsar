@@ -65,8 +65,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			container1 = createAndStartContainer(consumerFactory, latch, "one", messageCountByKey1);
 			container2 = createAndStartContainer(consumerFactory, latch, "two", messageCountByKey2);
 			container3 = createAndStartContainer(consumerFactory, latch, "three", messageCountByKey3);
-			logger.info("**** Containers all started - pausing 10s");
-			Thread.sleep(2_000);
+			logger.info("**** Containers all started - pausing for 5s");
+			Thread.sleep(5_000);
 
 			DefaultPulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Map.of("topicName", "key-shared-batch-disabled-topic", "batchingEnabled", "false"));
@@ -86,6 +86,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 
 			// Make sure that each key group of messages was handled by single container
 			assertThat(messageCountByKey1.values()).allMatch((mesasgeCount) -> mesasgeCount == 10);
+			assertThat(messageCountByKey2.values()).allMatch((mesasgeCount) -> mesasgeCount == 10);
+			assertThat(messageCountByKey3.values()).allMatch((mesasgeCount) -> mesasgeCount == 10);
 		}
 		finally {
 			safeStopContainer(container1);
@@ -115,6 +117,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			logger.info("CONTAINER(%s) got: %s".formatted(containerName, msg.getValue()));
 			messageCountByKey.compute(msg.getKey(), (k, v) -> v != null ? v.intValue() + 1 : 1);
 			latch.countDown();
+			logger.info("CONTAINER(%s) got: %s - latch count is now %d".formatted(containerName, msg.getValue(), latch.getCount()));
+
 		});
 		containerProps.setSubscriptionType(SubscriptionType.Key_Shared);
 		containerProps.setSchema(Schema.STRING);
