@@ -552,7 +552,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 		}
 		else {
 			throw new IllegalArgumentException(
-					String.format("@PulsarListener can't resolve '%s' as a String", resolvedValue));
+					"@PulsarListener can't resolve '%s' as a String".formatted(resolvedValue));
 		}
 	}
 
@@ -579,12 +579,12 @@ public class PulsarListenerAnnotationBeanPostProcessor<V>
 				ReflectionUtils.handleReflectionException(ex);
 			}
 			catch (NoSuchMethodException ex) {
-				throw new IllegalStateException(String.format(
-						"@PulsarListener method '%s' found on bean target class '%s', "
-								+ "but not found in any interface(s) for bean JDK proxy. Either "
-								+ "pull the method up to an interface or switch to subclass (CGLIB) "
-								+ "proxies by setting proxy-target-class/proxyTargetClass " + "attribute to 'true'",
-						method.getName(), method.getDeclaringClass().getSimpleName()), ex);
+				throw new IllegalStateException("@PulsarListener method '%s' found on bean target class '%s', "
+						+ "but not found in any interface(s) for bean JDK proxy. Either "
+						+ "pull the method up to an interface or switch to subclass (CGLIB) "
+						+ "proxies by setting proxy-target-class/proxyTargetClass "
+						+ "attribute to 'true'".formatted(method.getName(), method.getDeclaringClass().getSimpleName()),
+						ex);
 			}
 		}
 		return method;

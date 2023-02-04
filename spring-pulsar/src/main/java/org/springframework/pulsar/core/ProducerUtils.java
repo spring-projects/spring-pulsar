@@ -35,7 +35,7 @@ final class ProducerUtils {
 	}
 
 	static <T> String formatProducer(Producer<T> producer) {
-		return String.format("(%s:%s)", producer.getProducerName(), producer.getTopic());
+		return "(%s:%s)".formatted(producer.getProducerName(), producer.getTopic());
 	}
 
 	static <T> String resolveTopicName(@Nullable String userSpecifiedTopic, PulsarProducerFactory<T> producerFactory) {
@@ -49,7 +49,7 @@ final class ProducerUtils {
 
 	static <T> void closeProducerAsync(Producer<T> producer, LogAccessor logger) {
 		producer.closeAsync().exceptionally(e -> {
-			logger.warn(e, () -> String.format("Failed to close producer %s", ProducerUtils.formatProducer(producer)));
+			logger.warn(e, () -> "Failed to close producer %s".formatted(ProducerUtils.formatProducer(producer)));
 			return null;
 		});
 	}

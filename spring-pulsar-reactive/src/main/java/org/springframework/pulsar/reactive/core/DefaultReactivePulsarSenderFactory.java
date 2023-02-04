@@ -95,7 +95,7 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 
 		String resolvedTopic = ReactiveMessageSenderUtils.resolveTopicName(topic, this);
-		this.logger.trace(() -> String.format("Creating reactive message sender for '%s' topic", resolvedTopic));
+		this.logger.trace(() -> "Creating reactive message sender for '%s' topic".formatted(resolvedTopic));
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
 		sender.applySpec(this.reactiveMessageSenderSpec);
 		sender.topic(resolvedTopic);

@@ -184,7 +184,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		String defaultTopic = Objects.toString(this.producerFactory.getProducerConfig().get("topicName"), null);
 		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow(
 				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
-		this.logger.trace(() -> String.format("Sending msg to '%s' topic", topicName));
+		this.logger.trace(() -> "Sending msg to '%s' topic".formatted(topicName));
 
 		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
 		Observation observation = newObservation(senderContext);
@@ -201,11 +201,11 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
 				if (ex == null) {
-					this.logger.trace(() -> String.format("Sent msg to '%s' topic", topicName));
+					this.logger.trace(() -> "Sent msg to '%s' topic".formatted(topicName));
 					observation.stop();
 				}
 				else {
-					this.logger.error(ex, () -> String.format("Failed to send msg to '%s' topic", topicName));
+					this.logger.error(ex, () -> "Failed to send msg to '%s' topic".formatted(topicName));
 					observation.error(ex);
 					observation.stop();
 				}

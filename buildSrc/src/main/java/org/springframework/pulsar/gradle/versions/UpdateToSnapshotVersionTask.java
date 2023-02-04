@@ -44,7 +44,7 @@ public abstract class UpdateToSnapshotVersionTask extends UpdateProjectVersionTa
 				patchSegment = String.valueOf(Integer.parseInt(patchSegment) + 1);
 			}
 			System.out.println("modifier = " + modifier);
-			return String.format("%s.%s.%s-SNAPSHOT", majorSegment, minorSegment, patchSegment);
+			return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
 		}
 		else {
 			throw new IllegalStateException(

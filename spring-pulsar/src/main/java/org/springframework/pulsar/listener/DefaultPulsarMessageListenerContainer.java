@@ -512,9 +512,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						this.nackableMessages.add(message.getMessageId());
 					}
 					else {
-						throw new IllegalStateException(String.format(
-								"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks",
-								message.getMessageId()), e);
+						throw new IllegalStateException(
+
+								"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks"
+										.formatted(message.getMessageId()),
+								e);
 					}
 				}
 			}
@@ -691,7 +693,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			catch (PulsarClientException pce) {
 				AbstractAcknowledgement.logger.warn(pce,
-						() -> String.format("Acknowledgment failed for message: [%s]", messageId));
+						() -> "Acknowledgment failed for message: [%s]".formatted(messageId));
 				consumer.negativeAcknowledge(messageId);
 			}
 		}

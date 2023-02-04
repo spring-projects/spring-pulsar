@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,9 @@ public class CheckClasspathForProhibitedDependencies extends DefaultTask {
 				.map((artifact) -> artifact.getModuleVersion().getId()).filter(this::prohibited)
 				.map((id) -> id.getGroup() + ":" + id.getName()).collect(Collectors.toCollection(TreeSet::new));
 		if (!prohibited.isEmpty()) {
-			StringBuilder message = new StringBuilder(String.format("Found prohibited dependencies:%n"));
+			StringBuilder message = new StringBuilder("Found prohibited dependencies:%n".formatted());
 			for (String dependency : prohibited) {
-				message.append(String.format("    %s%n", dependency));
+				message.append("    %s%n".formatted(dependency));
 			}
 			throw new GradleException(message.toString());
 		}
