@@ -16,15 +16,17 @@
 
 package org.springframework.pulsar.core;
 
-import java.time.Duration;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.log.LogAccessor;
@@ -55,35 +57,35 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 					Map.of("topicNames", Collections.singleton("key-shared-batch-disabled-topic"), "subscriptionName",
 							"key-shared-batch-disabled-sub"));
 
-			CountDownLatch latch1 = new CountDownLatch(10);
-			CountDownLatch latch2 = new CountDownLatch(10);
-			CountDownLatch latch3 = new CountDownLatch(10);
-			container1 = createAndStartContainer(consumerFactory, latch1, "hello alice doe");
-			container2 = createAndStartContainer(consumerFactory, latch2, "hello buzz doe");
-			container3 = createAndStartContainer(consumerFactory, latch3, "hello john doe");
+			CountDownLatch latch = new CountDownLatch(30);
+			Map<String, Integer> messageCountByKey1 = new HashMap<>();
+			Map<String, Integer> messageCountByKey2 = new HashMap<>();
+			Map<String, Integer> messageCountByKey3 = new HashMap<>();
+
+			container1 = createAndStartContainer(consumerFactory, latch, "one", messageCountByKey1);
+			container2 = createAndStartContainer(consumerFactory, latch, "two", messageCountByKey2);
+			container3 = createAndStartContainer(consumerFactory, latch, "three", messageCountByKey3);
 			logger.info("**** Containers all started - pausing 10s");
-			Thread.sleep(10_000);
+			Thread.sleep(2_000);
 
 			DefaultPulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
 					Map.of("topicName", "key-shared-batch-disabled-topic", "batchingEnabled", "false"));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.newMessage("hello alice doe")
+				pulsarTemplate.newMessage("alice-" + i)
 						.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).send();
-				pulsarTemplate.newMessage("hello buzz doe")
+				pulsarTemplate.newMessage("buzz-" + i)
 						.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).send();
-				pulsarTemplate.newMessage("hello john doe")
+				pulsarTemplate.newMessage("john-" + i)
 						.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).send();
 			}
 			logger.info("**** Sent all messages");
 
-			Awaitility.await().atMost(Duration.ofSeconds(30)).pollDelay(Duration.ofSeconds(5)).until(() -> {
-				long count1 = latch1.getCount();
-				long count2 = latch2.getCount();
-				long count3 = latch3.getCount();
-				logger.info("**** L1 %d L2 %d L3 %d".formatted(count1, count2, count3));
-				return count1 == 0 && count2 == 0 && count3 == 0;
-			});
+			// Wait for the all to be consumed
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+
+			// Make sure that each key group of messages was handled by single container
+			assertThat(messageCountByKey1.values()).allMatch((mesasgeCount) -> mesasgeCount == 10);
 		}
 		finally {
 			safeStopContainer(container1);
@@ -103,28 +105,23 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 	}
 
 	private DefaultPulsarMessageListenerContainer<String> createAndStartContainer(
-			PulsarConsumerFactory<String> consumerFactory, CountDownLatch latch, String expectedMessage) {
-		PulsarContainerProperties containerProps = pulsarContainerProperties(latch, expectedMessage,
-				SubscriptionType.Key_Shared);
+			PulsarConsumerFactory<String> consumerFactory, CountDownLatch latch, String containerName,
+			Map<String, Integer> messageCountByKey) {
+
+		PulsarContainerProperties containerProps = new PulsarContainerProperties();
+		containerProps.setBatchListener(false);
+
+		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			logger.info("CONTAINER(%s) got: %s".formatted(containerName, msg.getValue()));
+			messageCountByKey.compute(msg.getKey(), (k, v) -> v != null ? v.intValue() + 1 : 1);
+			latch.countDown();
+		});
+		containerProps.setSubscriptionType(SubscriptionType.Key_Shared);
+		containerProps.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				consumerFactory, containerProps);
 		container.start();
 		return container;
-	}
-
-	private PulsarContainerProperties pulsarContainerProperties(CountDownLatch latch, String message,
-			SubscriptionType subscriptionType) {
-		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setBatchListener(false);
-		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			logger.info("CONTAINER(%s) got: %s".formatted(message, msg.getValue()));
-			if (msg.getValue().equals(message)) {
-				latch.countDown();
-			}
-		});
-		pulsarContainerProperties.setSubscriptionType(subscriptionType);
-		pulsarContainerProperties.setSchema(Schema.STRING);
-		return pulsarContainerProperties;
 	}
 
 }
