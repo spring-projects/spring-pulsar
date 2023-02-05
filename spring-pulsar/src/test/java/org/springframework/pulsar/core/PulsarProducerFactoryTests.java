@@ -18,6 +18,7 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -62,24 +63,11 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 		pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@AfterEach
 	void closePulsarClient() throws PulsarClientException {
 		if (pulsarClient != null && !pulsarClient.isClosed()) {
 			pulsarClient.close();
-		}
-	}
-
-	@Test
-	@SuppressWarnings("unchecked")
-	void createProducerWithAllOptions() throws PulsarClientException {
-		var keys = Set.of("key");
-		ProducerBuilderCustomizer<String> customizer1 = mock(ProducerBuilderCustomizer.class);
-		var producerFactory = newProducerFactory();
-		try (var producer = producerFactory.createProducer(schema, "topic0", keys,
-				Collections.singletonList(customizer1))) {
-			assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
-			assertThatProducerHasEncryptionKeys(producer, keys);
-			verify(customizer1).customize(any(ProducerBuilder.class));
 		}
 	}
 
@@ -132,34 +120,27 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			Map<String, Object> producerConfig);
 
-	@Nested
-	class CreateProducerSchemaOnlyApi {
-
-		@Test
-		void withDefaultTopic() throws PulsarClientException {
-			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
-			try (var producer = producerFactory.createProducer(schema)) {
-				assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
-			}
+	@Test
+	@SuppressWarnings("unchecked")
+	void createProducerWithAllOptions() throws PulsarClientException {
+		var keys = Set.of("key");
+		ProducerBuilderCustomizer<String> customizer1 = mock(ProducerBuilderCustomizer.class);
+		var producerFactory = newProducerFactory();
+		try (var producer = producerFactory.createProducer(schema, "topic0", keys,
+				Collections.singletonList(customizer1))) {
+			assertThatProducerHasSchemaAndTopic(producer, schema, "topic0");
+			assertThatProducerHasEncryptionKeys(producer, keys);
+			verify(customizer1).customize(any(ProducerBuilder.class));
 		}
-
-		@Test
-		void withoutDefaultTopic() {
-			assertThatIllegalArgumentException().isThrownBy(() -> newProducerFactory().createProducer(schema))
-					.withMessageContaining("Topic must be specified when no default topic is configured");
-		}
-
 	}
 
 	@Nested
 	class CreateProducerSchemaAndTopicApi {
 
 		@Test
-		void topicSpecifiedWithDefaultTopic() throws PulsarClientException {
-			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
-			try (var producer = producerFactory.createProducer(schema, "topic1")) {
-				assertThatProducerHasSchemaAndTopic(producer, schema, "topic1");
-			}
+		void withoutSchema() {
+			assertThatNullPointerException().isThrownBy(() -> newProducerFactory().createProducer(null, "topic0"))
+					.withMessageContaining("Schema must be specified");
 		}
 
 		@Test
@@ -170,10 +151,10 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 		}
 
 		@Test
-		void noTopicSpecifiedWithDefaultTopic() throws PulsarClientException {
+		void topicSpecifiedWithDefaultTopic() throws PulsarClientException {
 			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
-			try (var producer = producerFactory.createProducer(schema, null)) {
-				assertThatProducerHasTopic(producer, "topic0");
+			try (var producer = producerFactory.createProducer(schema, "topic1")) {
+				assertThatProducerHasSchemaAndTopic(producer, schema, "topic1");
 			}
 		}
 
@@ -181,6 +162,14 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 		void noTopicSpecifiedWithoutDefaultTopic() {
 			assertThatIllegalArgumentException().isThrownBy(() -> newProducerFactory().createProducer(schema, null))
 					.withMessageContaining("Topic must be specified when no default topic is configured");
+		}
+
+		@Test
+		void noTopicSpecifiedWithDefaultTopic() throws PulsarClientException {
+			var producerFactory = newProducerFactoryWithDefaultTopic("topic0");
+			try (var producer = producerFactory.createProducer(schema, null)) {
+				assertThatProducerHasTopic(producer, "topic0");
+			}
 		}
 
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@ import org.junit.jupiter.api.Test;
 class DefaultPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void createProducerMultipleCalls() throws PulsarClientException {
+	void createProducerMultipleTimeDoesNotCacheProducer() throws PulsarClientException {
 		Map<String, Object> producerConfig = Collections.emptyMap();
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, producerConfig);
 		try (Producer<String> producer1 = producerFactory.createProducer(schema, "topic1")) {
