@@ -48,9 +48,9 @@ public class FailoverConsumerApp {
 			for (int i = 0; i < 10; i++) {
 				pulsarTemplate.newMessage("hello john doe 0 ").withTopic(topic)
 						.withProducerCustomizer(builder -> builder.messageRouter(new FooRouter())).sendAsync();
-				pulsarTemplate.newMessage("hello alice doe 1")
+				pulsarTemplate.newMessage("hello alice doe 1").withTopic(topic)
 						.withProducerCustomizer(builder -> builder.messageRouter(new BarRouter())).sendAsync();
-				pulsarTemplate.newMessage("hello buzz doe 2")
+				pulsarTemplate.newMessage("hello buzz doe 2").withTopic(topic)
 						.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter())).sendAsync();
 				Thread.sleep(1_000);
 			}
