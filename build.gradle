@@ -45,11 +45,25 @@ check {
 	dependsOn checkstyleNohttp
 }
 
+/**
+ * Update copyrights for modified files:
+ * 		'gradle updateCopyrights'
+ *
+ * Update copyrights for ALL files:
+ * 		'gradle updateCopyrights -Pall=true'
+ */
 subprojects { subproject ->
 	task updateCopyrights {
-		onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
-		if (gitPresent) {
-			inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+		if (findProperty("all") == "true") {
+			inputs.files(fileTree("${projectDir}").matching {
+				include "**/*.java"
+			}.files)
+		}
+		else {
+			onlyIf { gitPresent && !System.getenv('GITHUB_ACTION') }
+			if (gitPresent) {
+				inputs.files(modifiedFiles.filter { f -> f.path.contains(subproject.name) })
+			}
 		}
 		outputs.dir('build')
 		doLast {
