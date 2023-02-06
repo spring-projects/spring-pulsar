@@ -18,8 +18,10 @@ package org.springframework.pulsar.reactive.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -77,24 +79,13 @@ class DefaultReactiveMessageSenderFactoryTests {
 	}
 
 	@Nested
-	class CreateSenderSchemaOnlyApi {
-
-		@Test
-		void withDefaultTopic() {
-			var sender = newSenderFactoryWithDefaultTopic("topic0").createSender(schema);
-			assertThatSenderHasTopic(sender, "topic0");
-		}
-
-		@Test
-		void withoutDefaultTopic() {
-			assertThatIllegalArgumentException().isThrownBy(() -> newSenderFactory().createSender(schema))
-					.withMessageContaining("Topic must be specified when no default topic is configured");
-		}
-
-	}
-
-	@Nested
 	class CreateSenderSchemaAndTopicApi {
+
+		@Test
+		void withoutSchema() {
+			assertThatNullPointerException().isThrownBy(() -> newSenderFactory().createSender(null, "topic0"))
+					.withMessageContaining("Schema must be specified");
+		}
 
 		@Test
 		void topicSpecifiedWithDefaultTopic() {
@@ -128,6 +119,14 @@ class DefaultReactiveMessageSenderFactoryTests {
 		@Test
 		void singleCustomizer() {
 			var sender = newSenderFactory().createSender(schema, "topic1", (b) -> b.producerName("fooProducer"));
+			assertThatSenderSpecSatisfies(sender,
+					(senderSpec) -> assertThat(senderSpec.getProducerName()).isEqualTo("fooProducer"));
+		}
+
+		@Test
+		void singleCustomizerViaListApi() {
+			var sender = newSenderFactory().createSender(schema, "topic1",
+					Collections.singletonList((b) -> b.producerName("fooProducer")));
 			assertThatSenderSpecSatisfies(sender,
 					(senderSpec) -> assertThat(senderSpec.getProducerName()).isEqualTo("fooProducer"));
 		}
