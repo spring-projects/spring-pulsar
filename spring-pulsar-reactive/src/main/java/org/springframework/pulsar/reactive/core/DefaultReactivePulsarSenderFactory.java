@@ -18,6 +18,7 @@ package org.springframework.pulsar.reactive.core;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
@@ -69,11 +70,6 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	}
 
 	@Override
-	public ReactiveMessageSender<T> createSender(Schema<T> schema) {
-		return doCreateReactiveMessageSender(schema, null, null);
-	}
-
-	@Override
 	public ReactiveMessageSender<T> createSender(Schema<T> schema, @Nullable String topic) {
 		return doCreateReactiveMessageSender(schema, topic, null);
 	}
@@ -93,7 +89,7 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
-
+		Objects.requireNonNull(schema, "Schema must be specified");
 		String resolvedTopic = ReactiveMessageSenderUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> String.format("Creating reactive message sender for '%s' topic", resolvedTopic));
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);

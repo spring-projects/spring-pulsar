@@ -34,13 +34,6 @@ import org.springframework.lang.Nullable;
 public interface ReactivePulsarSenderFactory<T> {
 
 	/**
-	 * Create a reactive message sender that will send messages to the default topic.
-	 * @param schema the schema of the messages to be sent
-	 * @return the reactive message sender
-	 */
-	ReactiveMessageSender<T> createSender(Schema<T> schema);
-
-	/**
 	 * Create a reactive message sender.
 	 * @param topic the topic to send messages to or {@code null} to use the default topic
 	 * @param schema the schema of the messages to be sent
