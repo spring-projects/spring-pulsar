@@ -39,14 +39,6 @@ import org.springframework.lang.Nullable;
 public interface PulsarProducerFactory<T> {
 
 	/**
-	 * Create a producer that will send messages to the default topic.
-	 * @param schema the schema of the messages to be sent
-	 * @return the producer
-	 * @throws PulsarClientException if any error occurs
-	 */
-	Producer<T> createProducer(Schema<T> schema) throws PulsarClientException;
-
-	/**
 	 * Create a producer.
 	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
@@ -61,7 +53,7 @@ public interface PulsarProducerFactory<T> {
 	 * @param schema the schema of the messages to be sent
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
-	 * @param customizer optional producer builder customizer
+	 * @param customizer the optional customizer to apply to the producer builder
 	 * @return the producer
 	 * @throws PulsarClientException if any error occurs
 	 */

@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.pulsar.client.api.BatcherBuilder;
 import org.apache.pulsar.client.api.CryptoKeyReader;
@@ -58,11 +59,6 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	@Override
-	public Producer<T> createProducer(Schema<T> schema) throws PulsarClientException {
-		return doCreateProducer(schema, null, null, null);
-	}
-
-	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException {
 		return doCreateProducer(schema, topic, null, null);
 	}
@@ -70,8 +66,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable ProducerBuilderCustomizer<T> customizer) throws PulsarClientException {
-		return doCreateProducer(schema, topic, Collections.emptyList(),
-				customizer != null ? Collections.singletonList(customizer) : null);
+		return doCreateProducer(schema, topic, null, customizer != null ? Collections.singletonList(customizer) : null);
 	}
 
 	@Override
@@ -98,6 +93,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
+		Objects.requireNonNull(schema, "Schema must be specified");
 		String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
 		this.logger.trace(() -> "Creating producer for '%s' topic".formatted(resolvedTopic));
 		ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);

@@ -34,8 +34,7 @@ import org.junit.jupiter.api.Test;
 class DefaultPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void createProducerMultipleCalls() throws PulsarClientException {
+	void createProducerMultipleTimeDoesNotCacheProducer() throws PulsarClientException {
 		Map<String, Object> producerConfig = Collections.emptyMap();
 		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, producerConfig);
 		try (Producer<String> producer1 = producerFactory.createProducer(schema, "topic1")) {
