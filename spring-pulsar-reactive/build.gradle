@@ -16,13 +16,14 @@ dependencies {
 	optional 'com.jayway.jsonpath:json-path'
 	optional 'io.projectreactor:reactor-core'
 
-	testImplementation 'org.junit.jupiter:junit-jupiter'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation project(':spring-pulsar-test')
 	testRuntimeOnly 'ch.qos.logback:logback-classic'
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.assertj:assertj-core'
 	testImplementation 'org.awaitility:awaitility'
 	testImplementation 'org.hamcrest:hamcrest'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
 	testImplementation 'org.testcontainers:junit-jupiter'

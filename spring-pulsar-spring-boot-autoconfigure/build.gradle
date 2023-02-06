@@ -16,13 +16,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'com.google.code.findbugs:jsr305'
 
+	testImplementation project(':spring-pulsar-test')
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
 	testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
-	testImplementation project(':spring-pulsar-test')
+
 	// used by PulsarFunctionTests
 	testImplementation 'org.testcontainers:rabbitmq'
 	testImplementation 'org.springframework.boot:spring-boot-starter-amqp'
