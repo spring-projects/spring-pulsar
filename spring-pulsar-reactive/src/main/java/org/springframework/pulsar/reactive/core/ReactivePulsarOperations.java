@@ -41,7 +41,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @param message the message to send
 	 * @return the id assigned by the broker to the published message
 	 */
-	Mono<MessageId> send(T message);
+	Mono<MessageId> send(@Nullable T message);
 
 	/**
 	 * Sends a message to the specified topic in a reactive manner. default topic
@@ -50,7 +50,7 @@ public interface ReactivePulsarOperations<T> {
 	 * resolution
 	 * @return the id assigned by the broker to the published message
 	 */
-	Mono<MessageId> send(T message, @Nullable Schema<T> schema);
+	Mono<MessageId> send(@Nullable T message, @Nullable Schema<T> schema);
 
 	/**
 	 * Sends a message to the specified topic in a reactive manner.
@@ -59,7 +59,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @param message the message to send
 	 * @return the id assigned by the broker to the published message
 	 */
-	Mono<MessageId> send(@Nullable String topic, T message);
+	Mono<MessageId> send(@Nullable String topic, @Nullable T message);
 
 	/**
 	 * Sends a message to the specified topic in a reactive manner.
@@ -70,7 +70,7 @@ public interface ReactivePulsarOperations<T> {
 	 * resolution
 	 * @return the id assigned by the broker to the published message
 	 */
-	Mono<MessageId> send(@Nullable String topic, T message, @Nullable Schema<T> schema);
+	Mono<MessageId> send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema);
 
 	/**
 	 * Sends multiple messages to the default topic in a reactive manner.
@@ -119,7 +119,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @param message the payload of the message
 	 * @return the builder to configure and send the message
 	 */
-	SendOneMessageBuilder<T> newMessage(T message);
+	SendOneMessageBuilder<T> newMessage(@Nullable T message);
 
 	/**
 	 * Create a {@link SendManyMessageBuilder builder} for configuring and sending

@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
@@ -35,7 +34,7 @@ public interface TopicResolver {
 	 * returns {@code null} to signal no default)
 	 * @return the topic to use or {@code empty} if no topic could be resolved
 	 */
-	Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, Supplier<String> defaultTopicSupplier);
+	Resolved<String> resolveTopic(@Nullable String userSpecifiedTopic, Supplier<String> defaultTopicSupplier);
 
 	/**
 	 * Resolve the topic name to use for the given message.
@@ -46,7 +45,7 @@ public interface TopicResolver {
 	 * returns {@code null} to signal no default)
 	 * @return the topic to use or {@code empty} if no topic could be resolved
 	 */
-	<T> Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, T message,
+	<T> Resolved<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable T message,
 			Supplier<String> defaultTopicSupplier);
 
 	/**
@@ -57,7 +56,7 @@ public interface TopicResolver {
 	 * returns {@code null} to signal no default)
 	 * @return the topic to use or {@code empty} if no topic could be resolved
 	 */
-	Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, Class<?> messageType,
+	Resolved<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
 			Supplier<String> defaultTopicSupplier);
 
 }

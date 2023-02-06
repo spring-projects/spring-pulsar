@@ -126,8 +126,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	protected String resolveTopicName(String userSpecifiedTopic) {
 		String defaultTopic = Objects.toString(getProducerConfig().get("topicName"), null);
-		return this.topicResolver.resolveTopic(userSpecifiedTopic, () -> defaultTopic).orElseThrow(
-				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
+		return this.topicResolver.resolveTopic(userSpecifiedTopic, () -> defaultTopic).orElseThrow();
 	}
 
 	@Override

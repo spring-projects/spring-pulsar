@@ -123,16 +123,22 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	}
 
 	@Override
-	public <T> Schema<T> getSchema(Class<?> messageClass, boolean returnDefault) {
+	public <T> Resolved<Schema<T>> resolveSchema(@Nullable Class<?> messageClass, boolean returnDefault) {
+		if (messageClass == null) {
+			return Resolved.failed("Schema must be specified when the message is null");
+		}
 		Schema<?> schema = BASE_SCHEMA_MAPPINGS.get(messageClass);
 		if (schema == null) {
 			schema = getCustomSchemaOrMaybeDefault(messageClass, returnDefault);
 		}
-		return schema != null ? castToType(schema) : null;
+		if (schema == null) {
+			return Resolved.failed("Schema not specified and no schema found for " + messageClass);
+		}
+		return Resolved.of(castToType(schema));
 	}
 
 	@Nullable
-	protected Schema<?> getCustomSchemaOrMaybeDefault(Class<?> messageClass, boolean returnDefault) {
+	protected Schema<?> getCustomSchemaOrMaybeDefault(@Nullable Class<?> messageClass, boolean returnDefault) {
 		Schema<?> schema = this.customSchemaMappings.get(messageClass);
 		if (schema == null && returnDefault) {
 			if (messageClass != null) {
@@ -150,49 +156,55 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> Schema<T> getSchema(SchemaType schemaType, @Nullable ResolvableType messageType) {
-		Schema<?> schema = switch (schemaType) {
-			case STRING -> Schema.STRING;
-			case BOOLEAN -> Schema.BOOL;
-			case INT8 -> Schema.INT8;
-			case INT16 -> Schema.INT16;
-			case INT32 -> Schema.INT32;
-			case INT64 -> Schema.INT64;
-			case FLOAT -> Schema.FLOAT;
-			case DOUBLE -> Schema.DOUBLE;
-			case DATE -> Schema.DATE;
-			case TIME -> Schema.TIME;
-			case TIMESTAMP -> Schema.TIMESTAMP;
-			case BYTES -> Schema.BYTES;
-			case INSTANT -> Schema.INSTANT;
-			case LOCAL_DATE -> Schema.LOCAL_DATE;
-			case LOCAL_TIME -> Schema.LOCAL_TIME;
-			case LOCAL_DATE_TIME -> Schema.LOCAL_DATE_TIME;
-			case JSON -> JSONSchema.of(requireNonNullMessageType(schemaType, messageType));
-			case AVRO -> AvroSchema.of(requireNonNullMessageType(schemaType, messageType));
-			case PROTOBUF -> {
-				Class<?> messageClass = requireNonNullMessageType(schemaType, messageType);
-				yield ProtobufSchema.of((Class<? extends GeneratedMessageV3>) messageClass);
-			}
-			case KEY_VALUE -> {
-				requireNonNullMessageType(schemaType, messageType);
-				yield getMessageKeyValueSchema(messageType);
-			}
-			case NONE -> {
-				if (messageType == null) {
-					yield Schema.BYTES;
+	public <T> Resolved<Schema<T>> resolveSchema(SchemaType schemaType, @Nullable ResolvableType messageType) {
+		try {
+			Schema<?> schema = switch (schemaType) {
+				case STRING -> Schema.STRING;
+				case BOOLEAN -> Schema.BOOL;
+				case INT8 -> Schema.INT8;
+				case INT16 -> Schema.INT16;
+				case INT32 -> Schema.INT32;
+				case INT64 -> Schema.INT64;
+				case FLOAT -> Schema.FLOAT;
+				case DOUBLE -> Schema.DOUBLE;
+				case DATE -> Schema.DATE;
+				case TIME -> Schema.TIME;
+				case TIMESTAMP -> Schema.TIMESTAMP;
+				case BYTES -> Schema.BYTES;
+				case INSTANT -> Schema.INSTANT;
+				case LOCAL_DATE -> Schema.LOCAL_DATE;
+				case LOCAL_TIME -> Schema.LOCAL_TIME;
+				case LOCAL_DATE_TIME -> Schema.LOCAL_DATE_TIME;
+				case JSON -> JSONSchema.of(requireNonNullMessageType(schemaType, messageType));
+				case AVRO -> AvroSchema.of(requireNonNullMessageType(schemaType, messageType));
+				case PROTOBUF -> {
+					Class<?> messageClass = requireNonNullMessageType(schemaType, messageType);
+					yield ProtobufSchema.of((Class<? extends GeneratedMessageV3>) messageClass);
 				}
-				if (KeyValue.class.isAssignableFrom(messageType.getRawClass())) {
+				case KEY_VALUE -> {
+					requireNonNullMessageType(schemaType, messageType);
 					yield getMessageKeyValueSchema(messageType);
 				}
-				yield getSchema(messageType.getRawClass(), false);
-			}
-			default -> throw new IllegalArgumentException("Unsupported schema type: " + schemaType.name());
-		};
-		return schema != null ? castToType(schema) : null;
+				case NONE -> {
+					if (messageType == null || messageType.getRawClass() == null) {
+						yield Schema.BYTES;
+					}
+					if (KeyValue.class.isAssignableFrom(messageType.getRawClass())) {
+						yield getMessageKeyValueSchema(messageType);
+					}
+					yield resolveSchema(messageType.getRawClass(), false).orElseThrow();
+				}
+				default -> throw new IllegalArgumentException("Unsupported schema type: " + schemaType.name());
+			};
+			return Resolved.of(castToType(schema));
+		}
+		catch (RuntimeException e) {
+			return Resolved.failed(e);
+		}
 	}
 
-	private Class<?> requireNonNullMessageType(SchemaType schemaType, ResolvableType messageType) {
+	@Nullable
+	private Class<?> requireNonNullMessageType(SchemaType schemaType, @Nullable ResolvableType messageType) {
 		return Objects.requireNonNull(messageType, "messageType must be specified for " + schemaType.name())
 				.getRawClass();
 	}
@@ -200,8 +212,8 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	private Schema<?> getMessageKeyValueSchema(ResolvableType messageType) {
 		Class<?> keyClass = messageType.resolveGeneric(0);
 		Class<?> valueClass = messageType.resolveGeneric(1);
-		Schema<? extends Class<?>> keySchema = this.getSchema(keyClass);
-		Schema<? extends Class<?>> valueSchema = this.getSchema(valueClass);
+		Schema<?> keySchema = this.resolveSchema(keyClass).orElseThrow();
+		Schema<?> valueSchema = this.resolveSchema(valueClass).orElseThrow();
 		return Schema.KeyValue(keySchema, valueSchema, KeyValueEncodingType.INLINE);
 	}
 

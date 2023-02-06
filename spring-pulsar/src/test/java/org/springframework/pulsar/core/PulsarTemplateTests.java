@@ -17,6 +17,8 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,21 +30,23 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,8 +54,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.util.function.ThrowingConsumer;
 
 /**
  * Tests for {@link PulsarTemplate}.
@@ -63,129 +67,125 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  */
 class PulsarTemplateTests implements PulsarTestContainerSupport {
 
-	@ParameterizedTest(name = "{0}")
-	@MethodSource("sendMessageTestProvider")
-	void sendMessageTest(String testName, SendTestArgs testArgs) throws Exception {
-		// Use the test args to construct the params to pass to send handler
-		String topic = testName;
-		String subscription = topic + "-sub";
-		String msgPayload = topic + "-msg";
-		TypedMessageBuilderCustomizer<String> messageCustomizer = null;
-		if (testArgs.messageCustomizer) {
-			messageCustomizer = (mb) -> mb.key("foo-key");
-		}
-		ProducerBuilderCustomizer<String> producerCustomizer = null;
-		if (testArgs.producerCustomizer) {
-			producerCustomizer = (pb) -> pb.producerName("foo-producer");
-		}
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			try (Consumer<String> consumer = client.newConsumer(Schema.STRING).topic(topic)
-					.subscriptionName(subscription).subscribe()) {
-				Map<String, Object> producerConfig = testArgs.explicitTopic ? Collections.emptyMap()
-						: Collections.singletonMap("topicName", topic);
-				PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client,
-						producerConfig);
-				PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+	private PulsarClient client;
 
-				Object sendResponse;
-				if (testArgs.simpleApi) {
-					if (testArgs.explicitSchema && testArgs.explicitTopic) {
-						sendResponse = testArgs.async ? pulsarTemplate.sendAsync(topic, msgPayload, Schema.STRING)
-								: pulsarTemplate.send(topic, msgPayload, Schema.STRING);
-					}
-					else if (testArgs.explicitSchema) {
-						sendResponse = testArgs.async ? pulsarTemplate.sendAsync(msgPayload, Schema.STRING)
-								: pulsarTemplate.send(msgPayload, Schema.STRING);
-					}
-					else if (testArgs.explicitTopic) {
-						sendResponse = testArgs.async ? pulsarTemplate.sendAsync(topic, msgPayload)
-								: pulsarTemplate.send(topic, msgPayload);
-					}
-					else {
-						sendResponse = testArgs.async ? pulsarTemplate.sendAsync(msgPayload)
-								: pulsarTemplate.send(msgPayload);
-					}
-				}
-				else {
-					SendMessageBuilder<String> messageBuilder = pulsarTemplate.newMessage(msgPayload);
-					if (testArgs.explicitTopic) {
-						messageBuilder = messageBuilder.withTopic(topic);
-					}
-					if (testArgs.explicitSchema) {
-						messageBuilder = messageBuilder.withSchema(Schema.STRING);
-					}
-					if (messageCustomizer != null) {
-						messageBuilder = messageBuilder.withMessageCustomizer(messageCustomizer);
-					}
-					if (producerCustomizer != null) {
-						messageBuilder = messageBuilder.withProducerCustomizer(producerCustomizer);
-					}
-					sendResponse = testArgs.async ? messageBuilder.sendAsync() : messageBuilder.send();
-				}
-
-				if (sendResponse instanceof CompletableFuture) {
-					sendResponse = ((CompletableFuture<?>) sendResponse).get(3, TimeUnit.SECONDS);
-				}
-				assertThat(sendResponse).isNotNull();
-
-				CompletableFuture<Message<String>> receiveMsgFuture = consumer.receiveAsync();
-				Message<String> msg = receiveMsgFuture.get(3, TimeUnit.SECONDS);
-
-				assertThat(msg.getData()).asString().isEqualTo(msgPayload);
-				if (messageCustomizer != null) {
-					assertThat(msg.getKey()).isEqualTo("foo-key");
-				}
-				if (producerCustomizer != null) {
-					assertThat(msg.getProducerName()).isEqualTo("foo-producer");
-				}
-				// Make sure the producer was closed by the template (albeit indirectly as
-				// client removes closed producers)
-				await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> assertThat(client).extracting("producers")
-						.asInstanceOf(InstanceOfAssertFactories.COLLECTION).isEmpty());
-			}
-		}
+	@BeforeEach
+	void setup() throws PulsarClientException {
+		client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 	}
 
-	private static Stream<Arguments> sendMessageTestProvider() {
-		return Stream.of(arguments("simpleSend", SendTestArgs.simple().sync()),
-				arguments("simpleSendWithTopic", SendTestArgs.simple().sync().topic()),
-				arguments("simpleSendWithSchema", SendTestArgs.simple().sync().schema()),
-				arguments("simpleSendWithTopicAndSchema", SendTestArgs.simple().sync().topic().schema()),
-				arguments("simpleAsyncSend", SendTestArgs.simple().async()),
-				arguments("simpleAsyncSendWithTopic", SendTestArgs.simple().async().topic()),
-				arguments("simpleAsyncSendWithSchema", SendTestArgs.simple().async().schema()),
-				arguments("simpleAsyncSendWithTopicAndSchema", SendTestArgs.simple().async().topic().schema()),
-				arguments("fluentSend", SendTestArgs.fluent().sync()),
-				arguments("fluentSendWithSchema", SendTestArgs.fluent().sync().schema()),
-				arguments("fluentSendWithTopic", SendTestArgs.fluent().sync().topic()),
-				arguments("fluentSendWithMessageCustomizer", SendTestArgs.fluent().sync().messageCustomizer()),
-				arguments("fluentSendWithProducerCustomizer", SendTestArgs.fluent().sync().producerCustomizer()),
-				arguments("fluentSendWithTopicAndSchema", SendTestArgs.fluent().sync().topic().schema()),
-				arguments("fluentSendWithTopicAndSchemaAndCustomizers",
-						SendTestArgs.fluent().sync().topic().schema().messageCustomizer().producerCustomizer()),
-				arguments("fluentAsyncSend", SendTestArgs.fluent().async()),
-				arguments("fluentAsyncSendWithSchema", SendTestArgs.fluent().async().schema()),
-				arguments("fluentAsyncSendWithTopic", SendTestArgs.fluent().async().topic()),
-				arguments("fluentAsyncSendWithMessageCustomizer", SendTestArgs.fluent().async().messageCustomizer()),
-				arguments("fluentAsyncSendWithProducerCustomizer", SendTestArgs.fluent().async().producerCustomizer()),
-				arguments("fluentAsyncSendWithTopicAndSchema", SendTestArgs.fluent().async().topic().schema()),
-				arguments("fluentAsyncSendWithTopicAndSchemaAndCustomizers",
-						SendTestArgs.fluent().async().topic().schema().messageCustomizer().producerCustomizer()));
+	@AfterEach
+	void tearDown() throws PulsarClientException {
+		// Make sure the producer was closed by the template (albeit indirectly as
+		// client removes closed producers)
+		await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> assertThat(client).extracting("producers")
+				.asInstanceOf(InstanceOfAssertFactories.COLLECTION).isEmpty());
+		client.close();
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("sendMessageTestProvider")
+	void sendMessageTest(String testName, ThrowingConsumer<PulsarTemplate<String>> sendFunction,
+			Boolean withDefaultTopic, String expectedValue) throws Exception {
+		sendAndConsume(sendFunction, testName, Schema.STRING, expectedValue, withDefaultTopic);
+	}
+
+	static Stream<Arguments> sendMessageTestProvider() {
+		String message = "test-message";
+
+		return Stream.of(
+				// Simple send sync
+				arguments("simpleSendWithDefaultTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send(message), true, message),
+				arguments("simpleSendWithTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send("simpleSendWithTopic",
+								message),
+						false, message),
+				arguments("simpleSendWithDefaultTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send(message, Schema.STRING),
+						true, message),
+				arguments("simpleSendWithTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+								.send("simpleSendWithTopicAndSchema", message, Schema.STRING),
+						false, message),
+				arguments("simpleSendNullWithTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+								.send("simpleSendNullWithTopicAndSchema", null, Schema.STRING),
+						false, null),
+
+				// Simple send async
+				arguments("simpleSendAsyncWithDefaultTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.sendAsync(message).get(3,
+								TimeUnit.SECONDS),
+						true, message),
+				arguments("simpleSendAsyncWithTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+								.sendAsync("simpleSendAsyncWithTopic", message).get(3, TimeUnit.SECONDS),
+						false, message),
+				arguments("simpleSendAsyncWithDefaultTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+								.sendAsync(message, Schema.STRING).get(3, TimeUnit.SECONDS),
+						true, message),
+				arguments("simpleSendAsyncWithTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+								.sendAsync("simpleSendAsyncWithTopicAndSchema", message, Schema.STRING)
+								.get(3, TimeUnit.SECONDS),
+						false, message),
+				arguments("simpleSendAsyncNullWithTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+								.sendAsync("simpleSendAsyncNullWithTopicAndSchema", null, Schema.STRING)
+								.get(3, TimeUnit.SECONDS),
+						false, null),
+
+				// Fluent send
+				arguments("fluentSendWithDefaultTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(message).send(),
+						true, message),
+				arguments("fluentSendWithTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(message)
+								.withTopic("fluentSendWithTopic").send(),
+						false, message),
+				arguments("fluentSendWithDefaultTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(message)
+								.withSchema(Schema.STRING).send(),
+						true, message),
+				arguments("fluentSendNullWithTopicAndSchema",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(null)
+								.withSchema(Schema.STRING).withTopic("fluentSendNullWithTopicAndSchema").send(),
+						false, null),
+				arguments("fluentSendAsync", (ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+						.newMessage(message).sendAsync().get(3, TimeUnit.SECONDS), true, message)
+
+		);
+	}
+
+	@Test
+	void sendMessageWithMessageCustomizer() throws Exception {
+		ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
+				.withMessageCustomizer((mb) -> mb.key("test-key")).send();
+		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING,
+				"test-message", true);
+		assertThat(msg.getKey()).isEqualTo("test-key");
+	}
+
+	@Test
+	void sendMessageWithSenderCustomizer() throws Exception {
+		ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
+				.withProducerCustomizer((sb) -> sb.producerName("test-producer")).send();
+		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING,
+				"test-message", true);
+		assertThat(msg.getProducerName()).isEqualTo("test-producer");
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("interceptorInvocationTestProvider")
 	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws Exception {
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client,
-					Collections.singletonMap("topicName", topic));
-			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
-			pulsarTemplate.send("test-interceptor");
-			for (ProducerInterceptor interceptor : interceptors) {
-				verify(interceptor, atLeastOnce()).eligible(any(Message.class));
-			}
+		PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client,
+				Collections.singletonMap("topicName", topic));
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
+		pulsarTemplate.send("test-interceptor");
+		for (ProducerInterceptor interceptor : interceptors) {
+			verify(interceptor, atLeastOnce()).eligible(any(Message.class));
 		}
 	}
 
@@ -198,161 +198,126 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void sendMessageWithSpecificSchema() throws Exception {
+	void sendNonPrimitiveMessageWithSpecifiedSchema() throws Exception {
 		String topic = "ptt-specificSchema-topic";
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.AVRO(Foo.class)).topic(topic)
-					.subscriptionName("ptt-specificSchema-subs").subscribe()) {
-				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-						Collections.singletonMap("topicName", topic));
-				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(foo, Schema.AVRO(Foo.class));
-				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
-						.isEqualTo(foo);
-			}
-		}
+		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo, Schema.AVRO(Foo.class));
+		sendAndConsume(sendFunction, topic, Schema.AVRO(Foo.class), foo, true);
 	}
 
 	@Test
-	void sendMessageWithoutSpecificSchema() throws Exception {
+	void sendNonPrimitiveMessageWithInferredSchema() throws Exception {
 		String topic = "ptt-nospecificSchema-topic";
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("ptt-nospecificSchema-subs").subscribe()) {
-				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-						Collections.singletonMap("topicName", topic));
-				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(foo);
-				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
-						.isEqualTo(foo);
-			}
-		}
+		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo);
+		sendAndConsume(sendFunction, topic, Schema.JSON(Foo.class), foo, true);
 	}
 
 	@Test
 	void sendMessageWithSpecificSchemaInferredByCustomTypeMappings() throws Exception {
 		String topic = "ptt-schemaInferred-topic";
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("ptt-schemaInferred-subs").subscribe()) {
-				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-						Collections.singletonMap("topicName", topic));
-				// Custom schema resolver allows not specifying the schema when sending
-				DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
-				schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
-				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
-						schemaResolver, new DefaultTopicResolver(), null, null);
 
-				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(foo);
-				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
-						.isEqualTo(foo);
-			}
-		}
+		PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+				Collections.singletonMap("topicName", topic));
+		// Custom schema resolver allows not specifying the schema when sending
+		DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
+		schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
+		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
+				schemaResolver, new DefaultTopicResolver(), null, null);
+
+		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.newMessage(foo).send();
+		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
 	}
 
 	@ParameterizedTest
 	@ValueSource(booleans = { true, false })
 	void sendMessageTopicInferredByCustomTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
 		String topic = "ptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
-					.subscriptionName("ptt-topicInferred-subs").subscribe()) {
-				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-						producerFactoryHasDefaultTopic ? Collections.singletonMap("topicName", "fake-topic")
-								: Collections.emptyMap());
-				// Topic mappings allows not specifying the topic when sending (nor having
-				// default on producer)
-				DefaultTopicResolver topicResolver = new DefaultTopicResolver();
-				topicResolver.addCustomTopicMapping(Foo.class, topic);
-				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
-						new DefaultSchemaResolver(), topicResolver, null, null);
 
-				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(foo, Schema.JSON(Foo.class));
-				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
-						.isEqualTo(foo);
-			}
-		}
+		PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+				producerFactoryHasDefaultTopic ? Collections.singletonMap("topicName", "fake-topic")
+						: Collections.emptyMap());
+		// Topic mappings allows not specifying the topic when sending (nor having
+		// default on producer)
+		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
+		topicResolver.addCustomTopicMapping(Foo.class, topic);
+		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
+				new DefaultSchemaResolver(), topicResolver, null, null);
+
+		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo, Schema.JSON(Foo.class));
+		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	void sendMessageWithEncryptionKeys() throws Exception {
 		String topic = "ptt-encryptionKeys-topic";
-		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build()) {
-			PulsarProducerFactory<String> producerFactory = mock(PulsarProducerFactory.class);
-			when(producerFactory.createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>()))
-					.thenReturn(client.newProducer(Schema.STRING).topic(topic).create());
-			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-			pulsarTemplate.newMessage("msg").withTopic(topic).withEncryptionKeys(Set.of("key")).send();
-			verify(producerFactory).createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>());
-		}
+		PulsarProducerFactory<String> producerFactory = mock(PulsarProducerFactory.class);
+		when(producerFactory.createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>()))
+				.thenReturn(client.newProducer(Schema.STRING).topic(topic).create());
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+		pulsarTemplate.newMessage("msg").withTopic(topic).withEncryptionKeys(Set.of("key")).send();
+		verify(producerFactory).createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>());
 	}
 
-	static final class SendTestArgs {
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("sendMessageFailedTestProvider")
+	void sendMessageFailed(String testName, ThrowingConsumer<PulsarTemplate<String>> sendFunction) {
+		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client, new HashMap<>());
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+		assertThatIllegalArgumentException().isThrownBy(() -> sendFunction.accept(pulsarTemplate));
+	}
 
-		private final boolean simpleApi;
+	static Stream<Arguments> sendMessageFailedTestProvider() {
+		String message = "test-message";
+		return Stream.of(
+				arguments("sendWithoutTopic",
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send(message)),
+				arguments("sendNullWithoutSchema", (ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
+						.send("sendNullWithoutSchema", (String) null)));
+	}
 
-		private boolean async;
+	@Test
+	void sendNullWithDefaultTopicFails() {
+		HashMap<String, Object> config = new HashMap<>();
+		config.put("topicName", "sendNullWithDefaultTopicFails");
+		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client, config);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING));
+	}
 
-		private boolean explicitTopic;
+	@Test
+	void sendWithoutSchemaFails() {
+		PulsarProducerFactory<Foo> senderFactory = new DefaultPulsarProducerFactory<>(client, new HashMap<>());
+		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+		// Defaulting to Schema.JSON would prevent this from failing
+		assertThatExceptionOfType(ClassCastException.class)
+				.isThrownBy(() -> pulsarTemplate.send("sendWithoutSchemaFails", new Foo("foo", "bar")));
+	}
 
-		private boolean explicitSchema;
-
-		private boolean messageCustomizer;
-
-		private boolean producerCustomizer;
-
-		private SendTestArgs(boolean simpleApi) {
-			this.simpleApi = simpleApi;
+	private <T> Message<T> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
+			Schema<T> schema, T expectedValue, Boolean withDefaultTopic) throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		if (withDefaultTopic) {
+			config.put("topicName", topic);
 		}
+		PulsarProducerFactory<T> senderFactory = new DefaultPulsarProducerFactory<>(client, config);
+		PulsarTemplate<T> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+		return sendAndConsume(pulsarTemplate, sendFunction, topic, schema, expectedValue);
+	}
 
-		static SendTestArgs simple() {
-			return new SendTestArgs(true);
+	private <T> Message<T> sendAndConsume(PulsarTemplate<T> template, ThrowingConsumer<PulsarTemplate<T>> sendFunction,
+			String topic, Schema<T> schema, T expectedValue) throws Exception {
+		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema).topic(topic)
+				.subscriptionName(topic + "-sub").subscribe()) {
+			sendFunction.accept(template);
+			Message<T> msg = consumer.receive(3, TimeUnit.SECONDS);
+			assertThat(msg).isNotNull();
+			assertThat(msg.getValue()).isEqualTo(expectedValue);
+			return msg;
 		}
-
-		static SendTestArgs fluent() {
-			return new SendTestArgs(false);
-		}
-
-		SendTestArgs async() {
-			this.async = true;
-			return this;
-		}
-
-		SendTestArgs sync() {
-			this.async = false;
-			return this;
-		}
-
-		SendTestArgs topic() {
-			this.explicitTopic = true;
-			return this;
-		}
-
-		SendTestArgs schema() {
-			this.explicitSchema = true;
-			return this;
-		}
-
-		SendTestArgs messageCustomizer() {
-			this.messageCustomizer = true;
-			return this;
-		}
-
-		SendTestArgs producerCustomizer() {
-			this.producerCustomizer = true;
-			return this;
-		}
-
 	}
 
 	public static class Foo {

@@ -138,10 +138,9 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		SchemaResolver schemaResolver = pulsarContainerProperties.getSchemaResolver();
 		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		ResolvableType messageType = resolvableType(messageParameter);
-		Schema<?> schema = schemaResolver.getSchema(schemaType, messageType);
-		if (schema != null) {
-			pulsarContainerProperties.setSchema((Schema) schema);
-		}
+		schemaResolver.resolveSchema(schemaType, messageType)
+				.ifResolved(schema -> pulsarContainerProperties.setSchema((Schema) schema));
+
 		// Make sure the schemaType is updated to match the current schema
 		if (pulsarContainerProperties.getSchema() != null) {
 			SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
@@ -154,7 +153,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 				|| !ObjectUtils.isEmpty(pulsarContainerProperties.getTopics());
 		if (!hasTopicInfo) {
 			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
-					.ifPresent((topic) -> pulsarContainerProperties.setTopics(Collections.singleton(topic)));
+					.ifResolved((topic) -> pulsarContainerProperties.setTopics(Collections.singleton(topic)));
 		}
 
 		ReactiveMessageConsumerBuilderCustomizer<V> customizer1 = b -> b.deadLetterPolicy(this.deadLetterPolicy);

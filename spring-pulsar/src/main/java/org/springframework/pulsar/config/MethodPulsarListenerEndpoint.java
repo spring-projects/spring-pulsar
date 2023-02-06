@@ -26,7 +26,6 @@ import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
-import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.MethodParameter;
@@ -143,10 +142,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		SchemaResolver schemaResolver = pulsarContainerProperties.getSchemaResolver();
 		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		ResolvableType messageType = resolvableType(messageParameter);
-		Schema<?> schema = schemaResolver.getSchema(schemaType, messageType);
-		if (schema != null) {
-			pulsarContainerProperties.setSchema(schema);
-		}
+		schemaResolver.resolveSchema(schemaType, messageType).ifResolved(pulsarContainerProperties::setSchema);
+
 		// Make sure the schemaType is updated to match the current schema
 		if (pulsarContainerProperties.getSchema() != null) {
 			SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
@@ -159,7 +156,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				|| StringUtils.hasText(pulsarContainerProperties.getTopicsPattern());
 		if (!hasTopicInfo) {
 			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
-					.ifPresent((topic) -> pulsarContainerProperties.setTopics(new String[] { topic }));
+					.ifResolved((topic) -> pulsarContainerProperties.setTopics(new String[] { topic }));
 		}
 
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);

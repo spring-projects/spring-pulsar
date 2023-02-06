@@ -35,9 +35,8 @@ public interface SchemaResolver {
 	 * @param message the message instance
 	 * @return the schema to use or {@code null} if no schema could be resolved
 	 */
-	@Nullable
-	default <T> Schema<T> getSchema(T message) {
-		return getSchema(message.getClass());
+	default <T> Resolved<Schema<T>> resolveSchema(@Nullable T message) {
+		return resolveSchema(message == null ? null : message.getClass());
 	}
 
 	/**
@@ -46,9 +45,8 @@ public interface SchemaResolver {
 	 * @param messageType the message type
 	 * @return the schema to use or {@code null} if no schema could be resolved
 	 */
-	@Nullable
-	default <T> Schema<T> getSchema(Class<?> messageType) {
-		return getSchema(messageType, true);
+	default <T> Resolved<Schema<T>> resolveSchema(@Nullable Class<?> messageType) {
+		return resolveSchema(messageType, true);
 	}
 
 	/**
@@ -60,8 +58,7 @@ public interface SchemaResolver {
 	 * @return the schema to use or the default schema if no schema could be resolved and
 	 * {@code returnDefault} is {@code true} - otherwise {@code null}
 	 */
-	@Nullable
-	<T> Schema<T> getSchema(Class<?> messageType, boolean returnDefault);
+	<T> Resolved<Schema<T>> resolveSchema(@Nullable Class<?> messageType, boolean returnDefault);
 
 	/**
 	 * Get the schema to use given a schema type and a message type.
@@ -70,8 +67,7 @@ public interface SchemaResolver {
 	 * @param messageType the message type
 	 * @return the schema to use
 	 */
-	@Nullable
-	<T> Schema<T> getSchema(SchemaType schemaType, @Nullable ResolvableType messageType);
+	<T> Resolved<Schema<T>> resolveSchema(SchemaType schemaType, @Nullable ResolvableType messageType);
 
 	/**
 	 * Callback interface that can be implemented by beans wishing to customize the schema
