@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -201,13 +202,31 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		String topic = "ptt-specificSchema-topic";
 		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build()) {
-			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.AVRO(Foo.class)).topic(topic)
 					.subscriptionName("ptt-specificSchema-subs").subscribe()) {
 				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
 						Collections.singletonMap("topicName", topic));
 				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-				pulsarTemplate.send(foo, Schema.JSON(Foo.class));
+				pulsarTemplate.send(foo, Schema.AVRO(Foo.class));
+				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
+						.isEqualTo(foo);
+			}
+		}
+	}
+
+	@Test
+	void sendMessageWithoutSpecificSchema() throws Exception {
+		String topic = "ptt-nospecificSchema-topic";
+		try (PulsarClient client = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build()) {
+			try (Consumer<Foo> consumer = client.newConsumer(Schema.JSON(Foo.class)).topic(topic)
+					.subscriptionName("ptt-nospecificSchema-subs").subscribe()) {
+				PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+						Collections.singletonMap("topicName", topic));
+				PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+				Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+				pulsarTemplate.send(foo);
 				assertThat(consumer.receiveAsync()).succeedsWithin(Duration.ofSeconds(3)).extracting(Message::getValue)
 						.isEqualTo(foo);
 			}
@@ -336,7 +355,53 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	}
 
-	record Foo(String foo, String bar) {
+	public static class Foo {
+
+		private String foo;
+
+		private String bar;
+
+		Foo() {
+		}
+
+		Foo(String foo, String bar) {
+			this.foo = foo;
+			this.bar = bar;
+		}
+
+		public String getFoo() {
+			return foo;
+		}
+
+		public void setFoo(String foo) {
+			this.foo = foo;
+		}
+
+		public String getBar() {
+			return bar;
+		}
+
+		public void setBar(String bar) {
+			this.bar = bar;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			Foo foo1 = (Foo) o;
+			return foo.equals(foo1.foo) && bar.equals(foo1.bar);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(foo, bar);
+		}
+
 	}
 
 }

@@ -130,7 +130,11 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	@Nullable
 	private Schema<?> getCustomSchemaOrMaybeDefault(Class<?> messageClass, boolean returnDefault) {
-		return this.customSchemaMappings.getOrDefault(messageClass, (returnDefault ? Schema.BYTES : null));
+		Schema<?> schema = this.customSchemaMappings.get(messageClass);
+		if (schema == null && returnDefault) {
+			return messageClass != null ? Schema.JSON(messageClass) : Schema.BYTES;
+		}
+		return schema;
 	}
 
 	@Override
