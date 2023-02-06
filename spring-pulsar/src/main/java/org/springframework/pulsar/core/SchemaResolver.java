@@ -36,8 +36,8 @@ public interface SchemaResolver {
 	 * @return the schema to use or {@code null} if no schema could be resolved
 	 */
 	@Nullable
-	default <T> Schema<T> getSchema(T message) {
-		return getSchema(message.getClass());
+	default <T> Schema<T> getSchema(@Nullable T message) {
+		return getSchema(message == null ? null : message.getClass());
 	}
 
 	/**
@@ -47,7 +47,7 @@ public interface SchemaResolver {
 	 * @return the schema to use or {@code null} if no schema could be resolved
 	 */
 	@Nullable
-	default <T> Schema<T> getSchema(Class<?> messageType) {
+	default <T> Schema<T> getSchema(@Nullable Class<?> messageType) {
 		return getSchema(messageType, true);
 	}
 
@@ -61,7 +61,7 @@ public interface SchemaResolver {
 	 * {@code returnDefault} is {@code true} - otherwise {@code null}
 	 */
 	@Nullable
-	<T> Schema<T> getSchema(Class<?> messageType, boolean returnDefault);
+	<T> Schema<T> getSchema(@Nullable Class<?> messageType, boolean returnDefault);
 
 	/**
 	 * Get the schema to use given a schema type and a message type.

@@ -71,17 +71,20 @@ public class DefaultTopicResolver implements TopicResolver {
 
 	@Override
 	public Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, Supplier<String> defaultTopicSupplier) {
-		return doResolveTopic(userSpecifiedTopic, null, defaultTopicSupplier);
+		if (StringUtils.hasText(userSpecifiedTopic)) {
+			return Optional.of(userSpecifiedTopic);
+		}
+		return Optional.ofNullable(defaultTopicSupplier.get());
 	}
 
 	@Override
-	public <T> Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, T message,
+	public <T> Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable T message,
 			Supplier<String> defaultTopicSupplier) {
-		return doResolveTopic(userSpecifiedTopic, message.getClass(), defaultTopicSupplier);
+		return doResolveTopic(userSpecifiedTopic, message != null ? message.getClass() : null, defaultTopicSupplier);
 	}
 
 	@Override
-	public Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, Class<?> messageType,
+	public Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
 			Supplier<String> defaultTopicSupplier) {
 		return doResolveTopic(userSpecifiedTopic, messageType, defaultTopicSupplier);
 	}
@@ -90,6 +93,9 @@ public class DefaultTopicResolver implements TopicResolver {
 			Supplier<String> defaultTopicSupplier) {
 		if (StringUtils.hasText(userSpecifiedTopic)) {
 			return Optional.of(userSpecifiedTopic);
+		}
+		if (messageType == null) {
+			return Optional.empty();
 		}
 		return Optional.ofNullable(this.customTopicMappings.getOrDefault(messageType, defaultTopicSupplier.get()));
 	}

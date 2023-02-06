@@ -46,7 +46,7 @@ public interface TopicResolver {
 	 * returns {@code null} to signal no default)
 	 * @return the topic to use or {@code empty} if no topic could be resolved
 	 */
-	<T> Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, T message,
+	<T> Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable T message,
 			Supplier<String> defaultTopicSupplier);
 
 	/**
@@ -57,7 +57,7 @@ public interface TopicResolver {
 	 * returns {@code null} to signal no default)
 	 * @return the topic to use or {@code empty} if no topic could be resolved
 	 */
-	Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, Class<?> messageType,
+	Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
 			Supplier<String> defaultTopicSupplier);
 
 }

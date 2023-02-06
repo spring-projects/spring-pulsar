@@ -114,48 +114,51 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	}
 
 	@Override
-	public MessageId send(T message) throws PulsarClientException {
+	public MessageId send(@Nullable T message) throws PulsarClientException {
 		return doSend(null, message, null, null, null, null);
 	}
 
 	@Override
-	public MessageId send(T message, @Nullable Schema<T> schema) throws PulsarClientException {
+	public MessageId send(@Nullable T message, @Nullable Schema<T> schema) throws PulsarClientException {
 		return doSend(null, message, schema, null, null, null);
 	}
 
 	@Override
-	public MessageId send(@Nullable String topic, T message) throws PulsarClientException {
+	public MessageId send(@Nullable String topic, @Nullable T message) throws PulsarClientException {
 		return doSend(topic, message, null, null, null, null);
 	}
 
 	@Override
-	public MessageId send(@Nullable String topic, T message, @Nullable Schema<T> schema) throws PulsarClientException {
+	public MessageId send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema)
+			throws PulsarClientException {
 		return doSend(topic, message, schema, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable T message) throws PulsarClientException {
 		return doSendAsync(null, message, null, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(T message, @Nullable Schema<T> schema) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable T message, @Nullable Schema<T> schema)
+			throws PulsarClientException {
 		return doSendAsync(null, message, schema, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message)
+			throws PulsarClientException {
 		return doSendAsync(topic, message, null, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message, @Nullable Schema<T> schema)
-			throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message,
+			@Nullable Schema<T> schema) throws PulsarClientException {
 		return doSendAsync(topic, message, schema, null, null, null);
 	}
 
 	@Override
-	public SendMessageBuilder<T> newMessage(T message) {
+	public SendMessageBuilder<T> newMessage(@Nullable T message) {
 		return new SendMessageBuilderImpl<>(this, message);
 	}
 
@@ -164,7 +167,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		this.beanName = beanName;
 	}
 
-	private MessageId doSend(@Nullable String topic, T message, @Nullable Schema<T> schema,
+	private MessageId doSend(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema,
 			@Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
@@ -177,13 +180,22 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		}
 	}
 
-	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, T message, @Nullable Schema<T> schema,
-			@Nullable Collection<String> encryptionKeys,
+	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, @Nullable T message,
+			@Nullable Schema<T> schema, @Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		String defaultTopic = Objects.toString(this.producerFactory.getProducerConfig().get("topicName"), null);
-		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow(
-				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
+		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow(() -> {
+			if (this.topicResolver.getClass().equals(DefaultTopicResolver.class)) {
+				if (message == null) {
+					return new IllegalArgumentException("Topic must be specified when the message is null");
+				}
+				else {
+					return new IllegalArgumentException("Topic must be specified when no default topic is configured");
+				}
+			}
+			return new IllegalArgumentException("Could not resolve the topic");
+		});
 		this.logger.trace(() -> "Sending msg to '%s' topic".formatted(topicName));
 
 		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
@@ -192,13 +204,19 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 			observation.start();
 			Producer<T> producer = prepareProducerForSend(topicName, message, schema, encryptionKeys,
 					producerCustomizer);
-			TypedMessageBuilder<T> messageBuilder = producer.newMessage().value(message);
-			if (typedMessageBuilderCustomizer != null) {
-				typedMessageBuilderCustomizer.customize(messageBuilder);
+			TypedMessageBuilder<T> messageBuilder;
+			try {
+				messageBuilder = producer.newMessage().value(message);
+				if (typedMessageBuilderCustomizer != null) {
+					typedMessageBuilderCustomizer.customize(messageBuilder);
+				}
+				// propagate props to message
+				senderContext.properties().forEach(messageBuilder::property);
 			}
-			// propagate props to message
-			senderContext.properties().forEach(messageBuilder::property);
-
+			catch (Exception e) {
+				ProducerUtils.closeProducerAsync(producer, this.logger);
+				throw e;
+			}
 			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
 				if (ex == null) {
 					this.logger.trace(() -> "Sent msg to '%s' topic".formatted(topicName));
@@ -227,12 +245,15 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
-	private Producer<T> prepareProducerForSend(@Nullable String topic, T message, @Nullable Schema<T> schema,
+	private Producer<T> prepareProducerForSend(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema,
 			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
 			throws PulsarClientException {
-		if (schema == null) {
-			schema = Objects.requireNonNull(this.schemaResolver.getSchema(message),
-					"Schema must not be null - expecting at least a default schema");
+		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.getSchema(message) : schema;
+		if (resolvedSchema == null) {
+			if (this.schemaResolver.getClass().equals(DefaultSchemaResolver.class)) {
+				throw new IllegalArgumentException("Schema must be specified when the message is null");
+			}
+			throw new IllegalArgumentException("Cannot resolve the schema");
 		}
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(this.interceptors)) {
@@ -241,13 +262,14 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		if (producerCustomizer != null) {
 			customizers.add(producerCustomizer);
 		}
-		return this.producerFactory.createProducer(schema, topic, encryptionKeys, customizers);
+		return this.producerFactory.createProducer(resolvedSchema, topic, encryptionKeys, customizers);
 	}
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
 
 		private final PulsarTemplate<T> template;
 
+		@Nullable
 		private final T message;
 
 		@Nullable
@@ -265,7 +287,7 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 		@Nullable
 		private ProducerBuilderCustomizer<T> producerCustomizer;
 
-		SendMessageBuilderImpl(PulsarTemplate<T> template, T message) {
+		SendMessageBuilderImpl(PulsarTemplate<T> template, @Nullable T message) {
 			this.template = template;
 			this.message = message;
 		}

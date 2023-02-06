@@ -40,7 +40,7 @@ public interface PulsarOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(T message) throws PulsarClientException;
+	MessageId send(@Nullable T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a blocking manner.
@@ -50,7 +50,7 @@ public interface PulsarOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(T message, @Nullable Schema<T> schema) throws PulsarClientException;
+	MessageId send(@Nullable T message, @Nullable Schema<T> schema) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a blocking manner.
@@ -60,7 +60,7 @@ public interface PulsarOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(@Nullable String topic, T message) throws PulsarClientException;
+	MessageId send(@Nullable String topic, @Nullable T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a blocking manner.
@@ -72,7 +72,8 @@ public interface PulsarOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(@Nullable String topic, T message, @Nullable Schema<T> schema) throws PulsarClientException;
+	MessageId send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema)
+			throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a non-blocking manner.
@@ -80,7 +81,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(T message) throws PulsarClientException;
+	CompletableFuture<MessageId> sendAsync(@Nullable T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the default topic in a non-blocking manner.
@@ -90,7 +91,8 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(T message, @Nullable Schema<T> schema) throws PulsarClientException;
+	CompletableFuture<MessageId> sendAsync(@Nullable T message, @Nullable Schema<T> schema)
+			throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a non-blocking manner.
@@ -100,7 +102,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message) throws PulsarClientException;
+	CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message) throws PulsarClientException;
 
 	/**
 	 * Sends a message to the specified topic in a non-blocking manner.
@@ -112,7 +114,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(@Nullable String topic, T message, @Nullable Schema<T> schema)
+	CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema)
 			throws PulsarClientException;
 
 	/**
@@ -120,7 +122,7 @@ public interface PulsarOperations<T> {
 	 * @param message the payload of the message
 	 * @return the builder to configure and send the message
 	 */
-	SendMessageBuilder<T> newMessage(T message);
+	SendMessageBuilder<T> newMessage(@Nullable T message);
 
 	/**
 	 * Builder that can be used to configure and send a message. Provides more options

@@ -123,7 +123,10 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	}
 
 	@Override
-	public <T> Schema<T> getSchema(Class<?> messageClass, boolean returnDefault) {
+	public <T> Schema<T> getSchema(@Nullable Class<?> messageClass, boolean returnDefault) {
+		if (messageClass == null) {
+			return null;
+		}
 		Schema<?> schema = BASE_SCHEMA_MAPPINGS.get(messageClass);
 		if (schema == null) {
 			schema = getCustomSchemaOrMaybeDefault(messageClass, returnDefault);
@@ -132,7 +135,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	}
 
 	@Nullable
-	protected Schema<?> getCustomSchemaOrMaybeDefault(Class<?> messageClass, boolean returnDefault) {
+	protected Schema<?> getCustomSchemaOrMaybeDefault(@Nullable Class<?> messageClass, boolean returnDefault) {
 		Schema<?> schema = this.customSchemaMappings.get(messageClass);
 		if (schema == null && returnDefault) {
 			if (messageClass != null) {
@@ -179,7 +182,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 				yield getMessageKeyValueSchema(messageType);
 			}
 			case NONE -> {
-				if (messageType == null) {
+				if (messageType == null || messageType.getRawClass() == null) {
 					yield Schema.BYTES;
 				}
 				if (KeyValue.class.isAssignableFrom(messageType.getRawClass())) {
@@ -192,7 +195,8 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		return schema != null ? castToType(schema) : null;
 	}
 
-	private Class<?> requireNonNullMessageType(SchemaType schemaType, ResolvableType messageType) {
+	@Nullable
+	private Class<?> requireNonNullMessageType(SchemaType schemaType, @Nullable ResolvableType messageType) {
 		return Objects.requireNonNull(messageType, "messageType must be specified for " + schemaType.name())
 				.getRawClass();
 	}

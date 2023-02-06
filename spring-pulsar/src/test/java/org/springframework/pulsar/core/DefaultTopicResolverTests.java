@@ -110,7 +110,7 @@ class DefaultTopicResolverTests {
 				arguments("complexMessageWithUserTopic", userTopic, Foo.class, defaultTopic, userTopic),
 				arguments("complexMessageNoUserTopic", null, Foo.class, defaultTopic, fooTopic),
 				arguments("nullMessageWithUserTopicAndDefault", userTopic, null, defaultTopic, userTopic),
-				arguments("nullMessageWithDefault", null, null, defaultTopic, defaultTopic),
+				arguments("nullMessageWithDefault", null, null, defaultTopic, null),
 				arguments("noMatchWithUserTopicAndDefault", userTopic, Bar.class, defaultTopic, userTopic),
 				arguments("noMatchWithUserTopic", userTopic, Bar.class, null, userTopic),
 				arguments("noMatchWithDefault", null, Bar.class, defaultTopic, defaultTopic),
