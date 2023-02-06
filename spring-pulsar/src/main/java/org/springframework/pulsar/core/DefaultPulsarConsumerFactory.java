@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -63,8 +64,16 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 
 	@Override
 	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
+			@Nullable String subscriptionName, ConsumerBuilderCustomizer<T> customizer) throws PulsarClientException {
+		return createConsumer(schema, topics, subscriptionName, null,
+				customizer != null ? Collections.singletonList(customizer) : null);
+	}
+
+	@Override
+	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
 			@Nullable String subscriptionName, @Nullable Map<String, String> metadataProperties,
 			@Nullable List<ConsumerBuilderCustomizer<T>> customizers) throws PulsarClientException {
+		Objects.requireNonNull(schema, "Schema must be specified");
 		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 		Map<String, Object> config = new HashMap<>(this.consumerConfig);
 		if (topics != null) {
