@@ -50,7 +50,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Tests for {@link org.springframework.pulsar.reactive.core.ReactivePulsarTemplate}.
+ * Tests for {@link ReactivePulsarTemplate}.
  *
  * @author Christophe Bornet
  * @author Chris Bono

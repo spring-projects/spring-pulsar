@@ -84,8 +84,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 				.maximumSize(cacheMaximumSize).initialCapacity(cacheInitialCapacity)
 				.scheduler(Scheduler.systemScheduler()).evictionListener(
 						(RemovalListener<ProducerCacheKey<T>, Producer<T>>) (producerCacheKey, producer, cause) -> {
-							this.logger.debug(() -> String.format("Producer %s evicted from cache due to %s",
-									ProducerUtils.formatProducer(producer), cause));
+							this.logger.debug(() -> "Producer %s evicted from cache due to %s"
+									.formatted(ProducerUtils.formatProducer(producer), cause));
 							closeProducer(producer);
 						})
 				.build();
@@ -106,9 +106,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		try {
 			Producer<T> producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
 			return new ProducerWithCloseCallback<>(producer,
-					(p) -> this.logger
-							.trace(() -> String.format("Client closed producer %s but will skip actual closing",
-									ProducerUtils.formatProducer(producer))));
+					(p) -> this.logger.trace(() -> "Client closed producer %s but will skip actual closing"
+							.formatted(ProducerUtils.formatProducer(producer))));
 		}
 		catch (PulsarClientException ex) {
 			throw new RuntimeException(ex);
@@ -129,8 +128,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			actualProducer = wrappedProducer.getActualProducer();
 		}
 		if (actualProducer == null) {
-			this.logger.warn(() -> String.format("Unable to get actual producer for %s - will skip closing it",
-					ProducerUtils.formatProducer(producer)));
+			this.logger.warn(() -> "Unable to get actual producer for %s - will skip closing it"
+					.formatted(ProducerUtils.formatProducer(producer)));
 			return;
 		}
 		ProducerUtils.closeProducerAsync(actualProducer, this.logger);

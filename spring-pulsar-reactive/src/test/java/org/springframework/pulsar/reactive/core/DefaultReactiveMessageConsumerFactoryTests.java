@@ -32,8 +32,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for
- * {@link org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory}
+ * Tests for {@link DefaultReactivePulsarConsumerFactory}.
  *
  * @author Christophe Bornet
  * @author Chris Bono

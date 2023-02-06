@@ -18,7 +18,6 @@ package org.springframework.pulsar.listener;
 
 import java.util.function.BiFunction;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -35,7 +34,7 @@ import org.springframework.pulsar.core.PulsarOperations;
  */
 public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageRecovererFactory<T> {
 
-	protected final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	protected final LogAccessor logger = new LogAccessor(this.getClass());
 
 	/**
 	 * TODO: Move this to a common constants class.

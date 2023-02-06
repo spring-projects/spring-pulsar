@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 
 import org.springframework.aop.framework.Advised;
@@ -120,7 +119,7 @@ import org.springframework.util.StringUtils;
 public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 		implements BeanPostProcessor, Ordered, ApplicationContextAware, InitializingBean, SmartInitializingSingleton {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	/**
 	 * The bean name of the default {@link ReactivePulsarListenerContainerFactory}.
@@ -508,7 +507,7 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 		}
 		else {
 			throw new IllegalArgumentException(
-					String.format("@ReactivePulsarListener can't resolve '%s' as a String", resolvedValue));
+					"@ReactivePulsarListener can't resolve '%s' as a String".formatted(resolvedValue));
 		}
 	}
 
@@ -536,12 +535,12 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 				ReflectionUtils.handleReflectionException(ex);
 			}
 			catch (NoSuchMethodException ex) {
-				throw new IllegalStateException(String.format(
-						"@ReactivePulsarListener method '%s' found on bean target class '%s', "
-								+ "but not found in any interface(s) for bean JDK proxy. Either "
-								+ "pull the method up to an interface or switch to subclass (CGLIB) "
-								+ "proxies by setting proxy-target-class/proxyTargetClass " + "attribute to 'true'",
-						method.getName(), method.getDeclaringClass().getSimpleName()), ex);
+				throw new IllegalStateException("@ReactivePulsarListener method '%s' found on bean target class '%s', "
+						+ "but not found in any interface(s) for bean JDK proxy. Either "
+						+ "pull the method up to an interface or switch to subclass (CGLIB) "
+						+ "proxies by setting proxy-target-class/proxyTargetClass "
+						+ "attribute to 'true'".formatted(method.getName(), method.getDeclaringClass().getSimpleName()),
+						ex);
 			}
 		}
 		return method;

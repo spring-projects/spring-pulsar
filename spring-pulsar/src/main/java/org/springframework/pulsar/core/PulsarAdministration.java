@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
@@ -52,7 +51,7 @@ import org.springframework.util.StringUtils;
 public class PulsarAdministration
 		implements ApplicationContextAware, SmartInitializingSingleton, PulsarAdministrationOperations {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final PulsarAdminBuilder adminBuilder;
 

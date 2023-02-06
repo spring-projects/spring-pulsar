@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.config;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.PulsarClient;
 
 import org.springframework.beans.factory.FactoryBean;
@@ -32,7 +31,7 @@ import org.springframework.lang.Nullable;
  */
 public class PulsarClientFactoryBean extends AbstractFactoryBean<PulsarClient> {
 
-	private final LogAccessor logger = new LogAccessor(LogFactory.getLog(this.getClass()));
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final PulsarClientConfiguration pulsarClientConfiguration;
 

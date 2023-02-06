@@ -224,7 +224,7 @@ public class PulsarFunctionAdministration implements SmartLifecycle {
 	private String buildLogMsg(PulsarFunctionOperations<?> function, boolean isUpdate, boolean isUrlArchive) {
 		// <verb> '<name>' <type> (using (url|local) archive: <archive>
 		// Ex: Updating 'Uppercase' function (using url archive: sink://foo.bar)
-		return String.format("%s %s (using %s archive: %s)", isUpdate ? "Updating" : "Creating", functionDesc(function),
+		return "%s %s (using %s archive: %s)".formatted(isUpdate ? "Updating" : "Creating", functionDesc(function),
 				isUrlArchive ? "url" : "local", function.archive());
 	}
 
@@ -289,15 +289,15 @@ public class PulsarFunctionAdministration implements SmartLifecycle {
 	private Optional<Exception> enforceStopPolicyOnFunction(PulsarFunctionOperations<?> function, PulsarAdmin admin) {
 		return switch (function.stopPolicy()) {
 			case NONE -> {
-				this.logger.info(() -> String.format("No stop policy for %s - leaving alone", functionDesc(function)));
+				this.logger.info(() -> "No stop policy for %s - leaving alone".formatted(functionDesc(function)));
 				yield Optional.empty();
 			}
 			case STOP -> {
-				this.logger.info(() -> String.format("Stopping %s", functionDesc(function)));
+				this.logger.info(() -> "Stopping %s".formatted(functionDesc(function)));
 				yield safeInvoke(() -> function.stop(admin));
 			}
 			case DELETE -> {
-				this.logger.info(() -> String.format("Deleting %s", functionDesc(function)));
+				this.logger.info(() -> "Deleting %s".formatted(functionDesc(function)));
 				yield safeInvoke(() -> function.delete(admin));
 			}
 		};
@@ -314,7 +314,7 @@ public class PulsarFunctionAdministration implements SmartLifecycle {
 	}
 
 	private String functionDesc(PulsarFunctionOperations<?> function) {
-		return String.format("'%s' %s", function.name(), function.type().toString().toLowerCase());
+		return "'%s' %s".formatted(function.name(), function.type().toString().toLowerCase());
 	}
 
 	/**

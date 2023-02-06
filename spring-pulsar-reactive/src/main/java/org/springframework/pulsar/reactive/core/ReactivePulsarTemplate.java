@@ -128,12 +128,12 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 			@Nullable MessageSpecBuilderCustomizer<T> messageSpecBuilderCustomizer,
 			@Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer) {
 		String topicName = resolveTopic(topic, message.getClass());
-		this.logger.trace(() -> String.format("Sending reactive msg to '%s' topic", topicName));
+		this.logger.trace(() -> "Sending reactive msg to '%s' topic".formatted(topicName));
 		ReactiveMessageSender<T> sender = createMessageSender(topicName, message, schema, customizer);
 		// @formatter:off
 		return sender.sendOne(getMessageSpec(messageSpecBuilderCustomizer, message))
-				.doOnError(ex -> this.logger.error(ex, () -> String.format("Failed to send message to '%s' topic", topicName)))
-				.doOnSuccess(msgId -> this.logger.trace(() -> String.format("Sent message to '%s' topic", topicName)));
+				.doOnError(ex -> this.logger.error(ex, () -> "Failed to send message to '%s' topic".formatted(topicName)))
+				.doOnSuccess(msgId -> this.logger.trace(() -> "Sent message to '%s' topic".formatted(topicName)));
 		// @formatter:on
 	}
 
@@ -144,11 +144,9 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 			if (firstMessage != null && firstSignal.isOnNext()) {
 				String topicName = resolveTopic(topic, firstMessage.getClass());
 				ReactiveMessageSender<T> sender = createMessageSender(topicName, firstMessage, schema, customizer);
-				return messageFlux.map(MessageSpec::of).as(sender::sendMany)
-						.doOnError(ex -> this.logger.error(ex,
-								() -> String.format("Failed to send messages to '%s' topic", topicName)))
-						.doOnNext(msgId -> this.logger
-								.trace(() -> String.format("Sent messages to '%s' topic", topicName)));
+				return messageFlux.map(MessageSpec::of).as(sender::sendMany).doOnError(
+						ex -> this.logger.error(ex, () -> "Failed to send messages to '%s' topic".formatted(topicName)))
+						.doOnNext(msgId -> this.logger.trace(() -> "Sent messages to '%s' topic".formatted(topicName)));
 			}
 			// The flux has errored or is completed
 			return messageFlux.thenMany(Flux.empty());

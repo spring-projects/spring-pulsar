@@ -99,7 +99,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
 		String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
-		this.logger.trace(() -> String.format("Creating producer for '%s' topic", resolvedTopic));
+		this.logger.trace(() -> "Creating producer for '%s' topic".formatted(resolvedTopic));
 		ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
 
 		Map<String, Object> config = new HashMap<>(this.producerConfig);

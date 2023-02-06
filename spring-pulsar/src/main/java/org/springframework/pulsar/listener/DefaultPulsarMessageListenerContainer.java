@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.BatchReceivePolicy;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
@@ -512,9 +511,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						this.nackableMessages.add(message.getMessageId());
 					}
 					else {
-						throw new IllegalStateException(String.format(
-								"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks",
-								message.getMessageId()), e);
+						throw new IllegalStateException(
+
+								"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks"
+										.formatted(message.getMessageId()),
+								e);
 					}
 				}
 			}
@@ -672,7 +673,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private static abstract class AbstractAcknowledgement implements Acknowledgement {
 
-		private static final LogAccessor logger = new LogAccessor(LogFactory.getLog(AbstractAcknowledgement.class));
+		private static final LogAccessor logger = new LogAccessor(AbstractAcknowledgement.class);
 
 		protected final Consumer<?> consumer;
 
@@ -691,7 +692,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			catch (PulsarClientException pce) {
 				AbstractAcknowledgement.logger.warn(pce,
-						() -> String.format("Acknowledgment failed for message: [%s]", messageId));
+						() -> "Acknowledgment failed for message: [%s]".formatted(messageId));
 				consumer.negativeAcknowledge(messageId);
 			}
 		}
