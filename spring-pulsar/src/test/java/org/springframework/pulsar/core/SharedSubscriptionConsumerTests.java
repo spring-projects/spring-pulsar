@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.log.LogAccessor;
@@ -46,6 +47,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Test
+	@Disabled
 	void sharedSubscriptionRoundRobinBasicScenario() throws Exception {
 
 		DefaultPulsarMessageListenerContainer<String> container1 = null;

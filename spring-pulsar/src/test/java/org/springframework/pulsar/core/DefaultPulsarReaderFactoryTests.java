@@ -17,6 +17,7 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +32,7 @@ import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
@@ -56,13 +58,60 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		}
 	}
 
-	@Test
-	void basicPulsarReader() throws Exception {
-		PulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(this.pulsarClient,
-				Collections.emptyMap());
-		Message<String> message;
-		try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
-				MessageId.earliest, Schema.STRING)) {
+	@Nested
+	class BasicScenarioTests {
+
+		private PulsarReaderFactory<String> pulsarReaderFactory;
+
+		@BeforeEach
+		void createReaderFactory() {
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, Collections.emptyMap());
+		}
+
+		@Test
+		void readingFromTheBeginningOfTheTopic() throws Exception {
+			Message<String> message;
+			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
+					MessageId.earliest, Schema.STRING)) {
+
+				Map<String, Object> prodConfig = Map.of("topicName", "basic-pulsar-reader-topic");
+				PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+						prodConfig);
+				PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+				pulsarTemplate.send("hello john doe");
+
+				message = reader.readNext();
+			}
+			assertThat(message.getValue()).isEqualTo("hello john doe");
+		}
+
+		@Test
+		void readingFromTheMiddleOfTheTopic() throws Exception {
+			Map<String, Object> prodConfig = Map.of("topicName", "reading-from-the-middle-of-topic");
+			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+					prodConfig);
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+			MessageId[] messageIds = new MessageId[10];
+
+			for (int i = 0; i < 10; i++) {
+				messageIds[i] = pulsarTemplate.send("hello john doe-" + i);
+			}
+
+			Message<String> message;
+			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("reading-from-the-middle-of-topic"),
+					messageIds[4], Schema.STRING)) {
+				for (int i = 0; i < 5; i++) {
+					message = reader.readNext();
+					assertThat(message.getValue()).isEqualTo("hello john doe-" + (i + 5));
+				}
+				message = reader.readNext(1, TimeUnit.SECONDS);
+				assertThat(message).isNull();
+			}
+		}
+
+		@Test
+		void readingFromTheEndOfTheTopic() throws Exception {
+			Message<String> message;
 
 			Map<String, Object> prodConfig = Map.of("topicName", "basic-pulsar-reader-topic");
 			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
@@ -70,36 +119,45 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.send("hello john doe");
 
-			message = reader.readNext();
+			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
+					MessageId.latest, Schema.STRING)) {
+				pulsarTemplate.send("hello alice doe");
+				// It should not read the first message sent (john doe) as latest is the
+				// message id to start.
+				message = reader.readNext();
+				assertThat(message.getValue()).isEqualTo("hello alice doe");
+				message = reader.readNext(1, TimeUnit.SECONDS);
+				assertThat(message).isNull();
+			}
 		}
-		assertThat(message.getValue()).isEqualTo("hello john doe");
+
 	}
 
-	@Test
-	void readingFromTheMiddleOfTheTopic() throws Exception {
-		PulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(this.pulsarClient,
-				Collections.emptyMap());
+	@Nested
+	class MissingConfig {
 
-		Map<String, Object> prodConfig = Map.of("topicName", "reading-from-the-middle-of-topic");
-		PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-		MessageId[] messageIds = new MessageId[10];
+		private PulsarReaderFactory<String> pulsarReaderFactory;
 
-		for (int i = 0; i < 10; i++) {
-			messageIds[i] = pulsarTemplate.send("hello john doe-" + i);
+		@BeforeEach
+		void createReaderFactory() {
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, Collections.emptyMap());
 		}
 
-		Message<String> message;
-		try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("reading-from-the-middle-of-topic"),
-				messageIds[4], Schema.STRING)) {
-			for (int i = 0; i < 5; i++) {
-				message = reader.readNext();
-				assertThat(message.getValue()).isEqualTo("hello john doe-" + (i + 5));
-			}
-			message = reader.readNext(1, TimeUnit.SECONDS);
-			assertThat(message).isNull();
+		@Test
+		void missingTopic() {
+			assertThatThrownBy(
+					() -> pulsarReaderFactory.createReader(Collections.emptyList(), MessageId.earliest, Schema.STRING))
+							.isInstanceOf(IllegalArgumentException.class)
+							.hasMessageContaining("Passed in topicNames should not be null or empty");
 		}
+
+		@Test
+		void missingStartingMessageId() {
+			assertThatThrownBy(() -> pulsarReaderFactory.createReader(List.of("my-reader-topic"), null, Schema.STRING))
+					.isInstanceOf(PulsarClientException.class).hasMessageContaining(
+							"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
+		}
+
 	}
 
 }
