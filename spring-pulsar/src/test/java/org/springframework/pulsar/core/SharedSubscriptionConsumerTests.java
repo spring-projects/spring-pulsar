@@ -46,6 +46,52 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Test
+	void sharedSubscriptionRoundRobinBasicScenario() throws Exception {
+
+		DefaultPulsarMessageListenerContainer<String> container1 = null;
+		DefaultPulsarMessageListenerContainer<String> container2 = null;
+		DefaultPulsarMessageListenerContainer<String> container3 = null;
+		PulsarClient pulsarClient = null;
+		try {
+			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+			DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+					pulsarClient,
+					Map.of("topicNames", Collections.singleton("shared-subscription-single-msg-test-topic"),
+							"subscriptionName", "shared-subscription-single-msg-test-sub"));
+
+			CountDownLatch latch1 = new CountDownLatch(1);
+			CountDownLatch latch2 = new CountDownLatch(1);
+			CountDownLatch latch3 = new CountDownLatch(1);
+
+			container1 = createAndStartContainerForShared(latch1, "hello john doe", pulsarConsumerFactory);
+			container2 = createAndStartContainerForShared(latch2, "hello alice doe", pulsarConsumerFactory);
+			container3 = createAndStartContainerForShared(latch3, "hello buzz doe", pulsarConsumerFactory);
+
+			Map<String, Object> prodConfig = Map.of("topicName", "shared-subscription-single-msg-test-topic");
+			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient, prodConfig);
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+
+			pulsarTemplate.newMessage("hello john doe").sendAsync();
+			pulsarTemplate.newMessage("hello alice doe").sendAsync();
+			pulsarTemplate.newMessage("hello buzz doe").sendAsync();
+
+			boolean await1 = latch1.await(10, TimeUnit.SECONDS);
+			boolean await2 = latch2.await(10, TimeUnit.SECONDS);
+			boolean await3 = latch3.await(10, TimeUnit.SECONDS);
+			assertThat(await1).isTrue();
+			assertThat(await2).isTrue();
+			assertThat(await3).isTrue();
+		}
+		finally {
+			safeStopContainer(container1);
+			safeStopContainer(container2);
+			safeStopContainer(container3);
+			pulsarClient.close();
+		}
+	}
+
+	@Test
 	void keySharedSubscriptionWithDefaultAutoSplitHashingRange() throws Exception {
 		DefaultPulsarMessageListenerContainer<String> container1 = null;
 		DefaultPulsarMessageListenerContainer<String> container2 = null;
@@ -62,9 +108,9 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			Map<String, Integer> messageCountByKey2 = new HashMap<>();
 			Map<String, Integer> messageCountByKey3 = new HashMap<>();
 
-			container1 = createAndStartContainer(consumerFactory, latch, "one", messageCountByKey1);
-			container2 = createAndStartContainer(consumerFactory, latch, "two", messageCountByKey2);
-			container3 = createAndStartContainer(consumerFactory, latch, "three", messageCountByKey3);
+			container1 = createAndStartContainerForKeyShared(consumerFactory, latch, "one", messageCountByKey1);
+			container2 = createAndStartContainerForKeyShared(consumerFactory, latch, "two", messageCountByKey2);
+			container3 = createAndStartContainerForKeyShared(consumerFactory, latch, "three", messageCountByKey3);
 			logger.info("**** Containers all started - pausing for 5s");
 			Thread.sleep(5_000);
 
@@ -106,7 +152,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		}
 	}
 
-	private DefaultPulsarMessageListenerContainer<String> createAndStartContainer(
+	private DefaultPulsarMessageListenerContainer<String> createAndStartContainerForKeyShared(
 			PulsarConsumerFactory<String> consumerFactory, CountDownLatch latch, String containerName,
 			Map<String, Integer> messageCountByKey) {
 
@@ -125,6 +171,21 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		containerProps.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				consumerFactory, containerProps);
+		container.start();
+		return container;
+	}
+
+	private DefaultPulsarMessageListenerContainer<String> createAndStartContainerForShared(CountDownLatch latch,
+			String message, PulsarConsumerFactory<String> consumerFactory) {
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+			assertThat(msg.getValue()).isEqualTo(message);
+			latch.countDown();
+		});
+		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				consumerFactory, pulsarContainerProperties);
 		container.start();
 		return container;
 	}
