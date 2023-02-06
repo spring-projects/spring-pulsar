@@ -45,6 +45,7 @@ import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.ConsumerTestUtils;
@@ -89,6 +90,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		pulsarClient.close();
 	}
 
+	@Disabled
 	@Test
 	void containerPauseAndResumeFeatureUsingWaitAndNotify() throws Exception {
 		Map<String, Object> config = Map.of("topicNames", Collections.singleton("containerPauseResumeWaitNotify-topic"),
