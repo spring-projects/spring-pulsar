@@ -19,7 +19,6 @@ package org.springframework.pulsar.core;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
@@ -70,34 +69,40 @@ public class DefaultTopicResolver implements TopicResolver {
 	}
 
 	@Override
-	public Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, Supplier<String> defaultTopicSupplier) {
+	public Resolved<String> resolveTopic(@Nullable String userSpecifiedTopic, Supplier<String> defaultTopicSupplier) {
 		if (StringUtils.hasText(userSpecifiedTopic)) {
-			return Optional.of(userSpecifiedTopic);
+			return Resolved.of(userSpecifiedTopic);
 		}
-		return Optional.ofNullable(defaultTopicSupplier.get());
+		String defaultTopic = defaultTopicSupplier.get();
+		if (defaultTopic == null) {
+			return Resolved.failed("Topic must be specified when no default topic is configured");
+		}
+		return Resolved.of(defaultTopic);
 	}
 
 	@Override
-	public <T> Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable T message,
+	public <T> Resolved<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable T message,
 			Supplier<String> defaultTopicSupplier) {
 		return doResolveTopic(userSpecifiedTopic, message != null ? message.getClass() : null, defaultTopicSupplier);
 	}
 
 	@Override
-	public Optional<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
+	public Resolved<String> resolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
 			Supplier<String> defaultTopicSupplier) {
 		return doResolveTopic(userSpecifiedTopic, messageType, defaultTopicSupplier);
 	}
 
-	private Optional<String> doResolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
+	protected Resolved<String> doResolveTopic(@Nullable String userSpecifiedTopic, @Nullable Class<?> messageType,
 			Supplier<String> defaultTopicSupplier) {
 		if (StringUtils.hasText(userSpecifiedTopic)) {
-			return Optional.of(userSpecifiedTopic);
+			return Resolved.of(userSpecifiedTopic);
 		}
 		if (messageType == null) {
-			return Optional.empty();
+			return Resolved.failed("Topic must be specified when the message is null");
 		}
-		return Optional.ofNullable(this.customTopicMappings.getOrDefault(messageType, defaultTopicSupplier.get()));
+		String topic = this.customTopicMappings.getOrDefault(messageType, defaultTopicSupplier.get());
+		return topic == null ? Resolved.failed("Topic must be specified when no default topic is configured")
+				: Resolved.of(topic);
 	}
 
 }

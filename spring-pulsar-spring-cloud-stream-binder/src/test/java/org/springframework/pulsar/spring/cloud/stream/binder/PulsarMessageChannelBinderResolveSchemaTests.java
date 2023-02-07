@@ -17,9 +17,13 @@
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +35,7 @@ import org.junit.jupiter.params.provider.EnumSource.Mode;
 import org.springframework.core.ResolvableType;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.Resolved;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
 
@@ -50,21 +55,24 @@ public class PulsarMessageChannelBinderResolveSchemaTests {
 	@ParameterizedTest
 	@EnumSource(mode = Mode.MATCH_NONE, names = "^(AUTO.*|AVRO|JSON|KEY_VALUE|NONE|PROTOBUF.*)$")
 	void primitiveSchemaTypes(SchemaType schemaType) {
+		doReturn(Resolved.of(Schema.STRING)).when(resolver).resolveSchema(schemaType, null);
 		binder.resolveSchema(schemaType, null, null, null);
-		verify(resolver).getSchema(schemaType, null);
+		verify(resolver).resolveSchema(schemaType, null);
 	}
 
 	@ParameterizedTest
 	@EnumSource(mode = Mode.MATCH_ALL, names = "^(JSON|AVRO|PROTOBUF)$")
 	void structSchemaTypes(SchemaType schemaType) {
+		doReturn(Resolved.of(Schema.STRING)).when(resolver).resolveSchema(eq(schemaType), any());
 		binder.resolveSchema(schemaType, Foo.class, null, null);
-		verify(resolver).getSchema(schemaType, ResolvableType.forClass(Foo.class));
+		verify(resolver).resolveSchema(schemaType, ResolvableType.forClass(Foo.class));
 	}
 
 	@Test
 	void keyValueSchemaType() {
+		doReturn(Resolved.of(Schema.STRING)).when(resolver).resolveSchema(eq(SchemaType.KEY_VALUE), any());
 		binder.resolveSchema(SchemaType.KEY_VALUE, null, Foo.class, Bar.class);
-		verify(resolver).getSchema(SchemaType.KEY_VALUE,
+		verify(resolver).resolveSchema(SchemaType.KEY_VALUE,
 				ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Bar.class));
 	}
 
@@ -94,21 +102,24 @@ public class PulsarMessageChannelBinderResolveSchemaTests {
 
 		@Test
 		void withMesssageType() {
+			doReturn(Resolved.of(Schema.STRING)).when(resolver).resolveSchema(eq(SchemaType.NONE), any());
 			binder.resolveSchema(SchemaType.NONE, Foo.class, null, null);
-			verify(resolver).getSchema(SchemaType.NONE, ResolvableType.forClass(Foo.class));
+			verify(resolver).resolveSchema(SchemaType.NONE, ResolvableType.forClass(Foo.class));
 		}
 
 		@Test
 		void withKeyAndValueTypes() {
+			doReturn(Resolved.of(Schema.STRING)).when(resolver).resolveSchema(eq(SchemaType.NONE), any());
 			binder.resolveSchema(SchemaType.NONE, null, Foo.class, Bar.class);
-			verify(resolver).getSchema(SchemaType.NONE,
+			verify(resolver).resolveSchema(SchemaType.NONE,
 					ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Bar.class));
 		}
 
 		@Test
 		void withMessageTypeAndKeyAndValueTypes() {
+			doReturn(Resolved.of(Schema.STRING)).when(resolver).resolveSchema(eq(SchemaType.NONE), any());
 			binder.resolveSchema(SchemaType.NONE, Foo.class, String.class, Bar.class);
-			verify(resolver).getSchema(SchemaType.NONE, ResolvableType.forClass(Foo.class));
+			verify(resolver).resolveSchema(SchemaType.NONE, ResolvableType.forClass(Foo.class));
 		}
 
 		@Test

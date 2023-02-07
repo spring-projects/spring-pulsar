@@ -19,7 +19,6 @@ package org.springframework.pulsar.core;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -59,7 +58,7 @@ class DefaultTopicResolverTests {
 	@MethodSource("resolveNoMessageInfoProvider")
 	void resolveNoMessageInfo(String testName, @Nullable String userTopic, @Nullable String defaultTopic,
 			@Nullable String expectedTopic) {
-		assertThatTopicIsExpected(resolver.resolveTopic(userTopic, () -> defaultTopic), expectedTopic);
+		assertThat(resolver.resolveTopic(userTopic, () -> defaultTopic).get().orElse(null)).isEqualTo(expectedTopic);
 	}
 
 	static Stream<Arguments> resolveNoMessageInfoProvider() {
@@ -77,7 +76,8 @@ class DefaultTopicResolverTests {
 	@MethodSource("resolveByMessageInstanceProvider")
 	<T> void resolveByMessageInstance(String testName, @Nullable String userTopic, T message,
 			@Nullable String defaultTopic, @Nullable String expectedTopic) {
-		assertThatTopicIsExpected(resolver.resolveTopic(userTopic, message, () -> defaultTopic), expectedTopic);
+		assertThat(resolver.resolveTopic(userTopic, message, () -> defaultTopic).get().orElse(null))
+				.isEqualTo(expectedTopic);
 	}
 
 	static Stream<Arguments> resolveByMessageInstanceProvider() {
@@ -99,7 +99,8 @@ class DefaultTopicResolverTests {
 	@MethodSource("resolveByMessageTypeProvider")
 	void resolveByMessageType(String testName, @Nullable String userTopic, Class<?> messageType,
 			@Nullable String defaultTopic, @Nullable String expectedTopic) {
-		assertThatTopicIsExpected(resolver.resolveTopic(userTopic, messageType, () -> defaultTopic), expectedTopic);
+		assertThat(resolver.resolveTopic(userTopic, messageType, () -> defaultTopic).get().orElse(null))
+				.isEqualTo(expectedTopic);
 	}
 
 	static Stream<Arguments> resolveByMessageTypeProvider() {
@@ -117,15 +118,6 @@ class DefaultTopicResolverTests {
 				arguments("noMatchNoUserTopicNorDefault", null, Bar.class, null, null)
 		);
 		// @formatter:on
-	}
-
-	private void assertThatTopicIsExpected(Optional<String> actual, @Nullable String expectedTopic) {
-		if (expectedTopic == null) {
-			assertThat(actual).isEmpty();
-		}
-		else {
-			assertThat(actual).hasValue(expectedTopic);
-		}
 	}
 
 	@Nested

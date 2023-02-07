@@ -157,17 +157,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	private String resolveTopic(@Nullable String topic, @Nullable Object message) {
 		String defaultTopic = this.reactiveMessageSenderFactory.getReactiveMessageSenderSpec().getTopicName();
-		return this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow(() -> {
-			if (this.topicResolver.getClass().equals(DefaultTopicResolver.class)) {
-				if (message == null) {
-					return new IllegalArgumentException("Topic must be specified when the message is null");
-				}
-				else {
-					return new IllegalArgumentException("Topic must be specified when no default topic is configured");
-				}
-			}
-			return new IllegalArgumentException("Could not resolve the topic");
-		});
+		return this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow();
 	}
 
 	private static <T> MessageSpec<T> getMessageSpec(
@@ -181,13 +171,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 
 	private ReactiveMessageSender<T> createMessageSender(@Nullable String topic, @Nullable T message,
 			@Nullable Schema<T> schema, @Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer) {
-		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.getSchema(message) : schema;
-		if (resolvedSchema == null) {
-			if (this.schemaResolver.getClass().equals(DefaultSchemaResolver.class)) {
-				throw new IllegalArgumentException("Schema must be specified when the message is null");
-			}
-			throw new IllegalArgumentException("Cannot resolve the schema");
-		}
+		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.resolveSchema(message).orElseThrow() : schema;
 		return this.reactiveMessageSenderFactory.createSender(resolvedSchema, topic, customizer);
 	}
 

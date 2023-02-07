@@ -162,7 +162,7 @@ public class PulsarMessageChannelBinder extends
 			}
 		}
 		// TODO if schema == null then default lookup bean Schema<?> w/ name == binding
-		return this.schemaResolver.getSchema(schemaType, resolvableType);
+		return this.schemaResolver.resolveSchema(schemaType, resolvableType).get().orElse(null);
 	}
 
 	@Override

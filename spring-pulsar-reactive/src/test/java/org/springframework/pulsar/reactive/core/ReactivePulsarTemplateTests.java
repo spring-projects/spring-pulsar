@@ -47,7 +47,6 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.util.function.ThrowingConsumer;
 
 import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
 
 /**
  * Tests for {@link ReactivePulsarTemplate}.
@@ -221,16 +220,6 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				null);
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send((String) null, Schema.STRING));
-	}
-
-	@Test
-	void sendWithoutSchemaFails() {
-		ReactivePulsarSenderFactory<Foo> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
-				new MutableReactiveMessageSenderSpec(), null);
-		ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
-		// Defaulting to Schema.JSON would prevent this from failing
-		StepVerifier.create(pulsarTemplate.send("sendWithoutSchemaFails", new Foo("foo", "bar")))
-				.verifyError(ClassCastException.class);
 	}
 
 	private <T> Message<T> sendAndConsume(Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic,
