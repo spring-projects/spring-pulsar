@@ -1,6 +1,6 @@
 == Specifying Schema Information
 If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
-However, if you use any complex types (such as `JSON`, `AVRO`, `PROTOBUF`, and others), you need to specify the proper schema when invoking send operations on the `{template-class}`.
+For non-primitive types, if the Schema is not explicitly specified when invoking send operations on the `{template-class}`, the Spring Pulsar framework will try to build a `Schema.JSON` from the type.
 
 IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
 

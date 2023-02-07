@@ -139,7 +139,8 @@ class DefaultSchemaResolverTests {
 			resolver.addCustomSchemaMapping(Bar.class, Schema.STRING);
 			assertThat(resolver.getSchema(new Foo("foo1"))).isSameAs(fooSchema);
 			assertThat(resolver.getSchema(new Bar<>("bar1"))).isEqualTo(Schema.STRING);
-			assertThat(resolver.getSchema(new Zaa("zaa1"))).isEqualTo(Schema.BYTES); // default
+			assertThat(resolver.getSchema(new Zaa("zaa1")).getSchemaInfo())
+					.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
 		}
 
 	}
@@ -189,7 +190,8 @@ class DefaultSchemaResolverTests {
 		@Test
 		void customMessageTypes() {
 			assertThat(resolver.getSchema(Foo.class, false)).isNull();
-			assertThat(resolver.getSchema(Foo.class, true)).isEqualTo(Schema.BYTES);
+			assertThat(resolver.getSchema(Foo.class, true).getSchemaInfo())
+					.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
 			resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 			assertThat(resolver.getSchema(Foo.class, false)).isEqualTo(Schema.STRING);
 			assertThat(resolver.getSchema(Bar.class, false)).isNull();
@@ -305,13 +307,15 @@ class DefaultSchemaResolverTests {
 			}
 
 			@Test
-			void customKeyValueMessageTypeDefaultsToBytesSchema() {
-				ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Bar.class);
+			void customKeyValueMessageTypeDefaultsToJSONSchema() {
+				ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Zaa.class);
 				assertThat(resolver.getSchema(SchemaType.NONE, kvType))
 						.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
 						.satisfies((keyValueSchema -> {
-							assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.BYTES);
-							assertThat(keyValueSchema.getValueSchema()).isEqualTo(Schema.BYTES);
+							assertThat(keyValueSchema.getKeySchema().getSchemaInfo())
+									.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
+							assertThat(keyValueSchema.getValueSchema().getSchemaInfo())
+									.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
 							assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
 						}));
 			}

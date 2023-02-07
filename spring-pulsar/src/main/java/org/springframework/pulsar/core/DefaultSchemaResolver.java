@@ -39,6 +39,7 @@ import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.ResolvableType;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 
 import com.google.protobuf.GeneratedMessageV3;
@@ -55,6 +56,8 @@ import com.google.protobuf.GeneratedMessageV3;
  * @author Chris Bono
  */
 public class DefaultSchemaResolver implements SchemaResolver {
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private static final Map<Class<?>, Schema<?>> BASE_SCHEMA_MAPPINGS = new HashMap<>();
 	static {
@@ -129,8 +132,20 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	}
 
 	@Nullable
-	private Schema<?> getCustomSchemaOrMaybeDefault(Class<?> messageClass, boolean returnDefault) {
-		return this.customSchemaMappings.getOrDefault(messageClass, (returnDefault ? Schema.BYTES : null));
+	protected Schema<?> getCustomSchemaOrMaybeDefault(Class<?> messageClass, boolean returnDefault) {
+		Schema<?> schema = this.customSchemaMappings.get(messageClass);
+		if (schema == null && returnDefault) {
+			if (messageClass != null) {
+				try {
+					return Schema.JSON(messageClass);
+				}
+				catch (Exception e) {
+					this.logger.debug(e, "Failed to create JSON schema for " + messageClass.getName());
+				}
+			}
+			return Schema.BYTES;
+		}
+		return schema;
 	}
 
 	@Override
