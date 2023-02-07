@@ -41,6 +41,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
+import org.apache.pulsar.client.impl.conf.ReaderConfigurationData;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,7 @@ import org.springframework.pulsar.autoconfigure.PulsarProperties.TypeMapping;
  *
  * @author Chris Bono
  * @author Christophe Bornet
+ * @author Soby Chacko
  */
 public class PulsarPropertiesTests {
 
@@ -499,6 +501,40 @@ public class PulsarPropertiesTests {
 			assertThat(properties.getFunction().getFailFast()).isFalse();
 			assertThat(properties.getFunction().getPropagateFailures()).isFalse();
 			assertThat(properties.getFunction().getPropagateStopFailures()).isTrue();
+		}
+
+	}
+
+	@Nested
+	class ReaderPropertiesTests {
+
+		@Test
+		void readerProperties() {
+			Map<String, String> props = new HashMap<>();
+
+			props.put("spring.pulsar.reader.topic-names", "my-topic");
+			props.put("spring.pulsar.reader.receiver-queue-size", "100");
+			props.put("spring.pulsar.reader.reader-name", "my-reader");
+			props.put("spring.pulsar.reader.subscription-name", "my-subscription");
+			props.put("spring.pulsar.reader.subscription-role-prefix", "sub-role");
+			props.put("spring.pulsar.reader.read-compacted", "true");
+			props.put("spring.pulsar.reader.reset-include-head", "true");
+			bind(props);
+
+			Map<String, Object> readerProps = properties.buildReaderProperties();
+
+			// Verify that the props can be loaded in a ReaderBuilder
+			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(readerProps,
+					new ReaderConfigurationData<>(), ReaderConfigurationData.class));
+
+			assertThat(readerProps)
+					.hasEntrySatisfying("topicName",
+							topics -> assertThat(topics).asInstanceOf(InstanceOfAssertFactories.array(String[].class))
+									.containsExactly("my-topic"))
+					.containsEntry("receiverQueueSize", 100).containsEntry("readerName", "my-reader")
+					.containsEntry("subscriptionName", "my-subscription")
+					.containsEntry("subscriptionRolePrefix", "sub-role").containsEntry("readCompacted", true)
+					.containsEntry("resetIncludeHead", true);
 		}
 
 	}
