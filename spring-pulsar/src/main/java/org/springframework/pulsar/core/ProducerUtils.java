@@ -16,13 +16,9 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Optional;
-
 import org.apache.pulsar.client.api.Producer;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
-import org.springframework.util.StringUtils;
 
 /**
  * Common utilities used by producer components.
@@ -36,15 +32,6 @@ final class ProducerUtils {
 
 	static <T> String formatProducer(Producer<T> producer) {
 		return "(%s:%s)".formatted(producer.getProducerName(), producer.getTopic());
-	}
-
-	static <T> String resolveTopicName(@Nullable String userSpecifiedTopic, PulsarProducerFactory<T> producerFactory) {
-		if (StringUtils.hasText(userSpecifiedTopic)) {
-			return userSpecifiedTopic;
-		}
-		return Optional.ofNullable(producerFactory.getProducerConfig().get("topicName")).map(Object::toString)
-				.orElseThrow(() -> new IllegalArgumentException(
-						"Topic must be specified when no default topic is configured"));
 	}
 
 	static <T> void closeProducerAsync(Producer<T> producer, LogAccessor logger) {

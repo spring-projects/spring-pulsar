@@ -39,6 +39,7 @@ import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
@@ -79,7 +80,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageSenderSpec prodConfig = new MutableReactiveMessageSenderSpec();
 		prodConfig.setTopicName(topic);
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
-				reactivePulsarClient, prodConfig, null);
+				reactivePulsarClient, prodConfig, null, new DefaultTopicResolver());
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
 		pulsarTemplate.send("hello john doe").subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -111,7 +112,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageSenderSpec prodConfig = new MutableReactiveMessageSenderSpec();
 		prodConfig.setTopicName(topic);
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
-				reactivePulsarClient, prodConfig, null);
+				reactivePulsarClient, prodConfig, null, new DefaultTopicResolver());
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
 		Flux.range(0, 5).map(i -> "hello john doe" + i).as(pulsarTemplate::send).subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -150,7 +151,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageSenderSpec prodConfig = new MutableReactiveMessageSenderSpec();
 		prodConfig.setTopicName(topic);
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
-				reactivePulsarClient, prodConfig, null);
+				reactivePulsarClient, prodConfig, null, new DefaultTopicResolver());
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
 		pulsarTemplate.send("hello john doe").subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -259,7 +260,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageSenderSpec prodConfig = new MutableReactiveMessageSenderSpec();
 		prodConfig.setTopicName(topic);
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
-				reactivePulsarClient, prodConfig, null);
+				reactivePulsarClient, prodConfig, null, new DefaultTopicResolver());
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
 		pulsarTemplate.send("hello john doe").subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -305,7 +306,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		prodConfig.setBatchingEnabled(false);
 		prodConfig.setTopicName(topic);
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
-				reactivePulsarClient, prodConfig, null);
+				reactivePulsarClient, prodConfig, null, new DefaultTopicResolver());
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
 		Flux.range(0, 5).map(i -> "hello john doe" + i).as(pulsarTemplate::send).subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();

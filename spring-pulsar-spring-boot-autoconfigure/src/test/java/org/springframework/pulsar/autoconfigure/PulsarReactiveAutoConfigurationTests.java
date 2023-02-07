@@ -50,6 +50,7 @@ import org.springframework.boot.test.context.assertj.AssertableApplicationContex
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
@@ -69,6 +70,7 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarContainerPrope
  * Autoconfiguration tests for {@link PulsarReactiveAutoConfiguration}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 @SuppressWarnings("unchecked")
 class PulsarReactiveAutoConfigurationTests {
@@ -201,6 +203,9 @@ class PulsarReactiveAutoConfigurationTests {
 								.extracting("reactiveMessageSenderCache",
 										InstanceOfAssertFactories.type(ReactiveMessageSenderCache.class))
 								.isSameAs(cache);
+						senderFactory.extracting("topicResolver", InstanceOfAssertFactories.type(TopicResolver.class))
+								.isSameAs(context.getBean(TopicResolver.class));
+
 					}));
 		}
 	}

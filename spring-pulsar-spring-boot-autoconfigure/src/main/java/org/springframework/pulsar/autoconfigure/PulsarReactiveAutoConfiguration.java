@@ -93,9 +93,9 @@ public class PulsarReactiveAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public ReactivePulsarSenderFactory<?> reactivePulsarSenderFactory(ReactivePulsarClient pulsarReactivePulsarClient,
-			ObjectProvider<ReactiveMessageSenderCache> cache) {
+			ObjectProvider<ReactiveMessageSenderCache> cache, TopicResolver topicResolver) {
 		return new DefaultReactivePulsarSenderFactory<>(pulsarReactivePulsarClient,
-				this.properties.buildReactiveMessageSenderSpec(), cache.getIfAvailable());
+				this.properties.buildReactiveMessageSenderSpec(), cache.getIfAvailable(), topicResolver);
 	}
 
 	@Bean

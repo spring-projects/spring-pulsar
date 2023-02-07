@@ -86,16 +86,18 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "false")
-	public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient) {
-		return new DefaultPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties());
+	public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient, TopicResolver topicResolver) {
+		return new DefaultPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties(),
+				topicResolver);
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "true", matchIfMissing = true)
-	public PulsarProducerFactory<?> cachingPulsarProducerFactory(PulsarClient pulsarClient) {
+	public PulsarProducerFactory<?> cachingPulsarProducerFactory(PulsarClient pulsarClient,
+			TopicResolver topicResolver) {
 		return new CachingPulsarProducerFactory<>(pulsarClient, this.properties.buildProducerProperties(),
-				this.properties.getProducer().getCache().getExpireAfterAccess(),
+				topicResolver, this.properties.getProducer().getCache().getExpireAfterAccess(),
 				this.properties.getProducer().getCache().getMaximumSize(),
 				this.properties.getProducer().getCache().getInitialCapacity());
 	}

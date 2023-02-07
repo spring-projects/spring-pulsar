@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -463,6 +464,22 @@ class PulsarAutoConfigurationTests {
 							.extracting("producerCache").extracting("cache")
 							.hasFieldOrPropertyWithValue("maximum", 5150L)
 							.hasFieldOrPropertyWithValue("expiresAfterAccessNanos", TimeUnit.SECONDS.toNanos(100))));
+		}
+
+		@Test
+		void beansAreInjectedInNonCachingProducerFactory() {
+			contextRunner.withPropertyValues("spring.pulsar.producer.cache.enabled=false")
+					.run((context -> assertThat(context).hasNotFailed().getBean(DefaultPulsarProducerFactory.class)
+							.hasFieldOrPropertyWithValue("pulsarClient", context.getBean(PulsarClient.class))
+							.hasFieldOrPropertyWithValue("topicResolver", context.getBean(TopicResolver.class))));
+		}
+
+		@Test
+		void beansAreInjectedInCachingProducerFactory() {
+			contextRunner.withPropertyValues("spring.pulsar.producer.cache.enabled=true")
+					.run((context -> assertThat(context).hasNotFailed().getBean(CachingPulsarProducerFactory.class)
+							.hasFieldOrPropertyWithValue("pulsarClient", context.getBean(PulsarClient.class))
+							.hasFieldOrPropertyWithValue("topicResolver", context.getBean(TopicResolver.class))));
 		}
 
 		private void assertHasProducerFactoryOfType(Class<?> producerFactoryType,

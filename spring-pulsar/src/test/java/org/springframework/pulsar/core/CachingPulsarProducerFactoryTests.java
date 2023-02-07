@@ -186,7 +186,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	@Test
 	void producerEvictedFromCache() throws PulsarClientException {
 		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient,
-				Collections.emptyMap(), Duration.ofSeconds(3L), 10L, 2);
+				Collections.emptyMap(), new DefaultTopicResolver(), Duration.ofSeconds(3L), 10L, 2);
 		var actualProducer = actualProducer(producerFactory.createProducer(schema, "topic1"));
 		var cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
 		var producerCache = getAssertedProducerCache(producerFactory, Collections.singletonList(cacheKey));
@@ -232,7 +232,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			Map<String, Object> producerConfig) {
 		var producerFactory = new CachingPulsarProducerFactory<String>(pulsarClient, producerConfig,
-				Duration.ofMinutes(5L), 30L, 2);
+				new DefaultTopicResolver(), Duration.ofMinutes(5L), 30L, 2);
 		producerFactories.add(producerFactory);
 		return producerFactory;
 	}

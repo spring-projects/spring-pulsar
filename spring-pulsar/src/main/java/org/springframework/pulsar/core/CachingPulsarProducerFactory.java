@@ -73,13 +73,15 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	 * configuration.
 	 * @param pulsarClient the client used to create the producers
 	 * @param producerConfig the configuration to use when creating a producer
+	 * @param topicResolver the topic resolver to use
 	 * @param cacheExpireAfterAccess time period to expire unused entries in the cache
 	 * @param cacheMaximumSize maximum size of cache (entries)
 	 * @param cacheInitialCapacity the initial size of cache
 	 */
 	public CachingPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> producerConfig,
-			Duration cacheExpireAfterAccess, Long cacheMaximumSize, Integer cacheInitialCapacity) {
-		super(pulsarClient, producerConfig);
+			TopicResolver topicResolver, Duration cacheExpireAfterAccess, Long cacheMaximumSize,
+			Integer cacheInitialCapacity) {
+		super(pulsarClient, producerConfig, topicResolver);
 		this.producerCache = Caffeine.newBuilder().expireAfterAccess(cacheExpireAfterAccess)
 				.maximumSize(cacheMaximumSize).initialCapacity(cacheInitialCapacity)
 				.scheduler(Scheduler.systemScheduler()).evictionListener(
@@ -95,7 +97,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolveTopicName = ProducerUtils.resolveTopicName(topic, this);
+		String resolveTopicName = resolveTopicName(topic);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, resolveTopicName,
 				encryptionKeys == null ? null : new HashSet<>(encryptionKeys), customizers);
 		return this.producerCache.get(producerCacheKey,
