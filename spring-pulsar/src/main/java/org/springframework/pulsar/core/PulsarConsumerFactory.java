@@ -49,6 +49,27 @@ public interface PulsarConsumerFactory<T> {
 	 * topic(s) or {@code null} to use the default configured subscription name. Beware
 	 * that specifying {@code null} when no default subscription name is configured will
 	 * result in an exception
+	 * @param customizer an optional customizer to apply to the consumer builder. Note
+	 * that the customizer is applied last and has the potential for overriding any
+	 * specified parameters or default properties.
+	 * @return the consumer
+	 * @throws PulsarClientException if any error occurs
+	 */
+	Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics, @Nullable String subscriptionName,
+			ConsumerBuilderCustomizer<T> customizer) throws PulsarClientException;
+
+	/**
+	 * Create a consumer.
+	 * @param schema the schema of the messages to be sent
+	 * @param topics the topics the consumer will subscribe to, replacing the default
+	 * topics, or {@code null} to use the default topics. Beware that using
+	 * {@link ConsumerBuilder#topic} or {@link ConsumerBuilder#topics} will add to the
+	 * default topics, not override them. Also beware that specifying {@code null} when no
+	 * default topic is configured will result in an exception.
+	 * @param subscriptionName the name to use for the subscription to the consumed
+	 * topic(s) or {@code null} to use the default configured subscription name. Beware
+	 * that specifying {@code null} when no default subscription name is configured will
+	 * result in an exception
 	 * @param metadataProperties the metadata properties to attach to the consumer,
 	 * replacing the default metadata properties, or {@code null} to use the default
 	 * metadata properties. Beware that using {@link ConsumerBuilder#property} or

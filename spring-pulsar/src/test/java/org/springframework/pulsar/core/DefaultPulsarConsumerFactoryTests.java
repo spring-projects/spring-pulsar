@@ -75,6 +75,13 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, Collections.emptyMap());
 		}
 
+		@Test
+		void withoutSchema() {
+			assertThatThrownBy(
+					() -> consumerFactory.createConsumer(null, Collections.singletonList("topic0"), null, null, null))
+							.isInstanceOf(NullPointerException.class).hasMessageContaining("Schema must be specified");
+		}
+
 		@SuppressWarnings("resource")
 		@Test
 		void withSchemaOnly() {
@@ -120,6 +127,14 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		}
 
 		@Test
+		void withSingleCustomizerApi() throws PulsarClientException {
+			try (var consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic0"),
+					"topic0-sub", (cb) -> cb.consumerName("foo-consumer"))) {
+				assertThat(consumer.getConsumerName()).isEqualTo("foo-consumer");
+			}
+		}
+
+		@Test
 		void customizesAreAppliedLast() throws PulsarClientException {
 			try (var consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic0"),
 					"topic0-sub", null, List.of((cb) -> cb.subscriptionName("topic0-sub2")))) {
@@ -160,6 +175,13 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 			defaultConfig.put("properties", defaultMetadataProperties);
 			defaultConfig.put("subscriptionName", defaultSubscription);
 			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, defaultConfig);
+		}
+
+		@Test
+		void withoutSchema() {
+			assertThatThrownBy(
+					() -> consumerFactory.createConsumer(null, Collections.singletonList("topic0"), null, null, null))
+							.isInstanceOf(NullPointerException.class).hasMessageContaining("Schema must be specified");
 		}
 
 		@Test
