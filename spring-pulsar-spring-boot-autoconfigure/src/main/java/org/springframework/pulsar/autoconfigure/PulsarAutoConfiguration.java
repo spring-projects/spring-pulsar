@@ -35,11 +35,13 @@ import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
@@ -155,6 +157,12 @@ public class PulsarAutoConfiguration {
 		return new PulsarFunctionAdministration(pulsarAdministration, pulsarFunctions, pulsarSinks, pulsarSources,
 				this.properties.getFunction().getFailFast(), this.properties.getFunction().getPropagateFailures(),
 				this.properties.getFunction().getPropagateStopFailures());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public PulsarReaderFactory<?> pulsarReaderFactory(PulsarClient pulsarClient) {
+		return new DefaultPulsarReaderFactory<>(pulsarClient, this.properties.buildReaderProperties());
 	}
 
 }

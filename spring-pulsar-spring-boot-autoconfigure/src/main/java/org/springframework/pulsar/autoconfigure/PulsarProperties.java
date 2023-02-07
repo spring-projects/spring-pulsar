@@ -2185,7 +2185,7 @@ public class PulsarProperties {
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 
-			map.from(this::getTopicNames).to(properties.in("topicName"));
+			map.from(this::getTopicNames).to(properties.in("topicNames"));
 			map.from(this::getReceiverQueueSize).to(properties.in("receiverQueueSize"));
 			map.from(this::getReaderName).to(properties.in("readerName"));
 			map.from(this::getSubscriptionName).to(properties.in("subscriptionName"));
