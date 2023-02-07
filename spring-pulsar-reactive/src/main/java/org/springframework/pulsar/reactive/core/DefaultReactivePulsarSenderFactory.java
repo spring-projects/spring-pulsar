@@ -33,6 +33,8 @@ import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.DefaultTopicResolver;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -53,20 +55,23 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	@Nullable
 	private final ReactiveMessageSenderCache reactiveMessageSenderCache;
 
+	private TopicResolver topicResolver;
+
 	public DefaultReactivePulsarSenderFactory(PulsarClient pulsarClient,
 			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
 			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache) {
 		this(AdaptedReactivePulsarClientFactory.create(pulsarClient), reactiveMessageSenderSpec,
-				reactiveMessageSenderCache);
+				reactiveMessageSenderCache, new DefaultTopicResolver());
 	}
 
 	public DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient,
 			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache) {
+			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache, TopicResolver topicResolver) {
 		this.reactivePulsarClient = reactivePulsarClient;
 		this.reactiveMessageSenderSpec = new ImmutableReactiveMessageSenderSpec(
 				reactiveMessageSenderSpec != null ? reactiveMessageSenderSpec : new MutableReactiveMessageSenderSpec());
 		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
+		this.topicResolver = topicResolver;
 	}
 
 	@Override
@@ -90,8 +95,12 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolvedTopic = ReactiveMessageSenderUtils.resolveTopicName(topic, this);
+		String resolvedTopic = this.topicResolver
+				.resolveTopic(topic, () -> getReactiveMessageSenderSpec().getTopicName())
+				.orElseThrow(() -> new IllegalArgumentException(
+						"Topic must be specified when no default topic is configured"));
 		this.logger.trace(() -> "Creating reactive message sender for '%s' topic".formatted(resolvedTopic));
+
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
 		sender.applySpec(this.reactiveMessageSenderSpec);
 		sender.topic(resolvedTopic);

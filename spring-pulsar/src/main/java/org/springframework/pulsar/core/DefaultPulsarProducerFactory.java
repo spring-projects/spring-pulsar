@@ -53,9 +53,17 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	private final PulsarClient pulsarClient;
 
+	private final TopicResolver topicResolver;
+
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> config) {
+		this(pulsarClient, config, new DefaultTopicResolver());
+	}
+
+	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> config,
+			TopicResolver topicResolver) {
 		this.pulsarClient = pulsarClient;
 		this.producerConfig = Collections.unmodifiableMap(config);
+		this.topicResolver = topicResolver;
 	}
 
 	@Override
@@ -94,7 +102,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolvedTopic = ProducerUtils.resolveTopicName(topic, this);
+		String resolvedTopic = resolveTopicName(topic);
 		this.logger.trace(() -> "Creating producer for '%s' topic".formatted(resolvedTopic));
 		ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
 
@@ -114,6 +122,12 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		producerBuilder.topic(resolvedTopic);
 
 		return producerBuilder.create();
+	}
+
+	protected String resolveTopicName(String userSpecifiedTopic) {
+		String defaultTopic = Objects.toString(getProducerConfig().get("topicName"), null);
+		return this.topicResolver.resolveTopic(userSpecifiedTopic, () -> defaultTopic).orElseThrow(
+				() -> new IllegalArgumentException("Topic must be specified when no default topic is configured"));
 	}
 
 	@Override
