@@ -39,7 +39,6 @@ import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
-import org.apache.pulsar.shade.org.apache.avro.AvroTypeException;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -140,10 +139,8 @@ class DefaultSchemaResolverTests {
 			resolver.addCustomSchemaMapping(Bar.class, Schema.STRING);
 			assertThat(resolver.getSchema(new Foo("foo1"))).isSameAs(fooSchema);
 			assertThat(resolver.getSchema(new Bar<>("bar1"))).isEqualTo(Schema.STRING);
-			assertThat(resolver.getSchema(new Zaa("zaa1")).getSchemaInfo()).satisfies(schemaInfo -> {
-				assertThat(schemaInfo.getType()).isEqualTo(SchemaType.JSON);
-				assertThat(schemaInfo.getSchema()).isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo().getSchema());
-			});
+			assertThat(resolver.getSchema(new Zaa("zaa1")).getSchemaInfo())
+					.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
 		}
 
 	}
@@ -198,7 +195,7 @@ class DefaultSchemaResolverTests {
 			resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 			assertThat(resolver.getSchema(Foo.class, false)).isEqualTo(Schema.STRING);
 			assertThat(resolver.getSchema(Bar.class, false)).isNull();
-			assertThatExceptionOfType(AvroTypeException.class).isThrownBy(() -> resolver.getSchema(Bar.class, true));
+			assertThat(resolver.getSchema(Bar.class, true)).isEqualTo(Schema.BYTES);
 		}
 
 	}
