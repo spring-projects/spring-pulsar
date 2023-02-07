@@ -79,6 +79,8 @@ public class PulsarProperties {
 
 	private final Admin admin = new Admin();
 
+	private final Reader reader = new Reader();
+
 	private final Defaults defaults = new Defaults();
 
 	public Consumer getConsumer() {
@@ -109,6 +111,10 @@ public class PulsarProperties {
 		return this.admin;
 	}
 
+	public Reader getReader() {
+		return this.reader;
+	}
+
 	public Defaults getDefaults() {
 		return this.defaults;
 	}
@@ -127,6 +133,10 @@ public class PulsarProperties {
 
 	public Map<String, Object> buildAdminProperties() {
 		return new HashMap<>(this.admin.buildProperties());
+	}
+
+	public Map<String, Object> buildReaderProperties() {
+		return new HashMap<>(this.reader.buildProperties());
 	}
 
 	public static class Consumer {
@@ -2069,6 +2079,120 @@ public class PulsarProperties {
 					.to(properties.in("autoCertRefreshSeconds"));
 
 			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
+
+			return properties;
+		}
+
+	}
+
+	public static class Reader {
+
+		/**
+		 * Topic name.
+		 */
+		private String[] topicNames;
+
+		/**
+		 * Size of a consumer's receiver queue.
+		 */
+		private Integer receiverQueueSize;
+
+		/**
+		 * Reader name.
+		 */
+		private String readerName;
+
+		/**
+		 * Subscription name.
+		 */
+		private String subscriptionName;
+
+		/**
+		 * Prefix of subscription role.
+		 */
+		private String subscriptionRolePrefix;
+
+		/**
+		 * If enabled, a consumer reads messages from a compacted topic rather than a full
+		 * message backlog of a topic.
+		 */
+		private Boolean readCompacted;
+
+		/**
+		 * If set to true, the first message to be returned is the one specified by
+		 * messageId.
+		 */
+		private Boolean resetIncludeHead;
+
+		public String[] getTopicNames() {
+			return this.topicNames;
+		}
+
+		public void setTopicNames(String[] topicNames) {
+			this.topicNames = topicNames;
+		}
+
+		public Integer getReceiverQueueSize() {
+			return this.receiverQueueSize;
+		}
+
+		public void setReceiverQueueSize(Integer receiverQueueSize) {
+			this.receiverQueueSize = receiverQueueSize;
+		}
+
+		public String getReaderName() {
+			return this.readerName;
+		}
+
+		public void setReaderName(String readerName) {
+			this.readerName = readerName;
+		}
+
+		public String getSubscriptionName() {
+			return this.subscriptionName;
+		}
+
+		public void setSubscriptionName(String subscriptionName) {
+			this.subscriptionName = subscriptionName;
+		}
+
+		public String getSubscriptionRolePrefix() {
+			return this.subscriptionRolePrefix;
+		}
+
+		public void setSubscriptionRolePrefix(String subscriptionRolePrefix) {
+			this.subscriptionRolePrefix = subscriptionRolePrefix;
+		}
+
+		public Boolean getReadCompacted() {
+			return this.readCompacted;
+		}
+
+		public void setReadCompacted(Boolean readCompacted) {
+			this.readCompacted = readCompacted;
+		}
+
+		public Boolean getResetIncludeHead() {
+			return this.resetIncludeHead;
+		}
+
+		public void setResetIncludeHead(Boolean resetIncludeHead) {
+			this.resetIncludeHead = resetIncludeHead;
+		}
+
+		public Map<String, Object> buildProperties() {
+
+			PulsarProperties.Properties properties = new Properties();
+
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+
+			map.from(this::getTopicNames).to(properties.in("topicName"));
+			map.from(this::getReceiverQueueSize).to(properties.in("receiverQueueSize"));
+			map.from(this::getReaderName).to(properties.in("readerName"));
+			map.from(this::getSubscriptionName).to(properties.in("subscriptionName"));
+			map.from(this::getSubscriptionRolePrefix).to(properties.in("subscriptionRolePrefix"));
+			map.from(this::getReadCompacted).to(properties.in("readCompacted"));
+			map.from(this::getResetIncludeHead).to(properties.in("resetIncludeHead"));
 
 			return properties;
 		}

@@ -41,6 +41,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
+import org.apache.pulsar.client.impl.conf.ReaderConfigurationData;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -499,6 +500,40 @@ public class PulsarPropertiesTests {
 			assertThat(properties.getFunction().getFailFast()).isFalse();
 			assertThat(properties.getFunction().getPropagateFailures()).isFalse();
 			assertThat(properties.getFunction().getPropagateStopFailures()).isTrue();
+		}
+
+	}
+
+	@Nested
+	class ReaderPropertiesTests {
+
+		@Test
+		void readerProperties() {
+			Map<String, String> props = new HashMap<>();
+
+			props.put("spring.pulsar.reader.topic-names", "my-topic");
+			props.put("spring.pulsar.reader.receiverQueueSize", "100");
+			props.put("spring.pulsar.reader.readerName", "my-reader");
+			props.put("spring.pulsar.reader.subscriptionName", "my-subscription");
+			props.put("spring.pulsar.reader.subscriptionRolePrefix", "sub-role");
+			props.put("spring.pulsar.reader.readCompacted", "true");
+			props.put("spring.pulsar.reader.resetIncludeHead", "true");
+			bind(props);
+
+			Map<String, Object> readerProps = properties.buildReaderProperties();
+
+			// Verify that the props can be loaded in a ReaderBuilder
+			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(readerProps,
+					new ReaderConfigurationData<>(), ReaderConfigurationData.class));
+
+			assertThat(readerProps)
+					.hasEntrySatisfying("topicName",
+							topics -> assertThat(topics).asInstanceOf(InstanceOfAssertFactories.array(String[].class))
+									.containsExactly("my-topic"))
+					.containsEntry("receiverQueueSize", 100).containsEntry("readerName", "my-reader")
+					.containsEntry("subscriptionName", "my-subscription")
+					.containsEntry("subscriptionRolePrefix", "sub-role").containsEntry("readCompacted", true)
+					.containsEntry("resetIncludeHead", true);
 		}
 
 	}
