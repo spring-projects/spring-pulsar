@@ -2088,7 +2088,7 @@ public class PulsarProperties {
 	public static class Reader {
 
 		/**
-		 * Topic name.
+		 * Topic names.
 		 */
 		private String[] topicNames;
 
@@ -2113,14 +2113,13 @@ public class PulsarProperties {
 		private String subscriptionRolePrefix;
 
 		/**
-		 * If enabled, a consumer reads messages from a compacted topic rather than a full
-		 * message backlog of a topic.
+		 * Whether to read messages from a compacted topic rather than a full message
+		 * backlog of a topic.
 		 */
 		private Boolean readCompacted;
 
 		/**
-		 * If set to true, the first message to be returned is the one specified by
-		 * messageId.
+		 * Whether the first message to be returned is the one specified by messageId.
 		 */
 		private Boolean resetIncludeHead;
 

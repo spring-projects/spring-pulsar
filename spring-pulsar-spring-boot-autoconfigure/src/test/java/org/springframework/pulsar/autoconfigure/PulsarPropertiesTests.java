@@ -511,7 +511,7 @@ public class PulsarPropertiesTests {
 		void readerProperties() {
 			Map<String, String> props = new HashMap<>();
 
-			props.put("spring.pulsar.reader.topic-names", "my-topic");
+			props.put("spring.pulsar.reader.topicNames", "my-topic");
 			props.put("spring.pulsar.reader.receiverQueueSize", "100");
 			props.put("spring.pulsar.reader.readerName", "my-reader");
 			props.put("spring.pulsar.reader.subscriptionName", "my-subscription");
