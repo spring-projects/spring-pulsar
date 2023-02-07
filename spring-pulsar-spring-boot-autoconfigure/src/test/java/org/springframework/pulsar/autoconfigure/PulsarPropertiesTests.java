@@ -528,7 +528,7 @@ public class PulsarPropertiesTests {
 					new ReaderConfigurationData<>(), ReaderConfigurationData.class));
 
 			assertThat(readerProps)
-					.hasEntrySatisfying("topicName",
+					.hasEntrySatisfying("topicNames",
 							topics -> assertThat(topics).asInstanceOf(InstanceOfAssertFactories.array(String[].class))
 									.containsExactly("my-topic"))
 					.containsEntry("receiverQueueSize", 100).containsEntry("readerName", "my-reader")

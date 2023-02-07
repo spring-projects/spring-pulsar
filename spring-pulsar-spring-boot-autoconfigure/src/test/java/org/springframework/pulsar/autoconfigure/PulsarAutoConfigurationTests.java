@@ -50,11 +50,13 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
@@ -486,6 +488,35 @@ class PulsarAutoConfigurationTests {
 				AssertableApplicationContext context) {
 			assertThat(context).hasNotFailed().hasSingleBean(PulsarProducerFactory.class)
 					.getBean(PulsarProducerFactory.class).isExactlyInstanceOf(producerFactoryType);
+		}
+
+	}
+
+	@Nested
+	class ReaderFactoryAutoConfigurationTests {
+
+		@Test
+		void readerFactoryIsAutoConfiguredByDefault() {
+			contextRunner.run((context) -> assertThat(context).hasNotFailed().hasSingleBean(PulsarReaderFactory.class)
+					.getBean(PulsarReaderFactory.class).isExactlyInstanceOf(DefaultPulsarReaderFactory.class));
+		}
+
+		@Test
+		void readerFactoryCanBeConfigured() {
+			contextRunner.withPropertyValues("spring.pulsar.reader.topic-names=foo",
+					"spring.pulsar.reader.receiver-queue-size=200", "spring.pulsar.reader.reader-name=test-reader",
+					"spring.pulsar.reader.subscription-name=test-subscription",
+					"spring.pulsar.reader.subscription-role-prefix=test-prefix",
+					"spring.pulsar.reader.read-compacted=true", "spring.pulsar.reader.reset-include-head=true")
+					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarReaderFactory.class)
+							.extracting("readerConfig")
+							.hasFieldOrPropertyWithValue("topicNames", new String[] { "foo" })
+							.hasFieldOrPropertyWithValue("receiverQueueSize", 200)
+							.hasFieldOrPropertyWithValue("readerName", "test-reader")
+							.hasFieldOrPropertyWithValue("subscriptionName", "test-subscription")
+							.hasFieldOrPropertyWithValue("subscriptionRolePrefix", "test-prefix")
+							.hasFieldOrPropertyWithValue("readCompacted", true)
+							.hasFieldOrPropertyWithValue("resetIncludeHead", true)));
 		}
 
 	}
