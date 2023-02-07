@@ -79,7 +79,7 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		void withoutSchema() {
 			assertThatThrownBy(
 					() -> consumerFactory.createConsumer(null, Collections.singletonList("topic0"), null, null, null))
-							.isInstanceOf(InvalidConfigurationException.class)
+							.isInstanceOf(NullPointerException.class)
 							.hasMessageContaining("Schema must be specified");
 		}
 
@@ -182,7 +182,7 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		void withoutSchema() {
 			assertThatThrownBy(
 					() -> consumerFactory.createConsumer(null, Collections.singletonList("topic0"), null, null, null))
-							.isInstanceOf(InvalidConfigurationException.class)
+							.isInstanceOf(NullPointerException.class)
 							.hasMessageContaining("Schema must be specified");
 		}
 
