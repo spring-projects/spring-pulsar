@@ -57,6 +57,7 @@ import org.springframework.pulsar.autoconfigure.PulsarProperties.TypeMapping;
  *
  * @author Chris Bono
  * @author Christophe Bornet
+ * @author Soby Chacko
  */
 public class PulsarPropertiesTests {
 
@@ -511,13 +512,13 @@ public class PulsarPropertiesTests {
 		void readerProperties() {
 			Map<String, String> props = new HashMap<>();
 
-			props.put("spring.pulsar.reader.topicNames", "my-topic");
-			props.put("spring.pulsar.reader.receiverQueueSize", "100");
-			props.put("spring.pulsar.reader.readerName", "my-reader");
-			props.put("spring.pulsar.reader.subscriptionName", "my-subscription");
-			props.put("spring.pulsar.reader.subscriptionRolePrefix", "sub-role");
-			props.put("spring.pulsar.reader.readCompacted", "true");
-			props.put("spring.pulsar.reader.resetIncludeHead", "true");
+			props.put("spring.pulsar.reader.topic-names", "my-topic");
+			props.put("spring.pulsar.reader.receiver-queue-size", "100");
+			props.put("spring.pulsar.reader.reader-name", "my-reader");
+			props.put("spring.pulsar.reader.subscription-name", "my-subscription");
+			props.put("spring.pulsar.reader.subscription-role-prefix", "sub-role");
+			props.put("spring.pulsar.reader.read-compacted", "true");
+			props.put("spring.pulsar.reader.reset-include-head", "true");
 			bind(props);
 
 			Map<String, Object> readerProps = properties.buildReaderProperties();
