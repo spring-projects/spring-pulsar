@@ -18,6 +18,8 @@ package org.springframework.pulsar.reactive.core;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.reactive.client.api.MessageSendResult;
+import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.reactivestreams.Publisher;
 
 import org.springframework.lang.Nullable;
@@ -76,7 +78,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @return the ids assigned by the broker to the published messages in the same order
 	 * as they were sent
 	 */
-	Flux<MessageId> send(Publisher<T> messages);
+	Flux<MessageSendResult<T>> send(Publisher<MessageSpec<T>> messages);
 
 	/**
 	 * Sends multiple messages to the default topic in a reactive manner.
@@ -86,7 +88,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @return the ids assigned by the broker to the published messages in the same order
 	 * as they were sent
 	 */
-	Flux<MessageId> send(Publisher<T> messages, @Nullable Schema<T> schema);
+	Flux<MessageSendResult<T>> send(Publisher<MessageSpec<T>> messages, @Nullable Schema<T> schema);
 
 	/**
 	 * Sends multiple messages to the specified topic in a reactive manner.
@@ -96,7 +98,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @return the ids assigned by the broker to the published messages in the same order
 	 * as they were sent
 	 */
-	Flux<MessageId> send(@Nullable String topic, Publisher<T> messages);
+	Flux<MessageSendResult<T>> send(@Nullable String topic, Publisher<MessageSpec<T>> messages);
 
 	/**
 	 * Sends multiple messages to the specified topic in a reactive manner.
@@ -108,7 +110,8 @@ public interface ReactivePulsarOperations<T> {
 	 * @return the ids assigned by the broker to the published messages in the same order
 	 * as they were sent
 	 */
-	Flux<MessageId> send(@Nullable String topic, Publisher<T> messages, @Nullable Schema<T> schema);
+	Flux<MessageSendResult<T>> send(@Nullable String topic, Publisher<MessageSpec<T>> messages,
+			@Nullable Schema<T> schema);
 
 	/**
 	 * Create a {@link SendOneMessageBuilder builder} for configuring and sending a
@@ -124,7 +127,7 @@ public interface ReactivePulsarOperations<T> {
 	 * @param messages the messages to send
 	 * @return the builder to configure and send the message
 	 */
-	SendManyMessageBuilder<T> newMessages(Publisher<T> messages);
+	SendManyMessageBuilder<T> newMessages(Publisher<MessageSpec<T>> messages);
 
 	/**
 	 * Builder that can be used to configure and send a message. Provides more options
@@ -184,7 +187,7 @@ public interface ReactivePulsarOperations<T> {
 		 * @return the ids assigned by the broker to the published messages in the same
 		 * order as they were sent
 		 */
-		Flux<MessageId> send();
+		Flux<MessageSendResult<T>> send();
 
 	}
 

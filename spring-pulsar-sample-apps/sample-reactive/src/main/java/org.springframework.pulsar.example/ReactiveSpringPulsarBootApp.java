@@ -21,6 +21,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.MessageResult;
+import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +62,7 @@ public class ReactiveSpringPulsarBootApp {
 
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {
-			Flux.range(0, 10).map((i) -> "sample-message-" + i)
+			Flux.range(0, 10).map((i) -> MessageSpec.of("sample-message-" + i))
 					.as(messages -> this.reactivePulsarTemplate.send("sample-reactive-topic1", messages)).subscribe();
 		}
 
@@ -89,7 +90,7 @@ public class ReactiveSpringPulsarBootApp {
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {
 			Schema<Foo> schema = Schema.JSON(Foo.class);
-			Flux.range(0, 10).map((i) -> new Foo("Foo-" + i, "Bar-" + i))
+			Flux.range(0, 10).map((i) -> MessageSpec.of(new Foo("Foo-" + i, "Bar-" + i)))
 					.as(messages -> this.reactivePulsarTemplate.send("sample-reactive-topic2", messages, schema))
 					.subscribe();
 		}
@@ -125,7 +126,7 @@ public class ReactiveSpringPulsarBootApp {
 
 		@Bean
 		ApplicationRunner sendSimple(ReactivePulsarTemplate<String> reactivePulsarTemplate) {
-			return args -> Flux.range(0, 10).map((i) -> "msg-from-sendSimple-" + i)
+			return args -> Flux.range(0, 10).map((i) -> MessageSpec.of("msg-from-sendSimple-" + i))
 					.as(messages -> reactivePulsarTemplate.send("sample-reactive-topic3", messages)).subscribe();
 		}
 

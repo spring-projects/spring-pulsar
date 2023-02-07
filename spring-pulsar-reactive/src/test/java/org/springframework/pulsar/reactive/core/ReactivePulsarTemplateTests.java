@@ -35,6 +35,7 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -78,11 +79,12 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				}
 
 				if (useSimpleApi) {
-					pulsarTemplate.send(Flux.fromIterable(foos), Schema.JSON(Foo.class)).subscribe();
+					pulsarTemplate.send(Flux.fromIterable(foos).map(MessageSpec::of), Schema.JSON(Foo.class))
+							.subscribe();
 				}
 				else {
-					pulsarTemplate.newMessages(Flux.fromIterable(foos)).withSchema(Schema.JSON(Foo.class)).send()
-							.subscribe();
+					pulsarTemplate.newMessages(Flux.fromIterable(foos).map(MessageSpec::of))
+							.withSchema(Schema.JSON(Foo.class)).send().subscribe();
 				}
 
 				for (int i = 0; i < 10; i++) {
@@ -118,10 +120,10 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				}
 
 				if (useSimpleApi) {
-					pulsarTemplate.send(Flux.fromIterable(foos)).subscribe();
+					pulsarTemplate.send(Flux.fromIterable(foos).map(MessageSpec::of)).subscribe();
 				}
 				else {
-					pulsarTemplate.newMessages(Flux.fromIterable(foos)).send().subscribe();
+					pulsarTemplate.newMessages(Flux.fromIterable(foos).map(MessageSpec::of)).send().subscribe();
 				}
 
 				// TODO figure out if expected to not be ordered when schema not set on
@@ -174,16 +176,17 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		return Stream.of(
 				arguments("simpleApiNoSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.send(Flux.fromIterable(data)).subscribe()),
+								.send(Flux.fromIterable(data).map(MessageSpec::of)).subscribe()),
 				arguments("simpleApiWithSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.send(Flux.fromIterable(data), Schema.STRING).subscribe()),
+								.send(Flux.fromIterable(data).map(MessageSpec::of), Schema.STRING).subscribe()),
 				arguments("fluentApiNoSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.newMessages(Flux.fromIterable(data)).send().subscribe()),
+								.newMessages(Flux.fromIterable(data).map(MessageSpec::of)).send().subscribe()),
 				arguments("fluentApiWithSchema",
 						(BiConsumer<List<String>, ReactivePulsarTemplate<String>>) (data, template) -> template
-								.newMessages(Flux.fromIterable(data)).withSchema(Schema.STRING).send().subscribe()));
+								.newMessages(Flux.fromIterable(data).map(MessageSpec::of)).withSchema(Schema.STRING)
+								.send().subscribe()));
 	}
 
 	@ParameterizedTest(name = "{0}")

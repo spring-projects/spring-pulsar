@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.reactive.client.api.MessageSendResult;
 import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.MessageSpecBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
@@ -62,9 +63,10 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	}
 
 	/**
-	 * Construct a template instance with a custom schema resolver.
+	 * Construct a template instance with a custom schema resolver and a custom topic
+	 * resolver.
 	 * @param reactiveMessageSenderFactory the factory used to create the backing Pulsar
-	 * @param schemaResolver the schema resolver to use reactive senders
+	 * @param schemaResolver the schema resolver to use
 	 * @param topicResolver the topic resolver to use
 	 */
 	public ReactivePulsarTemplate(ReactivePulsarSenderFactory<T> reactiveMessageSenderFactory,
@@ -95,22 +97,23 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	}
 
 	@Override
-	public Flux<MessageId> send(Publisher<T> messages) {
+	public Flux<MessageSendResult<T>> send(Publisher<MessageSpec<T>> messages) {
 		return send(null, messages);
 	}
 
 	@Override
-	public Flux<MessageId> send(Publisher<T> messages, @Nullable Schema<T> schema) {
+	public Flux<MessageSendResult<T>> send(Publisher<MessageSpec<T>> messages, @Nullable Schema<T> schema) {
 		return doSendMany(null, Flux.from(messages), schema, null);
 	}
 
 	@Override
-	public Flux<MessageId> send(@Nullable String topic, Publisher<T> messages) {
+	public Flux<MessageSendResult<T>> send(@Nullable String topic, Publisher<MessageSpec<T>> messages) {
 		return doSendMany(topic, Flux.from(messages), null, null);
 	}
 
 	@Override
-	public Flux<MessageId> send(@Nullable String topic, Publisher<T> messages, @Nullable Schema<T> schema) {
+	public Flux<MessageSendResult<T>> send(@Nullable String topic, Publisher<MessageSpec<T>> messages,
+			@Nullable Schema<T> schema) {
 		return doSendMany(topic, Flux.from(messages), schema, null);
 	}
 
@@ -120,7 +123,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	}
 
 	@Override
-	public SendManyMessageBuilder<T> newMessages(Publisher<T> messages) {
+	public SendManyMessageBuilder<T> newMessages(Publisher<MessageSpec<T>> messages) {
 		return new SendManyMessageBuilderImpl<>(this, messages);
 	}
 
@@ -137,14 +140,15 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 		// @formatter:on
 	}
 
-	private Flux<MessageId> doSendMany(@Nullable String topic, Flux<T> messages, @Nullable Schema<T> schema,
-			@Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer) {
+	private Flux<MessageSendResult<T>> doSendMany(@Nullable String topic, Flux<MessageSpec<T>> messages,
+			@Nullable Schema<T> schema, @Nullable ReactiveMessageSenderBuilderCustomizer<T> customizer) {
 		return messages.switchOnFirst((firstSignal, messageFlux) -> {
-			T firstMessage = firstSignal.get();
+			MessageSpec<T> firstMessage = firstSignal.get();
 			if (firstMessage != null && firstSignal.isOnNext()) {
-				String topicName = resolveTopic(topic, firstMessage.getClass());
-				ReactiveMessageSender<T> sender = createMessageSender(topicName, firstMessage, schema, customizer);
-				return messageFlux.map(MessageSpec::of).as(sender::sendMany).doOnError(
+				String topicName = resolveTopic(topic, firstMessage.getValue().getClass());
+				ReactiveMessageSender<T> sender = createMessageSender(topicName, firstMessage.getValue(), schema,
+						customizer);
+				return messageFlux.as(sender::sendMany).doOnError(
 						ex -> this.logger.error(ex, () -> "Failed to send messages to '%s' topic".formatted(topicName)))
 						.doOnNext(msgId -> this.logger.trace(() -> "Sent messages to '%s' topic".formatted(topicName)));
 			}
@@ -251,15 +255,15 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	private static final class SendManyMessageBuilderImpl<T>
 			extends SendMessageBuilderImpl<SendManyMessageBuilderImpl<T>, T> implements SendManyMessageBuilder<T> {
 
-		private final Publisher<T> messages;
+		private final Publisher<MessageSpec<T>> messages;
 
-		SendManyMessageBuilderImpl(ReactivePulsarTemplate<T> template, Publisher<T> messages) {
+		SendManyMessageBuilderImpl(ReactivePulsarTemplate<T> template, Publisher<MessageSpec<T>> messages) {
 			super(template);
 			this.messages = messages;
 		}
 
 		@Override
-		public Flux<MessageId> send() {
+		public Flux<MessageSendResult<T>> send() {
 			return this.template.doSendMany(this.topic, Flux.from(this.messages), this.schema, this.senderCustomizer);
 		}
 

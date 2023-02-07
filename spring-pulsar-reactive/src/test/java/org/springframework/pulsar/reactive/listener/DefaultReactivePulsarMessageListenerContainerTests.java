@@ -31,6 +31,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.adapter.DefaultMessageGroupingFunction;
 import org.apache.pulsar.reactive.client.api.MessageResult;
+import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
@@ -113,7 +114,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
 				reactivePulsarClient, prodConfig, null);
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
-		Flux.range(0, 5).map(i -> "hello john doe" + i).as(pulsarTemplate::send).subscribe();
+		Flux.range(0, 5).map(i -> MessageSpec.of("hello john doe" + i)).as(pulsarTemplate::send).subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 		container.stop();
 		pulsarClient.close();
@@ -307,7 +308,7 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		DefaultReactivePulsarSenderFactory<String> pulsarProducerFactory = new DefaultReactivePulsarSenderFactory<>(
 				reactivePulsarClient, prodConfig, null);
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(pulsarProducerFactory);
-		Flux.range(0, 5).map(i -> "hello john doe" + i).as(pulsarTemplate::send).subscribe();
+		Flux.range(0, 5).map(i -> MessageSpec.of("hello john doe" + i)).as(pulsarTemplate::send).subscribe();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
