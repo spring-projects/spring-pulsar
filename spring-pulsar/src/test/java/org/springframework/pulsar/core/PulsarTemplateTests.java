@@ -227,18 +227,13 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
 	}
 
-	@ParameterizedTest(name = "{0}")
-	@MethodSource("sendMessageFailedTestProvider")
-	void sendMessageFailed(String testName, ThrowingConsumer<PulsarTemplate<String>> sendFunction) {
-		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client, new HashMap<>());
+	@Test
+	void sendMessageWithoutTopicFails() {
+		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client,
+				Collections.emptyMap());
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-		assertThatIllegalArgumentException().isThrownBy(() -> sendFunction.accept(pulsarTemplate));
-	}
-
-	static Stream<Arguments> sendMessageFailedTestProvider() {
-		String message = "test-message";
-		return Stream.of(arguments("sendWithoutTopic",
-				(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send(message)));
+		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message"))
+				.withMessage("Topic must be specified when no default topic is configured");
 	}
 
 	private <T> Message<T> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
@@ -322,17 +317,6 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			assertThatIllegalArgumentException()
 					.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
 					.withMessage("Schema must be specified when the message is null");
-		}
-
-		@Test
-		void sendNullWithTopicAndSchema() throws Exception {
-			String topic = "sendNullWithTopicAndSchema";
-			PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client,
-					Collections.emptyMap());
-			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-			ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.send(topic, null,
-					Schema.STRING);
-			sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.STRING, null);
 		}
 
 	}
