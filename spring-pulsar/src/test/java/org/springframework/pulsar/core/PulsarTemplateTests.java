@@ -17,7 +17,6 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -48,6 +47,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -177,6 +177,18 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		assertThat(msg.getProducerName()).isEqualTo("test-producer");
 	}
 
+	@Test
+	@SuppressWarnings("unchecked")
+	void sendMessageWithEncryptionKeys() throws Exception {
+		String topic = "ptt-encryptionKeys-topic";
+		PulsarProducerFactory<String> producerFactory = mock(PulsarProducerFactory.class);
+		when(producerFactory.createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>()))
+				.thenReturn(client.newProducer(Schema.STRING).topic(topic).create());
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
+		pulsarTemplate.newMessage("msg").withTopic(topic).withEncryptionKeys(Set.of("key")).send();
+		verify(producerFactory).createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>());
+	}
+
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("interceptorInvocationTestProvider")
 	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws Exception {
@@ -197,44 +209,10 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 						List.of(mock(ProducerInterceptor.class), mock(ProducerInterceptor.class))));
 	}
 
-	@Test
-	void sendNonPrimitiveMessageWithSpecifiedSchema() throws Exception {
-		String topic = "ptt-specificSchema-topic";
-		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo, Schema.AVRO(Foo.class));
-		sendAndConsume(sendFunction, topic, Schema.AVRO(Foo.class), foo, true);
-	}
-
-	@Test
-	void sendNonPrimitiveMessageWithInferredSchema() throws Exception {
-		String topic = "ptt-nospecificSchema-topic";
-		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo);
-		sendAndConsume(sendFunction, topic, Schema.JSON(Foo.class), foo, true);
-	}
-
-	@Test
-	void sendMessageWithSpecificSchemaInferredByCustomTypeMappings() throws Exception {
-		String topic = "ptt-schemaInferred-topic";
-
-		PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-				Collections.singletonMap("topicName", topic));
-		// Custom schema resolver allows not specifying the schema when sending
-		DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
-		schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
-		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
-				schemaResolver, new DefaultTopicResolver(), null, null);
-
-		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.newMessage(foo).send();
-		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
-	}
-
 	@ParameterizedTest
 	@ValueSource(booleans = { true, false })
-	void sendMessageTopicInferredByCustomTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
+	void sendMessageWithTopicInferredByTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
 		String topic = "ptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
-
 		PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
 				producerFactoryHasDefaultTopic ? Collections.singletonMap("topicName", "fake-topic")
 						: Collections.emptyMap());
@@ -244,22 +222,9 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		topicResolver.addCustomTopicMapping(Foo.class, topic);
 		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
 				new DefaultSchemaResolver(), topicResolver, null, null);
-
 		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo, Schema.JSON(Foo.class));
 		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
-	}
-
-	@Test
-	@SuppressWarnings("unchecked")
-	void sendMessageWithEncryptionKeys() throws Exception {
-		String topic = "ptt-encryptionKeys-topic";
-		PulsarProducerFactory<String> producerFactory = mock(PulsarProducerFactory.class);
-		when(producerFactory.createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>()))
-				.thenReturn(client.newProducer(Schema.STRING).topic(topic).create());
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-		pulsarTemplate.newMessage("msg").withTopic(topic).withEncryptionKeys(Set.of("key")).send();
-		verify(producerFactory).createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>());
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -272,29 +237,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	static Stream<Arguments> sendMessageFailedTestProvider() {
 		String message = "test-message";
-		return Stream.of(
-				arguments("sendWithoutTopic",
-						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send(message)),
-				arguments("sendNullWithoutSchema", (ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-						.send("sendNullWithoutSchema", (String) null)));
-	}
-
-	@Test
-	void sendNullWithDefaultTopicFails() {
-		HashMap<String, Object> config = new HashMap<>();
-		config.put("topicName", "sendNullWithDefaultTopicFails");
-		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client, config);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING));
-	}
-
-	@Test
-	void sendWithoutSchemaFails() {
-		PulsarProducerFactory<Foo> senderFactory = new DefaultPulsarProducerFactory<>(client, new HashMap<>());
-		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-		// Defaulting to Schema.JSON would prevent this from failing
-		assertThatExceptionOfType(ClassCastException.class)
-				.isThrownBy(() -> pulsarTemplate.send("sendWithoutSchemaFails", new Foo("foo", "bar")));
+		return Stream.of(arguments("sendWithoutTopic",
+				(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.send(message)));
 	}
 
 	private <T> Message<T> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
@@ -318,6 +262,79 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			assertThat(msg.getValue()).isEqualTo(expectedValue);
 			return msg;
 		}
+	}
+
+	@Nested
+	class SendNonPrimitiveSchemaTests {
+
+		@Test
+		void withSpecifiedSchema() throws Exception {
+			String topic = "ptt-specificSchema-topic";
+			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+			ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo,
+					Schema.AVRO(Foo.class));
+			sendAndConsume(sendFunction, topic, Schema.AVRO(Foo.class), foo, true);
+		}
+
+		@Test
+		void withSchemaInferredByMessageType() throws Exception {
+			String topic = "ptt-nospecificSchema-topic";
+			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+			ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo);
+			sendAndConsume(sendFunction, topic, Schema.JSON(Foo.class), foo, true);
+		}
+
+		@Test
+		void withSchemaInferredByTypeMappings() throws Exception {
+			String topic = "ptt-schemaInferred-topic";
+			PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
+					Collections.singletonMap("topicName", topic));
+			// Custom schema resolver allows not specifying the schema when sending
+			DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
+			schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
+			PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
+					schemaResolver, new DefaultTopicResolver(), null, null);
+			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
+			ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.newMessage(foo).send();
+			sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
+		}
+
+	}
+
+	@Nested
+	class SendNullTests {
+
+		@Test
+		void sendNullWithDefaultTopicFails() {
+			HashMap<String, Object> config = new HashMap<>();
+			config.put("topicName", "sendNullWithDefaultTopicFails");
+			PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client, config);
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+			assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING))
+					.withMessage("Topic must be specified when the message is null");
+		}
+
+		@Test
+		void sendNullWithoutSchemaFails() {
+			PulsarProducerFactory<Object> senderFactory = new DefaultPulsarProducerFactory<>(client,
+					Collections.emptyMap());
+			PulsarTemplate<Object> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+			assertThatIllegalArgumentException()
+					.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
+					.withMessage("Schema must be specified when the message is null");
+		}
+
+		@Test
+		void sendNullWithTopicAndSchema() throws Exception {
+			String topic = "sendNullWithTopicAndSchema";
+			PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client,
+					Collections.emptyMap());
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
+			ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.send(topic, null,
+					Schema.STRING);
+			sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.STRING, null);
+		}
+
 	}
 
 	public static class Foo {
