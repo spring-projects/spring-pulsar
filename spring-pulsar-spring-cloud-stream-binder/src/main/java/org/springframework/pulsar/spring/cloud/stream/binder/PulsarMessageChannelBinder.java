@@ -31,9 +31,12 @@ import org.springframework.cloud.stream.binder.ExtendedProducerProperties;
 import org.springframework.cloud.stream.binder.ExtendedPropertiesBinder;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.endpoint.MessageProducerSupport;
+import org.springframework.integration.handler.AbstractMessageProducingHandler;
+import org.springframework.integration.support.management.ManageableLifecycle;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -92,15 +95,14 @@ public class PulsarMessageChannelBinder extends
 		else {
 			schema = null;
 		}
-		return message -> {
-			try {
-				PulsarMessageChannelBinder.this.pulsarTemplate.sendAsync(destination.getName(), message.getPayload(),
-						schema);
-			}
-			catch (PulsarClientException ex) {
-				this.logger.trace("Failed to send message to destination: " + destination.getName(), ex);
-			}
-		};
+		PulsarProducerConfigurationMessageHandler handler = new PulsarProducerConfigurationMessageHandler(
+				this.pulsarTemplate, schema, destination.getName());
+
+		AbstractApplicationContext applicationContext = getApplicationContext();
+		handler.setApplicationContext(applicationContext);
+		handler.setBeanFactory(getBeanFactory());
+
+		return handler;
 	}
 
 	@Override
@@ -213,6 +215,58 @@ public class PulsarMessageChannelBinder extends
 
 		public void setMessageListenerContainer(AbstractPulsarMessageListenerContainer<?> messageListenerContainer) {
 			this.messageListenerContainer = messageListenerContainer;
+		}
+
+	}
+
+	static class PulsarProducerConfigurationMessageHandler extends AbstractMessageProducingHandler
+			implements ManageableLifecycle {
+
+		private boolean running = true;
+
+		final PulsarTemplate<Object> pulsarTemplate;
+
+		final Schema<Object> schema;
+
+		final String destination;
+
+		PulsarProducerConfigurationMessageHandler(PulsarTemplate<Object> pulsarTemplate, Schema<Object> schema,
+				String destination) {
+			this.pulsarTemplate = pulsarTemplate;
+			this.schema = schema;
+			this.destination = destination;
+		}
+
+		@Override
+		public void start() {
+			try {
+				super.onInit();
+			}
+			catch (Exception ex) {
+				this.logger.error(ex, "Initialization errors: ");
+				throw new RuntimeException(ex);
+			}
+		}
+
+		@Override
+		public void stop() {
+			// TODO - should we close the underlyiung producer?
+			this.running = false;
+		}
+
+		@Override
+		public boolean isRunning() {
+			return this.running;
+		}
+
+		@Override
+		protected void handleMessageInternal(Message<?> message) {
+			try {
+				this.pulsarTemplate.sendAsync(this.destination, message.getPayload(), this.schema);
+			}
+			catch (PulsarClientException ex) {
+				logger.trace(ex, "Failed to send message to destination: " + this.destination);
+			}
 		}
 
 	}
