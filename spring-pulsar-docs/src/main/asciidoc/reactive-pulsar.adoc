@@ -492,6 +492,6 @@ The easy way to solve this is to provide a DLQ topic name always.
 
 [[reactive-pulsar-reader]]
 === Pulsar Reader Support
-The framework provides support for using https://pulsar.apache.org/docs/2.10.x/concepts-clients/#reader-interface[Pulsar Reader] in a Reactive fashion via the `ReactivePulsarReaderFactory`.
+The framework provides support for using {apache-pulsar-docs}/concepts-clients/#reader-interface[Pulsar Reader] in a Reactive fashion via the `ReactivePulsarReaderFactory`.
 
 Spring Boot provides this reader factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-reader,`spring.pulsar.reactive.reader`>> prefixed application properties.
