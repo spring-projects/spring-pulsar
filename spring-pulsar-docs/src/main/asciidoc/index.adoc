@@ -33,7 +33,7 @@ In addition to this reference documentation, we recommend a number of other reso
 
 - {github}[Spring for Apache Pulsar GitHub Repository]
 - https://pulsar.apache.org/[Apache Pulsar Project Home Page]
-- https://pulsar.apache.org/docs/client-libraries-java/[Apache Pulsar Java Client]
+- {apache-pulsar-docs}/client-libraries-java/[Apache Pulsar Java Client]
 - https://github.com/apache/pulsar[Apache Pulsar GitHub Repository]
 - https://github.com/apache/pulsar-client-reactive[Apache Pulsar Reactive Client GitHub Repository]
 

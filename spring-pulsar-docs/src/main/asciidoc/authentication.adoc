@@ -1,3 +1,6 @@
+
+include::attributes.adoc[]
+
 To connect to a Pulsar cluster that requires authentication, you need to set the `authPluginClassName` and any parameters required by the authentication plugin. You can set the parameters as a single JSON-encoded string or as map of parameter names to parameter values. The following listings show both approaches:
 
 [source,yaml,indent=0,role="primary"]
@@ -131,5 +134,4 @@ spring:
 ----
 ====
 
-
-NOTE: You can find more information on each of the schemes and their required properties in the official link:https://pulsar.apache.org/docs/security-overview#authentication-providers[Pulsar security] documentation.
+NOTE: You can find more information on each of the schemes and their required properties in the official {apache-pulsar-docs}/security-overview#authentication-providers[Pulsar security] documentation.

@@ -72,7 +72,7 @@ The action that occurs during the create/update operation is dependent on path "
 Apache Pulsar provides many source and sink connectors out-of-the-box, aka built-in connectors. To use a built-in connector simply set the `archive` to `builtin://<connector-type>` (eg `builtin://rabbit`).
 
 == Custom functions
-The details on how to develop and package custom functions can be found in the https://pulsar.apache.org/docs/2.10.x/functions-develop[Pulsar docs].
+The details on how to develop and package custom functions can be found in the {apache-pulsar-docs}/functions-develop[Pulsar docs].
 However, at a high-level, the requirements are as follows:
 
 * Code uses Java8

@@ -1129,6 +1129,13 @@ void someMethod() {
 
 TIP: The id parameter passed to `getListenerContainer` is the container id - which will be the value of the `@PulsarListener` id attribute when pausing/resuming a `@PulsarListener`.
 
+[[imperative-pulsar-reader]]
+=== Pulsar Reader Support
+The framework provides support for using {apache-pulsar-docs}/concepts-clients/#reader-interface[Pulsar Reader] via the `PulsarReaderFactory`.
+
+Spring Boot provides this reader factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reader,`spring.pulsar.reader`>> prefixed application properties.
+
+
 
 == Publishing and Consuming Partitioned Topics
 
