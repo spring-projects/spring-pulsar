@@ -23,9 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.apache.pulsar.client.api.BatcherBuilder;
-import org.apache.pulsar.client.api.CryptoKeyReader;
-import org.apache.pulsar.client.api.MessageRouter;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -112,7 +109,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		if (encryptionKeys != null) {
 			config.put("encryptionKeys", encryptionKeys);
 		}
-		loadConf(producerBuilder, config);
+		ProducerBuilderConfigurationUtil.loadConf(producerBuilder, config);
 		producerBuilder.topic(resolvedTopic);
 
 		if (!CollectionUtils.isEmpty(customizers)) {
@@ -132,26 +129,6 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Map<String, Object> getProducerConfig() {
 		return this.producerConfig;
-	}
-
-	private static <T> void loadConf(ProducerBuilder<T> producerBuilder, Map<String, Object> config) {
-		producerBuilder.loadConf(config);
-
-		// Set fields that are not loaded by loadConf
-		if (config.containsKey("encryptionKeys")) {
-			@SuppressWarnings("unchecked")
-			Collection<String> keys = (Collection<String>) config.get("encryptionKeys");
-			keys.forEach(producerBuilder::addEncryptionKey);
-		}
-		if (config.containsKey("customMessageRouter")) {
-			producerBuilder.messageRouter((MessageRouter) config.get("customMessageRouter"));
-		}
-		if (config.containsKey("batcherBuilder")) {
-			producerBuilder.batcherBuilder((BatcherBuilder) config.get("batcherBuilder"));
-		}
-		if (config.containsKey("cryptoKeyReader")) {
-			producerBuilder.cryptoKeyReader((CryptoKeyReader) config.get("cryptoKeyReader"));
-		}
 	}
 
 }
