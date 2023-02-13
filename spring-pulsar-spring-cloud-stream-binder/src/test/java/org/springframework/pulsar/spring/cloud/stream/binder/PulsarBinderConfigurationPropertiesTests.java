@@ -52,9 +52,9 @@ public class PulsarBinderConfigurationPropertiesTests {
 
 	@Test
 	void partitionCountProperty() {
-		assertThat(properties.partitionCount()).isEqualTo(0);
+		assertThat(properties.getPartitionCount()).isNull();
 		bind(Map.of("spring.cloud.stream.pulsar.binder.partition-count", "5150"));
-		assertThat(properties.partitionCount()).isEqualTo(5150);
+		assertThat(properties.getPartitionCount()).isEqualTo(5150);
 	}
 
 	@Test

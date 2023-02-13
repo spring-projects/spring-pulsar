@@ -41,7 +41,8 @@ public class PulsarConsumerProperties extends ConsumerConfigProperties {
 	@Nullable
 	private Class<?> messageValueType;
 
-	private int partitionCount = 0;
+	@Nullable
+	private Integer partitionCount;
 
 	@Nullable
 	public SchemaType getSchemaType() {
@@ -79,11 +80,12 @@ public class PulsarConsumerProperties extends ConsumerConfigProperties {
 		this.messageValueType = messageValueType;
 	}
 
-	public int getPartitionCount() {
+	@Nullable
+	public Integer getPartitionCount() {
 		return this.partitionCount;
 	}
 
-	public void setPartitionCount(int partitionCount) {
+	public void setPartitionCount(Integer partitionCount) {
 		this.partitionCount = partitionCount;
 	}
 

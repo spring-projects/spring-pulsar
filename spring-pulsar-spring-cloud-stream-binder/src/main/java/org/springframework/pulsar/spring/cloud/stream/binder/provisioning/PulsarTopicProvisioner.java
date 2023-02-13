@@ -50,25 +50,27 @@ public class PulsarTopicProvisioner implements
 	public ProducerDestination provisionProducerDestination(String name,
 			ExtendedProducerProperties<PulsarProducerProperties> pulsarProducerProperties)
 			throws ProvisioningException {
-		int partitionCount = getPartitionCount(pulsarProducerProperties.getExtension().getPartitionCount());
+		Integer partitionCountFromBinding = pulsarProducerProperties.getExtension().getPartitionCount();
+		var partitionCount = getPartitionCount(partitionCountFromBinding);
 		var pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
 		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
-	private int getPartitionCount(int partitionCountConfig) {
-		var partitionCount = this.pulsarBinderConfigurationProperties.partitionCount();
-		if (partitionCountConfig > 0) {
+	private int getPartitionCount(Integer partitionCountConfig) {
+		var partitionCount = this.pulsarBinderConfigurationProperties.getPartitionCount();
+		if (partitionCountConfig != null && partitionCountConfig > 0) {
 			partitionCount = partitionCountConfig;
 		}
-		return partitionCount;
+		return partitionCount == null ? 0 : partitionCount;
 	}
 
 	@Override
 	public ConsumerDestination provisionConsumerDestination(String name, String group,
 			ExtendedConsumerProperties<PulsarConsumerProperties> pulsarConsumerProperties)
 			throws ProvisioningException {
-		int partitionCount = getPartitionCount(pulsarConsumerProperties.getExtension().getPartitionCount());
+		var partitionCountFromBinding = pulsarConsumerProperties.getExtension().getPartitionCount();
+		var partitionCount = getPartitionCount(partitionCountFromBinding);
 		var pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
 		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
