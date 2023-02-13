@@ -18,6 +18,7 @@ package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.autoconfigure.ConsumerConfigProperties;
 import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
 
@@ -36,7 +37,8 @@ public class PulsarBinderConfigurationProperties {
 	@NestedConfigurationProperty
 	private final ProducerConfigProperties producer = new ProducerConfigProperties();
 
-	private int partitionCount = 1;
+	@Nullable
+	private Integer partitionCount;
 
 	public ConsumerConfigProperties getConsumer() {
 		return this.consumer;
@@ -46,11 +48,12 @@ public class PulsarBinderConfigurationProperties {
 		return this.producer;
 	}
 
-	public int partitionCount() {
+	@Nullable
+	public Integer getPartitionCount() {
 		return this.partitionCount;
 	}
 
-	public void setPartitionCount(int partitionCount) {
+	public void setPartitionCount(Integer partitionCount) {
 		this.partitionCount = partitionCount;
 	}
 

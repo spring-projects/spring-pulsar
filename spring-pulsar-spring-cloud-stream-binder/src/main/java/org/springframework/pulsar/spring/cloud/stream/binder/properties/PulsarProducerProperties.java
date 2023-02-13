@@ -42,6 +42,9 @@ public class PulsarProducerProperties extends ProducerConfigProperties {
 	private Class<?> messageValueType;
 
 	@Nullable
+	private Integer partitionCount;
+
+	@Nullable
 	public SchemaType getSchemaType() {
 		return this.schemaType;
 	}
@@ -75,6 +78,15 @@ public class PulsarProducerProperties extends ProducerConfigProperties {
 
 	public void setMessageValueType(@Nullable Class<?> messageValueType) {
 		this.messageValueType = messageValueType;
+	}
+
+	@Nullable
+	public Integer getPartitionCount() {
+		return this.partitionCount;
+	}
+
+	public void setPartitionCount(Integer partitionCount) {
+		this.partitionCount = partitionCount;
 	}
 
 }

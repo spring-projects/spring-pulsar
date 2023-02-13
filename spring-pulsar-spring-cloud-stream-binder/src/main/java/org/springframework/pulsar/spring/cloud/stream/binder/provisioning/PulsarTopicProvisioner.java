@@ -50,28 +50,28 @@ public class PulsarTopicProvisioner implements
 	public ProducerDestination provisionProducerDestination(String name,
 			ExtendedProducerProperties<PulsarProducerProperties> pulsarProducerProperties)
 			throws ProvisioningException {
-
-		int partitionCount = this.pulsarBinderConfigurationProperties.partitionCount();
-		int partitionCountOnBinding = pulsarProducerProperties.getPartitionCount();
-		if (partitionCountOnBinding > 1) {
-			partitionCount = partitionCountOnBinding;
-		}
-		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
+		Integer partitionCountFromBinding = pulsarProducerProperties.getExtension().getPartitionCount();
+		var partitionCount = getPartitionCount(partitionCountFromBinding);
+		var pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
 		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
+	}
+
+	private int getPartitionCount(Integer partitionCountConfig) {
+		var partitionCount = this.pulsarBinderConfigurationProperties.getPartitionCount();
+		if (partitionCountConfig != null && partitionCountConfig > 0) {
+			partitionCount = partitionCountConfig;
+		}
+		return partitionCount == null ? 0 : partitionCount;
 	}
 
 	@Override
 	public ConsumerDestination provisionConsumerDestination(String name, String group,
 			ExtendedConsumerProperties<PulsarConsumerProperties> pulsarConsumerProperties)
 			throws ProvisioningException {
-		int partitionCount = this.pulsarBinderConfigurationProperties.partitionCount();
-
-		int partitionCountOnBinding = pulsarConsumerProperties.getExtension().getPartitionCount();
-		if (partitionCountOnBinding > 1) {
-			partitionCount = partitionCountOnBinding;
-		}
-		PulsarTopic pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
+		var partitionCountFromBinding = pulsarConsumerProperties.getExtension().getPartitionCount();
+		var partitionCount = getPartitionCount(partitionCountFromBinding);
+		var pulsarTopic = PulsarTopic.builder(name).numberOfPartitions(partitionCount).build();
 		this.pulsarAdministration.createOrModifyTopics(pulsarTopic);
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
