@@ -36,7 +36,7 @@ public class PulsarBinderConfigurationProperties {
 	@NestedConfigurationProperty
 	private final ProducerConfigProperties producer = new ProducerConfigProperties();
 
-	private int partitionCount = 1;
+	private int partitionCount = 0;
 
 	public ConsumerConfigProperties getConsumer() {
 		return this.consumer;

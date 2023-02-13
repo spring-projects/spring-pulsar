@@ -50,7 +50,7 @@ public class PulsarTopicProvisionerTests {
 				new PulsarProducerProperties());
 		ProducerDestination producerDestination = pulsarTopicProvisioner.provisionProducerDestination("foo",
 				properties);
-		verifyAndAssert(pulsarAdministration, producerDestination.getName(), "foo", 1);
+		verifyAndAssert(pulsarAdministration, producerDestination.getName(), "foo", 0);
 	}
 
 	private static void verifyAndAssert(PulsarAdministration pulsarAdministration, String actualProducerDestination,
@@ -73,7 +73,7 @@ public class PulsarTopicProvisionerTests {
 				new PulsarConsumerProperties());
 		ConsumerDestination consumerDestination = pulsarTopicProvisioner.provisionConsumerDestination("bar", "",
 				properties);
-		verifyAndAssert(pulsarAdministration, consumerDestination.getName(), "bar", 1);
+		verifyAndAssert(pulsarAdministration, consumerDestination.getName(), "bar", 0);
 	}
 
 	@Test
@@ -98,7 +98,7 @@ public class PulsarTopicProvisionerTests {
 				pulsarBinderConfigurationProperties);
 		ExtendedProducerProperties<PulsarProducerProperties> properties = new ExtendedProducerProperties<>(
 				new PulsarProducerProperties());
-		properties.setPartitionCount(4);
+		properties.getExtension().setPartitionCount(4);
 		ProducerDestination producerDestination = pulsarTopicProvisioner.provisionProducerDestination("foo",
 				properties);
 		verifyAndAssert(pulsarAdministration, producerDestination.getName(), "foo", 4);
