@@ -16,10 +16,10 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
-import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.autoconfigure.ConsumerConfigProperties;
 
 /**
  * Pulsar consumer properties used by the binder.
@@ -27,13 +27,7 @@ import org.springframework.lang.Nullable;
  * @author Soby Chacko
  * @author Chris Bono
  */
-public class PulsarConsumerProperties {
-
-	@Nullable
-	private String subscriptionName;
-
-	@Nullable
-	private SubscriptionType subscriptionType;
+public class PulsarConsumerProperties extends ConsumerConfigProperties {
 
 	@Nullable
 	private SchemaType schemaType;
@@ -47,25 +41,7 @@ public class PulsarConsumerProperties {
 	@Nullable
 	private Class<?> messageValueType;
 
-	private int partitionCount = 1;
-
-	@Nullable
-	public String getSubscriptionName() {
-		return this.subscriptionName;
-	}
-
-	public void setSubscriptionName(String subscriptionName) {
-		this.subscriptionName = subscriptionName;
-	}
-
-	@Nullable
-	public SubscriptionType getSubscriptionType() {
-		return this.subscriptionType;
-	}
-
-	public void setSubscriptionType(SubscriptionType subscriptionType) {
-		this.subscriptionType = subscriptionType;
-	}
+	private Integer partitionCount = 1;
 
 	@Nullable
 	public SchemaType getSchemaType() {
@@ -103,11 +79,11 @@ public class PulsarConsumerProperties {
 		this.messageValueType = messageValueType;
 	}
 
-	public int getPartitionCount() {
+	public Integer getPartitionCount() {
 		return this.partitionCount;
 	}
 
-	public void setPartitionCount(int partitionCount) {
+	public void setPartitionCount(Integer partitionCount) {
 		this.partitionCount = partitionCount;
 	}
 

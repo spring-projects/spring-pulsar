@@ -51,10 +51,11 @@ public class PulsarBinderConfiguration {
 	@Bean
 	public PulsarMessageChannelBinder pulsarMessageChannelBinder(PulsarTopicProvisioner pulsarTopicProvisioner,
 			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<byte[]> pulsarConsumerFactory,
-			PulsarExtendedBindingProperties pulsarExtendedBindingProperties, SchemaResolver schemaResolver) {
+			PulsarBinderConfigurationProperties binderConfigProps, PulsarExtendedBindingProperties bindingConfigProps,
+			SchemaResolver schemaResolver) {
 		PulsarMessageChannelBinder pulsarMessageChannelBinder = new PulsarMessageChannelBinder(pulsarTopicProvisioner,
-				pulsarTemplate, pulsarConsumerFactory, schemaResolver);
-		pulsarMessageChannelBinder.setExtendedBindingProperties(pulsarExtendedBindingProperties);
+				pulsarTemplate, pulsarConsumerFactory, binderConfigProps, schemaResolver);
+		pulsarMessageChannelBinder.setExtendedBindingProperties(bindingConfigProps);
 		return pulsarMessageChannelBinder;
 	}
 

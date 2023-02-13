@@ -22,6 +22,7 @@ import org.springframework.integration.config.EnableIntegration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
 
 /**
@@ -29,18 +30,19 @@ import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.Pulsar
  * {@link PulsarMessageChannelBinder}.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarTestBinder extends AbstractPulsarTestBinder {
 
 	@SuppressWarnings({ "unchecked" })
 	PulsarTestBinder(PulsarTopicProvisioner pulsarTopicProvisioner, PulsarTemplate<?> pulsarTemplate,
-			PulsarConsumerFactory<?> pulsarConsumerFactory, SchemaResolver schemaResolver) {
+			PulsarConsumerFactory<?> pulsarConsumerFactory, PulsarBinderConfigurationProperties binderConfigProps,
+			SchemaResolver schemaResolver) {
 
 		try {
-			PulsarMessageChannelBinder binder = new PulsarMessageChannelBinder(pulsarTopicProvisioner,
-					(PulsarTemplate<Object>) pulsarTemplate, pulsarConsumerFactory, schemaResolver);
-
-			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(Config.class);
+			var binder = new PulsarMessageChannelBinder(pulsarTopicProvisioner, (PulsarTemplate<Object>) pulsarTemplate,
+					pulsarConsumerFactory, binderConfigProps, schemaResolver);
+			var context = new AnnotationConfigApplicationContext(Config.class);
 			setApplicationContext(context);
 			binder.setApplicationContext(context);
 			binder.afterPropertiesSet();

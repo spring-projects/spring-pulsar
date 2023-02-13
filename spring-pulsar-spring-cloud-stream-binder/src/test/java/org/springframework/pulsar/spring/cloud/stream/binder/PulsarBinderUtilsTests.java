@@ -17,10 +17,19 @@
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
@@ -29,27 +38,96 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarCo
  * Unit tests for {@link PulsarBinderUtils}.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarBinderUtilsTests {
 
-	@Test
-	void subscriptionNameIsNotNullWhenProvidedAsProperty() {
-		ConsumerDestination consumerDestination = mock(ConsumerDestination.class);
-		PulsarConsumerProperties pulsarConsumerProperties = mock(PulsarConsumerProperties.class);
-		when(pulsarConsumerProperties.getSubscriptionName()).thenReturn("my-subscription");
-		String subscriptionName = PulsarBinderUtils.subscriptionName(pulsarConsumerProperties, consumerDestination);
-		assertThat(subscriptionName).isEqualTo("my-subscription");
+	@Nested
+	class SubscriptionNameTests {
+
+		@Test
+		void respectsValueWhenSetAsProperty() {
+			var consumerDestination = mock(ConsumerDestination.class);
+			var pulsarConsumerProperties = mock(PulsarConsumerProperties.class);
+			when(pulsarConsumerProperties.getSubscriptionName()).thenReturn("my-sub");
+			assertThat(PulsarBinderUtils.subscriptionName(pulsarConsumerProperties, consumerDestination))
+					.isEqualTo("my-sub");
+		}
+
+		@Test
+		void generatesValueWhenNotSetAsProperty() {
+			var consumerDestination = mock(ConsumerDestination.class);
+			var pulsarConsumerProperties = mock(PulsarConsumerProperties.class);
+			when(pulsarConsumerProperties.getSubscriptionName()).thenReturn(null);
+			when(consumerDestination.getName()).thenReturn("my-topic");
+			assertThat(PulsarBinderUtils.subscriptionName(pulsarConsumerProperties, consumerDestination))
+					.startsWith("my-topic-anon-subscription-");
+		}
+
 	}
 
-	@Test
-	void subscriptionNameIsNotNullWhenPropertyIsMissing() {
-		ConsumerDestination consumerDestination = mock(ConsumerDestination.class);
-		PulsarConsumerProperties pulsarConsumerProperties = mock(PulsarConsumerProperties.class);
-		when(pulsarConsumerProperties.getSubscriptionName()).thenReturn(null);
-		when(consumerDestination.getName()).thenReturn("my-topic");
-		String subscriptionName = PulsarBinderUtils.subscriptionName(pulsarConsumerProperties, consumerDestination);
-		assertThat(subscriptionName).startsWith("my-topic" + PulsarBinderUtils.SUBSCRIPTION_NAME_SEPARATOR
-				+ PulsarBinderUtils.ANON_SUBSCRIPTION + PulsarBinderUtils.SUBSCRIPTION_NAME_SEPARATOR);
+	@Nested
+	class MergedPropertiesTests {
+
+		@ParameterizedTest(name = "{0}")
+		@MethodSource("mergePropertiesTestProvider")
+		void mergePropertiesTest(String testName, Map<String, Object> baseProps, Map<String, Object> binderProps,
+				Map<String, Object> bindingProps, Map<String, Object> expectedMergedProps) {
+			assertThat(PulsarBinderUtils.mergePropertiesWithPrecedence(baseProps, binderProps, bindingProps))
+					.containsExactlyInAnyOrderEntriesOf(expectedMergedProps);
+		}
+
+		// @formatter:off
+		static Stream<Arguments> mergePropertiesTestProvider() {
+			return Stream.of(
+					arguments("binderLevelContainsSamePropAsBaseWithDiffValue",
+							Map.of("foo", "foo-base"),
+							Map.of("foo", "foo-binder"),
+							Collections.emptyMap(),
+							Map.of("foo", "foo-binder")),
+					arguments("binderLevelContainsNewPropNotInBase",
+							Collections.emptyMap(),
+							Map.of("foo", "foo-binder"),
+							Collections.emptyMap(),
+							Map.of("foo", "foo-binder")),
+					arguments("binderLevelContainsSamePropAsBaseWithSameValue",
+							Map.of("foo", "foo-base"),
+							Map.of("foo", "foo-base"),
+							Collections.emptyMap(),
+							Collections.emptyMap()),
+					arguments("bindingLevelContainsSamePropAsBaseWithDiffValue",
+							Map.of("foo", "foo-base"),
+							Collections.emptyMap(),
+							Map.of("foo", "foo-binding"),
+							Map.of("foo", "foo-binding")),
+					arguments("bindingLevelContainsNewPropNotInBase",
+							Collections.emptyMap(),
+							Map.of("foo", "foo-binding"),
+							Collections.emptyMap(),
+							Map.of("foo", "foo-binding")),
+					arguments("bindingLevelContainsSamePropAsBaseWithSameValue",
+							Map.of("foo", "foo-base"),
+							Collections.emptyMap(),
+							Map.of("foo", "foo-base"),
+							Collections.emptyMap()),
+					arguments("bindingOverridesBinder",
+							Map.of("bar", "bar-base"),
+							Map.of("foo", "foo-binder"),
+							Map.of("foo", "foo-binding"),
+							Map.of("foo", "foo-binding")),
+					arguments("binderOverridesBaseAndBindingOverridesBinder",
+							Map.of("foo", "foo-base"),
+							Map.of("foo", "foo-binder"),
+							Map.of("foo", "foo-binding"),
+							Map.of("foo", "foo-binding")),
+					arguments("onlyBaseProps",
+							Map.of("foo", "foo-base"),
+							Collections.emptyMap(),
+							Collections.emptyMap(),
+							Collections.emptyMap()));
+		}
+		// @formatter:on
+
 	}
 
 }

@@ -16,10 +16,20 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.awaitility.Awaitility;
@@ -38,9 +48,17 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
+import org.springframework.pulsar.autoconfigure.PulsarProperties;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
+import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
+import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.ProducerBuilderCustomizer;
+import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
+import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
@@ -50,11 +68,45 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  * @author Chris Bono
  */
 @ExtendWith(OutputCaptureExtension.class)
+@SuppressWarnings("JUnitMalformedDeclaration")
 class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
-	private final LogAccessor logger = new LogAccessor(this.getClass());
-
 	private static final int AWAIT_DURATION = 10;
+
+	@Test
+	void binderAndBindingPropsAreAppliedAndRespected(CapturedOutput output) {
+		SpringApplication app = new SpringApplication(BinderAndBindingPropsTestConfig.class);
+		app.setWebApplicationType(WebApplicationType.NONE);
+		try (ConfigurableApplicationContext context = app.run(
+				"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+				"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+				"--spring.cloud.function.definition=textSupplier;textLogger",
+				"--spring.cloud.stream.bindings.textLogger-in-0.destination=textSupplier-out-0",
+				"--spring.pulsar.producer.producer-name=textSupplierProducer-fromBase",
+				"--spring.cloud.stream.pulsar.binder.producer.producer-name=textSupplierProducer-fromBinder",
+				"--spring.cloud.stream.pulsar.bindings.textSupplier-out-0.producer.producer-name=textSupplierProducer-fromBinding",
+				"--spring.cloud.stream.pulsar.binder.producer.max-pending-messages=1100",
+				"--spring.pulsar.producer.block-if-queue-full=true",
+				"--spring.cloud.stream.pulsar.binder.consumer.subscription-name=textLoggerSub-fromBinder",
+				"--spring.cloud.stream.pulsar.binder.consumer.consumer-name=textLogger-fromBinder",
+				"--spring.cloud.stream.pulsar.bindings.textLogger-in-0.consumer.consumer-name=textLogger-fromBinding")) {
+
+			Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+					.until(() -> output.toString().contains("Hello binder: test-basic-scenario"));
+
+			// now verify the properties were set onto producer and consumer as expected
+			TrackingProducerFactory producerFactory = context.getBean(TrackingProducerFactory.class);
+			assertThat(producerFactory.producersCreated).isNotEmpty().element(0)
+					.hasFieldOrPropertyWithValue("producerName", "textSupplierProducer-fromBinding")
+					.hasFieldOrPropertyWithValue("conf.maxPendingMessages", 1100)
+					.hasFieldOrPropertyWithValue("conf.blockIfQueueFull", true);
+
+			TrackingConsumerFactory consumerFactory = context.getBean(TrackingConsumerFactory.class);
+			assertThat(consumerFactory.consumersCreated).isNotEmpty().element(0)
+					.hasFieldOrPropertyWithValue("consumerName", "textLogger-fromBinding")
+					.hasFieldOrPropertyWithValue("conf.subscriptionName", "textLoggerSub-fromBinder");
+		}
+	}
 
 	@Nested
 	class DefaultEncoding {
@@ -69,10 +121,8 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 					"--spring.cloud.function.definition=textSupplier;textLogger",
 					"--spring.cloud.stream.bindings.textLogger-in-0.destination=textSupplier-out-0",
 					"--spring.cloud.stream.pulsar.bindings.textLogger-in-0.consumer.subscription-name=pbit-text-sub1")) {
-
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: test-basic-scenario"));
-
 			}
 		}
 
@@ -242,6 +292,68 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 		@Bean
 		public Consumer<String> textLogger() {
 			return s -> this.logger.info("Hello binder: " + s);
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(PrimitiveTextConfig.class)
+	static class BinderAndBindingPropsTestConfig {
+
+		@Bean
+		public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient,
+				PulsarProperties pulsarProperties, TopicResolver topicResolver) {
+			return new TrackingProducerFactory(pulsarClient, pulsarProperties.buildProducerProperties(), topicResolver);
+		}
+
+		@Bean
+		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient,
+				PulsarProperties pulsarProperties) {
+			return new TrackingConsumerFactory(pulsarClient, pulsarProperties.buildConsumerProperties());
+		}
+
+	}
+
+	static class TrackingProducerFactory extends DefaultPulsarProducerFactory<String> {
+
+		List<Producer<String>> producersCreated = new ArrayList<>();
+
+		TrackingProducerFactory(PulsarClient pulsarClient, Map<String, Object> config, TopicResolver topicResolver) {
+			super(pulsarClient, config, topicResolver);
+		}
+
+		@Override
+		protected Producer<String> doCreateProducer(Schema<String> schema, @Nullable String topic,
+				@Nullable Collection<String> encryptionKeys,
+				@Nullable List<ProducerBuilderCustomizer<String>> producerBuilderCustomizers)
+				throws PulsarClientException {
+			Producer<String> producer = super.doCreateProducer(schema, topic, encryptionKeys,
+					producerBuilderCustomizers);
+			producersCreated.add(producer);
+			return producer;
+		}
+
+	}
+
+	static class TrackingConsumerFactory extends DefaultPulsarConsumerFactory<String> {
+
+		List<org.apache.pulsar.client.api.Consumer<String>> consumersCreated = new ArrayList<>();
+
+		TrackingConsumerFactory(PulsarClient pulsarClient, Map<String, Object> consumerConfig) {
+			super(pulsarClient, consumerConfig);
+		}
+
+		@Override
+		public org.apache.pulsar.client.api.Consumer<String> createConsumer(Schema<String> schema,
+				@Nullable Collection<String> topics, @Nullable String subscriptionName,
+				@Nullable Map<String, String> metadataProperties,
+				@Nullable List<ConsumerBuilderCustomizer<String>> consumerBuilderCustomizers)
+				throws PulsarClientException {
+			org.apache.pulsar.client.api.Consumer<String> consumer = super.createConsumer(schema, topics,
+					subscriptionName, metadataProperties, consumerBuilderCustomizers);
+			consumersCreated.add(consumer);
+			return consumer;
 		}
 
 	}
