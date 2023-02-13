@@ -53,7 +53,6 @@ import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
-import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
@@ -89,8 +88,6 @@ public class PulsarBinderTests extends
 		}
 	}
 
-	private final String CLASS_UNDER_TEST_NAME = PulsarMessageChannelBinder.class.getSimpleName();
-
 	@Override
 	protected boolean usesExplicitRouting() {
 		return false;
@@ -98,26 +95,21 @@ public class PulsarBinderTests extends
 
 	@Override
 	protected String getClassUnderTestName() {
-		return CLASS_UNDER_TEST_NAME;
+		return PulsarMessageChannelBinder.class.getSimpleName();
 	}
 
 	@Override
 	protected PulsarTestBinder getBinder() {
-		PulsarAdministration pulsarAdministration = new PulsarAdministration(
+		var pulsarAdministration = new PulsarAdministration(
 				Map.of("serviceUrl", PulsarTestContainerSupport.getHttpServiceUrl()));
-		PulsarBinderConfigurationProperties configurationProperties = new PulsarBinderConfigurationProperties();
-		PulsarTopicProvisioner pulsarTopicProvisioner = new PulsarTopicProvisioner(pulsarAdministration,
-				configurationProperties);
-
-		PulsarProducerFactory<?> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				Collections.emptyMap());
-		PulsarTemplate<?> pulsarTemplate = new PulsarTemplate<>(producerFactory);
-
-		Map<String, Object> config = Map.of("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
-		DefaultPulsarConsumerFactory<?> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
-
+		var configProps = new PulsarBinderConfigurationProperties();
+		var provisioner = new PulsarTopicProvisioner(pulsarAdministration, configProps);
+		var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, Collections.emptyMap());
+		var pulsarTemplate = new PulsarTemplate<>(producerFactory);
+		var config = Map.<String, Object>of("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest);
+		var consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
 		if (this.binder == null) {
-			this.binder = new PulsarTestBinder(pulsarTopicProvisioner, pulsarTemplate, consumerFactory,
+			this.binder = new PulsarTestBinder(provisioner, pulsarTemplate, consumerFactory, configProps,
 					new DefaultSchemaResolver());
 		}
 		return this.binder;
@@ -213,7 +205,7 @@ public class PulsarBinderTests extends
 				String.format("defaultGroup%s0", getDestinationNameDelimiter()), null, input2,
 				createConsumerProperties());
 
-		String testPayload1 = "foo-" + UUID.randomUUID().toString();
+		String testPayload1 = "foo-" + UUID.randomUUID();
 		output.send(MessageBuilder.withPayload(testPayload1)
 				.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.TEXT_PLAIN).build());
 
@@ -227,13 +219,13 @@ public class PulsarBinderTests extends
 
 		binding2.unbind();
 
-		String testPayload2 = "foo-" + UUID.randomUUID().toString();
+		String testPayload2 = "foo-" + UUID.randomUUID();
 		output.send(MessageBuilder.withPayload(testPayload2)
 				.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.TEXT_PLAIN).build());
 
 		binding2 = binder.bindConsumer(String.format("defaultGroup%s0", getDestinationNameDelimiter()), null, input2,
 				createConsumerProperties());
-		String testPayload3 = "foo-" + UUID.randomUUID().toString();
+		String testPayload3 = "foo-" + UUID.randomUUID();
 		output.send(MessageBuilder.withPayload(testPayload3)
 				.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.TEXT_PLAIN).build());
 
@@ -276,7 +268,7 @@ public class PulsarBinderTests extends
 				.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.TEXT_PLAIN).build();
 		moduleOutputChannel.send(message);
 		CountDownLatch latch = new CountDownLatch(1);
-		AtomicReference<Message<byte[]>> inboundMessageRef = new AtomicReference<Message<byte[]>>();
+		AtomicReference<Message<byte[]>> inboundMessageRef = new AtomicReference<>();
 		moduleInputChannel.subscribe(message1 -> {
 			try {
 				inboundMessageRef.set((Message<byte[]>) message1);
@@ -305,7 +297,7 @@ public class PulsarBinderTests extends
 	@Test
 	@Override
 	@Disabled
-	public void testPartitionedModuleSpEL(TestInfo testInfo) throws Exception {
+	public void testPartitionedModuleSpEL(TestInfo testInfo) {
 		// This use-case needs to be further evaluated for Pulsar binder.
 	}
 

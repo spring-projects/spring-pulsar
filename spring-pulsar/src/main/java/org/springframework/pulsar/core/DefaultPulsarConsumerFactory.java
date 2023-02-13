@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,8 +45,6 @@ import org.springframework.util.CollectionUtils;
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
 
 	private final Map<String, Object> consumerConfig;
-
-	private final List<Consumer<T>> consumers = new ArrayList<>();
 
 	private final PulsarClient pulsarClient;
 
@@ -89,9 +86,7 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
-		Consumer<T> consumer = consumerBuilder.subscribe();
-		this.consumers.add(consumer);
-		return consumer;
+		return consumerBuilder.subscribe();
 	}
 
 	public Map<String, Object> getConsumerConfig() {

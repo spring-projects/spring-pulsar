@@ -17,23 +17,41 @@
 package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.pulsar.autoconfigure.ConsumerConfigProperties;
+import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
 
 /**
  * {@link ConfigurationProperties} for Pulsar binder configuration.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @ConfigurationProperties(prefix = "spring.cloud.stream.pulsar.binder")
 public class PulsarBinderConfigurationProperties {
 
+	@NestedConfigurationProperty
+	private final ConsumerConfigProperties consumer = new ConsumerConfigProperties();
+
+	@NestedConfigurationProperty
+	private final ProducerConfigProperties producer = new ProducerConfigProperties();
+
 	private int partitionCount = 1;
+
+	public ConsumerConfigProperties getConsumer() {
+		return this.consumer;
+	}
+
+	public ProducerConfigProperties getProducer() {
+		return this.producer;
+	}
 
 	public int partitionCount() {
 		return this.partitionCount;
 	}
 
-	public void setPartitionCount(int numberOfPartitions) {
-		this.partitionCount = numberOfPartitions;
+	public void setPartitionCount(int partitionCount) {
+		this.partitionCount = partitionCount;
 	}
 
 }

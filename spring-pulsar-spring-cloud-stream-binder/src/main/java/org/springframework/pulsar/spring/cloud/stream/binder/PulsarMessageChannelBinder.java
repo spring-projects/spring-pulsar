@@ -31,7 +31,6 @@ import org.springframework.cloud.stream.binder.ExtendedProducerProperties;
 import org.springframework.cloud.stream.binder.ExtendedPropertiesBinder;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
-import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.endpoint.MessageProducerSupport;
@@ -42,6 +41,10 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.pulsar.autoconfigure.ConsumerConfigProperties;
+import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
+import org.springframework.pulsar.core.ProducerBuilderConfigurationUtil;
+import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
@@ -49,6 +52,7 @@ import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContaine
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarRecordMessageListener;
+import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
@@ -70,14 +74,17 @@ public class PulsarMessageChannelBinder extends
 
 	private final SchemaResolver schemaResolver;
 
+	private PulsarBinderConfigurationProperties binderConfigProps;
+
 	private PulsarExtendedBindingProperties extendedBindingProperties = new PulsarExtendedBindingProperties();
 
 	public PulsarMessageChannelBinder(PulsarTopicProvisioner provisioningProvider,
 			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<?> pulsarConsumerFactory,
-			SchemaResolver schemaResolver) {
+			PulsarBinderConfigurationProperties binderConfigProps, SchemaResolver schemaResolver) {
 		super(null, provisioningProvider);
 		this.pulsarTemplate = pulsarTemplate;
 		this.pulsarConsumerFactory = pulsarConsumerFactory;
+		this.binderConfigProps = binderConfigProps;
 		this.schemaResolver = schemaResolver;
 	}
 
@@ -95,11 +102,16 @@ public class PulsarMessageChannelBinder extends
 		else {
 			schema = null;
 		}
-		PulsarProducerConfigurationMessageHandler handler = new PulsarProducerConfigurationMessageHandler(
-				this.pulsarTemplate, schema, destination.getName());
 
-		AbstractApplicationContext applicationContext = getApplicationContext();
-		handler.setApplicationContext(applicationContext);
+		var baseProducerProps = new ProducerConfigProperties().buildProperties();
+		var binderProducerProps = this.binderConfigProps.getProducer().buildProperties();
+		var bindingProducerProps = producerProperties.getExtension().buildProperties();
+		var mergedProducerProps = PulsarBinderUtils.mergePropertiesWithPrecedence(baseProducerProps,
+				binderProducerProps, bindingProducerProps);
+
+		var handler = new PulsarProducerConfigurationMessageHandler(this.pulsarTemplate, schema, destination.getName(),
+				(builder) -> ProducerBuilderConfigurationUtil.loadConf(builder, mergedProducerProps));
+		handler.setApplicationContext(getApplicationContext());
 		handler.setBeanFactory(getBeanFactory());
 
 		return handler;
@@ -108,29 +120,38 @@ public class PulsarMessageChannelBinder extends
 	@Override
 	protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group,
 			ExtendedConsumerProperties<PulsarConsumerProperties> properties) {
-		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setTopics(new String[] { destination.getName() });
-		PulsarMessageDrivenChannelAdapter pulsarMessageDrivenChannelAdapter = new PulsarMessageDrivenChannelAdapter();
-		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
+		var containerProperties = new PulsarContainerProperties();
+		containerProperties.setTopics(new String[] { destination.getName() });
+
+		var messageDrivenChannelAdapter = new PulsarMessageDrivenChannelAdapter();
+		containerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 			Message<Object> message = MessageBuilder.withPayload(msg.getValue()).build();
-			pulsarMessageDrivenChannelAdapter.send(message);
+			messageDrivenChannelAdapter.send(message);
 		});
 		if (properties.isUseNativeDecoding()) {
-			Schema<Object> schema = resolveSchema(properties.getExtension().getSchemaType(),
+			var schema = resolveSchema(properties.getExtension().getSchemaType(),
 					properties.getExtension().getMessageType(), properties.getExtension().getMessageKeyType(),
 					properties.getExtension().getMessageValueType());
-			pulsarContainerProperties.setSchema(
+			containerProperties.setSchema(
 					Objects.requireNonNull(schema, "Could not determine consumer schema for " + destination.getName()));
 		}
 		else {
-			pulsarContainerProperties.setSchema(Schema.BYTES);
+			containerProperties.setSchema(Schema.BYTES);
 		}
-		String subscriptionName = PulsarBinderUtils.subscriptionName(properties.getExtension(), destination);
-		pulsarContainerProperties.setSubscriptionName(subscriptionName);
-		DefaultPulsarMessageListenerContainer<?> container = new DefaultPulsarMessageListenerContainer<>(
-				this.pulsarConsumerFactory, pulsarContainerProperties);
-		pulsarMessageDrivenChannelAdapter.setMessageListenerContainer(container);
-		return pulsarMessageDrivenChannelAdapter;
+		var subscriptionName = PulsarBinderUtils.subscriptionName(properties.getExtension(), destination);
+		containerProperties.setSubscriptionName(subscriptionName);
+
+		var baseConsumerProps = new ConsumerConfigProperties().buildProperties();
+		var binderConsumerProps = this.binderConfigProps.getConsumer().buildProperties();
+		var bindingConsumerProps = properties.getExtension().buildProperties();
+		var mergedConsumerProps = PulsarBinderUtils.mergePropertiesWithPrecedence(baseConsumerProps,
+				binderConsumerProps, bindingConsumerProps);
+		containerProperties.getPulsarConsumerProperties().putAll(mergedConsumerProps);
+
+		var container = new DefaultPulsarMessageListenerContainer<>(this.pulsarConsumerFactory, containerProperties);
+		messageDrivenChannelAdapter.setMessageListenerContainer(container);
+
+		return messageDrivenChannelAdapter;
 	}
 
 	// VisibleForTesting
@@ -230,11 +251,14 @@ public class PulsarMessageChannelBinder extends
 
 		final String destination;
 
+		final ProducerBuilderCustomizer<Object> layeredProducerPropsCustomizer;
+
 		PulsarProducerConfigurationMessageHandler(PulsarTemplate<Object> pulsarTemplate, Schema<Object> schema,
-				String destination) {
+				String destination, ProducerBuilderCustomizer<Object> layeredProducerPropsCustomizer) {
 			this.pulsarTemplate = pulsarTemplate;
 			this.schema = schema;
 			this.destination = destination;
+			this.layeredProducerPropsCustomizer = layeredProducerPropsCustomizer;
 		}
 
 		@Override
@@ -262,7 +286,8 @@ public class PulsarMessageChannelBinder extends
 		@Override
 		protected void handleMessageInternal(Message<?> message) {
 			try {
-				this.pulsarTemplate.sendAsync(this.destination, message.getPayload(), this.schema);
+				this.pulsarTemplate.newMessage(message.getPayload()).withTopic(this.destination).withSchema(this.schema)
+						.withProducerCustomizer(this.layeredProducerPropsCustomizer).sendAsync();
 			}
 			catch (PulsarClientException ex) {
 				logger.trace(ex, "Failed to send message to destination: " + this.destination);

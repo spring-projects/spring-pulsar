@@ -19,6 +19,7 @@ package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
 
 /**
  * Pulsar producer properties used by the binder.
@@ -26,7 +27,7 @@ import org.springframework.lang.Nullable;
  * @author Soby Chacko
  * @author Chris Bono
  */
-public class PulsarProducerProperties {
+public class PulsarProducerProperties extends ProducerConfigProperties {
 
 	@Nullable
 	private SchemaType schemaType;
