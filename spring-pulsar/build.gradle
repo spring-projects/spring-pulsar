@@ -8,7 +8,9 @@ dependencies {
 	api 'com.github.ben-manes.caffeine:caffeine'
 	api 'com.google.protobuf:protobuf-java'
 	api 'io.micrometer:micrometer-observation'
-	api 'org.apache.pulsar:pulsar-client-all'
+	api ('org.apache.pulsar:pulsar-client-all') {
+		exclude group: 'org.apache.logging.log4j'
+	}
 	api 'org.springframework:spring-context'
 	api 'org.springframework:spring-messaging'
 	api 'org.springframework:spring-tx'

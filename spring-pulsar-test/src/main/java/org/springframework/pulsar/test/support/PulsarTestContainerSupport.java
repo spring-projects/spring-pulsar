@@ -57,7 +57,7 @@ public interface PulsarTestContainerSupport {
 	}
 
 	private static DockerImageName getStandardPulsarImage() {
-		return DockerImageName.parse("apachepulsar/pulsar:2.10.3");
+		return DockerImageName.parse("apachepulsar/pulsar:2.11.0");
 	}
 
 	private static DockerImageName getMacM1PulsarImage() {
