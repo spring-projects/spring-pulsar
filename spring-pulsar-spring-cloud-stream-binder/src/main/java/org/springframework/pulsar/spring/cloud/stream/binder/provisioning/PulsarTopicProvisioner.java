@@ -22,6 +22,7 @@ import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
 import org.springframework.cloud.stream.provisioning.ProvisioningException;
 import org.springframework.cloud.stream.provisioning.ProvisioningProvider;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
@@ -57,7 +58,7 @@ public class PulsarTopicProvisioner implements
 		return new PulsarDestination(pulsarTopic.topicName(), pulsarTopic.numberOfPartitions());
 	}
 
-	private int getPartitionCount(Integer partitionCountConfig) {
+	private int getPartitionCount(@Nullable Integer partitionCountConfig) {
 		var partitionCount = this.pulsarBinderConfigurationProperties.getPartitionCount();
 		if (partitionCountConfig != null && partitionCountConfig > 0) {
 			partitionCount = partitionCountConfig;
