@@ -277,7 +277,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(1)
 				.deadLetterTopic("dpmlct-016-dlq-topic").build();
 		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-016"), "subscriptionName",
-				"dpmlct-sb-016", "ackTimeoutMillis", 1, "deadLetterPolicy", deadLetterPolicy);
+				"dpmlct-sb-016", "negativeAckRedeliveryDelayMicros", TimeUnit.SECONDS.toMicros(1), "deadLetterPolicy",
+				deadLetterPolicy);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
@@ -332,7 +333,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(5).deadLetterTopic("dlq-topic")
 				.build();
 		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dpmlct-017"), "subscriptionName",
-				"dpmlct-sb-016", "ackTimeoutMillis", 1, "deadLetterPolicy", deadLetterPolicy);
+				"dpmlct-sb-016", "negativeAckRedeliveryDelayMicros", TimeUnit.SECONDS.toMicros(1), "deadLetterPolicy",
+				deadLetterPolicy);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
