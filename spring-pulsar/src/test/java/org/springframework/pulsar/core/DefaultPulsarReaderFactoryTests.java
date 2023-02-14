@@ -145,10 +145,11 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@Test
 		void missingTopic() {
+			// topic name is not set in the API call or in the reader config.
 			assertThatThrownBy(
 					() -> pulsarReaderFactory.createReader(Collections.emptyList(), MessageId.earliest, Schema.STRING))
-							.isInstanceOf(IllegalArgumentException.class)
-							.hasMessageContaining("Passed in topicNames should not be null or empty");
+							.isInstanceOf(PulsarClientException.class)
+							.hasMessageContaining("Topic name must be set on the reader builder");
 		}
 
 		@Test

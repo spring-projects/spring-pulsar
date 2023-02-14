@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Default implementation of {@link PulsarReaderFactory}.
@@ -54,7 +55,9 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 	public Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema)
 			throws PulsarClientException {
 		ReaderBuilder<T> readerBuilder = this.pulsarClient.newReader(schema);
-		readerBuilder.topics(topics);
+		if (!CollectionUtils.isEmpty(topics)) {
+			readerBuilder.topics(topics);
+		}
 		readerBuilder.startMessageId(messageId);
 
 		readerBuilder.loadConf(this.readerConfig);
