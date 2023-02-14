@@ -182,7 +182,8 @@ public class PulsarProperties {
 	public static class Client {
 
 		/**
-		 * Pulsar cluster URL to connect to a broker.
+		 * Pulsar service URL in the format
+		 * '(pulsar|pulsar+ssl)://&lt;host&gt;:&lt;port&gt;'.
 		 */
 		private String serviceUrl;
 
@@ -938,7 +939,8 @@ public class PulsarProperties {
 	public static class Admin {
 
 		/**
-		 * Pulsar service URL for the admin endpoint.
+		 * Pulsar web URL for the admin endpoint in the format
+		 * '(http|https)://&lt;host&gt;:&lt;port&gt;'.
 		 */
 		private String serviceUrl;
 
