@@ -19,6 +19,7 @@ package org.springframework.pulsar.core;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -54,6 +55,7 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 	@Override
 	public Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema)
 			throws PulsarClientException {
+		Objects.requireNonNull(schema, "Schema must be specified");
 		ReaderBuilder<T> readerBuilder = this.pulsarClient.newReader(schema);
 		if (!CollectionUtils.isEmpty(topics)) {
 			readerBuilder.topics(topics);

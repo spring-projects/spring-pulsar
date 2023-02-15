@@ -20,13 +20,14 @@ import java.time.Duration;
 import java.util.List;
 
 import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.util.Assert;
 
 /**
- * Container properties for Pulsar {@link org.apache.pulsar.client.api.Reader}.
+ * Container properties for Pulsar {@link Reader}.
  *
  * @author Soby Chacko
  */

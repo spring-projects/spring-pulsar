@@ -68,7 +68,7 @@ public non-sealed abstract class AbstractPulsarReaderListenerContainer<T> implem
 		return this.pulsarReaderFactory;
 	}
 
-	public PulsarReaderContainerProperties getPulsarReaderContainerProperties() {
+	public PulsarReaderContainerProperties getContainerProperties() {
 		return this.pulsarReaderContainerProperties;
 	}
 

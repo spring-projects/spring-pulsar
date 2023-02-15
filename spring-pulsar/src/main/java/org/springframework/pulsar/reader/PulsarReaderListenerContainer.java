@@ -30,7 +30,7 @@ public sealed interface PulsarReaderListenerContainer
 
 	void setupReaderListener(Object messageListener);
 
-	default PulsarReaderContainerProperties getPulsarReaderContainerProperties() {
+	default PulsarReaderContainerProperties getContainerProperties() {
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");
 	}
 

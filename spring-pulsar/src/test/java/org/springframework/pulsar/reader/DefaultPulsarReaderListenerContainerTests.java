@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
@@ -45,6 +46,8 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  * @author Soby Chacko
  */
 public class DefaultPulsarReaderListenerContainerTests implements PulsarTestContainerSupport {
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Nullable
 	private PulsarClient pulsarClient;
@@ -63,93 +66,112 @@ public class DefaultPulsarReaderListenerContainerTests implements PulsarTestCont
 
 	@Test
 	void basicDefaultReader() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("dprlct-001"), "subscriptionName",
-				"dprlct-sub-001");
+		var latch = new CountDownLatch(1);
+		var config = Map.of("topicNames", Collections.singleton("dprlct-001"), "subscriptionName", "dprlct-sub-001");
 
 		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
-		CountDownLatch latch = new CountDownLatch(1);
-		PulsarReaderContainerProperties readerContainerProperties = new PulsarReaderContainerProperties();
+		var readerContainerProperties = new PulsarReaderContainerProperties();
 		readerContainerProperties.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("hello john doe");
 			latch.countDown();
 		});
 		readerContainerProperties.setStartMessageId(MessageId.earliest);
 		readerContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarReaderListenerContainer<String> container = new DefaultPulsarReaderListenerContainer<>(
-				pulsarReaderFactory, readerContainerProperties);
-		container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "dprlct-001");
-		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-		pulsarTemplate.sendAsync("hello john doe");
-		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-		container.stop();
+		DefaultPulsarReaderListenerContainer<String> container = null;
+		try {
+			container = new DefaultPulsarReaderListenerContainer<>(pulsarReaderFactory, readerContainerProperties);
+			container.start();
+
+			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-001");
+			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient, prodConfig);
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+			pulsarTemplate.sendAsync("hello john doe");
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+		finally {
+			safeStopContainer(container);
+		}
 	}
 
 	@Test
 	void topicProvidedThroughContainerProperties() throws Exception {
-		Map<String, Object> config = Collections.emptyMap();
+		var latch = new CountDownLatch(1);
+		var containerProps = new PulsarReaderContainerProperties();
+		var config = Collections.<String, Object>emptyMap();
 
 		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
-		CountDownLatch latch = new CountDownLatch(1);
-		PulsarReaderContainerProperties readerContainerProperties = new PulsarReaderContainerProperties();
-		readerContainerProperties.setReaderListener((ReaderListener<?>) (reader, msg) -> {
+		containerProps.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("hello buzz doe");
 			latch.countDown();
 		});
-		readerContainerProperties.setStartMessageId(MessageId.earliest);
-		readerContainerProperties.setTopics(List.of("dprlct-002"));
-		readerContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarReaderListenerContainer<String> container = new DefaultPulsarReaderListenerContainer<>(
-				pulsarReaderFactory, readerContainerProperties);
-		container.start();
+		containerProps.setStartMessageId(MessageId.earliest);
+		containerProps.setTopics(List.of("dprlct-002"));
+		containerProps.setSchema(Schema.STRING);
+		DefaultPulsarReaderListenerContainer<String> container = null;
+		try {
+			container = new DefaultPulsarReaderListenerContainer<>(pulsarReaderFactory, containerProps);
+			container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "dprlct-002");
-		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-		pulsarTemplate.sendAsync("hello buzz doe");
-		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-		container.stop();
+			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-002");
+			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient, prodConfig);
+			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+			pulsarTemplate.sendAsync("hello buzz doe");
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+		finally {
+			safeStopContainer(container);
+		}
 	}
 
 	@Test
 	void latestMessageId() throws Exception {
-		Map<String, Object> config = Collections.emptyMap();
-
-		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
-		CountDownLatch latch = new CountDownLatch(2);
-		PulsarReaderContainerProperties readerContainerProperties = new PulsarReaderContainerProperties();
-		readerContainerProperties.setReaderListener((ReaderListener<?>) (reader, msg) -> {
+		var latch = new CountDownLatch(2);
+		var containerProps = new PulsarReaderContainerProperties();
+		containerProps.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("This message should be received by the reader");
 			latch.countDown();
 		});
-		readerContainerProperties.setStartMessageId(MessageId.latest);
-		readerContainerProperties.setTopics(List.of("dprlct-003"));
-		readerContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarReaderListenerContainer<String> container = new DefaultPulsarReaderListenerContainer<>(
-				pulsarReaderFactory, readerContainerProperties);
+		containerProps.setStartMessageId(MessageId.latest);
+		containerProps.setTopics(List.of("dprlct-003"));
+		containerProps.setSchema(Schema.STRING);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "dprlct-003");
-		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		var readerConfig = Collections.<String, Object>emptyMap();
+		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient, readerConfig);
+		DefaultPulsarReaderListenerContainer<String> container = null;
+		try {
+			container = new DefaultPulsarReaderListenerContainer<>(readerFactory, containerProps);
 
-		// The following sends will not be received by the reader as we are using the
-		// latest message id to start from.
-		for (int i = 0; i < 5; i++) {
-			pulsarTemplate.sendAsync("This message should not be received by the reader");
+			var prodConfig = Map.<String, Object>of("topicName", "dprlct-003");
+			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+			var pulsarTemplate = new PulsarTemplate<>(producerFactory);
+
+			// The following sends will not be received by the reader as we are using the
+			// latest message id to start from.
+			for (int i = 0; i < 5; i++) {
+				pulsarTemplate.sendAsync("This message should not be received by the reader");
+			}
+			container.start();
+
+			pulsarTemplate.sendAsync("This message should be received by the reader");
+			pulsarTemplate.sendAsync("This message should be received by the reader");
+
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
+		finally {
+			safeStopContainer(container);
+		}
+	}
 
-		container.start();
-
-		pulsarTemplate.sendAsync("This message should be received by the reader");
-		pulsarTemplate.sendAsync("This message should be received by the reader");
-
-		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-		container.stop();
+	private void safeStopContainer(PulsarReaderListenerContainer container) {
+		try {
+			container.stop();
+		}
+		catch (Exception ex) {
+			logger.warn(ex, "Failed to stop container %s: %s".formatted(container, ex.getMessage()));
+		}
 	}
 
 }

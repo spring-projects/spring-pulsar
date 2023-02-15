@@ -65,7 +65,7 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 
 	@Override
 	protected void doStart() {
-		PulsarReaderContainerProperties containerProperties = getPulsarReaderContainerProperties();
+		PulsarReaderContainerProperties containerProperties = getContainerProperties();
 
 		Object readerListenerObject = containerProperties.getReaderListener();
 		AsyncTaskExecutor readerExecutor = containerProperties.getReaderTaskExecutor();

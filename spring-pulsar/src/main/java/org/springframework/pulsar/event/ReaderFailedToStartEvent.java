@@ -16,6 +16,11 @@
 
 package org.springframework.pulsar.event;
 
+/**
+ * Event to publish when the reader is failed to start.
+ *
+ * @author Soby Chacko
+ */
 public class ReaderFailedToStartEvent extends PulsarEvent {
 
 	private static final long serialVersionUID = 1L;

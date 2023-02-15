@@ -17,7 +17,7 @@
 package org.springframework.pulsar.event;
 
 /**
- * Event to publish when the consumer is started.
+ * Event to publish when the reader is started.
  *
  * @author Soby Chacko
  */
