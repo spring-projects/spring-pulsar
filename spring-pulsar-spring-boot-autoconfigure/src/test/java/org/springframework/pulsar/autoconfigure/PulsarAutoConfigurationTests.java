@@ -44,7 +44,6 @@ import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarBootstrapConfiguration;
 import org.springframework.pulsar.annotation.PulsarListenerAnnotationBeanPostProcessor;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
@@ -106,31 +105,19 @@ class PulsarAutoConfigurationTests {
 
 	@Test
 	void defaultBeansAreAutoConfigured() {
-		this.contextRunner
-				.run((context) -> assertThat(context).hasNotFailed().hasSingleBean(PulsarClientConfiguration.class)
-						.hasSingleBean(PulsarClientFactoryBean.class).hasSingleBean(PulsarProducerFactory.class)
-						.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
-						.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
-						.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
-						.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class)
-						.hasSingleBean(DefaultSchemaResolver.class).hasSingleBean(DefaultTopicResolver.class));
-	}
-
-	@Test
-	void customPulsarClientConfigurationIsRespected() {
-		PulsarClientConfiguration clientConfig = new PulsarClientConfiguration(
-				new PulsarProperties().buildClientProperties());
-		this.contextRunner
-				.withBean("customPulsarClientConfiguration", PulsarClientConfiguration.class, () -> clientConfig)
-				.run((context) -> assertThat(context).hasNotFailed().getBean(PulsarClientConfiguration.class)
-						.isSameAs(clientConfig));
+		this.contextRunner.run((context) -> assertThat(context).hasNotFailed()
+				.hasSingleBean(PulsarClientFactoryBean.class).hasSingleBean(PulsarProducerFactory.class)
+				.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
+				.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
+				.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
+				.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class)
+				.hasSingleBean(DefaultSchemaResolver.class).hasSingleBean(DefaultTopicResolver.class));
 	}
 
 	@Test
 	void customPulsarClientFactoryBeanIsRespected() {
-		PulsarClientConfiguration clientConfig = new PulsarClientConfiguration(
+		PulsarClientFactoryBean clientFactoryBean = new PulsarClientFactoryBean(
 				new PulsarProperties().buildClientProperties());
-		PulsarClientFactoryBean clientFactoryBean = new PulsarClientFactoryBean(clientConfig);
 		this.contextRunner
 				.withBean("customPulsarClientFactoryBean", PulsarClientFactoryBean.class, () -> clientFactoryBean)
 				.run((context) -> assertThat(context)
@@ -323,8 +310,8 @@ class PulsarAutoConfigurationTests {
 					"spring.pulsar.client.auth-plugin-class-name=org.apache.pulsar.client.impl.auth.AuthenticationBasic",
 					"spring.pulsar.client.authentication.userId=username",
 					"spring.pulsar.client.authentication.password=topsecret")
-					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarClientConfiguration.class)
-							.extracting("configs", InstanceOfAssertFactories.map(String.class, Object.class))
+					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarClientFactoryBean.class)
+							.extracting("config", InstanceOfAssertFactories.map(String.class, Object.class))
 							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
 							.containsEntry("authParams", "{\"password\":\"topsecret\",\"userId\":\"username\"}")));
 		}

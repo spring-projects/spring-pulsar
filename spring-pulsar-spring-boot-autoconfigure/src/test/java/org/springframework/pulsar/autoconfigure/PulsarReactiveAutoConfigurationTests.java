@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -262,7 +263,7 @@ class PulsarReactiveAutoConfigurationTests {
 	@SuppressWarnings("rawtypes")
 	void beansAreInjectedInReactivePulsarClient() throws Exception {
 		try (PulsarClient client = mock(PulsarClient.class)) {
-			PulsarClientFactoryBean factoryBean = new PulsarClientFactoryBean(null) {
+			PulsarClientFactoryBean factoryBean = new PulsarClientFactoryBean(Collections.emptyMap()) {
 				@Override
 				protected PulsarClient createInstance() {
 					return client;
@@ -318,7 +319,7 @@ class PulsarReactiveAutoConfigurationTests {
 			ReactiveMessageSenderCache cache = AdaptedReactivePulsarClientFactory.createCache();
 			try (MockedStatic<AdaptedReactivePulsarClientFactory> mockedClientFactory = Mockito
 					.mockStatic(AdaptedReactivePulsarClientFactory.class)) {
-				mockedClientFactory.when(() -> AdaptedReactivePulsarClientFactory.createCache()).thenReturn(cache);
+				mockedClientFactory.when(AdaptedReactivePulsarClientFactory::createCache).thenReturn(cache);
 				mockedClientFactory.when(() -> AdaptedReactivePulsarClientFactory.create(any(PulsarClient.class)))
 						.thenReturn(mock(ReactivePulsarClient.class));
 				contextRunner.withClassLoader(new FilteredClassLoader(CaffeineProducerCacheProvider.class))
@@ -332,10 +333,9 @@ class PulsarReactiveAutoConfigurationTests {
 
 		@Test
 		void cacheCanBeDisabled() {
-			contextRunner.withPropertyValues("spring.pulsar.reactive.sender.cache.enabled=false").run((context -> {
-				assertThat(context).hasNotFailed().doesNotHaveBean(ProducerCacheProvider.class)
-						.doesNotHaveBean(ReactiveMessageSenderCache.class);
-			}));
+			contextRunner.withPropertyValues("spring.pulsar.reactive.sender.cache.enabled=false")
+					.run((context -> assertThat(context).hasNotFailed().doesNotHaveBean(ProducerCacheProvider.class)
+							.doesNotHaveBean(ReactiveMessageSenderCache.class)));
 		}
 
 		private AbstractObjectAssert<?, ProducerCacheProvider> assertCaffeineProducerCacheProvider(
