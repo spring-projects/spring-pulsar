@@ -151,14 +151,14 @@ public class DefaultPulsarReaderListenerContainerTests implements PulsarTestCont
 			// The following sends will not be received by the reader as we are using the
 			// latest message id to start from.
 			for (int i = 0; i < 5; i++) {
-				pulsarTemplate.sendAsync("This message should not be received by the reader");
+				pulsarTemplate.send("This message should not be received by the reader");
 			}
 			container.start();
 			assertThat(container.isRunning()).isTrue();
 			pulsarTemplate.sendAsync("This message should be received by the reader");
 			pulsarTemplate.sendAsync("This message should be received by the reader");
 
-			assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 		finally {
 			safeStopContainer(container);
