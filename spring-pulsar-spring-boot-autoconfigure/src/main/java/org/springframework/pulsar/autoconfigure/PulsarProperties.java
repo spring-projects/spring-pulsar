@@ -185,7 +185,7 @@ public class PulsarProperties {
 		 * Pulsar service URL in the format
 		 * '(pulsar|pulsar+ssl)://&lt;host&gt;:&lt;port&gt;'.
 		 */
-		private String serviceUrl;
+		private String serviceUrl = "pulsar://localhost:6650";
 
 		/**
 		 * Listener name for lookup. Clients can use listenerName to choose one of the
@@ -754,7 +754,6 @@ public class PulsarProperties {
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getListenerName).to(properties.in("listenerName"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
@@ -942,7 +941,7 @@ public class PulsarProperties {
 		 * Pulsar web URL for the admin endpoint in the format
 		 * '(http|https)://&lt;host&gt;:&lt;port&gt;'.
 		 */
-		private String serviceUrl;
+		private String serviceUrl = "http://localhost:8080";
 
 		/**
 		 * Fully qualified class name of the authentication plugin.
@@ -1186,7 +1185,6 @@ public class PulsarProperties {
 			PulsarProperties.Properties properties = new Properties();
 
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-
 			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
 			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
 			map.from(this::getAuthParams).to(properties.in("authParams"));
@@ -1207,8 +1205,6 @@ public class PulsarProperties {
 			map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(properties.in("requestTimeoutMs"));
 			map.from(this::getAutoCertRefreshTime).asInt(Duration::toSeconds)
 					.to(properties.in("autoCertRefreshSeconds"));
-
-			properties.putIfAbsent("serviceUrl", "http://localhost:8080");
 
 			return properties;
 		}
