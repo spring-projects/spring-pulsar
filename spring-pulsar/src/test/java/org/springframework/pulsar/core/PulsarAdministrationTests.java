@@ -52,6 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
+@SuppressWarnings("JUnitMalformedDeclaration")
 public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 
 	private static final String NAMESPACE = "public/default";
@@ -112,8 +113,8 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = CreateMissingTopicsTest.CreateMissingTopicsConfig.class)
-	class CreateMissingTopicsTest {
+	@ContextConfiguration(classes = CreateMissingTopicsTests.CreateMissingTopicsConfig.class)
+	class CreateMissingTopicsTests {
 
 		@Test
 		void topicsExist(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
@@ -143,8 +144,8 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = CreateMissingTopicsInSeparateNamespacesTest.CreateMissingTopicsConfig.class)
-	class CreateMissingTopicsInSeparateNamespacesTest {
+	@ContextConfiguration(classes = CreateMissingTopicsInSeparateNamespacesTests.CreateMissingTopicsConfig.class)
+	class CreateMissingTopicsInSeparateNamespacesTests {
 
 		@Test
 		void topicsExist(@Autowired PulsarTopic partitionedGreenTopic, @Autowired PulsarTopic partitionedBlueTopic)
@@ -190,8 +191,8 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = IncrementPartitionCountTest.IncrementPartitionCountConfig.class)
-	class IncrementPartitionCountTest {
+	@ContextConfiguration(classes = IncrementPartitionCountTests.IncrementPartitionCountConfig.class)
+	class IncrementPartitionCountTests {
 
 		@Test
 		void topicsExist(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
@@ -214,8 +215,8 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = DecrementPartitionCountTest.DecrementPartitionCountConfig.class)
-	class DecrementPartitionCountTest {
+	@ContextConfiguration(classes = DecrementPartitionCountTests.DecrementPartitionCountConfig.class)
+	class DecrementPartitionCountTests {
 
 		@Test
 		void topicModificationThrows(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
@@ -235,6 +236,32 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 				return PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(8).build();
 			}
 
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration
+	class ConflictingTopicsTests {
+
+		@Test
+		void unpartitionedTopicAlreadyExists() {
+			var unpartitionedTopic = PulsarTopic.builder("ctt-foo").numberOfPartitions(0).build();
+			var partitionedTopic = PulsarTopic.builder("ctt-foo").numberOfPartitions(3).build();
+			pulsarAdministration.createOrModifyTopics(unpartitionedTopic);
+			assertThatIllegalStateException()
+					.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(partitionedTopic)).withMessage(
+							"Topic 'persistent://public/default/ctt-foo' already exists un-partitioned. Needs to be deleted first.");
+		}
+
+		@Test
+		void partitionedTopicAlreadyExists() {
+			var unpartitionedTopic = PulsarTopic.builder("ctt-bar").numberOfPartitions(0).build();
+			var partitionedTopic = PulsarTopic.builder("ctt-bar").numberOfPartitions(3).build();
+			pulsarAdministration.createOrModifyTopics(partitionedTopic);
+			assertThatIllegalStateException()
+					.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(unpartitionedTopic)).withMessage(
+							"Topic 'persistent://public/default/ctt-bar' already exists partitioned. Needs to be deleted first.");
 		}
 
 	}
