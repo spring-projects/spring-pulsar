@@ -224,7 +224,7 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 			PulsarTopic smallerTopic = PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(4).build();
 			assertThatIllegalStateException().isThrownBy(() -> pulsarAdministration.createOrModifyTopics(smallerTopic))
 					.withMessage(
-							"Topic persistent://public/default/dpc-partitioned-1 found with 8 partitions. Needs to be deleted first.");
+							"Topic 'persistent://public/default/dpc-partitioned-1' found w/ 8 partitions but can't shrink to 4 - needs to be deleted first");
 
 		}
 
@@ -251,7 +251,7 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 			pulsarAdministration.createOrModifyTopics(unpartitionedTopic);
 			assertThatIllegalStateException()
 					.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(partitionedTopic)).withMessage(
-							"Topic 'persistent://public/default/ctt-foo' already exists un-partitioned. Needs to be deleted first.");
+							"Topic 'persistent://public/default/ctt-foo' already exists un-partitioned - needs to be deleted first");
 		}
 
 		@Test
@@ -261,7 +261,7 @@ public class PulsarAdministrationTests implements PulsarTestContainerSupport {
 			pulsarAdministration.createOrModifyTopics(partitionedTopic);
 			assertThatIllegalStateException()
 					.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(unpartitionedTopic)).withMessage(
-							"Topic 'persistent://public/default/ctt-bar' already exists partitioned. Needs to be deleted first.");
+							"Topic 'persistent://public/default/ctt-bar' already exists partitioned - needs to be deleted first");
 		}
 
 	}

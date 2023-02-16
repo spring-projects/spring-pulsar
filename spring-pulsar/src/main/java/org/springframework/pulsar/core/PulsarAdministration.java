@@ -178,7 +178,7 @@ public class PulsarAdministration
 					if (topic.isPartitioned()) {
 						if (existingTopicsInNamespace.contains(topicName)) {
 							throw new IllegalStateException(
-									"Topic '%s' already exists un-partitioned. Needs to be deleted first."
+									"Topic '%s' already exists un-partitioned - needs to be deleted first"
 											.formatted(topicName));
 						}
 						var matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
@@ -195,7 +195,7 @@ public class PulsarAdministration
 							}
 							else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
 								throw new IllegalStateException(
-										"Topic '%s' found w/ %d partitions - can't shrink to %d. Needs to be deleted first"
+										"Topic '%s' found w/ %d partitions but can't shrink to %d - needs to be deleted first"
 												.formatted(topicName, numberOfExistingPartitions,
 														topic.numberOfPartitions()));
 							}
@@ -205,7 +205,7 @@ public class PulsarAdministration
 						var matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
 						if (!matchingPartitions.isEmpty()) {
 							throw new IllegalStateException(
-									"Topic '%s' already exists partitioned. Needs to be deleted first."
+									"Topic '%s' already exists partitioned - needs to be deleted first"
 											.formatted(topicName));
 						}
 						if (!existingTopicsInNamespace.contains(topicName)) {
