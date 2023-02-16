@@ -35,7 +35,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
@@ -136,13 +135,8 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 		}
 
 		@Bean
-		public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
-			return new PulsarClientFactoryBean(pulsarClientConfiguration);
-		}
-
-		@Bean
-		public PulsarClientConfiguration pulsarClientConfiguration() {
-			return new PulsarClientConfiguration(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
+		public PulsarClientFactoryBean pulsarClientFactoryBean() {
+			return new PulsarClientFactoryBean(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
 		}
 
 		@Bean

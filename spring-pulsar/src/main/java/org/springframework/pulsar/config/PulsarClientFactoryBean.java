@@ -16,6 +16,10 @@
 
 package org.springframework.pulsar.config;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import org.apache.pulsar.client.api.PulsarClient;
 
 import org.springframework.beans.factory.FactoryBean;
@@ -33,10 +37,11 @@ public class PulsarClientFactoryBean extends AbstractFactoryBean<PulsarClient> {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private final PulsarClientConfiguration pulsarClientConfiguration;
+	private final Map<String, Object> config = new HashMap<>();
 
-	public PulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
-		this.pulsarClientConfiguration = pulsarClientConfiguration;
+	public PulsarClientFactoryBean(Map<String, Object> config) {
+		Objects.requireNonNull(config, "Config map cannot be null");
+		this.config.putAll(config);
 	}
 
 	@Override
@@ -46,7 +51,7 @@ public class PulsarClientFactoryBean extends AbstractFactoryBean<PulsarClient> {
 
 	@Override
 	protected PulsarClient createInstance() throws Exception {
-		return PulsarClient.builder().loadConf(this.pulsarClientConfiguration.getConfigs()).build();
+		return PulsarClient.builder().loadConf(this.config).build();
 	}
 
 	@Override

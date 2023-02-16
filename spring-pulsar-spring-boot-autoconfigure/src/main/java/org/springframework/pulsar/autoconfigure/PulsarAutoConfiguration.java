@@ -30,7 +30,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.pulsar.config.PulsarClientConfiguration;
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
@@ -75,14 +74,8 @@ public class PulsarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public PulsarClientConfiguration pulsarClientConfiguration() {
-		return new PulsarClientConfiguration(this.properties.buildClientProperties());
-	}
-
-	@Bean
-	@ConditionalOnMissingBean
-	public PulsarClientFactoryBean pulsarClientFactoryBean(PulsarClientConfiguration pulsarClientConfiguration) {
-		return new PulsarClientFactoryBean(pulsarClientConfiguration);
+	public PulsarClientFactoryBean pulsarClientFactoryBean() {
+		return new PulsarClientFactoryBean(this.properties.buildClientProperties());
 	}
 
 	@Bean
