@@ -41,7 +41,7 @@ jobs:
           GRADLE_USER_HOME: ~/.gradle
       - name: Run Gradle build
         run: |
-          ./gradlew clean build -DdownloadRabbitConnector=true --no-daemon --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew clean build -DdownloadRabbitConnector=false --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
       - name: Capture test results
         if: failure()
         uses: actions/upload-artifact@v3
@@ -51,7 +51,7 @@ jobs:
           retention-days: 3
       - name: Deploy artifacts
         run: |
-          ./gradlew publishArtifacts finalizeDeployArtifacts --no-daemon --stacktrace --info -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew publishArtifacts finalizeDeployArtifacts --stacktrace --info -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
