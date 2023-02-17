@@ -34,6 +34,7 @@ import reactor.core.publisher.Flux;
  *
  * @param <V> payload type.
  * @author Christophe Bornet
+ * @author Soby Chacko
  */
 public class PulsarReactiveStreamingMessagingMessageListenerAdapter<V>
 		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarStreamingHandler<V> {
@@ -50,7 +51,7 @@ public class PulsarReactiveStreamingMessagingMessageListenerAdapter<V>
 			theRecords = records.map(record -> toMessagingMessage(record, null));
 		}
 		try {
-			return (Flux<MessageResult<Void>>) invokeHandler(theRecords, null, null, null);
+			return (Flux<MessageResult<Void>>) invokeHandler(null, theRecords, null, null);
 		}
 		catch (Exception e) {
 			return Flux.error(e);

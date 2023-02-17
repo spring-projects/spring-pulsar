@@ -56,7 +56,7 @@ public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessag
 			this.logger.debug("Processing [" + message + "]");
 		}
 		try {
-			invokeHandler(theRecord, message, consumer, acknowledgement);
+			invokeHandler(message, theRecord, consumer, acknowledgement);
 		}
 		catch (Exception e) {
 			throw e;

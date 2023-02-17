@@ -38,7 +38,6 @@ import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.support.DefaultPulsarMessageHeaderMapper;
 import org.springframework.pulsar.support.converter.PulsarMessagingMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
@@ -146,22 +145,9 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		return getMessageConverter().toMessageFromReader(record, reader, getType());
 	}
 
-	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
-			Consumer<V> consumer, Acknowledgement acknowledgement) {
-
+	protected final Object invokeHandler(org.springframework.messaging.Message<?> message, Object... providedArgs) {
 		try {
-			return this.handlerMethod.invoke(message, data, consumer, acknowledgement);
-		}
-		catch (Exception ex) {
-			throw new MessageConversionException("Cannot handle message", ex);
-		}
-	}
-
-	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
-			Reader<V> reader) {
-
-		try {
-			return this.handlerMethod.invoke(message, data, reader);
+			return this.handlerMethod.invoke(message, providedArgs);
 		}
 		catch (Exception ex) {
 			throw new MessageConversionException("Cannot handle message", ex);

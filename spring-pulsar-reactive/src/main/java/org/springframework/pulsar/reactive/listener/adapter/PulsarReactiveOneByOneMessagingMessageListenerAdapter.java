@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
  *
  * @param <V> payload type.
  * @author Christophe Bornet
+ * @author Soby Chacko
  */
 public class PulsarReactiveOneByOneMessagingMessageListenerAdapter<V>
 		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarOneByOneMessageHandler<V> {
@@ -58,7 +59,7 @@ public class PulsarReactiveOneByOneMessagingMessageListenerAdapter<V>
 			this.logger.debug("Processing [" + message + "]");
 		}
 		try {
-			return (Mono<Void>) invokeHandler(theRecord, message, null, null);
+			return (Mono<Void>) invokeHandler(message, theRecord, null, null);
 		}
 		catch (Exception e) {
 			return Mono.error(e);
