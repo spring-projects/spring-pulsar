@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.reader;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -98,7 +99,14 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 
 	@Override
 	protected void doStop() {
-
+		setRunning(false);
+		try {
+			this.logger.info("Closing this consumer.");
+			this.internalAsyncReader.get().reader.close();
+		}
+		catch (IOException e) {
+			this.logger.error(e, () -> "Error closing Pulsar Client.");
+		}
 	}
 
 	private void publishReaderStartingEvent() {
