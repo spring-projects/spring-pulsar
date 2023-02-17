@@ -40,6 +40,9 @@ import org.apache.pulsar.common.policies.data.SourceStatus;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestWatcher;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PulsarContainer;
@@ -57,8 +60,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.autoconfigure.PulsarFunctionAdministrationIntegrationTests.ContainerLoggingTestWatcher;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarFunctionOperations.FunctionStopPolicy;
 import org.springframework.pulsar.function.PulsarSource;
@@ -73,6 +78,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  */
 @Testcontainers(disabledWithoutDocker = true)
 @EnabledIf("rabbitConnectorExists")
+@ExtendWith(ContainerLoggingTestWatcher.class)
 class PulsarFunctionAdministrationIntegrationTests {
 
 	private static final String RABBIT_QUEUE = "pft_foo_queue";
@@ -129,6 +135,7 @@ class PulsarFunctionAdministrationIntegrationTests {
 			List<String> messages = LongStream.range(0, RECEIVED_MESSAGE_LATCH.getCount()).mapToObj((i) -> "bar" + i)
 					.toList();
 			messages.forEach(msg -> rabbitTemplate.convertAndSend(RABBIT_QUEUE, msg));
+
 			assertThat(RECEIVED_MESSAGE_LATCH.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(RECEIVED_MESSAGES).containsExactlyElementsOf(messages);
 		}
@@ -255,6 +262,29 @@ class PulsarFunctionAdministrationIntegrationTests {
 		@Bean
 		PulsarSource rabbitSourceWithStopPolicyDelete() {
 			return PulsarFunctionAdministrationIntegrationTests.rabbitPulsarSource(FunctionStopPolicy.DELETE);
+		}
+
+	}
+
+	static class ContainerLoggingTestWatcher implements TestWatcher {
+
+		private final LogAccessor logger = new LogAccessor(this.getClass());
+
+		@Override
+		public void testFailed(ExtensionContext context, Throwable cause) {
+			this.logger.error(() -> "Test %s failed due to: %s - inspect container logs below:%n%n%s"
+					.formatted(context.getDisplayName(), cause.getMessage(), getPulsarContainerLogs()));
+		}
+
+		private String getPulsarContainerLogs() {
+			try {
+				return PULSAR_CONTAINER.getLogs();
+			}
+			catch (Exception ex) {
+				String msg = "<---- Failed to retrieve container logs: %s ---->".formatted(ex.getMessage());
+				logger.error(ex, msg);
+				return msg;
+			}
 		}
 
 	}
