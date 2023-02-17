@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -55,6 +57,7 @@ public class PulsarAdministration
 
 	private final PulsarAdminBuilder adminBuilder;
 
+	@Nullable
 	private ApplicationContext applicationContext;
 
 	/**
@@ -87,7 +90,7 @@ public class PulsarAdministration
 	}
 
 	private void loadConf(PulsarAdminBuilder builder, Map<String, Object> adminConfig) {
-		Map<String, Object> conf = new HashMap<>(adminConfig);
+		var conf = new HashMap<>(adminConfig);
 
 		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
 		// timeout settings from the config props
@@ -107,8 +110,8 @@ public class PulsarAdministration
 
 		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
 		// authentication from the config props
-		String authPluginClassName = (String) conf.get("authPluginClassName");
-		String authParams = (String) conf.get("authParams");
+		var authPluginClassName = (String) conf.get("authPluginClassName");
+		var authParams = (String) conf.get("authParams");
 		if (StringUtils.hasText(authPluginClassName) && StringUtils.hasText(authParams)) {
 			try {
 				builder.authentication(authPluginClassName, authParams);
@@ -120,8 +123,8 @@ public class PulsarAdministration
 	}
 
 	private void initialize() {
-		Collection<PulsarTopic> topics = this.applicationContext.getBeansOfType(PulsarTopic.class, false, false)
-				.values();
+		var topics = Objects.requireNonNull(this.applicationContext, "Application context was not set")
+				.getBeansOfType(PulsarTopic.class, false, false).values();
 		createOrModifyTopicsIfNeeded(topics);
 	}
 
@@ -161,39 +164,52 @@ public class PulsarAdministration
 	}
 
 	private void doCreateOrModifyTopicsIfNeeded(PulsarAdmin admin, Collection<PulsarTopic> topics) {
-		Map<String, List<PulsarTopic>> topicsPerNamespace = getTopicsPerNamespace(topics);
+		var topicsPerNamespace = getTopicsPerNamespace(topics);
 
 		topicsPerNamespace.forEach((namespace, requestedTopics) -> {
-			Set<PulsarTopic> topicsToCreate = new HashSet<>();
-			Set<PulsarTopic> topicsToModify = new HashSet<>();
+			var topicsToCreate = new HashSet<PulsarTopic>();
+			var topicsToModify = new HashSet<PulsarTopic>();
 
 			try {
-				List<String> existingTopicsInNamespace = admin.topics().getList(namespace);
+				var existingTopicsInNamespace = admin.topics().getList(namespace);
 
-				for (PulsarTopic topic : requestedTopics) {
+				for (var topic : requestedTopics) {
+					var topicName = topic.getFullyQualifiedTopicName();
 					if (topic.isPartitioned()) {
-						List<String> matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
+						if (existingTopicsInNamespace.contains(topicName)) {
+							throw new IllegalStateException(
+									"Topic '%s' already exists un-partitioned - needs to be deleted first"
+											.formatted(topicName));
+						}
+						var matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
 						if (matchingPartitions.isEmpty()) {
-							this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
+							this.logger.debug(() -> "Topic '%s' does not yet exist - will add".formatted(topicName));
 							topicsToCreate.add(topic);
 						}
 						else {
-							int numberOfExistingPartitions = matchingPartitions.size();
+							var numberOfExistingPartitions = matchingPartitions.size();
 							if (numberOfExistingPartitions < topic.numberOfPartitions()) {
-								this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " found with "
-										+ numberOfExistingPartitions + " partitions.");
+								this.logger.debug(() -> "Topic '%s' found with %d partitions - will update to %d"
+										.formatted(topicName, numberOfExistingPartitions, topic.numberOfPartitions()));
 								topicsToModify.add(topic);
 							}
 							else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
-								throw new IllegalStateException("Topic " + topic.getFullyQualifiedTopicName()
-										+ " found with " + numberOfExistingPartitions
-										+ " partitions. Needs to be deleted first.");
+								throw new IllegalStateException(
+										"Topic '%s' found w/ %d partitions but can't shrink to %d - needs to be deleted first"
+												.formatted(topicName, numberOfExistingPartitions,
+														topic.numberOfPartitions()));
 							}
 						}
 					}
 					else {
-						if (!existingTopicsInNamespace.contains(topic.getFullyQualifiedTopicName())) {
-							this.logger.debug(() -> "Topic " + topic.getFullyQualifiedTopicName() + " does not exist.");
+						var matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
+						if (!matchingPartitions.isEmpty()) {
+							throw new IllegalStateException(
+									"Topic '%s' already exists partitioned - needs to be deleted first"
+											.formatted(topicName));
+						}
+						if (!existingTopicsInNamespace.contains(topicName)) {
+							this.logger.debug(() -> "Topic '%s' does not yet exist - will add".formatted(topicName));
 							topicsToCreate.add(topic);
 						}
 					}
@@ -211,7 +227,7 @@ public class PulsarAdministration
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
 		this.logger.debug(() -> "Creating topics: " + topicsToCreate.stream()
 				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
-		for (PulsarTopic topic : topicsToCreate) {
+		for (var topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 			}
@@ -224,7 +240,7 @@ public class PulsarAdministration
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
 		this.logger.debug(() -> "Modifying topics: " + topicsToModify.stream()
 				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
-		for (PulsarTopic topic : topicsToModify) {
+		for (var topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}
 	}
