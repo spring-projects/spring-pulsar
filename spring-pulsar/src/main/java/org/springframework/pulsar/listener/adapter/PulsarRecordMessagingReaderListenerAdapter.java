@@ -39,11 +39,11 @@ public class PulsarRecordMessagingReaderListenerAdapter<V> extends PulsarMessagi
 	}
 
 	@Override
-	public void received(Reader<V> consumer, Message<V> record) {
+	public void received(Reader<V> reader, Message<V> record) {
 		org.springframework.messaging.Message<?> message = null;
 		Object theRecord = record;
 		if (isHeaderFound() || isSpringMessage()) {
-			message = toMessagingMessageFromReader(record, consumer);
+			message = toMessagingMessageFromReader(record, reader);
 		}
 		else if (isSimpleExtraction()) {
 			theRecord = record.getValue();
@@ -53,7 +53,7 @@ public class PulsarRecordMessagingReaderListenerAdapter<V> extends PulsarMessagi
 			this.logger.debug("Processing [" + message + "]");
 		}
 		try {
-			invokeHandler(theRecord, message, consumer);
+			invokeHandler(message, theRecord, reader);
 		}
 		catch (Exception e) {
 			throw e;

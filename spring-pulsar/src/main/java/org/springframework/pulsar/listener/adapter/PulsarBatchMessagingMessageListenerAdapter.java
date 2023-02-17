@@ -140,7 +140,7 @@ public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagi
 
 	protected void invoke(Object records, Consumer<V> consumer, Message<?> message, Acknowledgement acknowledgement) {
 		try {
-			invokeHandler(records, message, consumer, acknowledgement);
+			invokeHandler(message, records, consumer, acknowledgement);
 		}
 		catch (Exception e) {
 			throw e;
