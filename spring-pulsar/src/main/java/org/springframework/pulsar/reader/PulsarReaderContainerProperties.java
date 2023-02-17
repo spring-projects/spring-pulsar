@@ -22,8 +22,10 @@ import java.util.List;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.util.Assert;
 
 /**
@@ -43,9 +45,15 @@ public class PulsarReaderContainerProperties {
 
 	private List<String> topics;
 
-	private MessageId startMessageId;
+	private MessageId startMessageId = MessageId.earliest;
 
 	private Schema<?> schema;
+
+	private SchemaType schemaType;
+
+	private SchemaResolver schemaResolver;
+
+	private String subscriptionName;
 
 	public Object getReaderListener() {
 		return this.readerListener;
@@ -99,6 +107,30 @@ public class PulsarReaderContainerProperties {
 
 	public void setSchema(Schema<?> schema) {
 		this.schema = schema;
+	}
+
+	public String getSubscriptionName() {
+		return this.subscriptionName;
+	}
+
+	public void setSubscriptionName(String subscriptionName) {
+		this.subscriptionName = subscriptionName;
+	}
+
+	public SchemaType getSchemaType() {
+		return this.schemaType;
+	}
+
+	public void setSchemaType(SchemaType schemaType) {
+		this.schemaType = schemaType;
+	}
+
+	public SchemaResolver getSchemaResolver() {
+		return this.schemaResolver;
+	}
+
+	public void setSchemaResolver(SchemaResolver schemaResolver) {
+		this.schemaResolver = schemaResolver;
 	}
 
 }

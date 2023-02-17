@@ -27,7 +27,7 @@ import org.springframework.core.type.AnnotationMetadata;
  * @author Soby Chacko
  */
 @Order
-public class PulsarListenerConfigurationSelector implements DeferredImportSelector {
+public class PulsarAnnotationsConfigurationSelector implements DeferredImportSelector {
 
 	@Override
 	public String[] selectImports(AnnotationMetadata importingClassMetadata) {

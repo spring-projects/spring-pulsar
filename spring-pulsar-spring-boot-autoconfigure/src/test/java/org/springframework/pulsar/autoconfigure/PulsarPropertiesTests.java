@@ -529,7 +529,7 @@ public class PulsarPropertiesTests {
 
 			assertThat(readerProps)
 					.hasEntrySatisfying("topicNames",
-							topics -> assertThat(topics).asInstanceOf(InstanceOfAssertFactories.array(String[].class))
+							topics -> assertThat(topics).asInstanceOf(InstanceOfAssertFactories.list(String.class))
 									.containsExactly("my-topic"))
 					.containsEntry("receiverQueueSize", 100).containsEntry("readerName", "my-reader")
 					.containsEntry("subscriptionName", "my-subscription")

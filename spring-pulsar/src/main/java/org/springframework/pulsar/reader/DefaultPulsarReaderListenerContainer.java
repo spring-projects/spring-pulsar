@@ -58,7 +58,7 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 
 	private final AtomicReference<Thread> readerThread = new AtomicReference<>();
 
-	protected DefaultPulsarReaderListenerContainer(PulsarReaderFactory<T> pulsarReaderFactory,
+	public DefaultPulsarReaderListenerContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
 			PulsarReaderContainerProperties pulsarReaderContainerProperties) {
 		super(pulsarReaderFactory, pulsarReaderContainerProperties);
 		this.thisOrParentContainer = this;

@@ -58,9 +58,10 @@ public non-sealed abstract class AbstractPulsarReaderListenerContainer<T> implem
 
 	private volatile boolean running = false;
 
-	protected AbstractPulsarReaderListenerContainer(PulsarReaderFactory<T> pulsarReaderFactory,
+	@SuppressWarnings("unchecked")
+	protected AbstractPulsarReaderListenerContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
 			PulsarReaderContainerProperties pulsarReaderContainerProperties) {
-		this.pulsarReaderFactory = pulsarReaderFactory;
+		this.pulsarReaderFactory = (PulsarReaderFactory<T>) pulsarReaderFactory;
 		this.pulsarReaderContainerProperties = pulsarReaderContainerProperties;
 	}
 

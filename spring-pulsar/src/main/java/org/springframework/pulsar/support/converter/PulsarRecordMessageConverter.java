@@ -19,6 +19,7 @@ package org.springframework.pulsar.support.converter;
 import java.lang.reflect.Type;
 
 import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.Reader;
 
 import org.springframework.messaging.Message;
 import org.springframework.pulsar.support.MessageConverter;
@@ -32,5 +33,10 @@ import org.springframework.pulsar.support.MessageConverter;
 public interface PulsarRecordMessageConverter<T> extends MessageConverter {
 
 	Message<?> toMessage(org.apache.pulsar.client.api.Message<T> record, Consumer<T> consumer, Type payloadType);
+
+	default Message<?> toMessageFromReader(org.apache.pulsar.client.api.Message<T> record, Reader<T> reader,
+			Type payloadType) {
+		return null;
+	}
 
 }

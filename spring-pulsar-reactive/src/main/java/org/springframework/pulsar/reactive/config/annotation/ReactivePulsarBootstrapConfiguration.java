@@ -20,7 +20,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.pulsar.config.PulsarListenerBeanNames;
+import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
 
 /**
@@ -43,16 +43,16 @@ public class ReactivePulsarBootstrapConfiguration implements ImportBeanDefinitio
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 		if (!registry.containsBeanDefinition(
-				PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+				PulsarAnnotationSupportBeanNames.REACTIVE_PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			registry.registerBeanDefinition(
-					PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME,
+					PulsarAnnotationSupportBeanNames.REACTIVE_PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME,
 					new RootBeanDefinition(ReactivePulsarListenerAnnotationBeanPostProcessor.class));
 		}
 
-		if (!registry
-				.containsBeanDefinition(PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)) {
+		if (!registry.containsBeanDefinition(
+				PulsarAnnotationSupportBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)) {
 			registry.registerBeanDefinition(
-					PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
+					PulsarAnnotationSupportBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
 					new RootBeanDefinition(ReactivePulsarListenerEndpointRegistry.class));
 		}
 	}

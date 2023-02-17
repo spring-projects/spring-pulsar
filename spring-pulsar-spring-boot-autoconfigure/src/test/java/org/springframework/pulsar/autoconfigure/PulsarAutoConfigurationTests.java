@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.mock;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.PulsarClient;
@@ -496,8 +497,7 @@ class PulsarAutoConfigurationTests {
 					"spring.pulsar.reader.subscription-role-prefix=test-prefix",
 					"spring.pulsar.reader.read-compacted=true", "spring.pulsar.reader.reset-include-head=true")
 					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarReaderFactory.class)
-							.extracting("readerConfig")
-							.hasFieldOrPropertyWithValue("topicNames", new String[] { "foo" })
+							.extracting("readerConfig").hasFieldOrPropertyWithValue("topicNames", List.of("foo"))
 							.hasFieldOrPropertyWithValue("receiverQueueSize", 200)
 							.hasFieldOrPropertyWithValue("readerName", "test-reader")
 							.hasFieldOrPropertyWithValue("subscriptionName", "test-subscription")

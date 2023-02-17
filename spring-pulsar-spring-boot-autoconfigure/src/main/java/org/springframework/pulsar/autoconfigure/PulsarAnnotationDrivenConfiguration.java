@@ -26,12 +26,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarListenerBeanNames;
+import org.springframework.pulsar.config.DefaultPulsarReaderContainerFactory;
+import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
+import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
 import org.springframework.util.unit.DataSize;
 
 import io.micrometer.observation.ObservationRegistry;
@@ -80,9 +83,25 @@ public class PulsarAnnotationDrivenConfiguration {
 						? observationRegistryProvider.getIfUnique() : null);
 	}
 
+	@Bean
+	@ConditionalOnMissingBean(name = "pulsarReaderContainerFactory")
+	DefaultPulsarReaderContainerFactory<?> pulsarReaderContainerFactory(
+			ObjectProvider<PulsarReaderFactory<Object>> readerFactoryProvider, SchemaResolver schemaResolver) {
+
+		PulsarReaderContainerProperties containerProperties = new PulsarReaderContainerProperties();
+		containerProperties.setSchemaResolver(schemaResolver);
+
+		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+		PulsarProperties.Reader readerProperties = this.pulsarProperties.getReader();
+		map.from(readerProperties::getTopicNames).to(containerProperties::setTopics);
+
+		return new DefaultPulsarReaderContainerFactory<>(readerFactoryProvider.getIfAvailable(), containerProperties);
+	}
+
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
-	@ConditionalOnMissingBean(name = PulsarListenerBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
+	@ConditionalOnMissingBean(name = { PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME,
+			PulsarAnnotationSupportBeanNames.PULSAR_READER_ANNOTATION_PROCESSOR_BEAN_NAME })
 	static class EnablePulsarConfiguration {
 
 	}

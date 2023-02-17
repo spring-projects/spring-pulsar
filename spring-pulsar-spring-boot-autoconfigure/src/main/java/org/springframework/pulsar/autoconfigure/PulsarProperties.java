@@ -1216,7 +1216,7 @@ public class PulsarProperties {
 		/**
 		 * Topic names.
 		 */
-		private String[] topicNames;
+		private List<String> topicNames;
 
 		/**
 		 * Size of a consumer's receiver queue.
@@ -1249,11 +1249,11 @@ public class PulsarProperties {
 		 */
 		private Boolean resetIncludeHead;
 
-		public String[] getTopicNames() {
+		public List<String> getTopicNames() {
 			return this.topicNames;
 		}
 
-		public void setTopicNames(String[] topicNames) {
+		public void setTopicNames(List<String> topicNames) {
 			this.topicNames = topicNames;
 		}
 
