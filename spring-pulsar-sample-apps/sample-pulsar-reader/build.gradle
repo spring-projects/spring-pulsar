@@ -1,0 +1,27 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+	id 'org.springframework.boot' version '3.0.2'
+}
+
+description = 'Spring Pulsar Sample Application (Send and Receive)'
+
+dependencies {
+	implementation project(':spring-pulsar-spring-boot-starter')
+	implementation 'com.google.code.findbugs:jsr305'
+}
+
+bootRun {
+	jvmArgs = [
+			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
+			"--add-opens", "java.base/java.util=ALL-UNNAMED",
+			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
+	]
+}
+
+project.afterEvaluate {
+	project.tasks.publishArtifacts.enabled(false)
+	project.tasks.artifactoryPublish.enabled(false)
+	project.tasks.publishToOssrh.enabled(false)
+	project.tasks.publishMavenJavaPublicationToOssrhRepository.enabled(false)
+	project.tasks.publishAllPublicationsToOssrhRepository.enabled(false)
+}

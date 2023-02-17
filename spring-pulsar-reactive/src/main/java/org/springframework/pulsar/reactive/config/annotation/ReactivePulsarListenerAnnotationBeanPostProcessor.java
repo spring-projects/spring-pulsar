@@ -75,7 +75,7 @@ import org.springframework.messaging.handler.annotation.support.DefaultMessageHa
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.annotation.PulsarListenerConfigurer;
-import org.springframework.pulsar.config.PulsarListenerBeanNames;
+import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.reactive.config.MethodReactivePulsarListenerEndpoint;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
@@ -211,7 +211,7 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V>
 				Assert.state(this.beanFactory != null,
 						"BeanFactory must be set to find endpoint registry by bean name");
 				this.endpointRegistry = this.beanFactory.getBean(
-						PulsarListenerBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
+						PulsarAnnotationSupportBeanNames.REACTIVE_PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
 						ReactivePulsarListenerEndpointRegistry.class);
 			}
 			this.registrar.setEndpointRegistry(this.endpointRegistry);

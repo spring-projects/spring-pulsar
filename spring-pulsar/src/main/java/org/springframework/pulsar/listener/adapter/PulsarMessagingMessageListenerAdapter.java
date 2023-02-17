@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
+import org.apache.pulsar.client.api.Reader;
 
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.core.MethodParameter;
@@ -140,11 +141,27 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 		return getMessageConverter().toMessage(record, consumer, getType());
 	}
 
+	protected org.springframework.messaging.Message<?> toMessagingMessageFromReader(Message<V> record,
+			Reader<V> reader) {
+		return getMessageConverter().toMessageFromReader(record, reader, getType());
+	}
+
 	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
 			Consumer<V> consumer, Acknowledgement acknowledgement) {
 
 		try {
 			return this.handlerMethod.invoke(message, data, consumer, acknowledgement);
+		}
+		catch (Exception ex) {
+			throw new MessageConversionException("Cannot handle message", ex);
+		}
+	}
+
+	protected final Object invokeHandler(Object data, org.springframework.messaging.Message<?> message,
+			Reader<V> reader) {
+
+		try {
+			return this.handlerMethod.invoke(message, data, reader);
 		}
 		catch (Exception ex) {
 			throw new MessageConversionException("Cannot handle message", ex);
