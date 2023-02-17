@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.annotation;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +34,6 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.config.MethodPulsarReaderEndpoint;
@@ -250,18 +248,9 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		Set<PulsarReader> readers = new HashSet<>();
 		PulsarReader ann = AnnotatedElementUtils.findMergedAnnotation(method, PulsarReader.class);
 		if (ann != null) {
-			ann = enhance(method, ann);
 			readers.add(ann);
 		}
 		return readers;
-	}
-
-	private PulsarReader enhance(AnnotatedElement element, PulsarReader ann) {
-		if (this.enhancer == null) {
-			return ann;
-		}
-		return AnnotationUtils.synthesizeAnnotation(
-				this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarReader.class, null);
 	}
 
 }

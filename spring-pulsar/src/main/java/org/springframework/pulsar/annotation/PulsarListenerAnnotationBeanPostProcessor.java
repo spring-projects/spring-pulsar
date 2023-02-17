@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.annotation;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,8 +105,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 	private final Set<Class<?>> nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap<>(64));
 
 	private final ListenerScope listenerScope = new ListenerScope();
-
-	private AnnotationEnhancer enhancer;
 
 	private final AtomicInteger counter = new AtomicInteger();
 
@@ -380,22 +377,13 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		Set<PulsarListener> listeners = new HashSet<>();
 		PulsarListener ann = AnnotatedElementUtils.findMergedAnnotation(method, PulsarListener.class);
 		if (ann != null) {
-			ann = enhance(method, ann);
 			listeners.add(ann);
 		}
 		PulsarListeners anns = AnnotationUtils.findAnnotation(method, PulsarListeners.class);
 		if (anns != null) {
-			listeners.addAll(Arrays.stream(anns.value()).map(anno -> enhance(method, anno)).toList());
+			listeners.addAll(Arrays.stream(anns.value()).toList());
 		}
 		return listeners;
-	}
-
-	private PulsarListener enhance(AnnotatedElement element, PulsarListener ann) {
-		if (this.enhancer == null) {
-			return ann;
-		}
-		return AnnotationUtils.synthesizeAnnotation(
-				this.enhancer.apply(AnnotationUtils.getAnnotationAttributes(ann), element), PulsarListener.class, null);
 	}
 
 	private void addFormatters(FormatterRegistry registry) {

@@ -18,7 +18,6 @@ package org.springframework.pulsar.annotation;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -29,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -89,8 +87,6 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 	private Charset charset = StandardCharsets.UTF_8;
 
 	protected final PulsarHandlerMethodFactoryAdapter messageHandlerMethodFactory = new PulsarHandlerMethodFactoryAdapter();
-
-	protected AnnotationEnhancer enhancer;
 
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
@@ -224,24 +220,9 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		}
 	}
 
-	private void buildEnhancer() {
-		if (this.applicationContext != null) {
-			List<AnnotationEnhancer> enhancers = this.applicationContext
-					.getBeanProvider(AnnotationEnhancer.class, false).orderedStream().toList();
-			if (!enhancers.isEmpty()) {
-				this.enhancer = (attrs, element) -> {
-					for (AnnotationEnhancer enh : enhancers) {
-						attrs = enh.apply(attrs, element);
-					}
-					return attrs;
-				};
-			}
-		}
-	}
-
 	@Override
 	public void afterPropertiesSet() {
-		buildEnhancer();
+		// place holder
 	}
 
 	@Override
@@ -424,11 +405,6 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 			}
 			return false;
 		}
-
-	}
-
-	protected interface AnnotationEnhancer
-			extends BiFunction<Map<String, Object>, AnnotatedElement, Map<String, Object>> {
 
 	}
 
