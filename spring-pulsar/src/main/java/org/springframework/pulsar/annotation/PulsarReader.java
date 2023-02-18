@@ -22,6 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -38,7 +39,7 @@ public @interface PulsarReader {
 	 * <p>
 	 * If none is specified an auto-generated id is used.
 	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
 	 * @return the {@code id} for the container managing for this endpoint.
 	 * @see PulsarReaderEndpointRegistry#getReaderContainer(String)
 	 */
@@ -55,6 +56,12 @@ public @interface PulsarReader {
 	 * @return the {@code schemaType} for this listener
 	 */
 	SchemaType schemaType() default SchemaType.NONE;
+
+	/**
+	 * {@link MessageId} for this reader to start from.
+	 * @return starting message id - earliest or latest.
+	 */
+	String startMessageId() default "";
 
 	/**
 	 * Topics to listen to.

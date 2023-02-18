@@ -53,6 +53,7 @@ public class DefaultPulsarReaderContainerFactory<T>
 		}
 
 		properties.setSchemaType(endpoint.getSchemaType());
+		properties.setStartMessageId(endpoint.getStartMessageId());
 
 		return new DefaultPulsarReaderListenerContainer<>(this.getReaderFactory(), properties);
 	}

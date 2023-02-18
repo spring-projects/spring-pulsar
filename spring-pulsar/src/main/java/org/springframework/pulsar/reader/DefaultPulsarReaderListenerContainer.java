@@ -150,7 +150,7 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 						readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema());
 			}
 			catch (PulsarClientException e) {
-				DefaultPulsarReaderListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
+				throw new IllegalStateException("Pulsar client exceptions.", e);
 			}
 		}
 

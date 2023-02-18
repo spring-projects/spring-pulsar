@@ -18,6 +18,7 @@ package org.springframework.pulsar.config;
 
 import java.util.List;
 
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
@@ -77,5 +78,7 @@ public interface PulsarReaderEndpoint<C extends PulsarReaderListenerContainer> {
 
 	@Nullable
 	Boolean getAutoStartup();
+
+	MessageId getStartMessageId();
 
 }

@@ -26,6 +26,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.pulsar.client.api.MessageId;
+
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -210,6 +212,15 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		endpoint.setId(getEndpointId(pulsarReader));
 		endpoint.setTopics(topics);
 		endpoint.setSchemaType(pulsarReader.schemaType());
+		String startMessageIdString = pulsarReader.startMessageId();
+		MessageId startMessageId = null;
+		if (startMessageIdString.equalsIgnoreCase("earliest")) {
+			startMessageId = MessageId.earliest;
+		}
+		else if (startMessageIdString.equalsIgnoreCase("latest")) {
+			startMessageId = MessageId.latest;
+		}
+		endpoint.setStartMessageId(startMessageId);
 
 		String autoStartup = pulsarReader.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {

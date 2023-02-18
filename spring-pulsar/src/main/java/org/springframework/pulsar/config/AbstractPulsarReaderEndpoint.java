@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.beans.BeansException;
@@ -54,6 +55,8 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 	private String id;
 
 	private final List<String> topics = new ArrayList<>();
+
+	private MessageId startMessageId;
 
 	private BeanFactory beanFactory;
 
@@ -168,6 +171,14 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 
 	public void setSchemaType(SchemaType schemaType) {
 		this.schemaType = schemaType;
+	}
+
+	public MessageId getStartMessageId() {
+		return this.startMessageId;
+	}
+
+	public void setStartMessageId(MessageId startMessageId) {
+		this.startMessageId = startMessageId;
 	}
 
 }

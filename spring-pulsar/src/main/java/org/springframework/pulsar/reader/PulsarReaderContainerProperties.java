@@ -25,6 +25,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.util.Assert;
 
@@ -45,7 +46,7 @@ public class PulsarReaderContainerProperties {
 
 	private List<String> topics;
 
-	private MessageId startMessageId = MessageId.earliest;
+	private MessageId startMessageId;
 
 	private Schema<?> schema;
 
@@ -57,6 +58,10 @@ public class PulsarReaderContainerProperties {
 
 	public Object getReaderListener() {
 		return this.readerListener;
+	}
+
+	public PulsarReaderContainerProperties() {
+		this.schemaResolver = new DefaultSchemaResolver();
 	}
 
 	public void setReaderListener(Object readerListener) {
