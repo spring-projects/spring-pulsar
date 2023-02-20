@@ -106,6 +106,10 @@ gradlePlugin {
 			id = "io.spring.convention.artfiactory"
 			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
 		}
+		integrationTestPlugin {
+			id = "io.spring.convention.integration-test"
+			implementationClass = "io.spring.gradle.convention.IntegrationTestPlugin"
+		}
 		repositoryConventionPlugin {
 			id = "io.spring.convention.repository"
 			implementationClass = "io.spring.gradle.convention.RepositoryConventionPlugin"

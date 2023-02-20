@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.gradle;
 
+import io.spring.gradle.convention.IntegrationTestPlugin;
 import io.spring.gradle.convention.RepositoryConventionPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -44,5 +45,6 @@ public class SpringDocsModulePlugin implements Plugin<Project> {
 		pluginManager.apply(AsciidoctorConventionsPlugin.class);
 		pluginManager.apply(SpringPublishPlugin.class);
 		pluginManager.apply(OptionalDependenciesPlugin.class);
+		pluginManager.apply(IntegrationTestPlugin.class);
 	}
 }

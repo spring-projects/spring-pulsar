@@ -33,6 +33,10 @@ test {
 	testLogging.showStandardStreams = true
 }
 
+integrationTest {
+	maxHeapSize '2048m'
+}
+
 task downloadRabbitConnector {
 	onlyIf {
 		System.getProperty("downloadRabbitConnector") == "true"

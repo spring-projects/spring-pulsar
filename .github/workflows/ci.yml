@@ -39,9 +39,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         env:
           GRADLE_USER_HOME: ~/.gradle
-      - name: Run Gradle build
+      - name: Build and run unit tests
         run: |
-          ./gradlew clean build -DdownloadRabbitConnector=false --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew clean build -x integrationTest --continue --scan -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+      - name: Run integration tests
+        run: |
+          ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
       - name: Capture test results
         if: failure()
         uses: actions/upload-artifact@v3
