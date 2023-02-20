@@ -18,16 +18,14 @@ public class JacocoConventionsPlugin implements Plugin<Project> {
 	@Override
 	public void apply(final Project project) {
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> {
+
 			project.getPluginManager().apply(JacocoPlugin.class);
-			project.getExtensions().configure(JacocoPluginExtension.class, (jacocoExtension) -> {
-				jacocoExtension.setToolVersion("0.8.7");
-			});
-			project.getTasks().withType(Test.class, test -> {
-				project.getTasks().withType(JacocoReport.class, jacocoReport -> {
-					test.finalizedBy(jacocoReport);
-					jacocoReport.dependsOn(test);
-				});
-			});
+
+			project.getExtensions().configure(JacocoPluginExtension.class,
+					(jacocoExtension) -> jacocoExtension.setToolVersion("0.8.7"));
+
+			project.getTasks().withType(Test.class, (test) ->
+					project.getTasks().withType(JacocoReport.class, test::finalizedBy));
 		});
 	}
 }
