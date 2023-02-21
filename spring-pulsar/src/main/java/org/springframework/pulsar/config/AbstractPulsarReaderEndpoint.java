@@ -34,7 +34,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.util.Assert;
@@ -156,13 +156,13 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 	private void setupMessageListener(PulsarMessageReaderContainer container,
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<K> adapter = createReaderListener(container, messageConverter);
+		AbstractPulsarMessageToSpringMessageAdapter<K> adapter = createReaderListener(container, messageConverter);
 		Object messageListener = adapter;
 		Assert.state(messageListener != null, () -> "Endpoint [" + this + "] must provide a non null message listener");
 		container.setupReaderListener(messageListener);
 	}
 
-	protected abstract PulsarMessagingMessageListenerAdapter<K> createReaderListener(
+	protected abstract AbstractPulsarMessageToSpringMessageAdapter<K> createReaderListener(
 			PulsarMessageReaderContainer container, @Nullable MessageConverter messageConverter);
 
 	public SchemaType getSchemaType() {

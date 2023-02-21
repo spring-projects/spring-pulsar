@@ -16,17 +16,26 @@
 
 package org.springframework.pulsar.support.converter;
 
+import java.lang.reflect.Type;
+
+import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.Reader;
+
+import org.springframework.messaging.Message;
 import org.springframework.pulsar.support.MessageConverter;
 
 /**
- * Pulsar batch message converter strategy.
+ * Pulsar specific record converter strategy.
  *
- * @param <T> message type.
+ * @param <T> message type
  * @author Soby Chacko
  */
-public interface PulsarBatchMessageConverter<T> extends MessageConverter {
+public interface PulsarMessageConverter<T> extends MessageConverter {
 
-	default PulsarRecordMessageConverter<T> getRecordMessageConverter() {
+	Message<?> toMessage(org.apache.pulsar.client.api.Message<T> record, Consumer<T> consumer, Type payloadType);
+
+	default Message<?> toMessageFromReader(org.apache.pulsar.client.api.Message<T> record, Reader<T> reader,
+			Type payloadType) {
 		return null;
 	}
 

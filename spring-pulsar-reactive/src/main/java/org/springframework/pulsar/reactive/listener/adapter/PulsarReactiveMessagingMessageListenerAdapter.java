@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.Messages;
 
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 
 import reactor.core.publisher.Flux;
@@ -34,7 +34,7 @@ import reactor.core.publisher.Flux;
  * @author Chris Bono
  */
 public abstract class PulsarReactiveMessagingMessageListenerAdapter<V>
-		extends PulsarMessagingMessageListenerAdapter<V> {
+		extends AbstractPulsarMessageToSpringMessageAdapter<V> {
 
 	public PulsarReactiveMessagingMessageListenerAdapter(Object bean, Method method) {
 		super(bean, method);

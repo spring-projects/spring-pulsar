@@ -40,8 +40,8 @@ import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.listener.DefaultReactivePulsarMessageListenerContainer;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarContainerProperties;
@@ -49,7 +49,7 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListene
 import org.springframework.pulsar.reactive.listener.adapter.PulsarReactiveOneByOneMessagingMessageListenerAdapter;
 import org.springframework.pulsar.reactive.listener.adapter.PulsarReactiveStreamingMessagingMessageListenerAdapter;
 import org.springframework.pulsar.support.MessageConverter;
-import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
+import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -103,11 +103,12 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected PulsarMessagingMessageListenerAdapter<V> createMessageHandler(
+	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageHandler(
 			ReactivePulsarMessageListenerContainer<V> container, @Nullable MessageConverter messageConverter) {
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
-		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
+		AbstractPulsarMessageToSpringMessageAdapter<V> messageListener = createMessageListenerInstance(
+				messageConverter);
 		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
@@ -186,17 +187,17 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 				|| rawClass.isAssignableFrom(org.springframework.messaging.Message.class);
 	}
 
-	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {
+	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener) {
 		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
 				.createInvocableHandlerMethod(getBean(), getMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected PulsarMessagingMessageListenerAdapter<V> createMessageListenerInstance(
+	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<V> listener;
+		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isFluxListener()) {
 			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(this.bean, this.method);
 		}
@@ -204,8 +205,8 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(this.bean, this.method);
 		}
 
-		if (messageConverter instanceof PulsarRecordMessageConverter) {
-			listener.setMessageConverter((PulsarRecordMessageConverter) messageConverter);
+		if (messageConverter instanceof PulsarMessageConverter) {
+			listener.setMessageConverter((PulsarMessageConverter) messageConverter);
 		}
 		if (this.messagingConverter != null) {
 			listener.setMessagingConverter(this.messagingConverter);

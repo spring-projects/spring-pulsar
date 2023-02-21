@@ -37,7 +37,7 @@ import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -182,14 +182,14 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	private void setupMessageListener(PulsarMessageListenerContainer container,
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<K> adapter = createMessageListener(container, messageConverter);
+		AbstractPulsarMessageToSpringMessageAdapter<K> adapter = createMessageListener(container, messageConverter);
 		Object messageListener = adapter;
 		boolean isBatchListener = isBatchListener();
 		Assert.state(messageListener != null, () -> "Endpoint [" + this + "] must provide a non null message listener");
 		container.setupMessageListener(messageListener);
 	}
 
-	protected abstract PulsarMessagingMessageListenerAdapter<K> createMessageListener(
+	protected abstract AbstractPulsarMessageToSpringMessageAdapter<K> createMessageListener(
 			PulsarMessageListenerContainer container, @Nullable MessageConverter messageConverter);
 
 	public void setConsumerProperties(Properties consumerProperties) {

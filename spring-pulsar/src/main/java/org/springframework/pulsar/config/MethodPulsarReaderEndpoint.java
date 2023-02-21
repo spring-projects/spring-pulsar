@@ -36,14 +36,14 @@ import org.springframework.messaging.handler.annotation.support.MessageHandlerMe
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarRecordMessagingReaderListenerAdapter;
+import org.springframework.pulsar.listener.adapter.PulsarRecordMessageToSpringMessageReaderAdapter;
 import org.springframework.pulsar.reader.DefaultPulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
 import org.springframework.pulsar.support.MessageConverter;
-import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
+import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 
 /**
@@ -84,9 +84,9 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 	}
 
 	@Override
-	protected PulsarMessagingMessageListenerAdapter<V> createReaderListener(PulsarMessageReaderContainer container,
-			@Nullable MessageConverter messageConverter) {
-		PulsarMessagingMessageListenerAdapter<V> readerListener = createMessageListenerInstance(messageConverter);
+	protected AbstractPulsarMessageToSpringMessageAdapter<V> createReaderListener(
+			PulsarMessageReaderContainer container, @Nullable MessageConverter messageConverter) {
+		AbstractPulsarMessageToSpringMessageAdapter<V> readerListener = createMessageListenerInstance(messageConverter);
 		HandlerAdapter handlerMethod = configureListenerAdapter(readerListener);
 		readerListener.setHandlerMethod(handlerMethod);
 
@@ -158,21 +158,21 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 				|| rawClass.isAssignableFrom(org.springframework.messaging.Message.class);
 	}
 
-	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {
+	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener) {
 		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
 				.createInvocableHandlerMethod(getBean(), getMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected PulsarMessagingMessageListenerAdapter<V> createMessageListenerInstance(
+	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<V> listener;
-		PulsarRecordMessagingReaderListenerAdapter<V> messageListener = new PulsarRecordMessagingReaderListenerAdapter<>(
+		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
+		PulsarRecordMessageToSpringMessageReaderAdapter<V> messageListener = new PulsarRecordMessageToSpringMessageReaderAdapter<>(
 				this.bean, this.method);
-		if (messageConverter instanceof PulsarRecordMessageConverter) {
-			messageListener.setMessageConverter((PulsarRecordMessageConverter) messageConverter);
+		if (messageConverter instanceof PulsarMessageConverter) {
+			messageListener.setMessageConverter((PulsarMessageConverter) messageConverter);
 		}
 		listener = messageListener;
 

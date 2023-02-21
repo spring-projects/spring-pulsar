@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,10 @@ package org.springframework.pulsar.listener.adapter;
 
 import java.lang.reflect.Method;
 
-import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageListener;
-
-import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.Acknowledgement;
-import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
+import org.apache.pulsar.client.api.Reader;
+import org.apache.pulsar.client.api.ReaderListener;
 
 /**
  * A {@link MessageListener MessageListener} adapter that invokes a configurable
@@ -34,19 +31,19 @@ import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
  * @param <V> payload type.
  * @author Soby Chacko
  */
-public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
-		implements PulsarAcknowledgingMessageListener<V> {
+public class PulsarRecordMessageToSpringMessageReaderAdapter<V> extends AbstractPulsarMessageToSpringMessageAdapter<V>
+		implements ReaderListener<V> {
 
-	public PulsarRecordMessagingMessageListenerAdapter(Object bean, Method method) {
+	public PulsarRecordMessageToSpringMessageReaderAdapter(Object bean, Method method) {
 		super(bean, method);
 	}
 
 	@Override
-	public void received(Consumer<V> consumer, Message<V> record, @Nullable Acknowledgement acknowledgement) {
+	public void received(Reader<V> reader, Message<V> record) {
 		org.springframework.messaging.Message<?> message = null;
 		Object theRecord = record;
 		if (isHeaderFound() || isSpringMessage()) {
-			message = toMessagingMessage(record, consumer);
+			message = toMessagingMessageFromReader(record, reader);
 		}
 		else if (isSimpleExtraction()) {
 			theRecord = record.getValue();
@@ -56,7 +53,7 @@ public class PulsarRecordMessagingMessageListenerAdapter<V> extends PulsarMessag
 			this.logger.debug("Processing [" + message + "]");
 		}
 		try {
-			invokeHandler(message, theRecord, consumer, acknowledgement);
+			invokeHandler(message, theRecord, reader);
 		}
 		catch (Exception e) {
 			throw e;

@@ -43,13 +43,12 @@ import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContai
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarBatchMessagingMessageListenerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
-import org.springframework.pulsar.listener.adapter.PulsarRecordMessagingMessageListenerAdapter;
+import org.springframework.pulsar.listener.adapter.PulsarBatchMessagesToSpringMessageListenerAdapter;
+import org.springframework.pulsar.listener.adapter.PulsarRecordMessageToSpringMessageListenerAdapter;
 import org.springframework.pulsar.support.MessageConverter;
-import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
-import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
+import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -107,11 +106,12 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	}
 
 	@Override
-	protected PulsarMessagingMessageListenerAdapter<V> createMessageListener(PulsarMessageListenerContainer container,
-			@Nullable MessageConverter messageConverter) {
+	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListener(
+			PulsarMessageListenerContainer container, @Nullable MessageConverter messageConverter) {
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
-		PulsarMessagingMessageListenerAdapter<V> messageListener = createMessageListenerInstance(messageConverter);
+		AbstractPulsarMessageToSpringMessageAdapter<V> messageListener = createMessageListenerInstance(
+				messageConverter);
 		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
@@ -186,30 +186,27 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				|| rawClass.isAssignableFrom(org.springframework.messaging.Message.class);
 	}
 
-	protected HandlerAdapter configureListenerAdapter(PulsarMessagingMessageListenerAdapter<V> messageListener) {
+	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener) {
 		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
 				.createInvocableHandlerMethod(getBean(), getMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected PulsarMessagingMessageListenerAdapter<V> createMessageListenerInstance(
+	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<V> listener;
+		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isBatchListener()) {
-			PulsarBatchMessagingMessageListenerAdapter<V> messageListener = new PulsarBatchMessagingMessageListenerAdapter<>(
+			PulsarBatchMessagesToSpringMessageListenerAdapter<V> messageListener = new PulsarBatchMessagesToSpringMessageListenerAdapter<>(
 					this.bean, this.method);
-			if (messageConverter instanceof PulsarBatchMessageConverter) {
-				messageListener.setBatchMessageConverter((PulsarBatchMessageConverter) messageConverter);
-			}
 			listener = messageListener;
 		}
 		else {
-			PulsarRecordMessagingMessageListenerAdapter<V> messageListener = new PulsarRecordMessagingMessageListenerAdapter<>(
+			PulsarRecordMessageToSpringMessageListenerAdapter<V> messageListener = new PulsarRecordMessageToSpringMessageListenerAdapter<>(
 					this.bean, this.method);
-			if (messageConverter instanceof PulsarRecordMessageConverter) {
-				messageListener.setMessageConverter((PulsarRecordMessageConverter) messageConverter);
+			if (messageConverter instanceof PulsarMessageConverter) {
+				messageListener.setMessageConverter((PulsarMessageConverter) messageConverter);
 			}
 			listener = messageListener;
 		}

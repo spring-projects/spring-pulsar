@@ -31,10 +31,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.PulsarBatchAcknowledgingMessageListener;
-import org.springframework.pulsar.support.converter.PulsarBatchMessageConverter;
-import org.springframework.pulsar.support.converter.PulsarBatchMessagingMessageConverter;
-import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
-import org.springframework.util.Assert;
 
 /**
  * A {@link org.apache.pulsar.client.api.MessageListener MessageListener} adapter that
@@ -44,26 +40,11 @@ import org.springframework.util.Assert;
  * @param <V> payload type.
  * @author Soby Chacko
  */
-public class PulsarBatchMessagingMessageListenerAdapter<V> extends PulsarMessagingMessageListenerAdapter<V>
+public class PulsarBatchMessagesToSpringMessageListenerAdapter<V> extends AbstractPulsarMessageToSpringMessageAdapter<V>
 		implements PulsarBatchAcknowledgingMessageListener<V> {
 
-	private PulsarBatchMessageConverter<V> batchMessageConverter = new PulsarBatchMessagingMessageConverter<V>();
-
-	public PulsarBatchMessagingMessageListenerAdapter(Object bean, Method method) {
+	public PulsarBatchMessagesToSpringMessageListenerAdapter(Object bean, Method method) {
 		super(bean, method);
-	}
-
-	public void setBatchMessageConverter(PulsarBatchMessageConverter<V> messageConverter) {
-		Assert.notNull(messageConverter, "'messageConverter' cannot be null");
-		this.batchMessageConverter = messageConverter;
-		PulsarRecordMessageConverter<V> recordMessageConverter = messageConverter.getRecordMessageConverter();
-		if (recordMessageConverter != null) {
-			setMessageConverter(recordMessageConverter);
-		}
-	}
-
-	protected final PulsarBatchMessageConverter<V> getBatchMessageConverter() {
-		return this.batchMessageConverter;
 	}
 
 	@Override

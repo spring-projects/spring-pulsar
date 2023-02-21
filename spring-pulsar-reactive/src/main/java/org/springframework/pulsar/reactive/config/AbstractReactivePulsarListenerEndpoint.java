@@ -34,7 +34,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
+import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListenerContainer;
 import org.springframework.pulsar.support.MessageConverter;
@@ -177,12 +177,12 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 	private void setupMessageListener(ReactivePulsarMessageListenerContainer<T> container,
 			@Nullable MessageConverter messageConverter) {
 
-		PulsarMessagingMessageListenerAdapter<T> adapter = createMessageHandler(container, messageConverter);
+		AbstractPulsarMessageToSpringMessageAdapter<T> adapter = createMessageHandler(container, messageConverter);
 		Assert.state(adapter != null, () -> "Endpoint [" + this + "] must provide a non null message handler");
 		container.setupMessageHandler((ReactivePulsarMessageHandler) adapter);
 	}
 
-	protected abstract PulsarMessagingMessageListenerAdapter<T> createMessageHandler(
+	protected abstract AbstractPulsarMessageToSpringMessageAdapter<T> createMessageHandler(
 			ReactivePulsarMessageListenerContainer<T> container, @Nullable MessageConverter messageConverter);
 
 	@Nullable

@@ -39,7 +39,7 @@ import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.pulsar.support.DefaultPulsarMessageHeaderMapper;
-import org.springframework.pulsar.support.converter.PulsarMessagingMessageConverter;
+import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
 
@@ -51,7 +51,7 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  * @author Christophe Bornet
  */
-public abstract class PulsarMessagingMessageListenerAdapter<V> {
+public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
@@ -81,29 +81,29 @@ public abstract class PulsarMessagingMessageListenerAdapter<V> {
 
 	private boolean converterSet;
 
-	private PulsarRecordMessageConverter<V> messageConverter = new PulsarMessagingMessageConverter<V>(
+	private PulsarMessageConverter<V> messageConverter = new PulsarRecordMessageConverter<V>(
 			new DefaultPulsarMessageHeaderMapper());
 
 	private Type fallbackType = Object.class;
 
-	public PulsarMessagingMessageListenerAdapter(Object bean, Method method) {
+	public AbstractPulsarMessageToSpringMessageAdapter(Object bean, Method method) {
 		this.bean = bean;
 		this.inferredType = determineInferredType(method);
 	}
 
-	public void setMessageConverter(PulsarRecordMessageConverter<V> messageConverter) {
+	public void setMessageConverter(PulsarMessageConverter<V> messageConverter) {
 		this.messageConverter = messageConverter;
 		this.converterSet = true;
 	}
 
-	protected final PulsarRecordMessageConverter<V> getMessageConverter() {
+	protected final PulsarMessageConverter<V> getMessageConverter() {
 		return this.messageConverter;
 	}
 
 	public void setMessagingConverter(SmartMessageConverter messageConverter) {
 		Assert.isTrue(!this.converterSet, "Cannot set the SmartMessageConverter when setting the messageConverter, "
 				+ "add the SmartConverter to the message converter instead");
-		((PulsarMessagingMessageConverter<V>) this.messageConverter).setMessagingConverter(messageConverter);
+		((PulsarRecordMessageConverter<V>) this.messageConverter).setMessagingConverter(messageConverter);
 	}
 
 	protected Type getType() {
