@@ -35,7 +35,7 @@ import org.springframework.util.Assert;
  * @param <T> reader data type.
  * @author Soby Chacko
  */
-public non-sealed abstract class AbstractPulsarMessageMessageReaderContainer<T> implements PulsarMessageReaderContainer,
+public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> implements PulsarMessageReaderContainer,
 		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
@@ -59,7 +59,7 @@ public non-sealed abstract class AbstractPulsarMessageMessageReaderContainer<T> 
 	private volatile boolean running = false;
 
 	@SuppressWarnings("unchecked")
-	protected AbstractPulsarMessageMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
+	protected AbstractPulsarMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
 			PulsarReaderContainerProperties pulsarReaderContainerProperties) {
 		this.pulsarReaderFactory = (PulsarReaderFactory<T>) pulsarReaderFactory;
 		this.pulsarReaderContainerProperties = pulsarReaderContainerProperties;

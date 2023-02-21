@@ -25,7 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.PulsarReaderFactory;
-import org.springframework.pulsar.reader.AbstractPulsarMessageMessageReaderContainer;
+import org.springframework.pulsar.reader.AbstractPulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
 import org.springframework.pulsar.support.JavaUtils;
@@ -34,11 +34,11 @@ import org.springframework.pulsar.support.MessageConverter;
 /**
  * Base {@link PulsarReaderContainerFactory} implementation.
  *
- * @param <C> the {@link AbstractPulsarMessageMessageReaderContainer} implementation type.
+ * @param <C> the {@link AbstractPulsarMessageReaderContainer} implementation type.
  * @param <T> Message payload type.
  * @author Soby Chacko
  */
-public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPulsarMessageMessageReaderContainer<T>, T>
+public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPulsarMessageReaderContainer<T>, T>
 		implements PulsarReaderContainerFactory, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());

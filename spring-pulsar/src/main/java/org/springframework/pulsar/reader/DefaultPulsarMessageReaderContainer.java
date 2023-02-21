@@ -46,7 +46,7 @@ import org.springframework.scheduling.SchedulingAwareRunnable;
  * @param <T> reader data type.
  * @author Soby Chacko
  */
-public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessageMessageReaderContainer<T> {
+public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessageReaderContainer<T> {
 
 	private final AtomicReference<InternalAsyncReader> internalAsyncReader = new AtomicReference<>();
 
@@ -54,7 +54,7 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 
 	private volatile CompletableFuture<?> readerFuture;
 
-	private final AbstractPulsarMessageMessageReaderContainer<?> thisOrParentContainer;
+	private final AbstractPulsarMessageReaderContainer<?> thisOrParentContainer;
 
 	private final AtomicReference<Thread> readerThread = new AtomicReference<>();
 
