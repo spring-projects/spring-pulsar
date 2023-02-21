@@ -17,9 +17,9 @@
 package org.springframework.pulsar.config;
 
 import org.springframework.pulsar.core.PulsarReaderFactory;
-import org.springframework.pulsar.reader.DefaultPulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.DefaultPulsarMessageReaderContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -30,7 +30,7 @@ import org.springframework.util.StringUtils;
  * @author Soby Chacko
  */
 public class DefaultPulsarReaderContainerFactory<T>
-		extends AbstractPulsarReaderContainerFactory<DefaultPulsarReaderListenerContainer<T>, T> {
+		extends AbstractPulsarReaderContainerFactory<DefaultPulsarMessageReaderContainer<T>, T> {
 
 	public DefaultPulsarReaderContainerFactory(PulsarReaderFactory<? super T> readerFactory,
 			PulsarReaderContainerProperties containerProperties) {
@@ -38,8 +38,8 @@ public class DefaultPulsarReaderContainerFactory<T>
 	}
 
 	@Override
-	protected DefaultPulsarReaderListenerContainer<T> createContainerInstance(
-			PulsarReaderEndpoint<PulsarReaderListenerContainer> endpoint) {
+	protected DefaultPulsarMessageReaderContainer<T> createContainerInstance(
+			PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
 
 		PulsarReaderContainerProperties properties = new PulsarReaderContainerProperties();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
@@ -55,17 +55,17 @@ public class DefaultPulsarReaderContainerFactory<T>
 		properties.setSchemaType(endpoint.getSchemaType());
 		properties.setStartMessageId(endpoint.getStartMessageId());
 
-		return new DefaultPulsarReaderListenerContainer<>(this.getReaderFactory(), properties);
+		return new DefaultPulsarMessageReaderContainer<>(this.getReaderFactory(), properties);
 	}
 
 	@Override
-	protected void initializeContainer(DefaultPulsarReaderListenerContainer<T> instance,
-			PulsarReaderEndpoint<PulsarReaderListenerContainer> endpoint) {
+	protected void initializeContainer(DefaultPulsarMessageReaderContainer<T> instance,
+			PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
 		super.initializeContainer(instance, endpoint);
 	}
 
 	@Override
-	public DefaultPulsarReaderListenerContainer<T> createReaderContainer(String... topics) {
+	public DefaultPulsarMessageReaderContainer<T> createReaderContainer(String... topics) {
 		// TODO
 		return null;
 	}

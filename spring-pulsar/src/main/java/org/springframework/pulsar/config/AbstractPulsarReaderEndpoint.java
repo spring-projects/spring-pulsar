@@ -35,7 +35,7 @@ import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.util.Assert;
 
@@ -46,7 +46,7 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  */
 public abstract class AbstractPulsarReaderEndpoint<K>
-		implements PulsarReaderEndpoint<PulsarReaderListenerContainer>, BeanFactoryAware, InitializingBean {
+		implements PulsarReaderEndpoint<PulsarMessageReaderContainer>, BeanFactoryAware, InitializingBean {
 
 	private String subscriptionName;
 
@@ -146,14 +146,14 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 	}
 
 	@Override
-	public void setupListenerContainer(PulsarReaderListenerContainer listenerContainer,
+	public void setupListenerContainer(PulsarMessageReaderContainer listenerContainer,
 			@Nullable MessageConverter messageConverter) {
 
 		setupMessageListener(listenerContainer, messageConverter);
 	}
 
 	@SuppressWarnings("unchecked")
-	private void setupMessageListener(PulsarReaderListenerContainer container,
+	private void setupMessageListener(PulsarMessageReaderContainer container,
 			@Nullable MessageConverter messageConverter) {
 
 		PulsarMessagingMessageListenerAdapter<K> adapter = createReaderListener(container, messageConverter);
@@ -163,7 +163,7 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 	}
 
 	protected abstract PulsarMessagingMessageListenerAdapter<K> createReaderListener(
-			PulsarReaderListenerContainer container, @Nullable MessageConverter messageConverter);
+			PulsarMessageReaderContainer container, @Nullable MessageConverter messageConverter);
 
 	public SchemaType getSchemaType() {
 		return this.schemaType;

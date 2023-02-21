@@ -30,12 +30,12 @@ import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.util.Assert;
 
 /**
- * Core implementation for {@link PulsarReaderListenerContainer}.
+ * Core implementation for {@link PulsarMessageReaderContainer}.
  *
  * @param <T> reader data type.
  * @author Soby Chacko
  */
-public non-sealed abstract class AbstractPulsarReaderListenerContainer<T> implements PulsarReaderListenerContainer,
+public non-sealed abstract class AbstractPulsarMessageMessageReaderContainer<T> implements PulsarMessageReaderContainer,
 		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
@@ -59,7 +59,7 @@ public non-sealed abstract class AbstractPulsarReaderListenerContainer<T> implem
 	private volatile boolean running = false;
 
 	@SuppressWarnings("unchecked")
-	protected AbstractPulsarReaderListenerContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
+	protected AbstractPulsarMessageMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
 			PulsarReaderContainerProperties pulsarReaderContainerProperties) {
 		this.pulsarReaderFactory = (PulsarReaderFactory<T>) pulsarReaderFactory;
 		this.pulsarReaderContainerProperties = pulsarReaderContainerProperties;

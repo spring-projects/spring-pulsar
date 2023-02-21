@@ -16,28 +16,28 @@
 
 package org.springframework.pulsar.config;
 
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 
 /**
- * Creates the necessary {@link PulsarReaderListenerContainer} instances for the
- * registered {@linkplain PulsarReaderEndpoint endpoints}. Also manages the lifecycle of
- * the listener containers, in particular within the lifecycle of the application context.
+ * Creates the necessary {@link PulsarMessageReaderContainer} instances for the registered
+ * {@linkplain PulsarReaderEndpoint endpoints}. Also manages the lifecycle of the listener
+ * containers, in particular within the lifecycle of the application context.
  *
  * <p>
- * Contrary to {@link PulsarReaderListenerContainer}s created manually, listener
- * containers managed by registry are not beans in the application context and are not
- * candidates for autowiring. Use {@link #getReaderContainer(String)} ()} if you need to
- * access this registry's listener containers for management purposes. If you need to
- * access to a specific message listener container, use
- * {@link #getReaderContainer(String)} with the id of the endpoint.
+ * Contrary to {@link PulsarMessageReaderContainer}s created manually, listener containers
+ * managed by registry are not beans in the application context and are not candidates for
+ * autowiring. Use {@link #getReaderContainer(String)} ()} if you need to access this
+ * registry's listener containers for management purposes. If you need to access to a
+ * specific message listener container, use {@link #getReaderContainer(String)} with the
+ * id of the endpoint.
  *
  * @author Soby Chacko
  */
 public class PulsarReaderEndpointRegistry extends
-		GenericReaderEndpointRegistry<PulsarReaderListenerContainer, PulsarReaderEndpoint<PulsarReaderListenerContainer>> {
+		GenericReaderEndpointRegistry<PulsarMessageReaderContainer, PulsarReaderEndpoint<PulsarMessageReaderContainer>> {
 
 	public PulsarReaderEndpointRegistry() {
-		super(PulsarReaderListenerContainer.class);
+		super(PulsarMessageReaderContainer.class);
 	}
 
 }

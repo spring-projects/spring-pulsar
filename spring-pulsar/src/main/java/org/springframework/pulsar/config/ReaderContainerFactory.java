@@ -16,16 +16,16 @@
 
 package org.springframework.pulsar.config;
 
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 
 /**
- * Base container factory interface for {@link PulsarReaderListenerContainer}.
+ * Base container factory interface for {@link PulsarMessageReaderContainer}.
  *
  * @param <C> Container type
  * @param <E> Endpoint type
  * @author Soby Chacko
  */
-public interface ReaderContainerFactory<C extends PulsarReaderListenerContainer, E extends PulsarReaderEndpoint<C>> {
+public interface ReaderContainerFactory<C extends PulsarMessageReaderContainer, E extends PulsarReaderEndpoint<C>> {
 
 	C createReaderContainer(E endpoint);
 

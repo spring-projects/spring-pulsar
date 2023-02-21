@@ -25,20 +25,20 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.PulsarReaderFactory;
-import org.springframework.pulsar.reader.AbstractPulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.AbstractPulsarMessageMessageReaderContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
 import org.springframework.pulsar.support.JavaUtils;
 import org.springframework.pulsar.support.MessageConverter;
 
 /**
  * Base {@link PulsarReaderContainerFactory} implementation.
  *
- * @param <C> the {@link AbstractPulsarReaderListenerContainer} implementation type.
+ * @param <C> the {@link AbstractPulsarMessageMessageReaderContainer} implementation type.
  * @param <T> Message payload type.
  * @author Soby Chacko
  */
-public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPulsarReaderListenerContainer<T>, T>
+public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPulsarMessageMessageReaderContainer<T>, T>
 		implements PulsarReaderContainerFactory, ApplicationEventPublisherAware, ApplicationContextAware {
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
@@ -99,7 +99,7 @@ public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPul
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public C createReaderContainer(PulsarReaderEndpoint<PulsarReaderListenerContainer> endpoint) {
+	public C createReaderContainer(PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
 		C instance = createContainerInstance(endpoint);
 		JavaUtils.INSTANCE.acceptIfNotNull(endpoint.getId(), instance::setBeanName);
 		if (endpoint instanceof AbstractPulsarReaderEndpoint) {
@@ -112,13 +112,13 @@ public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPul
 		return instance;
 	}
 
-	protected abstract C createContainerInstance(PulsarReaderEndpoint<PulsarReaderListenerContainer> endpoint);
+	protected abstract C createContainerInstance(PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint);
 
 	private void configureEndpoint(AbstractPulsarReaderEndpoint<C> aplEndpoint) {
 
 	}
 
-	protected void initializeContainer(C instance, PulsarReaderEndpoint<PulsarReaderListenerContainer> endpoint) {
+	protected void initializeContainer(C instance, PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
 		PulsarReaderContainerProperties instanceProperties = instance.getContainerProperties();
 
 		if (instanceProperties.getSchema() == null) {

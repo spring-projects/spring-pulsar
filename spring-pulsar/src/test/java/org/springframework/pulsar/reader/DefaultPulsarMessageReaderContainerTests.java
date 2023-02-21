@@ -41,11 +41,11 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
- * Basic tests for {@link DefaultPulsarReaderListenerContainer}.
+ * Basic tests for {@link DefaultPulsarMessageReaderContainer}.
  *
  * @author Soby Chacko
  */
-public class DefaultPulsarReaderListenerContainerTests implements PulsarTestContainerSupport {
+public class DefaultPulsarMessageReaderContainerTests implements PulsarTestContainerSupport {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -78,9 +78,9 @@ public class DefaultPulsarReaderListenerContainerTests implements PulsarTestCont
 		readerContainerProperties.setStartMessageId(MessageId.earliest);
 		readerContainerProperties.setSchema(Schema.STRING);
 
-		DefaultPulsarReaderListenerContainer<String> container = null;
+		DefaultPulsarMessageReaderContainer<String> container = null;
 		try {
-			container = new DefaultPulsarReaderListenerContainer<>(pulsarReaderFactory, readerContainerProperties);
+			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, readerContainerProperties);
 			container.start();
 
 			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-001");
@@ -109,9 +109,9 @@ public class DefaultPulsarReaderListenerContainerTests implements PulsarTestCont
 		containerProps.setStartMessageId(MessageId.earliest);
 		containerProps.setTopics(List.of("dprlct-002"));
 		containerProps.setSchema(Schema.STRING);
-		DefaultPulsarReaderListenerContainer<String> container = null;
+		DefaultPulsarMessageReaderContainer<String> container = null;
 		try {
-			container = new DefaultPulsarReaderListenerContainer<>(pulsarReaderFactory, containerProps);
+			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, containerProps);
 			container.start();
 
 			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-002");
@@ -140,9 +140,9 @@ public class DefaultPulsarReaderListenerContainerTests implements PulsarTestCont
 
 		var readerConfig = Collections.<String, Object>emptyMap();
 		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient, readerConfig);
-		DefaultPulsarReaderListenerContainer<String> container = null;
+		DefaultPulsarMessageReaderContainer<String> container = null;
 		try {
-			container = new DefaultPulsarReaderListenerContainer<>(readerFactory, containerProps);
+			container = new DefaultPulsarMessageReaderContainer<>(readerFactory, containerProps);
 
 			var prodConfig = Map.<String, Object>of("topicName", "dprlct-003");
 			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
@@ -165,7 +165,7 @@ public class DefaultPulsarReaderListenerContainerTests implements PulsarTestCont
 		}
 	}
 
-	private void safeStopContainer(PulsarReaderListenerContainer container) {
+	private void safeStopContainer(PulsarMessageReaderContainer container) {
 		try {
 			container.stop();
 		}

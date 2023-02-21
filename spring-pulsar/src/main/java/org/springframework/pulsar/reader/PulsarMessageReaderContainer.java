@@ -25,8 +25,8 @@ import org.springframework.context.SmartLifecycle;
  *
  * @author Soby Chacko
  */
-public sealed interface PulsarReaderListenerContainer
-		extends SmartLifecycle, DisposableBean permits AbstractPulsarReaderListenerContainer {
+public sealed interface PulsarMessageReaderContainer
+		extends SmartLifecycle, DisposableBean permits AbstractPulsarMessageMessageReaderContainer {
 
 	void setupReaderListener(Object messageListener);
 

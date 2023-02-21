@@ -22,7 +22,7 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.support.MessageConverter;
 
 /**
@@ -33,7 +33,7 @@ import org.springframework.pulsar.support.MessageConverter;
  * @param <C> reader listener container type.
  * @author Soby Chacko
  */
-public interface PulsarReaderEndpoint<C extends PulsarReaderListenerContainer> {
+public interface PulsarReaderEndpoint<C extends PulsarMessageReaderContainer> {
 
 	/**
 	 * Return the id of this endpoint.

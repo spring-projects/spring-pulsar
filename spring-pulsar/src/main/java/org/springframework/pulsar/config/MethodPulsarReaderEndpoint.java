@@ -39,9 +39,9 @@ import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
 import org.springframework.pulsar.listener.adapter.PulsarMessagingMessageListenerAdapter;
 import org.springframework.pulsar.listener.adapter.PulsarRecordMessagingReaderListenerAdapter;
-import org.springframework.pulsar.reader.DefaultPulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.DefaultPulsarMessageReaderContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
 import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
@@ -84,7 +84,7 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 	}
 
 	@Override
-	protected PulsarMessagingMessageListenerAdapter<V> createReaderListener(PulsarReaderListenerContainer container,
+	protected PulsarMessagingMessageListenerAdapter<V> createReaderListener(PulsarMessageReaderContainer container,
 			@Nullable MessageConverter messageConverter) {
 		PulsarMessagingMessageListenerAdapter<V> readerListener = createMessageListenerInstance(messageConverter);
 		HandlerAdapter handlerMethod = configureListenerAdapter(readerListener);
@@ -112,7 +112,7 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 			messageParameter = parameter.get();
 		}
 
-		DefaultPulsarReaderListenerContainer<?> containerInstance = (DefaultPulsarReaderListenerContainer<?>) container;
+		DefaultPulsarMessageReaderContainer<?> containerInstance = (DefaultPulsarMessageReaderContainer<?>) container;
 		PulsarReaderContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
 		SchemaResolver schemaResolver = pulsarContainerProperties.getSchemaResolver();
 		SchemaType schemaType = pulsarContainerProperties.getSchemaType();

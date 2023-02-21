@@ -36,8 +36,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerRegistry;
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
 import org.springframework.util.Assert;
 
 /**
@@ -57,7 +57,7 @@ import org.springframework.util.Assert;
  * @param <E> endpoint type
  * @author Soby Chacko
  */
-public class GenericReaderEndpointRegistry<C extends PulsarReaderListenerContainer, E extends PulsarReaderEndpoint<C>>
+public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContainer, E extends PulsarReaderEndpoint<C>>
 		implements PulsarReaderContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
 		ApplicationListener<ContextRefreshedEvent> {
 

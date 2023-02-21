@@ -29,12 +29,12 @@ import org.springframework.lang.Nullable;
 public interface PulsarReaderContainerRegistry {
 
 	@Nullable
-	PulsarReaderListenerContainer getReaderContainer(String id);
+	PulsarMessageReaderContainer getReaderContainer(String id);
 
 	Set<String> getReaderContainerIds();
 
-	Collection<? extends PulsarReaderListenerContainer> getReaderContainers();
+	Collection<? extends PulsarMessageReaderContainer> getReaderContainers();
 
-	Collection<? extends PulsarReaderListenerContainer> getAllReaderContainers();
+	Collection<? extends PulsarMessageReaderContainer> getAllReaderContainers();
 
 }

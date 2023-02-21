@@ -16,14 +16,14 @@
 
 package org.springframework.pulsar.config;
 
-import org.springframework.pulsar.reader.PulsarReaderListenerContainer;
+import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 
 /**
- * Container factory for {@link PulsarReaderListenerContainer}.
+ * Container factory for {@link PulsarMessageReaderContainer}.
  *
  * @author Soby Chacko
  */
 public interface PulsarReaderContainerFactory extends
-		ReaderContainerFactory<PulsarReaderListenerContainer, PulsarReaderEndpoint<PulsarReaderListenerContainer>> {
+		ReaderContainerFactory<PulsarMessageReaderContainer, PulsarReaderEndpoint<PulsarMessageReaderContainer>> {
 
 }

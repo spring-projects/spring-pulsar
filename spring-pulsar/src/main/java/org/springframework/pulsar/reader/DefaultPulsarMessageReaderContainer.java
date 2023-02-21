@@ -46,7 +46,7 @@ import org.springframework.scheduling.SchedulingAwareRunnable;
  * @param <T> reader data type.
  * @author Soby Chacko
  */
-public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReaderListenerContainer<T> {
+public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessageMessageReaderContainer<T> {
 
 	private final AtomicReference<InternalAsyncReader> internalAsyncReader = new AtomicReference<>();
 
@@ -54,11 +54,11 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 
 	private volatile CompletableFuture<?> readerFuture;
 
-	private final AbstractPulsarReaderListenerContainer<?> thisOrParentContainer;
+	private final AbstractPulsarMessageMessageReaderContainer<?> thisOrParentContainer;
 
 	private final AtomicReference<Thread> readerThread = new AtomicReference<>();
 
-	public DefaultPulsarReaderListenerContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
+	public DefaultPulsarMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
 			PulsarReaderContainerProperties pulsarReaderContainerProperties) {
 		super(pulsarReaderFactory, pulsarReaderContainerProperties);
 		this.thisOrParentContainer = this;
@@ -161,7 +161,7 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 
 		@Override
 		public void run() {
-			DefaultPulsarReaderListenerContainer.this.readerThread.set(Thread.currentThread());
+			DefaultPulsarMessageReaderContainer.this.readerThread.set(Thread.currentThread());
 			publishReaderStartingEvent();
 			publishReaderStartedEvent();
 
@@ -171,7 +171,7 @@ public class DefaultPulsarReaderListenerContainer<T> extends AbstractPulsarReade
 					this.listener.received(this.reader, message);
 				}
 				catch (PulsarClientException e) {
-					DefaultPulsarReaderListenerContainer.this.logger.error(e, () -> "Error receiving messages.");
+					DefaultPulsarMessageReaderContainer.this.logger.error(e, () -> "Error receiving messages.");
 				}
 			}
 		}
