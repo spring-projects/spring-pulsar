@@ -162,6 +162,9 @@ class PulsarFunctionAdministrationIntegrationTests {
 			}
 		}
 
+		// Give functions time to invoke stop policy after context close
+		Thread.sleep(10000);
+
 		// Stop policy runs after context close - verify source are in expected state
 		try (PulsarAdmin admin = getAdmin()) {
 			assertSourceExistsWithStatus("rabbit-test-source-none", true, admin);
