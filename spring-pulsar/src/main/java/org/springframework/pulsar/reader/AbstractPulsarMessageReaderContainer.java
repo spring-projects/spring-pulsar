@@ -18,14 +18,7 @@ package org.springframework.pulsar.reader;
 
 import org.apache.pulsar.client.api.ReaderListener;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.util.Assert;
 
@@ -35,28 +28,14 @@ import org.springframework.util.Assert;
  * @param <T> reader data type.
  * @author Soby Chacko
  */
-public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> implements PulsarMessageReaderContainer,
-		BeanNameAware, ApplicationEventPublisherAware, ApplicationContextAware {
-
-	protected final LogAccessor logger = new LogAccessor(this.getClass());
+public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends AbstractPulsarMessageContainer
+		implements PulsarMessageReaderContainer {
 
 	private final PulsarReaderFactory<T> pulsarReaderFactory;
 
 	private final PulsarReaderContainerProperties pulsarReaderContainerProperties;
 
-	private ApplicationEventPublisher applicationEventPublisher;
-
-	private String beanName;
-
-	private ApplicationContext applicationContext;
-
-	private boolean autoStartup = true;
-
-	private int phase;
-
 	protected final Object lifecycleMonitor = new Object();
-
-	private volatile boolean running = false;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
@@ -74,46 +53,12 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> impleme
 	}
 
 	@Override
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-		this.applicationEventPublisher = applicationEventPublisher;
-	}
-
-	@Override
 	public boolean isRunning() {
 		return this.running;
 	}
 
 	protected void setRunning(boolean running) {
 		this.running = running;
-	}
-
-	/**
-	 * Get the event publisher.
-	 * @return the publisher
-	 */
-	@Nullable
-	public ApplicationEventPublisher getApplicationEventPublisher() {
-		return this.applicationEventPublisher;
-	}
-
-	@Override
-	public void setBeanName(String name) {
-		this.beanName = name;
-	}
-
-	@Nullable
-	public String getBeanName() {
-		return this.beanName; // the container factory sets this to the listener id
-	}
-
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = applicationContext;
-	}
-
-	@Nullable
-	protected ApplicationContext getApplicationContext() {
-		return this.applicationContext;
 	}
 
 	@Override
@@ -130,19 +75,6 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> impleme
 	public void setAutoStartup(boolean autoStartup) {
 		this.autoStartup = autoStartup;
 	}
-
-	public void setPhase(int phase) {
-		this.phase = phase;
-	}
-
-	@Override
-	public int getPhase() {
-		return this.phase;
-	}
-
-	protected abstract void doStart();
-
-	protected abstract void doStop();
 
 	@Override
 	public final void start() {
