@@ -256,12 +256,9 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		return result;
 	}
 
-	protected static class ListenerScope implements Scope {
+	public static class ListenerScope implements Scope {
 
 		private final Map<String, Object> listeners = new HashMap<>();
-
-		ListenerScope() {
-		}
 
 		public void addListener(String key, Object bean) {
 			this.listeners.put(key, bean);
@@ -333,6 +330,10 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 			defaultFactory.afterPropertiesSet();
 
 			return defaultFactory;
+		}
+
+		public DefaultFormattingConversionService getDefaultFormattingConversionService() {
+			return this.defaultFormattingConversionService;
 		}
 
 	}
