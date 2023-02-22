@@ -28,6 +28,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.listener.AckMode;
 
 /**
@@ -206,5 +207,12 @@ public @interface PulsarListener {
 	 * @return the bean name for the consumer error handler or an empty string.
 	 */
 	String pulsarConsumerErrorHandler() default "";
+
+	/**
+	 * The bean name or a 'SpEL' expression that resolves to a
+	 * {@link ConsumerBuilderCustomizer} to use to configure the consumer.
+	 * @return the bean name or empty string to not configure the consumer.
+	 */
+	String consumerCustomizer() default "";
 
 }

@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
@@ -63,6 +64,7 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
@@ -1072,6 +1074,40 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					topics = "consumer-pause-topic", properties = { "receiverQueueSize=1" })
 			void listen(String msg) {
 				latch.countDown();
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = PulsarListenerCustomizerTests.WithCustomizerConfig.class)
+	class PulsarListenerCustomizerTests {
+
+		private static final CountDownLatch latch = new CountDownLatch(1);
+
+		@Test
+		void withCustomizerOverridingSubscriptionName() throws Exception {
+			pulsarTemplate.send("with-customizer-listener-topic", "hello");
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class WithCustomizerConfig {
+
+			@PulsarListener(id = "with-customizer-listener", subscriptionName = "with-customizer-listener-subscription",
+					topics = "with-customizer-listener-topic", consumerCustomizer = "myCustomizer")
+			void listen(String ignored, Consumer<String> consumer) {
+				assertThat(consumer.getSubscription()).isEqualTo("test-changed-subscription-name");
+				latch.countDown();
+			}
+
+			@Bean
+			public ConsumerBuilderCustomizer<String> myCustomizer() {
+				return cb -> {
+					cb.subscriptionName("test-changed-subscription-name");
+				};
 			}
 
 		}

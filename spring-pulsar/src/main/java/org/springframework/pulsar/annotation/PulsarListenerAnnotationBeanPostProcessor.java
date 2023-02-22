@@ -51,6 +51,7 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -247,6 +248,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		resolveAckTimeoutRedeliveryBackoff(endpoint, pulsarListener);
 		resolveDeadLetterPolicy(endpoint, pulsarListener);
 		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
+		resolveConsumerCustomizer(endpoint, pulsarListener);
 	}
 
 	@SuppressWarnings({ "rawtypes" })
@@ -262,6 +264,22 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 			if (StringUtils.hasText(pulsarConsumerErrorHandlerBeanName)) {
 				endpoint.setPulsarConsumerErrorHandler(
 						this.beanFactory.getBean(pulsarConsumerErrorHandlerBeanName, PulsarConsumerErrorHandler.class));
+			}
+		}
+	}
+
+	@SuppressWarnings({ "rawtypes" })
+	private void resolveConsumerCustomizer(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
+		Object consumerCustomizer = resolveExpression(pulsarListener.consumerCustomizer());
+		if (consumerCustomizer instanceof ConsumerBuilderCustomizer<?>) {
+			endpoint.setConsumerBuilderCustomizer((ConsumerBuilderCustomizer<?>) consumerCustomizer);
+		}
+		else {
+			String consumerCustomizerBeanName = resolveExpressionAsString(pulsarListener.consumerCustomizer(),
+					"consumerCustomizer");
+			if (StringUtils.hasText(consumerCustomizerBeanName)) {
+				endpoint.setConsumerBuilderCustomizer(
+						this.beanFactory.getBean(consumerCustomizerBeanName, ConsumerBuilderCustomizer.class));
 			}
 		}
 	}

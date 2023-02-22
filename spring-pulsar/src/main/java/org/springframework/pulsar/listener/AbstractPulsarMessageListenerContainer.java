@@ -21,6 +21,7 @@ import org.apache.pulsar.client.api.RedeliveryBackoff;
 
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
 
@@ -53,6 +54,8 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 	protected DeadLetterPolicy deadLetterPolicy;
 
 	protected PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
+
+	protected ConsumerBuilderCustomizer<T> consumerBuilderCustomizer;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
@@ -152,6 +155,16 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
 		this.pulsarConsumerErrorHandler = pulsarConsumerErrorHandler;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void setConsumerCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer) {
+		this.consumerBuilderCustomizer = (ConsumerBuilderCustomizer<T>) consumerBuilderCustomizer;
+	}
+
+	public ConsumerBuilderCustomizer<T> getConsumerBuilderCustomizer() {
+		return this.consumerBuilderCustomizer;
 	}
 
 	@Override

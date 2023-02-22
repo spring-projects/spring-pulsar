@@ -19,6 +19,8 @@ package org.springframework.pulsar.listener;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
+
 /**
  * Internal abstraction used by the framework representing a message listener container.
  * Not meant to be implemented externally.
@@ -57,5 +59,11 @@ public sealed interface PulsarMessageListenerContainer
 	default void resume() {
 		throw new UnsupportedOperationException("This container doesn't support resume");
 	}
+
+	/**
+	 * Set a consumer customizer on this container.
+	 * @param consumerBuilderCustomizer {@link ConsumerBuilderCustomizer}
+	 */
+	void setConsumerCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer);
 
 }

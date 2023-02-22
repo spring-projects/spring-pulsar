@@ -1112,6 +1112,41 @@ On retry, the container sends a new batch of messages, starting with the failed 
 If it fails again, it is retried, until the retries are exhausted, at which point the message is sent to the DLT.
 At that point, the message is acknowledged by the container, and the listener is handed over with the subsequent messages in the original batch.
 
+=== Consumer Customization on PulsarListener
+
+Spring for Apache Pulsar provides a convenient way to customize the consumer created by the container used by the `PulsarListener`.
+Applications can provide a bean for `ConsumerBuilderCustomizer`.
+Here is an example.
+====
+[source, java]
+----
+@Bean
+public ConsumerBuilderCustomizer<String> myCustomizer() {
+    return cb -> {
+        cb.subscriptionName("modified-subscription-name");
+    };
+}
+----
+====
+
+Then this customizer bean name can be provided as an attribute on the `PuslarListener` annotation as shown below.
+
+====
+[source, java]
+----
+@PulsarListener(subscriptionName = "my-subscription",
+        topics = "my-topic", consumerCustomizer = "myCustomizer")
+void listen(String message) {
+
+}
+----
+====
+
+The framework detects the provided bean through the `PulsarListener` and applies this customizer on the Consumer builder before creating the Pulsar Consumer.
+
+If you have multiple `PulsarListener` methods, and each of them have different customization rules, you should create multiple customizer beans and attach the proper customizers on each `PulsarListener`.
+
+
 === Pausing and Resuming Message Listener Containers
 
 There are situations in which an application might want to pause message consumption temporarily and then resume later.

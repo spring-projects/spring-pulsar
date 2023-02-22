@@ -36,6 +36,7 @@ import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
@@ -80,6 +81,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	@SuppressWarnings("rawtypes")
 	private PulsarConsumerErrorHandler pulsarConsumerErrorHandler;
+
+	private ConsumerBuilderCustomizer<?> consumerBuilderCustomizer;
 
 	public void setBean(Object bean) {
 		this.bean = bean;
@@ -164,6 +167,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
 		container.setPulsarConsumerErrorHandler(this.pulsarConsumerErrorHandler);
 
+		container.setConsumerCustomizer(this.consumerBuilderCustomizer);
+
 		return messageListener;
 	}
 
@@ -239,6 +244,10 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	public void setAckTimeoutRedeliveryBackoff(RedeliveryBackoff ackTimeoutRedeliveryBackoff) {
 		this.ackTimeoutRedeliveryBackoff = ackTimeoutRedeliveryBackoff;
+	}
+
+	public void setConsumerBuilderCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer) {
+		this.consumerBuilderCustomizer = consumerBuilderCustomizer;
 	}
 
 }

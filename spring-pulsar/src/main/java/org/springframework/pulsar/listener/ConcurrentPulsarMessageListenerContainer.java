@@ -117,6 +117,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
 		container.setPulsarConsumerErrorHandler(this.pulsarConsumerErrorHandler);
+		container.setConsumerCustomizer(this.consumerBuilderCustomizer);
 	}
 
 	@Override

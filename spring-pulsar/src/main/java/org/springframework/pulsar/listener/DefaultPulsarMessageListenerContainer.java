@@ -18,7 +18,6 @@ package org.springframework.pulsar.listener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -239,6 +238,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
 
+		private final ConsumerBuilderCustomizer<T> consumerBuilderCustomizer;
+
 		private final boolean isBatchListener;
 
 		private final AckMode ackMode;
@@ -268,6 +269,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			this.observationRegistry = observationRegistry;
 			this.pulsarConsumerErrorHandler = getPulsarConsumerErrorHandler();
+			this.consumerBuilderCustomizer = getConsumerBuilderCustomizer();
 			try {
 				Map<String, Object> propertiesToConsumer = extractDirectConsumerProperties();
 				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
@@ -285,13 +287,17 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				Set<String> topicNames = (Set<String>) propertiesToConsumer.remove("topicNames");
 				Map<String, String> properties = (Map<String, String>) propertiesToConsumer.remove("properties");
 
-				ConsumerBuilderCustomizer<T> customizer = builder -> {
+				List<ConsumerBuilderCustomizer<T>> customizers = new ArrayList<>();
+				customizers.add(builder -> {
 					ConsumerBuilderConfigurationUtil.loadConf(builder, propertiesToConsumer);
 					builder.batchReceivePolicy(batchReceivePolicy);
-				};
+				});
+				if (this.consumerBuilderCustomizer != null) {
+					customizers.add(this.consumerBuilderCustomizer);
+				}
+
 				this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
-						topicNames, this.containerProperties.getSubscriptionName(), properties,
-						Collections.singletonList(customizer));
+						topicNames, this.containerProperties.getSubscriptionName(), properties, customizers);
 				Assert.state(this.consumer != null, "Unable to create a consumer");
 			}
 			catch (PulsarClientException e) {
