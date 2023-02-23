@@ -126,3 +126,68 @@ If a destination is not provided, the binding name becomes the value for the des
 
 When running the above app, you should see that the supplier executes every second which is then consumed by the function and enhances the time which in turn consumed by the logger consumer.
 
+== Message Conversion in Binder based Applications
+
+In the above sample application, you might observe that we did not provide any schema information for message conversion.
+That is because, by default, Spring Cloud Stream uses its own message conversion mechanism using the messaging support established in Spring Framework through the Spring Messaging project.
+Unless specified, Spring Cloud Stream uses `application/json` as the `content-type` for message conversion on both inbound and outbound bindings.
+On the outbound, the data is serialized as `byte[]` and the Pulsar binder then uses `Schema.BYTES` to send it over the wire to the Pulsar topic.
+Similarly, on the inbound, the data is consumed as `byte[]` from the Pulsar topic and then converted into the target type using the proper message converter.
+
+=== Using Native Conversion in Pulsar using Pulsar Schema
+
+Although the default is to use the framework provided message conversion, Spring Cloud Stream also allows each binder to determine how the message should be converted.
+If the application chooses to go this route, Spring Cloud Stream steers clear of using any Spring provided message conversion facility and simply passes around the data it receives or produces.
+This feature in Spring Cloud Stream is known as native encoding on the producer side and native decoding on the consumer side which simply means that the encoding and decoding natively takes place on the target middleware, in our case, on Apache Pulsar.
+For the above application, we can use the following configuration to bypass the framework conversion and uses native encoding and decoding.
+
+[source,yaml,indent=0,subs="verbatim"]
+----
+spring:
+  cloud:
+    stream:
+      bindings:
+        timeSupplier-out-0:
+          producer:
+            use-native-encoding: true
+        timeProcessor-in-0:
+          destination: timeSupplier-out-0
+          consumer:
+            use-native-decoding: true
+        timeProcessor-out-0:
+          destination: timeProcessor-out-0
+          producer:
+            use-native-encoding: true
+        timeLogger-in-0:
+          destination: timeProcessor-out-0
+          consumer:
+            use-native-decoding: true
+      pulsar:
+        bindings:
+          timeSupplier-out-0:
+            producer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
+          timeProcessor-in-0:
+            consumer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
+          timeProcessor-out-0:
+            producer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
+          timeLogger-in-0:
+            consumer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
+
+----
+
+The property to enable native encoding on the producer side is a binding level property from core Spring Cloud Stream.
+You set it on the producer binding - `spring.cloud.stream.bindings.<binding-name>.producer.use-native-encoding` and set this to `true`.
+Similarly, for consumer bindings, use - `spring.cloud.stream.bindings.<binding-name>.consumer.user-native-decoding` and set to `true`.
+If we decide to use native encoding and decoding, in the case of Pulsar, we need to set the corresponding schema and the underlying message type information.
+This information is provided as extended binding properties.
+We will look more about extended binding properties in Pulsar binder below.
+As you can see above in the configuration, the properties are - `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.schema-type` for schema information and `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.message-type` for the actual target type.
+If you have both keys and values on the message, then you can use `message-key-type` and `message-value-type` to specify their target types. 
