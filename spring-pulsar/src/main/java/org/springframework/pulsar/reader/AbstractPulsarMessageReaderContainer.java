@@ -20,6 +20,7 @@ import org.apache.pulsar.client.api.ReaderListener;
 
 import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
 import org.springframework.pulsar.core.PulsarReaderFactory;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.util.Assert;
 
 /**
@@ -36,6 +37,8 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends
 	private final PulsarReaderContainerProperties pulsarReaderContainerProperties;
 
 	protected final Object lifecycleMonitor = new Object();
+
+	protected ReaderBuilderCustomizer<T> readerBuilderCustomizer;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
@@ -94,6 +97,16 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends
 				doStop();
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void setReaderCustomizer(ReaderBuilderCustomizer<?> readerBuilderCustomizer) {
+		this.readerBuilderCustomizer = (ReaderBuilderCustomizer<T>) readerBuilderCustomizer;
+	}
+
+	public ReaderBuilderCustomizer<T> getReaderBuilderCustomizer() {
+		return this.readerBuilderCustomizer;
 	}
 
 }

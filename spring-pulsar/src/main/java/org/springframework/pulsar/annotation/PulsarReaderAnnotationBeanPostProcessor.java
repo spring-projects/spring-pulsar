@@ -44,6 +44,8 @@ import org.springframework.pulsar.config.PulsarReaderContainerFactory;
 import org.springframework.pulsar.config.PulsarReaderEndpoint;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -227,6 +229,23 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
 		}
 		endpoint.setBeanFactory(this.beanFactory);
+
+		resolveReaderCustomizer(endpoint, pulsarReader);
+	}
+
+	private void resolveReaderCustomizer(MethodPulsarReaderEndpoint<?> endpoint, PulsarReader pulsarReader) {
+		Object readerCustomizer = resolveExpression(pulsarReader.readerCustomizer());
+		if (readerCustomizer instanceof ConsumerBuilderCustomizer<?>) {
+			endpoint.setReaderBuilderCustomizer((ReaderBuilderCustomizer<?>) readerCustomizer);
+		}
+		else {
+			String readerCustomizerBeanName = resolveExpressionAsString(pulsarReader.readerCustomizer(),
+					"readerCustomizer");
+			if (StringUtils.hasText(readerCustomizerBeanName)) {
+				endpoint.setReaderBuilderCustomizer(
+						this.beanFactory.getBean(readerCustomizerBeanName, ReaderBuilderCustomizer.class));
+			}
+		}
 	}
 
 	private String getEndpointSubscriptionName(PulsarReader pulsarReader) {

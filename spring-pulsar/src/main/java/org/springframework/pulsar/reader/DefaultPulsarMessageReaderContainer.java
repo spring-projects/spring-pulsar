@@ -17,6 +17,8 @@
 package org.springframework.pulsar.reader;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +34,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.pulsar.core.PulsarReaderFactory;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.event.ReaderFailedToStartEvent;
 import org.springframework.pulsar.event.ReaderStartedEvent;
 import org.springframework.pulsar.event.ReaderStartingEvent;
@@ -139,15 +142,21 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 
 		private Reader<T> reader;
 
+		private final ReaderBuilderCustomizer<T> readerBuilderCustomizer;
+
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		InternalAsyncReader(ReaderListener<T> readerListener,
 				PulsarReaderContainerProperties readerContainerProperties) {
 			this.listener = readerListener;
 			this.readerContainerProperties = readerContainerProperties;
+			this.readerBuilderCustomizer = getReaderBuilderCustomizer();
 
 			try {
+				List<ReaderBuilderCustomizer<T>> customizers = this.readerBuilderCustomizer != null
+						? List.of(this.readerBuilderCustomizer) : Collections.emptyList();
 				this.reader = getPulsarReaderFactory().createReader(readerContainerProperties.getTopics(),
-						readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema());
+						readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema(),
+						customizers);
 			}
 			catch (PulsarClientException e) {
 				throw new IllegalStateException("Pulsar client exceptions.", e);

@@ -18,6 +18,7 @@ package org.springframework.pulsar.reader;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 
 /**
  * Internal abstraction used by the framework representing a message listener container.
@@ -42,5 +43,11 @@ public sealed interface PulsarMessageReaderContainer
 	default void setAutoStartup(boolean autoStartup) {
 		// empty
 	}
+
+	/**
+	 * Set a reader customizer on this container.
+	 * @param readerBuilderCustomizer {@link ReaderBuilderCustomizer}
+	 */
+	void setReaderCustomizer(ReaderBuilderCustomizer<?> readerBuilderCustomizer);
 
 }

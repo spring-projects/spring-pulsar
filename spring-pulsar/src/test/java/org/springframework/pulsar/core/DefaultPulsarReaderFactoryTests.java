@@ -72,7 +72,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		void readingFromTheBeginningOfTheTopic() throws Exception {
 			Message<String> message;
 			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
-					MessageId.earliest, Schema.STRING)) {
+					MessageId.earliest, Schema.STRING, Collections.emptyList())) {
 
 				Map<String, Object> prodConfig = Map.of("topicName", "basic-pulsar-reader-topic");
 				PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
@@ -99,7 +99,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 			Message<String> message;
 			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("reading-from-the-middle-of-topic"),
-					messageIds[4], Schema.STRING)) {
+					messageIds[4], Schema.STRING, Collections.emptyList())) {
 				for (int i = 0; i < 5; i++) {
 					message = reader.readNext();
 					assertThat(message.getValue()).isEqualTo("hello john doe-" + (i + 5));
@@ -120,7 +120,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 			pulsarTemplate.send("hello john doe");
 
 			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
-					MessageId.latest, Schema.STRING)) {
+					MessageId.latest, Schema.STRING, Collections.emptyList())) {
 				pulsarTemplate.send("hello alice doe");
 				// It should not read the first message sent (john doe) as latest is the
 				// message id to start.
@@ -146,16 +146,15 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		@Test
 		void missingTopic() {
 			// topic name is not set in the API call or in the reader config.
-			assertThatThrownBy(
-					() -> pulsarReaderFactory.createReader(Collections.emptyList(), MessageId.earliest, Schema.STRING))
-							.isInstanceOf(PulsarClientException.class)
+			assertThatThrownBy(() -> pulsarReaderFactory.createReader(Collections.emptyList(), MessageId.earliest,
+					Schema.STRING, Collections.emptyList())).isInstanceOf(PulsarClientException.class)
 							.hasMessageContaining("Topic name must be set on the reader builder");
 		}
 
 		@Test
 		void missingStartingMessageId() {
-			assertThatThrownBy(() -> pulsarReaderFactory.createReader(List.of("my-reader-topic"), null, Schema.STRING))
-					.isInstanceOf(PulsarClientException.class).hasMessageContaining(
+			assertThatThrownBy(() -> pulsarReaderFactory.createReader(List.of("my-reader-topic"), null, Schema.STRING,
+					Collections.emptyList())).isInstanceOf(PulsarClientException.class).hasMessageContaining(
 							"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
 		}
 

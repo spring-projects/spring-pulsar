@@ -25,7 +25,10 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +46,7 @@ import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -174,6 +178,52 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 			void read(String msg) {
 				latch.countDown();
 				assertThat(msg).isEqualTo("hello foobar");
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = StartMessageIdFromTheMiddleOfTheTopic.WithCustomizerConfig.class)
+	class StartMessageIdFromTheMiddleOfTheTopic {
+
+		private static final CountDownLatch latch = new CountDownLatch(5);
+
+		@Test
+		void startMessageIdProvidedThroughReaderCustomizer() throws Exception {
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@EnablePulsar
+		@Configuration
+		static class WithCustomizerConfig {
+
+			int currentIndex = 5;
+
+			MessageId[] messageIds = new MessageId[10];
+
+			@PulsarReader(id = "with-customizer-reader", subscriptionName = "with-customizer-reader-subscription",
+					topics = "with-customizer-reader-topic", readerCustomizer = "myCustomizer")
+			void listen(Message<String> message) {
+				assertThat(message.getMessageId()).isEqualTo(messageIds[currentIndex++]);
+				latch.countDown();
+			}
+
+			@Bean
+			public ReaderBuilderCustomizer<String> myCustomizer(PulsarTemplate<String> pulsarTemplate) {
+				return cb -> {
+					for (int i = 0; i < 10; i++) {
+						try {
+							messageIds[i] = pulsarTemplate.send("with-customizer-reader-topic", "hello john doe-");
+						}
+						catch (PulsarClientException e) {
+							// Ignore
+						}
+					}
+					cb.startMessageId(messageIds[4]); // the first message read is the one
+														// after this message id.
+				};
 			}
 
 		}

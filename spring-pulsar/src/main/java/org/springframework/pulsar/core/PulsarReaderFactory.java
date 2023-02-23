@@ -39,10 +39,13 @@ public interface PulsarReaderFactory<T> {
 	 * @param topics set of topics to read from
 	 * @param messageId starting message id to read from
 	 * @param schema schema of the message to consume
+	 * @param customizers the optional list of customizers to apply to the reader builder.
+	 * Note that the customizers are applied last and have the potential for overriding
+	 * any specified parameters or default properties.
 	 * @return Pulsar {@link Reader}
 	 * @throws PulsarClientException if there are issues when creating the reader
 	 */
-	Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema)
-			throws PulsarClientException;
+	Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema,
+			@Nullable List<ReaderBuilderCustomizer<T>> customizers) throws PulsarClientException;
 
 }

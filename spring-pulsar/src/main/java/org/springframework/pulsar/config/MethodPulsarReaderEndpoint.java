@@ -34,6 +34,7 @@ import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
@@ -62,6 +63,8 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 	private SmartMessageConverter messagingConverter;
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
+
+	private ReaderBuilderCustomizer<?> readerBuilderCustomizer;
 
 	public void setBean(Object bean) {
 		this.bean = bean;
@@ -136,6 +139,8 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		// }));
 		// }
 
+		container.setReaderCustomizer(this.readerBuilderCustomizer);
+
 		return readerListener;
 	}
 
@@ -192,6 +197,10 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory messageHandlerMethodFactory) {
 		this.messageHandlerMethodFactory = messageHandlerMethodFactory;
+	}
+
+	public void setReaderBuilderCustomizer(ReaderBuilderCustomizer<?> readerBuilderCustomizer) {
+		this.readerBuilderCustomizer = readerBuilderCustomizer;
 	}
 
 }

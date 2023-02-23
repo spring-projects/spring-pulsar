@@ -53,8 +53,8 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 	}
 
 	@Override
-	public Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema)
-			throws PulsarClientException {
+	public Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema,
+			@Nullable List<ReaderBuilderCustomizer<T>> customizers) throws PulsarClientException {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		ReaderBuilder<T> readerBuilder = this.pulsarClient.newReader(schema);
 		if (!CollectionUtils.isEmpty(topics)) {
@@ -63,6 +63,11 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 		readerBuilder.startMessageId(messageId);
 
 		readerBuilder.loadConf(this.readerConfig);
+
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers.forEach(customizer -> customizer.customize(readerBuilder));
+		}
+
 		return readerBuilder.create();
 	}
 

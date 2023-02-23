@@ -27,6 +27,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
@@ -74,5 +75,12 @@ public @interface PulsarReader {
 	String containerFactory() default "";
 
 	String autoStartup() default "";
+
+	/**
+	 * The bean name or a 'SpEL' expression that resolves to a
+	 * {@link ReaderBuilderCustomizer} to use to configure the reader.
+	 * @return the bean name or empty string to not configure the reader.
+	 */
+	String readerCustomizer() default "";
 
 }
