@@ -25,6 +25,8 @@ include::pulsar-function.adoc[leveloffset=+2]
 
 include::observability.adoc[leveloffset=+2]
 
+include::pulsar-binder.adoc[leveloffset=+2]
+
 :sectnums!:
 [[other-resources]]
 == Other Resources

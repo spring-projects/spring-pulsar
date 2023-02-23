@@ -12,6 +12,8 @@
 :github: https://github.com/spring-projects-experimental/spring-pulsar
 :javadocs: https://docs.spring.io/spring-pulsar/docs/{spring-pulsar-version}/api
 :spring-boot-docs: https://docs.spring.io/spring-boot/docs/{spring-boot-version}/reference/htmlsingle
+:spring-cloud-stream-docs: https://docs.spring.io/spring-cloud-stream/docs/current/reference/html/
+:spring-cloud-function: https://spring.io/projects/spring-cloud-function
 
 :apache-pulsar-docs: https://pulsar.apache.org/docs/2.11.x
 :apache-pulsar-io-docs: {apache-pulsar-docs}/io-connectors
