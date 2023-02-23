@@ -191,7 +191,7 @@ This information is provided as extended binding properties.
 As you can see above in the configuration, the properties are - `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.schema-type` for schema information and `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.message-type` for the actual target type.
 If you have both keys and values on the message, you can use `message-key-type` and `message-value-type` to specify their target types.
 
-== Using Pulsar Properties in Pulsar Binder for Spring Cloud Stream
+== Using Pulsar Properties in the Binder
 
 The binder uses basic components from Spring for Apache Pulsar framework to build its producer and consumer bindings.
 Since binder-based applications are Spring Boot applications, binder, by default, uses the Spring Boot autoconfiguration for Spring for Apache Pulsar.
@@ -211,3 +211,20 @@ This way, you can have a separate set of Pulsar properties applied for different
 
 The highest precedence is for extended binding properties.
 The precedence order of applying the properties in the binder is `extended binding properties -> binder properties -> Spring Boot properties.` (going from highest to lowest).
+
+== Pulsar Topic Provisioner
+
+Spring Cloud Stream binder for Apache Pulsar comes with an out-of-the-box provisioner for Pulsar topics.
+When running an application, if the necessary topics are absent, Pulsar will create the topics for you.
+However, this is a basic non-partitioned topic, and if you want advanced features like creating a partitioned topic, you can rely on the topic provisioner in the binder.
+Pulsar topic provisioner uses `PulsarAdministration` from the framework, which uses the `PulsarAdminBuilder.`
+For this reason, you need to set the `spring.pulsar.administration.service-url` property unless you are running Pulsar on the default server and port.
+
+=== Specify partition count when creating the topic
+
+When creating the topic, you can set the partition count in two ways.
+First, you can set it at the binder level using the property `spring.cloud.stream.pulsar.binder.partition-count`.
+As we saw above, doing this way will make all the topics created by the application inherit this property.
+Suppose you want granular control at the binding level for setting partitions.
+In that case, you can set the `partition-count` property per binding using the format `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.partition-count`.
+This way, various topics created by different functions in the same application will have different partitions based on the application requirements.
