@@ -188,6 +188,26 @@ You set it on the producer binding - `spring.cloud.stream.bindings.<binding-name
 Similarly, use - `spring.cloud.stream.bindings.<binding-name>.consumer.user-native-decoding` for consumer bindings and set it to `true.`
 If we decide to use native encoding and decoding, in the case of Pulsar, we need to set the corresponding schema and the underlying message type information.
 This information is provided as extended binding properties.
-We will look more at extended binding properties in the Pulsar binder below.
 As you can see above in the configuration, the properties are - `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.schema-type` for schema information and `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.message-type` for the actual target type.
 If you have both keys and values on the message, you can use `message-key-type` and `message-value-type` to specify their target types.
+
+== Using Pulsar Properties in Pulsar Binder for Spring Cloud Stream
+
+The binder uses basic components from Spring for Apache Pulsar framework to build its producer and consumer bindings.
+Since binder-based applications are Spring Boot applications, binder, by default, uses the Spring Boot autoconfiguration for Spring for Apache Pulsar.
+Therefore, all Pulsar Spring Boot properties available at the core framework level are also available through the binder.
+For example, you can use properties with the prefix `spring.pulsar.producer...`, `spring.pulsar.consumer...` etc.
+In addition, you can also set these Pulsar properties at the binder level.
+For instance, this will also work - `spring.cloud.stream.pulsar.binder.producer...` or `spring.cloud.stream.pulsar.binder.consumer...`.
+
+Either of the above approaches is fine, but when using properties like these, it is applied to the whole application.
+If you have multiple functions in the application, they all get the same properties.
+You can also set these Pulsar properties at the extended binding properties level to address this.
+Extended binding properties are applied at the binding itself.
+For instance, if you have an input and output binding, and both require a separate set of Pulsar properties, you must set them on the extended binding.
+The pattern for producer binding is `spring.cloud.stream.pulsar.bindings.<output-binding-name>.producer...`.
+Similarly, for consumer binding, the pattern is `spring.cloud.stream.pulsar.bindings.<input-binding-name>.consumer...`.
+This way, you can have a separate set of Pulsar properties applied for different bindings in the same application.
+
+The highest precedence is for extended binding properties.
+The precedence order of applying the properties in the binder is `extended binding properties -> binder properties -> Spring Boot properties.` (going from highest to lowest).
