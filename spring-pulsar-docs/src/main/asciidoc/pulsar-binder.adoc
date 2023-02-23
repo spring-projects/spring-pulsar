@@ -2,14 +2,14 @@
 = Spring Cloud Stream Binder for Apache Pulsar
 include::attributes.adoc[]
 
-Spring for Apache Pulsar provides a binder for Spring Cloud Stream that we can use for building event driven microservices using pub-sub paradigms.
+Spring for Apache Pulsar provides a binder for Spring Cloud Stream that we can use to build event-driven microservices using pub-sub paradigms.
 In this section, we will go through the basic details of this binder.
 
-TIP: For those who are unfamiliar with the concepts in Spring Cloud Stream, you may want to go through the main {spring-cloud-stream-docs}[reference docs] for Spring Cloud Stream to gain an understanding of the core concepts.
+TIP: For those unfamiliar with the concepts in Spring Cloud Stream, go through the primary {spring-cloud-stream-docs}[reference docs] for Spring Cloud Stream to understand the core concepts.
 
 == Usage
 
-To use Apache Pulsar binder for Spring Cloud Stream, we need to include the following dependency to your application.
+We need to include the following dependency on your application to use Apache Pulsar binder for Spring Cloud Stream.
 
 [source,xml,indent=0,subs="verbatim,attributes",role="primary"]
 .Maven
@@ -33,12 +33,12 @@ dependencies {
 
 == Overview
 
-In a nutshell, the Spring Cloud Stream binder for Apache Pulsar allows the applications to focus on the business logic rather than dealing with the lower-level details of managing and maintaining Pulsar.
+The Spring Cloud Stream binder for Apache Pulsar allows the applications to focus on business logic rather than dealing with the lower-level details of managing and maintaining Pulsar.
 The binder takes care of all those details for the application developer.
-Spring Cloud Stream brings a powerful programming model that is based on {spring-cloud-function}[Spring Cloud Function] that allows the app developer to write complex event driven application using a functional style.
-Applications can start from a middleware neutral manner and then map Pulsar topics as destinations in Spring Cloud Stream through Spring Boot configuration properties.
-Spring Cloud Stream is built on top of Spring Boot and when writing an event driven microservice using Spring Cloud Stream, you are essentially writing a Boot application.
-Here is a very simple Spring Cloud Stream application.
+Spring Cloud Stream brings a powerful programming model based on {spring-cloud-function}[Spring Cloud Function] that allows the app developer to write complex event-driven applications using a functional style.
+Applications can start from a middleware-neutral manner and then map Pulsar topics as destinations in Spring Cloud Stream through Spring Boot configuration properties.
+Spring Cloud Stream is built on top of Spring Boot, and when writing an event-driven microservice using Spring Cloud Stream, you are essentially writing a Boot application.
+Here is a straightforward Spring Cloud Stream application.
 
 ====
 [source, java]
@@ -82,14 +82,14 @@ public class SpringPulsarBinderSampleApp {
 ----
 ====
 
-The above sample application, which is a full-blown Spring Boot application deserves a few explanations. However, on a first pass you can see that this is nothing more than plain Java and a few Spring and Spring Boot annotations.
-We have three `Bean` methods here - a `java.util.function.Supplier`, a `java.util.function.Function` and finally a `java.util.function.Consumer`.
-The supplier produces the current time in milliseconds, the function takes this time and then enhances it by adding some random data, and then the consumer simply logs the enhanced time.
+The above sample application, a full-blown Spring Boot application, deserves a few explanations. However, on a first pass, you can see that this is just plain Java and a few Spring and Spring Boot annotations.
+We have three `Bean` methods here - a `java.util.function.Supplier`, a `java.util.function.Function`, and finally, a `java.util.function.Consumer`.
+The supplier produces the current time in milliseconds, the function takes this time and then enhances it by adding some random data, and then the consumer logs the enhanced time.
 
-We omitted all the imports for brevity, but there is nothing Spring Cloud Stream specific here in the entire application.
+We omitted all the imports for brevity, but nothing Spring Cloud Stream specific in the entire application.
 How does it become a Spring Cloud Stream application that interacts with Apache Pulsar?
-For that, you need to include the above dependency for the binder in the application.
-Once that dependency is added, you need to provide the following configuration properties.
+You must include the above dependency for the binder in the application.
+Once that dependency is added, you must provide the following configuration properties.
 
 [source,yaml,indent=0,subs="verbatim"]
 ----
@@ -107,38 +107,38 @@ spring:
           destination: timeProcessor-out-0
 ----
 
-With this, the above Spring Boot application has become an end-to-end event driven application that is based on Spring Cloud Stream.
+With this, the above Spring Boot application has become an end-to-end event-driven application based on Spring Cloud Stream.
 Because we have the Pulsar binder on the classpath, the application interacts with Apache Pulsar.
-If there is only one function in the application, then we don't need to tell Spring Cloud Stream to activate the function for execution, since it does that by default.
-If there are more than one such functions present in the application, as in our example, we need to instruct Spring Cloud Stream which of those functions that we would like to activate.
+If there is only one function in the application, then we don't need to tell Spring Cloud Stream to activate the function for execution since it does that by default.
+If there is more than one such function in the application, as in our example, we need to instruct Spring Cloud Stream which functions we would like to activate.
 In our case, we need all of them to be activated, and we do that through the `spring.cloud.function.definition` property.
-By default, the bean name becomes part of the Spring Cloud Stream binding name.
-A binding is a fundamental abstract concept in Spring Cloud Stream, using which the framework communicates with the middleware destination.
+The bean name becomes part of the Spring Cloud Stream binding name by default.
+A binding is a fundamentally abstract concept in Spring Cloud Stream, using which the framework communicates with the middleware destination.
 Almost everything that Spring Cloud Stream does occurs over a concrete binding.
-A supplier function has only an output binding, functions have both input and output bindings and consumers have only input binding.
-Let's take as an example our supplier bean - `timeSupplier`.
-The default binding name for this supplier is going be `timeSupplier-out-0`.
-Similarly, the default binding names for the `timeProcessor` function is going to be `timeProcessor-in-0` on the inbound and `timeProcessor-out-0` on the outbound.
+A supplier has only an output binding; functions have input and output bindings, and consumers have only input binding.
+Let's take as an example our supplier bean - `timeSupplier.`
+The default binding name for this supplier will be `timeSupplier-out-0`.
+Similarly, the default binding names for the `timeProcessor` function will be `timeProcessor-in-0` on the inbound and `timeProcessor-out-0` on the outbound.
 Please refer to the Spring Cloud Stream reference docs for details on how you can change the default binding names.
-In most situations, using the default binding names is simply enough.
-We set the destination on the binding names as shown above.
+In most situations, using the default binding names is enough.
+We set the destination on the binding names, as shown above.
 If a destination is not provided, the binding name becomes the value for the destination as in the case of `timeSupplier-out-0`.
 
-When running the above app, you should see that the supplier executes every second which is then consumed by the function and enhances the time which in turn consumed by the logger consumer.
+When running the above app, you should see that the supplier executes every second, which is then consumed by the function and enhances the time consumed by the logger consumer.
 
-== Message Conversion in Binder based Applications
+== Message Conversion in Binder-based Applications
 
-In the above sample application, you might observe that we did not provide any schema information for message conversion.
-That is because, by default, Spring Cloud Stream uses its own message conversion mechanism using the messaging support established in Spring Framework through the Spring Messaging project.
+In the above sample application, we provided no schema information for message conversion.
+That is because, by default, Spring Cloud Stream uses its message conversion mechanism using the messaging support established in Spring Framework through the Spring Messaging project.
 Unless specified, Spring Cloud Stream uses `application/json` as the `content-type` for message conversion on both inbound and outbound bindings.
-On the outbound, the data is serialized as `byte[]` and the Pulsar binder then uses `Schema.BYTES` to send it over the wire to the Pulsar topic.
+On the outbound, the data is serialized as `byte[],` and the Pulsar binder then uses `Schema.BYTES` to send it over the wire to the Pulsar topic.
 Similarly, on the inbound, the data is consumed as `byte[]` from the Pulsar topic and then converted into the target type using the proper message converter.
 
 === Using Native Conversion in Pulsar using Pulsar Schema
 
-Although the default is to use the framework provided message conversion, Spring Cloud Stream also allows each binder to determine how the message should be converted.
-If the application chooses to go this route, Spring Cloud Stream steers clear of using any Spring provided message conversion facility and simply passes around the data it receives or produces.
-This feature in Spring Cloud Stream is known as native encoding on the producer side and native decoding on the consumer side which simply means that the encoding and decoding natively takes place on the target middleware, in our case, on Apache Pulsar.
+Although the default is to use the framework-provided message conversion, Spring Cloud Stream allows each binder to determine how the message should be converted.
+Suppose the application chooses to go this route. In that case, Spring Cloud Stream steers clear of using any Spring-provided message conversion facility and passes around the data it receives or produces.
+This feature in Spring Cloud Stream is known as native encoding on the producer side and native decoding on the consumer side. This means that the encoding and decoding natively occur on the target middleware, in our case, on Apache Pulsar.
 For the above application, we can use the following configuration to bypass the framework conversion and uses native encoding and decoding.
 
 [source,yaml,indent=0,subs="verbatim"]
@@ -183,11 +183,11 @@ spring:
 
 ----
 
-The property to enable native encoding on the producer side is a binding level property from core Spring Cloud Stream.
-You set it on the producer binding - `spring.cloud.stream.bindings.<binding-name>.producer.use-native-encoding` and set this to `true`.
-Similarly, for consumer bindings, use - `spring.cloud.stream.bindings.<binding-name>.consumer.user-native-decoding` and set to `true`.
+The property to enable native encoding on the producer side is a binding level property from the core Spring Cloud Stream.
+You set it on the producer binding - `spring.cloud.stream.bindings.<binding-name>.producer.use-native-encoding` and set this to `true.`
+Similarly, use - `spring.cloud.stream.bindings.<binding-name>.consumer.user-native-decoding` for consumer bindings and set it to `true.`
 If we decide to use native encoding and decoding, in the case of Pulsar, we need to set the corresponding schema and the underlying message type information.
 This information is provided as extended binding properties.
-We will look more about extended binding properties in Pulsar binder below.
+We will look more at extended binding properties in the Pulsar binder below.
 As you can see above in the configuration, the properties are - `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.schema-type` for schema information and `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.message-type` for the actual target type.
-If you have both keys and values on the message, then you can use `message-key-type` and `message-value-type` to specify their target types. 
+If you have both keys and values on the message, you can use `message-key-type` and `message-value-type` to specify their target types.
