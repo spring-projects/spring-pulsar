@@ -44,8 +44,6 @@ In addition to this reference documentation, we recommend a number of other reso
 
 include::application-properties.adoc[leveloffset=+2]
 
-include::topic-resolution.adoc[leveloffset=+2]
-
 include::non-ga-versions.adoc[leveloffset=+2]
 
 include::native-image.adoc[leveloffset=+2]

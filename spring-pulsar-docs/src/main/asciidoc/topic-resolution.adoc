@@ -1,7 +1,3 @@
-[appendix]
-[[appendix.topic-resolution]]
-= Topic Resolution
-
 A destination topic is needed when producing or consuming messages.
 The framework looks in the following ordered locations to determine a topic (stopping at the first find):
 
