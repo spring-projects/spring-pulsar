@@ -98,7 +98,8 @@ tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 	}
 	doFirst {
 		attributes "spring-pulsar-version": project.version,
-				"spring-boot-version": project(':spring-pulsar-dependencies').springBootVersion ?: 'current'
+				"spring-boot-version": project(':spring-pulsar-dependencies').springBootVersion ?: 'current',
+				"spring-cloud-stream-version": project(':spring-pulsar-dependencies').springCloudStreamVersion ?: 'current'
 	}
 }
 
