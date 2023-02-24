@@ -58,6 +58,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBi
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
+import org.springframework.pulsar.support.DefaultPulsarHeaderMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.util.Assert;
 import org.springframework.util.MimeTypeUtils;
@@ -110,7 +111,7 @@ public class PulsarBinderTests extends
 		var consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
 		if (this.binder == null) {
 			this.binder = new PulsarTestBinder(provisioner, pulsarTemplate, consumerFactory, configProps,
-					new DefaultSchemaResolver());
+					new DefaultSchemaResolver(), new DefaultPulsarHeaderMapper());
 		}
 		return this.binder;
 	}
@@ -243,55 +244,6 @@ public class PulsarBinderTests extends
 		producerBinding.unbind();
 		binding1.unbind();
 		binding2.unbind();
-	}
-
-	@Test
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void testSendAndReceiveNoOriginalContentType(TestInfo testInfo) throws Exception {
-		Binder binder = getBinder();
-
-		BindingProperties producerBindingProperties = createProducerBindingProperties(
-				createProducerProperties(testInfo));
-		DirectChannel moduleOutputChannel = createBindableChannel("output", producerBindingProperties);
-		BindingProperties inputBindingProperties = createConsumerBindingProperties(createConsumerProperties());
-		DirectChannel moduleInputChannel = createBindableChannel("input", inputBindingProperties);
-		Binding<MessageChannel> producerBinding = binder.bindProducer(
-				String.format("bar%s0", getDestinationNameDelimiter()), moduleOutputChannel,
-				producerBindingProperties.getProducer());
-		Binding<MessageChannel> consumerBinding = binder.bindConsumer(
-				String.format("bar%s0", getDestinationNameDelimiter()), "testSendAndReceiveNoOriginalContentType",
-				moduleInputChannel, createConsumerProperties());
-		binderBindUnbindLatency();
-
-		Message<?> message = MessageBuilder.withPayload("foo")
-				.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.TEXT_PLAIN).build();
-		moduleOutputChannel.send(message);
-		CountDownLatch latch = new CountDownLatch(1);
-		AtomicReference<Message<byte[]>> inboundMessageRef = new AtomicReference<>();
-		moduleInputChannel.subscribe(message1 -> {
-			try {
-				inboundMessageRef.set((Message<byte[]>) message1);
-			}
-			finally {
-				latch.countDown();
-			}
-		});
-
-		moduleOutputChannel.send(message);
-		Assert.isTrue(latch.await(5, TimeUnit.SECONDS), "Failed to receive message");
-		assertThat(inboundMessageRef.get()).isNotNull();
-		assertThat(inboundMessageRef.get().getPayload()).isEqualTo("foo".getBytes());
-		// TODO: The below content-type should be TEXT_PLAIN, but default to
-		// application/json
-		// This is because we don't currently preserve any message headers on send. We
-		// should look into this soon.
-		// Also, the content-type is "application/json" (with double quotes). We will have
-		// to fix that as well.
-		assertThat(inboundMessageRef.get().getHeaders().get(MessageHeaders.CONTENT_TYPE).toString())
-				.contains(MimeTypeUtils.APPLICATION_JSON.toString());
-		producerBinding.unbind();
-		consumerBinding.unbind();
 	}
 
 	@Test

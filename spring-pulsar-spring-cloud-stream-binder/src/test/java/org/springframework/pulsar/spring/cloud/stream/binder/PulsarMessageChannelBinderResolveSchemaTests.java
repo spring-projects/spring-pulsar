@@ -39,6 +39,7 @@ import org.springframework.pulsar.core.Resolved;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
+import org.springframework.pulsar.support.DefaultPulsarHeaderMapper;
 
 /**
  * Unit tests for {@link PulsarMessageChannelBinder#resolveSchema}.
@@ -52,7 +53,7 @@ public class PulsarMessageChannelBinderResolveSchemaTests {
 	@SuppressWarnings("unchecked")
 	private PulsarMessageChannelBinder binder = new PulsarMessageChannelBinder(mock(PulsarTopicProvisioner.class),
 			mock(PulsarTemplate.class), mock(PulsarConsumerFactory.class),
-			mock(PulsarBinderConfigurationProperties.class), resolver);
+			mock(PulsarBinderConfigurationProperties.class), resolver, new DefaultPulsarHeaderMapper());
 
 	@ParameterizedTest
 	@EnumSource(mode = Mode.MATCH_NONE, names = "^(AUTO.*|AVRO|JSON|KEY_VALUE|NONE|PROTOBUF.*)$")
