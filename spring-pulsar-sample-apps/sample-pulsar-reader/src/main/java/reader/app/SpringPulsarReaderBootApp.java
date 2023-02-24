@@ -51,7 +51,7 @@ public class SpringPulsarReaderBootApp {
 	}
 
 	@PulsarReader(id = "my-id", subscriptionName = "pulsar-reader-demo-subscription",
-			topics = "pulsar-reader-demo-topic")
+			topics = "pulsar-reader-demo-topic", startMessageId = "earliest")
 	void read(String message) {
 		logger.info(message);
 	}

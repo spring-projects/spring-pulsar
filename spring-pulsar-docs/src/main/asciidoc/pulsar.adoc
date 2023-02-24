@@ -1176,6 +1176,55 @@ The framework provides support for using {apache-pulsar-docs}/concepts-clients/#
 
 Spring Boot provides this reader factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reader,`spring.pulsar.reader`>> prefixed application properties.
 
+==== PulsarReader Annotation
+
+While it is possible to use `PulsarReaderFactory` directly, Spring for Apache Pulsar provides a convenient annotation called `PulsarReader` that you can use to quickly read from a topic without setting up any reader factories yourselves.
+This is similar to the same ideas behind `PulsarListener.`
+Here is a quick example.
+
+====
+[source, java]
+----
+@PulsarReader(id = "pulsar-reader-demo-id", subscriptionName = "pulsar-reader-demo-subscription",
+topics = "pulsar-reader-demo-topic", startMessageId = "earliest")
+void read(String message) {
+    //...
+}
+----
+====
+
+As you can see from the above example, `PulsarReader` is a quick way to read from a Pulsar topic.
+The `id` and `subscriptionName` attributes are optional, but always a best practice to provide them.
+`PulsarReader` requires `topics` and the `startMessageId` as mandatory attributes.
+The `topics` attribute can be a single topic or a comma-separated list of topics.
+The `startMessageId` attribute instructs the reader to start from a particular message in the topic.
+The valid values for `startMessageId` are `earliest` or `latest.`
+Suppose you want the reader to start reading messages arbitrarily from a topic other than the earliest or latest available messages. In that case, you need to use a `ReaderBuilderCustomizer` to customize the `ReaderBuilder` so it knows the right `MessageId` to start from.
+
+==== Customizing the ReaderBuilder
+
+You can customize any fields available through `ReaderBuilder` using a `ReaderBuilderCustomizer` in Spring for Apache Pulsar.
+You can provide a `@Bean` from `ReaderBuilderCustomizer` and then make it available to the `PulsarReader` as below.
+
+====
+[source, java]
+----
+@PulsarReader(id = "with-customizer-reader", subscriptionName = "with-customizer-reader-subscription",
+					topics = "with-customizer-reader-topic", readerCustomizer = "myCustomizer")
+void read(String message) {
+    //...
+}
+
+@Bean
+public ReaderBuilderCustomizer<String> myCustomizer() {
+    return readerBuilder -> {
+        readerBuilder.startMessageId(messageId); // the first message read is after this message id.
+        // Any other customizations on the readerBuilder
+    };
+}
+----
+====
+
 [[topic-resolution-process-imperative]]
 == Topic Resolution
 include::topic-resolution.adoc[leveloffset=+1]
