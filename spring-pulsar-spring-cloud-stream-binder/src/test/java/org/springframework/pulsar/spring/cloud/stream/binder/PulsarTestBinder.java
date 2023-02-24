@@ -24,6 +24,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
+import org.springframework.pulsar.support.PulsarHeaderMapper;
 
 /**
  * Test binder to exercise producer/consumer bindings in
@@ -37,11 +38,11 @@ public class PulsarTestBinder extends AbstractPulsarTestBinder {
 	@SuppressWarnings({ "unchecked" })
 	PulsarTestBinder(PulsarTopicProvisioner pulsarTopicProvisioner, PulsarTemplate<?> pulsarTemplate,
 			PulsarConsumerFactory<?> pulsarConsumerFactory, PulsarBinderConfigurationProperties binderConfigProps,
-			SchemaResolver schemaResolver) {
+			SchemaResolver schemaResolver, PulsarHeaderMapper headerMapper) {
 
 		try {
 			var binder = new PulsarMessageChannelBinder(pulsarTopicProvisioner, (PulsarTemplate<Object>) pulsarTemplate,
-					pulsarConsumerFactory, binderConfigProps, schemaResolver);
+					pulsarConsumerFactory, binderConfigProps, schemaResolver, headerMapper);
 			var context = new AnnotationConfigApplicationContext(Config.class);
 			setApplicationContext(context);
 			binder.setApplicationContext(context);

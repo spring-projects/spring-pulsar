@@ -49,6 +49,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.lang.Nullable;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.pulsar.autoconfigure.PulsarProperties;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
@@ -274,6 +276,52 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: 5150->Foo[value=5150]"));
 			}
+		}
+
+	}
+
+	@Nested
+	class CustomMessageHeaders {
+
+		@Test
+		void headersPropagatedSendAndReceive(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(CustomHeadersConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=springMessageSupplier;springMessageLogger",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=springMessageSupplier-out-0",
+					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh-sub1")) {
+				// Wait for a few of the messages to flow through (check for index = 5)
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION)).until(
+						() -> output.toString().contains("Hello binder: test-headers-msg-5 w/ custom-id: 5150-5"));
+			}
+		}
+
+		@EnableAutoConfiguration
+		@SpringBootConfiguration
+		static class CustomHeadersConfig {
+
+			private final Logger logger = LoggerFactory.getLogger(getClass());
+
+			private int msgCount = 0;
+
+			@Bean
+			public Supplier<Message<String>> springMessageSupplier() {
+				return () -> {
+					msgCount++;
+					return MessageBuilder.withPayload("test-headers-msg-" + msgCount)
+							.setHeader("custom-id", "5150-" + msgCount).build();
+				};
+			}
+
+			@Bean
+			public Consumer<Message<String>> springMessageLogger() {
+				return s -> this.logger.info("Hello binder: {} w/ custom-id: {}", s.getPayload(),
+						s.getHeaders().get("custom-id"));
+			}
+
 		}
 
 	}

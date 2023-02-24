@@ -17,16 +17,13 @@
 package org.springframework.pulsar.support.converter;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.pulsar.client.api.Consumer;
 
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.pulsar.support.PulsarMessageHeaderMapper;
+import org.springframework.pulsar.support.PulsarHeaderMapper;
 
 /**
  *
@@ -35,26 +32,21 @@ import org.springframework.pulsar.support.PulsarMessageHeaderMapper;
  *
  * @param <V> message type
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class PulsarRecordMessageConverter<V> implements PulsarMessageConverter<V> {
 
-	private final PulsarMessageHeaderMapper pulsarMessageHeaderMapper;
+	private final PulsarHeaderMapper headerMapper;
 
 	private SmartMessageConverter messagingConverter;
 
-	public PulsarRecordMessageConverter(PulsarMessageHeaderMapper pulsarMessageHeaderMapper) {
-		this.pulsarMessageHeaderMapper = pulsarMessageHeaderMapper;
+	public PulsarRecordMessageConverter(PulsarHeaderMapper headerMapper) {
+		this.headerMapper = headerMapper;
 	}
 
 	@Override
 	public Message<?> toMessage(org.apache.pulsar.client.api.Message<V> record, Consumer<V> consumer, Type type) {
-
-		Map<String, Object> messageHeaders = new HashMap<>();
-		this.pulsarMessageHeaderMapper.toHeaders(record, messageHeaders);
-		Message<?> message = MessageBuilder.createMessage(extractAndConvertValue(record),
-				new MessageHeaders(messageHeaders));
-
-		return message;
+		return MessageBuilder.createMessage(extractAndConvertValue(record), this.headerMapper.toSpringHeaders(record));
 	}
 
 	protected org.springframework.messaging.converter.MessageConverter getMessagingConverter() {

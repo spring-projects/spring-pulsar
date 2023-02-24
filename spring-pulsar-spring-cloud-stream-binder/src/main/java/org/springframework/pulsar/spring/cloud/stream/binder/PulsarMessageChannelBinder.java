@@ -40,6 +40,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.pulsar.autoconfigure.ConsumerConfigProperties;
 import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
@@ -48,6 +49,7 @@ import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.core.TypedMessageBuilderCustomizer;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.DefaultPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -57,6 +59,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarCo
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
+import org.springframework.pulsar.support.PulsarHeaderMapper;
 
 /**
  * {@link Binder} implementation for Apache Pulsar.
@@ -72,20 +75,24 @@ public class PulsarMessageChannelBinder extends
 
 	private final PulsarConsumerFactory<?> pulsarConsumerFactory;
 
+	private final PulsarBinderConfigurationProperties binderConfigProps;
+
 	private final SchemaResolver schemaResolver;
 
-	private PulsarBinderConfigurationProperties binderConfigProps;
+	private final PulsarHeaderMapper headerMapper;
 
 	private PulsarExtendedBindingProperties extendedBindingProperties = new PulsarExtendedBindingProperties();
 
 	public PulsarMessageChannelBinder(PulsarTopicProvisioner provisioningProvider,
 			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<?> pulsarConsumerFactory,
-			PulsarBinderConfigurationProperties binderConfigProps, SchemaResolver schemaResolver) {
+			PulsarBinderConfigurationProperties binderConfigProps, SchemaResolver schemaResolver,
+			PulsarHeaderMapper headerMapper) {
 		super(null, provisioningProvider);
 		this.pulsarTemplate = pulsarTemplate;
 		this.pulsarConsumerFactory = pulsarConsumerFactory;
 		this.binderConfigProps = binderConfigProps;
 		this.schemaResolver = schemaResolver;
+		this.headerMapper = headerMapper;
 	}
 
 	@Override
@@ -110,7 +117,8 @@ public class PulsarMessageChannelBinder extends
 				binderProducerProps, bindingProducerProps);
 
 		var handler = new PulsarProducerConfigurationMessageHandler(this.pulsarTemplate, schema, destination.getName(),
-				(builder) -> ProducerBuilderConfigurationUtil.loadConf(builder, mergedProducerProps));
+				(builder) -> ProducerBuilderConfigurationUtil.loadConf(builder, mergedProducerProps),
+				this.headerMapper);
 		handler.setApplicationContext(getApplicationContext());
 		handler.setBeanFactory(getBeanFactory());
 
@@ -125,9 +133,10 @@ public class PulsarMessageChannelBinder extends
 
 		var messageDrivenChannelAdapter = new PulsarMessageDrivenChannelAdapter();
 		containerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			Message<Object> message = MessageBuilder.withPayload(msg.getValue()).build();
+			var message = MessageBuilder.createMessage(msg.getValue(), this.headerMapper.toSpringHeaders(msg));
 			messageDrivenChannelAdapter.send(message);
 		});
+
 		if (properties.isUseNativeDecoding()) {
 			var schema = resolveSchema(properties.getExtension().getSchemaType(),
 					properties.getExtension().getMessageType(), properties.getExtension().getMessageKeyType(),
@@ -243,22 +252,26 @@ public class PulsarMessageChannelBinder extends
 	static class PulsarProducerConfigurationMessageHandler extends AbstractMessageProducingHandler
 			implements ManageableLifecycle {
 
+		private final PulsarTemplate<Object> pulsarTemplate;
+
+		private final Schema<Object> schema;
+
+		private final String destination;
+
+		private final ProducerBuilderCustomizer<Object> layeredProducerPropsCustomizer;
+
+		private final PulsarHeaderMapper headerMapper;
+
 		private boolean running = true;
 
-		final PulsarTemplate<Object> pulsarTemplate;
-
-		final Schema<Object> schema;
-
-		final String destination;
-
-		final ProducerBuilderCustomizer<Object> layeredProducerPropsCustomizer;
-
 		PulsarProducerConfigurationMessageHandler(PulsarTemplate<Object> pulsarTemplate, Schema<Object> schema,
-				String destination, ProducerBuilderCustomizer<Object> layeredProducerPropsCustomizer) {
+				String destination, ProducerBuilderCustomizer<Object> layeredProducerPropsCustomizer,
+				PulsarHeaderMapper headerMapper) {
 			this.pulsarTemplate = pulsarTemplate;
 			this.schema = schema;
 			this.destination = destination;
 			this.layeredProducerPropsCustomizer = layeredProducerPropsCustomizer;
+			this.headerMapper = headerMapper;
 		}
 
 		@Override
@@ -286,12 +299,22 @@ public class PulsarMessageChannelBinder extends
 		@Override
 		protected void handleMessageInternal(Message<?> message) {
 			try {
-				this.pulsarTemplate.newMessage(message.getPayload()).withTopic(this.destination).withSchema(this.schema)
-						.withProducerCustomizer(this.layeredProducerPropsCustomizer).sendAsync();
+				// @formatter:off
+				this.pulsarTemplate.newMessage(message.getPayload())
+						.withTopic(this.destination)
+						.withSchema(this.schema)
+						.withProducerCustomizer(this.layeredProducerPropsCustomizer)
+						.withMessageCustomizer(this.applySpringHeadersAsPulsarProperties(message.getHeaders()))
+						.sendAsync();
+				// @formatter:on
 			}
 			catch (PulsarClientException ex) {
 				logger.trace(ex, "Failed to send message to destination: " + this.destination);
 			}
+		}
+
+		private TypedMessageBuilderCustomizer<Object> applySpringHeadersAsPulsarProperties(MessageHeaders headers) {
+			return (mb) -> this.headerMapper.fromSpringHeaders(headers).forEach(mb::property);
 		}
 
 	}

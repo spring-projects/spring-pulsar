@@ -38,7 +38,7 @@ import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.pulsar.support.DefaultPulsarMessageHeaderMapper;
+import org.springframework.pulsar.support.DefaultPulsarHeaderMapper;
 import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter;
 import org.springframework.util.Assert;
@@ -82,7 +82,7 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 	private boolean converterSet;
 
 	private PulsarMessageConverter<V> messageConverter = new PulsarRecordMessageConverter<V>(
-			new DefaultPulsarMessageHeaderMapper());
+			new DefaultPulsarHeaderMapper());
 
 	private Type fallbackType = Object.class;
 

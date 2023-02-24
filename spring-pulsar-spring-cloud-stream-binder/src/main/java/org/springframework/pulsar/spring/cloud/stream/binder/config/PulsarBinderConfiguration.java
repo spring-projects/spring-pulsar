@@ -30,6 +30,8 @@ import org.springframework.pulsar.spring.cloud.stream.binder.PulsarMessageChanne
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
+import org.springframework.pulsar.support.DefaultPulsarHeaderMapper;
+import org.springframework.pulsar.support.PulsarHeaderMapper;
 
 /**
  * Pulsar binder {@link Configuration}.
@@ -49,12 +51,17 @@ public class PulsarBinderConfiguration {
 	}
 
 	@Bean
+	public PulsarHeaderMapper pulsarHeaderMapper() {
+		return new DefaultPulsarHeaderMapper();
+	}
+
+	@Bean
 	public PulsarMessageChannelBinder pulsarMessageChannelBinder(PulsarTopicProvisioner pulsarTopicProvisioner,
 			PulsarTemplate<Object> pulsarTemplate, PulsarConsumerFactory<byte[]> pulsarConsumerFactory,
 			PulsarBinderConfigurationProperties binderConfigProps, PulsarExtendedBindingProperties bindingConfigProps,
-			SchemaResolver schemaResolver) {
+			SchemaResolver schemaResolver, PulsarHeaderMapper headerMapper) {
 		PulsarMessageChannelBinder pulsarMessageChannelBinder = new PulsarMessageChannelBinder(pulsarTopicProvisioner,
-				pulsarTemplate, pulsarConsumerFactory, binderConfigProps, schemaResolver);
+				pulsarTemplate, pulsarConsumerFactory, binderConfigProps, schemaResolver, headerMapper);
 		pulsarMessageChannelBinder.setExtendedBindingProperties(bindingConfigProps);
 		return pulsarMessageChannelBinder;
 	}
