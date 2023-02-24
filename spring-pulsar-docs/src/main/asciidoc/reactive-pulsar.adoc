@@ -61,7 +61,7 @@ On the Pulsar producer side, Spring Boot auto-configuration provides a `Reactive
 The template provides send methods that accept a single message and return a `Mono<MessageId>`.
 It also provides send methods that accept multiple messages (in the form of the ReactiveStreams `Publisher` type) and return a `Flux<MessageId>`.
 
-NOTE: For the API variants that do not include a topic parameter, a <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> is used to determine the destination topic.
+NOTE: For the API variants that do not include a topic parameter, a <<topic-resolution-process-reactive,topic resolution process>> is used to determine the destination topic.
 
 ==== Fluent API
 The template provides a {javadocs}/org/springframework/pulsar/reactive/core/ReactivePulsarOperations.html#newMessage(T)[fluent builder] to handle more complicated send requests.
@@ -114,7 +114,7 @@ The `ReactivePulsarTemplate` relies on a `ReactivePulsarSenderFactory` to actual
 
 Spring Boot provides this sender factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-sender,`spring.pulsar.reactive.sender`>> prefixed application properties.
 
-NOTE: If topic information is not specified when using the sender factory APIs directly, the same <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> used by the `ReactivePulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
+NOTE: If topic information is not specified when using the sender factory APIs directly, the same <<topic-resolution-process-reactive,topic resolution process>> used by the `ReactivePulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
 ==== Producer Caching
 Each underlying Pulsar producer consumes resources.
@@ -170,7 +170,7 @@ spring.pulsar.reactive.consumer:
 
 When `subscription-name` is not provided an auto-generated subscription name will be used.
 
-NOTE: If the topic information is not directly provided, a <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> is used to determine the destination topic.
+NOTE: If the topic information is not directly provided, a <<topic-resolution-process-reactive,topic resolution process>> is used to determine the destination topic.
 
 
 In the `ReactivePulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
@@ -329,7 +329,7 @@ The "listener" aspect is provided by the `ReactivePulsarMessageHandler` of which
 * `ReactivePulsarOneByOneMessageHandler` - handles a single message one-by-one
 * `ReactivePulsarStreamingHandler` - handles multiple messages via a `Flux`
 
-NOTE: If topic information is not specified when using the listener containers directly, the same <<topic-resolution.adoc#appendix.topic-resolution,topic resolution process>> used by the `ReactivePulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
+NOTE: If topic information is not specified when using the listener containers directly, the same <<topic-resolution-process-reactive,topic resolution process>> used by the `ReactivePulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
 
 [[reactive-concurrency]]
 === Concurrency
@@ -499,3 +499,7 @@ The easy way to solve this is to provide a DLQ topic name always.
 The framework provides support for using {apache-pulsar-docs}/concepts-clients/#reader-interface[Pulsar Reader] in a Reactive fashion via the `ReactivePulsarReaderFactory`.
 
 Spring Boot provides this reader factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-reader,`spring.pulsar.reactive.reader`>> prefixed application properties.
+
+[[topic-resolution-process-reactive]]
+== Topic Resolution
+include::topic-resolution.adoc[leveloffset=+1]
