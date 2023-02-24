@@ -18,6 +18,7 @@ dependencies {
 	api project (':spring-pulsar')
 	api 'org.springframework.boot:spring-boot-starter'
 	configurationProperties(project(path: ":spring-pulsar-spring-boot-autoconfigure", configuration: "configurationPropertiesMetadata"))
+	configurationProperties(project(path: ":spring-pulsar-spring-cloud-stream-binder", configuration: "configurationPropertiesMetadata"))
 	observationDocs "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 

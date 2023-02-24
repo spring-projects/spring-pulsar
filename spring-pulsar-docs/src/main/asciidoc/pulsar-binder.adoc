@@ -220,7 +220,7 @@ However, this is a basic non-partitioned topic, and if you want advanced feature
 Pulsar topic provisioner uses `PulsarAdministration` from the framework, which uses the `PulsarAdminBuilder.`
 For this reason, you need to set the `spring.pulsar.administration.service-url` property unless you are running Pulsar on the default server and port.
 
-=== Specify partition count when creating the topic
+=== Specifying partition count when creating the topic
 
 When creating the topic, you can set the partition count in two ways.
 First, you can set it at the binder level using the property `spring.cloud.stream.pulsar.binder.partition-count`.

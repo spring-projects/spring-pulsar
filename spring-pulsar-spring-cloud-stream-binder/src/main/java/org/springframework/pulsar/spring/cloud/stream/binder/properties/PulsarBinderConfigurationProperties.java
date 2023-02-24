@@ -37,6 +37,9 @@ public class PulsarBinderConfigurationProperties {
 	@NestedConfigurationProperty
 	private final ProducerConfigProperties producer = new ProducerConfigProperties();
 
+	/**
+	 * Number of topic partitions.
+	 */
 	@Nullable
 	private Integer partitionCount;
 

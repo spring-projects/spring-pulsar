@@ -31,3 +31,7 @@ include::application-properties/pulsar-reactive-sender.adoc[]
 include::application-properties/pulsar-reactive-consumer.adoc[]
 
 include::application-properties/pulsar-reactive-reader.adoc[]
+
+include::application-properties/pulsar-binder.adoc[]
+
+include::application-properties/pulsar-bindings.adoc[]

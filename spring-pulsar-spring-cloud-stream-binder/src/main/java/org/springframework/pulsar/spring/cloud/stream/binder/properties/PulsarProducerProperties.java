@@ -29,18 +29,33 @@ import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
  */
 public class PulsarProducerProperties extends ProducerConfigProperties {
 
+	/**
+	 * Pulsar {@link SchemaType} for this binding.
+	 */
 	@Nullable
 	private SchemaType schemaType;
 
+	/**
+	 * Pulsar message type for this binding.
+	 */
 	@Nullable
 	private Class<?> messageType;
 
+	/**
+	 * Type for the Pulsar message key.
+	 */
 	@Nullable
 	private Class<?> messageKeyType;
 
+	/**
+	 * Type for the Pulsar message value.
+	 */
 	@Nullable
 	private Class<?> messageValueType;
 
+	/**
+	 * Number of topic partitions.
+	 */
 	@Nullable
 	private Integer partitionCount;
 
