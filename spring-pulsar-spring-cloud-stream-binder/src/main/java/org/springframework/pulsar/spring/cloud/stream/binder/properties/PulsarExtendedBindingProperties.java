@@ -22,6 +22,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.stream.binder.AbstractExtendedBindingProperties;
 import org.springframework.cloud.stream.binder.BinderSpecificPropertiesProvider;
 
+/**
+ * {@link ConfigurationProperties @ConfigurationProperties} for Pulsar binder specific
+ * extensions to the common binding properties.
+ * <p>
+ * These properties are applied to individual bindings and will override any binder-level
+ * settings.
+ *
+ * @author Soby Chacko
+ * @author Chris Bono
+ */
 @ConfigurationProperties("spring.cloud.stream.pulsar")
 public class PulsarExtendedBindingProperties extends
 		AbstractExtendedBindingProperties<PulsarConsumerProperties, PulsarProducerProperties, PulsarBindingProperties> {
@@ -33,6 +43,9 @@ public class PulsarExtendedBindingProperties extends
 		return DEFAULTS_PREFIX;
 	}
 
+	/**
+	 * Properties per individual binding name (e.g. 'mySink-in-0').
+	 */
 	@Override
 	public Map<String, PulsarBindingProperties> getBindings() {
 		return this.doGetBindings();

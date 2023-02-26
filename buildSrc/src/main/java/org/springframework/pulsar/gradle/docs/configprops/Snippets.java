@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 the original author or authors.
+ * Copyright 2012-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.gradle.api.file.FileCollection;
  *
  * @author Brian Clozed
  * @author Phillip Webb
+ * @author Chris Bono
  */
 class Snippets {
 
@@ -76,13 +77,24 @@ class Snippets {
 			});
 			table.addRow(row);
 		});
-		snippet.forEachPrefix((prefix) -> {
-			remaining.stream().filter((candidate) -> candidate.startsWith(prefix)).forEach((name) -> {
-				if (added.add(name)) {
-					table.addRow(new SingleRow(snippet, this.properties.get(name)));
+
+		snippet.forEachPrefix((prefix) ->
+				remaining.stream().filter((p) -> p.startsWith(prefix) &&
+						!DocsOnlyConfigurationProperty.isDocsOnlyProp(p)).forEach((name) -> {
+			if (added.add(name)) {
+				table.addRow(new SingleRow(snippet, this.properties.get(name)));
+
+				// Handle any "docs only" props
+				if (name.equals("spring.cloud.stream.pulsar.bindings")) {
+					// TODO if sourceType is Map<K,V> then look for docs only props
+					this.properties.stream()
+							.filter((p) -> DocsOnlyConfigurationProperty.isDocsOnlyPropUnderPrefix(p, name))
+							.filter((p) -> added.add(p.getName()))
+							.map(DocsOnlyConfigurationProperty::fromConfigProp)
+							.forEach((p) -> table.addRow(new SingleRow(snippet, p)));
 				}
-			});
-		});
+			}
+		}));
 		Asciidoc asciidoc = getAsciidoc(snippet, table);
 		writeAsciidoc(outputDirectory, snippet, asciidoc);
 		return added;
@@ -128,4 +140,42 @@ class Snippets {
 		}
 	}
 
+	static class DocsOnlyConfigurationProperty extends ConfigurationProperty {
+
+		private static final String DOCS_ONLY_TOKEN = ".for-docs-only";
+
+		private final String displayName;
+
+		private DocsOnlyConfigurationProperty(String name, String displayName, String type,
+				Object defaultValue, String description, boolean deprecated) {
+			super(name, type, defaultValue, description, deprecated);
+			this.displayName = displayName;
+		}
+
+		@Override
+		String getDisplayName() {
+			return this.displayName;
+		}
+
+		static DocsOnlyConfigurationProperty fromConfigProp(ConfigurationProperty prop) {
+			var propNewName = prop.getName().replace(DOCS_ONLY_TOKEN, ".z");
+			var propDisplayName = prop.getName().replace(DOCS_ONLY_TOKEN, ".*");
+			return new DocsOnlyConfigurationProperty(
+					propNewName,
+					propDisplayName,
+					prop.getType(),
+					prop.getDefaultValue(),
+					prop.getDescription(),
+					prop.isDeprecated());
+		}
+
+		static boolean isDocsOnlyProp(String propName) {
+			return propName.contains(DOCS_ONLY_TOKEN);
+		}
+
+		static boolean isDocsOnlyPropUnderPrefix(ConfigurationProperty configProp, String prefix) {
+			return configProp.getName().startsWith(prefix + DOCS_ONLY_TOKEN);
+		}
+
+	}
 }

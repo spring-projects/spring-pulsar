@@ -23,7 +23,9 @@ import org.springframework.pulsar.autoconfigure.ConsumerConfigProperties;
 import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
 
 /**
- * {@link ConfigurationProperties} for Pulsar binder configuration.
+ * {@link ConfigurationProperties @ConfigurationProperties} for the Pulsar binder.
+ * <p>
+ * These properties are applied at the binder level (to all bindings).
  *
  * @author Soby Chacko
  * @author Chris Bono
@@ -31,9 +33,15 @@ import org.springframework.pulsar.autoconfigure.ProducerConfigProperties;
 @ConfigurationProperties(prefix = "spring.cloud.stream.pulsar.binder")
 public class PulsarBinderConfigurationProperties {
 
+	/**
+	 * Pulsar consumer specific binder-level properties (applied to all bindings).
+	 */
 	@NestedConfigurationProperty
 	private final ConsumerConfigProperties consumer = new ConsumerConfigProperties();
 
+	/**
+	 * Pulsar producer specific binder-level properties (applied to all bindings).
+	 */
 	@NestedConfigurationProperty
 	private final ProducerConfigProperties producer = new ProducerConfigProperties();
 

@@ -16,12 +16,40 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder.properties;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.cloud.stream.binder.BinderSpecificPropertiesProvider;
 
+/**
+ * Container for Pulsar specific extended producer and consumer binding properties.
+ * <p>
+ * These properties are applied to individual bindings and will override any binder-level
+ * setting.
+ *
+ * <p>
+ * <em>NOTE:</em> This class is only referenced as a value in the
+ * {@link PulsarExtendedBindingProperties#getBindings() bindings map} and therefore, by
+ * default is not included in the generated configuration metadata. To get around this
+ * limitation it is annotated with {@code @ConfigurationProperties}. However, that is the
+ * only reason it is annotated and is not intended to be used directly.
+ *
+ * @author Soby Chacko
+ * @author Chris Bono
+ */
+@SuppressWarnings("ConfigurationProperties")
+@ConfigurationProperties("spring.cloud.stream.pulsar.bindings.for-docs-only")
 public class PulsarBindingProperties implements BinderSpecificPropertiesProvider {
 
+	/**
+	 * Pulsar consumer specific binding properties.
+	 */
+	@NestedConfigurationProperty
 	private PulsarConsumerProperties consumer = new PulsarConsumerProperties();
 
+	/**
+	 * Pulsar producer specific binding properties.
+	 */
+	@NestedConfigurationProperty
 	private PulsarProducerProperties producer = new PulsarProducerProperties();
 
 	public PulsarConsumerProperties getConsumer() {
