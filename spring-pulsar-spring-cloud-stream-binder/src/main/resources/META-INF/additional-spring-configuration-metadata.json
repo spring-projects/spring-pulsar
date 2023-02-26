@@ -1,0 +1,10 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "spring.cloud.stream.pulsar.bindings",
+      "description": "Properties per individual binding name (e.g. 'mySink-in-0'). Replace the '*' ' with the name of your binding."
+    }
+  ],
+  "hints": []
+}
