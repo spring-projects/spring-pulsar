@@ -4,15 +4,9 @@
 		"https://checkstyle.org/dtds/suppressions_1_2.dtd">
 <suppressions>
 	<suppress files="package-info\.java" checks=".*" />
-	<suppress files="[\\/]test[\\/]" checks="RequireThis" />
-	<suppress files="[\\/]test[\\/]" checks="Javadoc*" />
-	<suppress files="DefaultPulsarHeaderMapperTests" checks="AvoidStaticImport" />
-	<suppress files="DefaultSchemaResolverTests" checks="AvoidStaticImport|MethodParamPad" />
-	<suppress files="DefaultTopicResolverTests" checks="AvoidStaticImport" />
-	<suppress files="PulsarBinderUtilsTest" checks="AvoidStaticImport" />
+	<suppress files="[\\/]test[\\/]" checks="RequireThis|AvoidStaticImport|Javadoc*" />
+	<suppress files="DefaultSchemaResolverTests" checks="MethodParamPad" />
 	<suppress files="PulsarFunctionAdministrationIntegrationTests" checks="Regexp" />
-	<suppress files="PulsarMessageChannelBinderResolveSchemaTests" checks="AvoidStaticImport" />
-
 	<suppress files="Proto" checks=".*"/>
 	<suppress files="ReactiveSpringPulsarBootApp" checks="HideUtilityClassConstructor"/>
 	<suppress files="[\\/]spring-pulsar-docs[\\/]" checks="JavadocPackage|JavadocType|JavadocVariable|SpringDeprecatedCheck" />

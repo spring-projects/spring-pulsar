@@ -23,7 +23,7 @@ import org.apache.pulsar.client.api.Consumer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.pulsar.support.PulsarHeaderMapper;
+import org.springframework.pulsar.support.header.PulsarHeaderMapper;
 
 /**
  *
