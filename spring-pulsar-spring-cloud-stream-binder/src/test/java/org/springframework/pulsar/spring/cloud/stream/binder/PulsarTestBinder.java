@@ -24,7 +24,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
-import org.springframework.pulsar.support.PulsarHeaderMapper;
+import org.springframework.pulsar.support.header.PulsarHeaderMapper;
 
 /**
  * Test binder to exercise producer/consumer bindings in

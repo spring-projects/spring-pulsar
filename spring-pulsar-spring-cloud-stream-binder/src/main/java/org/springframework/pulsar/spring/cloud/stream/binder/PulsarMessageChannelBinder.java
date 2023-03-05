@@ -59,7 +59,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarCo
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
-import org.springframework.pulsar.support.PulsarHeaderMapper;
+import org.springframework.pulsar.support.header.PulsarHeaderMapper;
 
 /**
  * {@link Binder} implementation for Apache Pulsar.
@@ -314,7 +314,7 @@ public class PulsarMessageChannelBinder extends
 		}
 
 		private TypedMessageBuilderCustomizer<Object> applySpringHeadersAsPulsarProperties(MessageHeaders headers) {
-			return (mb) -> this.headerMapper.fromSpringHeaders(headers).forEach(mb::property);
+			return (mb) -> this.headerMapper.toPulsarHeaders(headers).forEach(mb::property);
 		}
 
 	}

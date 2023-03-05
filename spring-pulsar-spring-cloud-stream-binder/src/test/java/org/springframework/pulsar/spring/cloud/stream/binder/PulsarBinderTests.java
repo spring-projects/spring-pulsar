@@ -58,7 +58,7 @@ import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBi
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarConsumerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarProducerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
-import org.springframework.pulsar.support.DefaultPulsarHeaderMapper;
+import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.util.Assert;
 import org.springframework.util.MimeTypeUtils;
@@ -111,7 +111,7 @@ public class PulsarBinderTests extends
 		var consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, config);
 		if (this.binder == null) {
 			this.binder = new PulsarTestBinder(provisioner, pulsarTemplate, consumerFactory, configProps,
-					new DefaultSchemaResolver(), new DefaultPulsarHeaderMapper());
+					new DefaultSchemaResolver(), JsonPulsarHeaderMapper.builder().build());
 		}
 		return this.binder;
 	}
