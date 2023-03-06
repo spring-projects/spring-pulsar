@@ -50,6 +50,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.pulsar.autoconfigure.PulsarProperties;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
@@ -61,6 +62,8 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
 import org.springframework.pulsar.core.TopicResolver;
+import org.springframework.pulsar.support.header.PulsarHeaderMapper;
+import org.springframework.pulsar.support.header.ToStringPulsarHeaderMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
@@ -285,23 +288,94 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
 		@Test
 		void headersPropagatedSendAndReceive(CapturedOutput output) {
-			SpringApplication app = new SpringApplication(CustomHeadersConfig.class);
+			SpringApplication app = new SpringApplication(CustomSimpleHeadersConfig.class);
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
 					"--spring.cloud.function.definition=springMessageSupplier;springMessageLogger",
-					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=springMessageSupplier-out-0",
-					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh-sub1")) {
+					"--spring.cloud.stream.bindings.springMessageSupplier-out-0.destination=cmh-1",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=cmh-1",
+					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh1-sub1")) {
 				// Wait for a few of the messages to flow through (check for index = 5)
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION)).until(
 						() -> output.toString().contains("Hello binder: test-headers-msg-5 w/ custom-id: 5150-5"));
 			}
 		}
 
+		@Test
+		void complexHeadersAreEncodedAndPropagated(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(CustomComplexHeadersConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=springMessageSupplier;springMessageLogger",
+					"--spring.cloud.stream.bindings.springMessageSupplier-out-0.destination=cmh-2",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=cmh-2",
+					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh2-sub1")) {
+				// Wait for a few of the messages to flow through (check for index = 5)
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION)).until(() -> output.toString()
+						.contains("Hello binder: test-headers-msg-5 w/ custom-id: FooHeader[value=5150-5]"));
+			}
+		}
+
+		@Test
+		void producerHeaderModeNone(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(CustomComplexHeadersConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=springMessageSupplier;springMessageLogger",
+					"--spring.cloud.stream.bindings.springMessageSupplier-out-0.destination=cmh-3",
+					"--spring.cloud.stream.bindings.springMessageSupplier-out-0.producer.header-mode=none",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=cmh-3",
+					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh3-sub1")) {
+				// Wait for a few of the messages to flow through (check for index = 5)
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: test-headers-msg-5 w/ custom-id: null"));
+			}
+		}
+
+		@Test
+		void consumerHeaderModeNone(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(CustomComplexHeadersConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=springMessageSupplier;springMessageLogger",
+					"--spring.cloud.stream.bindings.springMessageSupplier-out-0.destination=cmh-4",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=cmh-4",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.consumer.header-mode=none",
+					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh4-sub1")) {
+				// Wait for a few of the messages to flow through (check for index = 5)
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: test-headers-msg-5 w/ custom-id: null"));
+			}
+		}
+
+		@Test
+		void customHeaderMapperRespected(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(CustomHeaderMapperConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=springMessageSupplier;springMessageLogger",
+					"--spring.cloud.stream.bindings.springMessageSupplier-out-0.destination=cmh-5",
+					"--spring.cloud.stream.bindings.springMessageLogger-in-0.destination=cmh-5",
+					"--spring.cloud.stream.pulsar.bindings.springMessageLogger-in-0.consumer.subscription-name=pbit-cmh5-sub1")) {
+				// Wait for a few of the messages to flow through (check for index = 5)
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION)).until(() -> output.toString()
+						.contains("Hello binder: test-headers-msg-5 w/ custom-id: tsh->tph->FooHeader[value=5150-5]"));
+			}
+		}
+
 		@EnableAutoConfiguration
 		@SpringBootConfiguration
-		static class CustomHeadersConfig {
+		static class CustomSimpleHeadersConfig {
 
 			private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -320,6 +394,106 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 			public Consumer<Message<String>> springMessageLogger() {
 				return s -> this.logger.info("Hello binder: {} w/ custom-id: {}", s.getPayload(),
 						s.getHeaders().get("custom-id"));
+			}
+
+		}
+
+		@EnableAutoConfiguration
+		@SpringBootConfiguration
+		static class CustomComplexHeadersConfig {
+
+			private final Logger logger = LoggerFactory.getLogger(getClass());
+
+			private int msgCount = 0;
+
+			@Bean
+			public Supplier<Message<String>> springMessageSupplier() {
+				return () -> {
+					msgCount++;
+					return MessageBuilder.withPayload("test-headers-msg-" + msgCount)
+							.setHeader("custom-id", new FooHeader("5150-" + msgCount)).build();
+				};
+			}
+
+			@Bean
+			public Consumer<Message<String>> springMessageLogger() {
+				return s -> {
+					var header = s.getHeaders().get("custom-id");
+					if (header != null) {
+						assertThat(header).isInstanceOf(FooHeader.class);
+					}
+					this.logger.info("Hello binder: {} w/ custom-id: {}", s.getPayload(), header);
+				};
+			}
+
+			record FooHeader(String value) {
+			}
+
+		}
+
+		@EnableAutoConfiguration
+		@SpringBootConfiguration
+		static class CustomHeaderMapperConfig {
+
+			private final Logger logger = LoggerFactory.getLogger(getClass());
+
+			private int msgCount = 0;
+
+			@Bean
+			public PulsarHeaderMapper extendedToStringHeaderMapper() {
+				return new ToStringPulsarHeaderMapper(List.of("custom-id"), List.of("foo", "custom-id")) {
+					@Override
+					public Map<String, String> toPulsarHeaders(MessageHeaders springHeaders) {
+						Map<String, String> pulsarHeaders = super.toPulsarHeaders(springHeaders);
+						// foo and custom-id are allowed and expected
+						assertThat(pulsarHeaders).containsKeys("foo", "custom-id");
+						return pulsarHeaders;
+					}
+
+					@Override
+					public MessageHeaders toSpringHeaders(org.apache.pulsar.client.api.Message<?> pulsarMessage) {
+						MessageHeaders springHeaders = super.toSpringHeaders(pulsarMessage);
+						// foo not allowed, custom-id allowed
+						assertThat(springHeaders).doesNotContainKey("foo").containsKey("custom-id");
+						return springHeaders;
+					}
+
+					@Override
+					protected String toPulsarHeaderValue(String name, Object value, Object context) {
+						return "tph->" + super.toPulsarHeaderValue(name, value, context);
+					}
+
+					@Override
+					protected Object toSpringHeaderValue(String headerName, String rawHeader, Object context) {
+						return "tsh->" + super.toSpringHeaderValue(headerName, rawHeader, context);
+					}
+				};
+			}
+
+			@Bean
+			public Supplier<Message<String>> springMessageSupplier() {
+				return () -> {
+					msgCount++;
+					return MessageBuilder.withPayload("test-headers-msg-" + msgCount)
+							.setHeader("foo", "bar-" + msgCount)
+							.setHeader("custom-id", new FooHeader("5150-" + msgCount)).build();
+				};
+			}
+
+			@Bean
+			public Consumer<Message<String>> springMessageLogger() {
+				return s -> {
+					var header = s.getHeaders().get("custom-id");
+					if (header != null) {
+						assertThat(header).isInstanceOf(String.class);
+					}
+					var fooHeader = s.getHeaders().get("foo");
+					assertThat(fooHeader).isNull();
+					this.logger.info("Hello binder: {} w/ custom-id: {}", s.getPayload(), header);
+				};
+			}
+
+			record FooHeader(String value) {
 			}
 
 		}

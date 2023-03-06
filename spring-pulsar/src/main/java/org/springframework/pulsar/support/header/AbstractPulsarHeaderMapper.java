@@ -51,6 +51,10 @@ import org.springframework.pulsar.support.header.PulsarHeaderMatcher.PatternMatc
 public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToSpringHeadersContextType>
 		implements PulsarHeaderMapper {
 
+	private static final PatternMatch EXCLUDE_PATTERN_ID = PatternMatch.fromPatternString("!id");
+
+	private static final PatternMatch EXCLUDE_PATTERN_TIMESTAMP = PatternMatch.fromPatternString("!timestamp");
+
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final List<PulsarHeaderMatcher> inboundMatchers = new ArrayList<>();
@@ -99,14 +103,14 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 				PulsarHeaders.TOPIC_NAME));
 		// @formatter:on
 		if (outboundPatterns.isEmpty()) {
-			this.outboundMatchers.add(PatternMatch.fromPatternString("!id"));
-			this.outboundMatchers.add(PatternMatch.fromPatternString("!timestamp"));
+			this.outboundMatchers.add(EXCLUDE_PATTERN_ID);
+			this.outboundMatchers.add(EXCLUDE_PATTERN_TIMESTAMP);
 			this.outboundMatchers.add(PatternMatch.fromPatternString("*"));
 		}
 		else {
 			outboundPatterns.forEach((p) -> this.outboundMatchers.add(PatternMatch.fromPatternString(p)));
-			this.outboundMatchers.add(PatternMatch.fromPatternString("!id"));
-			this.outboundMatchers.add(PatternMatch.fromPatternString("!timestamp"));
+			this.outboundMatchers.add(EXCLUDE_PATTERN_ID);
+			this.outboundMatchers.add(EXCLUDE_PATTERN_TIMESTAMP);
 		}
 	}
 

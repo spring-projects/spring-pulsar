@@ -29,6 +29,7 @@ import org.springframework.cloud.stream.binder.BinderSpecificPropertiesProvider;
 import org.springframework.cloud.stream.binder.ExtendedConsumerProperties;
 import org.springframework.cloud.stream.binder.ExtendedProducerProperties;
 import org.springframework.cloud.stream.binder.ExtendedPropertiesBinder;
+import org.springframework.cloud.stream.binder.HeaderMode;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
 import org.springframework.core.ResolvableType;
@@ -118,11 +119,20 @@ public class PulsarMessageChannelBinder extends
 
 		var handler = new PulsarProducerConfigurationMessageHandler(this.pulsarTemplate, schema, destination.getName(),
 				(builder) -> ProducerBuilderConfigurationUtil.loadConf(builder, mergedProducerProps),
-				this.headerMapper);
+				determineOutboundHeaderMapper(producerProperties));
 		handler.setApplicationContext(getApplicationContext());
 		handler.setBeanFactory(getBeanFactory());
 
 		return handler;
+	}
+
+	@Nullable
+	private PulsarBinderHeaderMapper determineOutboundHeaderMapper(
+			ExtendedProducerProperties<PulsarProducerProperties> extProducerProps) {
+		if (HeaderMode.none.equals(extProducerProps.getHeaderMode())) {
+			return null;
+		}
+		return new PulsarBinderHeaderMapper(this.headerMapper);
 	}
 
 	@Override
@@ -131,10 +141,14 @@ public class PulsarMessageChannelBinder extends
 		var containerProperties = new PulsarContainerProperties();
 		containerProperties.setTopics(new String[] { destination.getName() });
 
+		var inboundHeaderMapper = determineInboundHeaderMapper(properties);
+
 		var messageDrivenChannelAdapter = new PulsarMessageDrivenChannelAdapter();
-		containerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			var message = MessageBuilder.createMessage(msg.getValue(), this.headerMapper.toSpringHeaders(msg));
-			messageDrivenChannelAdapter.send(message);
+		containerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, pulsarMsg) -> {
+			var springMessage = (inboundHeaderMapper != null)
+					? MessageBuilder.createMessage(pulsarMsg.getValue(), inboundHeaderMapper.toSpringHeaders(pulsarMsg))
+					: MessageBuilder.withPayload(pulsarMsg.getValue()).build();
+			messageDrivenChannelAdapter.send(springMessage);
 		});
 
 		if (properties.isUseNativeDecoding()) {
@@ -161,6 +175,15 @@ public class PulsarMessageChannelBinder extends
 		messageDrivenChannelAdapter.setMessageListenerContainer(container);
 
 		return messageDrivenChannelAdapter;
+	}
+
+	@Nullable
+	private PulsarBinderHeaderMapper determineInboundHeaderMapper(
+			ExtendedConsumerProperties<PulsarConsumerProperties> extConsumerProps) {
+		if (HeaderMode.none.equals(extConsumerProps.getHeaderMode())) {
+			return null;
+		}
+		return new PulsarBinderHeaderMapper(this.headerMapper);
 	}
 
 	// VisibleForTesting
@@ -314,7 +337,11 @@ public class PulsarMessageChannelBinder extends
 		}
 
 		private TypedMessageBuilderCustomizer<Object> applySpringHeadersAsPulsarProperties(MessageHeaders headers) {
-			return (mb) -> this.headerMapper.toPulsarHeaders(headers).forEach(mb::property);
+			return (mb) -> {
+				if (this.headerMapper != null) {
+					this.headerMapper.toPulsarHeaders(headers).forEach(mb::property);
+				}
+			};
 		}
 
 	}
