@@ -31,6 +31,11 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
  */
 public final class JacksonUtils {
 
+	private static final ClassLoader classLoader = ClassUtils.getDefaultClassLoader();
+
+	private static final boolean JACKSON_PRESENT = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper",
+			classLoader) && ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
+
 	private static final boolean JDK8_MODULE_PRESENT = ClassUtils
 			.isPresent("com.fasterxml.jackson.datatype.jdk8.Jdk8Module", null);
 
@@ -39,6 +44,14 @@ public final class JacksonUtils {
 
 	private static final boolean JODA_MODULE_PRESENT = ClassUtils
 			.isPresent("com.fasterxml.jackson.datatype.joda.JodaModule", null);
+
+	/**
+	 * Determines if the Jackson JSON processor is on the classpath.
+	 * @return whether Jackson JSON processor is available on the classpath
+	 */
+	public static boolean isJacksonPresent() {
+		return JACKSON_PRESENT;
+	}
 
 	/**
 	 * Factory for {@link ObjectMapper} instances with registered well-known modules and

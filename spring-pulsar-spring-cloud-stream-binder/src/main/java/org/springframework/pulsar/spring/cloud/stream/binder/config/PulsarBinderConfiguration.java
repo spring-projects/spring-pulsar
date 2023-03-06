@@ -30,8 +30,10 @@ import org.springframework.pulsar.spring.cloud.stream.binder.PulsarMessageChanne
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarBinderConfigurationProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.provisioning.PulsarTopicProvisioner;
+import org.springframework.pulsar.support.header.JacksonUtils;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
 import org.springframework.pulsar.support.header.PulsarHeaderMapper;
+import org.springframework.pulsar.support.header.ToStringPulsarHeaderMapper;
 
 /**
  * Pulsar binder {@link Configuration}.
@@ -51,8 +53,12 @@ public class PulsarBinderConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	public PulsarHeaderMapper pulsarHeaderMapper() {
-		return JsonPulsarHeaderMapper.builder().build();
+		if (JacksonUtils.isJacksonPresent()) {
+			return JsonPulsarHeaderMapper.builder().build();
+		}
+		return new ToStringPulsarHeaderMapper();
 	}
 
 	@Bean
