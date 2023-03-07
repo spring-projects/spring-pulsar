@@ -191,6 +191,36 @@ This information is provided as extended binding properties.
 As you can see above in the configuration, the properties are - `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.schema-type` for schema information and `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.message-type` for the actual target type.
 If you have both keys and values on the message, you can use `message-key-type` and `message-value-type` to specify their target types.
 
+=== Message Header Conversion
+Each message typically has header information that needs to be carried along as the message traverses between Pulsar and Spring Messaging via Spring Cloud Stream input and output bindings.
+To support this traversal, the framework handles the necessary message header conversion.
+
+include::pulsar-header.adoc[leveloffset=+1]
+
+
+==== Custom Header Mapper
+The Pulsar binder is configured with a default header mapper that can be overridden by providing your own `PulsarHeaderMapper` bean.
+
+In the following example, a JSON header mapper is configured that:
+
+- maps all inbound headers (except those with keys "`top`" or "`secret`")
+- maps outbound headers (except those with keys "`id`", "`timestamp`", or "`userId`")
+- only trusts objects in the "`com.acme`" package for outbound deserialization
+- de/serializes any "`com.acme.Money`" header values w/ simple `toString()` encoding
+
+[source,java,indent=0]
+----
+@Bean
+public PulsarHeaderMapper customPulsarHeaderMapper() {
+    return JsonPulsarHeaderMapper.builder()
+            .inboundPatterns("!top", "!secret", "*")
+            .outboundPatterns("!id", "!timestamp", "!userId", "*")
+            .trustedPackages("com.acme")
+            .toStringClasses("com.acme.Money")
+            .build();
+}
+----
+
 == Using Pulsar Properties in the Binder
 
 The binder uses basic components from Spring for Apache Pulsar framework to build its producer and consumer bindings.

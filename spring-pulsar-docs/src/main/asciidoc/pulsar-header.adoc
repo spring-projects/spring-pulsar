@@ -1,0 +1,57 @@
+
+== Message Headers
+
+=== Pulsar Headers
+Pulsar does not have a first-class "`header`" concept but instead provides a map for custom user properties as well as methods to access the message metadata typically stored in a message header (eg. `id` and `event-time`).
+As such, the terms "`Pulsar message header`" and "`Pulsar message metadata`" are used interchangeably.
+The list of available message metadata (headers) can be found in https://github.com/spring-projects-experimental/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
+
+=== Spring Headers
+Spring Messaging provides first-class "`header`" support via its `MessageHeaders` abstraction.
+
+=== Message Header Mapping
+The `PulsarHeaderMapper` strategy is provided to map headers to and from Pulsar user properties and Spring `MessageHeaders`.
+
+Its interface definition is as follows:
+====
+[source, java]
+----
+public interface PulsarHeaderMapper {
+
+	Map<String, String> toPulsarHeaders(MessageHeaders springHeaders);
+
+	MessageHeaders toSpringHeaders(Message<?> pulsarMessage);
+}
+----
+====
+
+The framework provides a couple of mapper implementations.
+
+- The `JsonPulsarHeaderMapper` maps headers as JSON in order to support rich header types and is the default when the Jackson JSON library is on the classpath.
+
+- The `ToStringPulsarHeaderMapper` maps headers as strings using the `toString()` method on the header values and is the fallback mapper.
+
+==== JSON Header Mapper
+The `JsonPulsarHeaderMapper` uses a "`special`" header (with a key of `spring_json_header_types`) that contains a JSON map of `<key>:<type>`.
+This header is used on the inbound side (Pulsar -> Spring) to provide appropriate conversion of each header value to the original type.
+
+===== Trusted Packages
+By default, the JSON mapper deserializes classes in all packages.
+However, if you receive messages from untrusted sources, you may wish to add only those packages you trust via the `trustedPackages` property on a custom configured `JsonPulsarHeaderMapper` bean you provide.
+
+===== ToString Classes
+Certain types are not suitable for JSON serialization, and a simple `toString()` serialization might be preferred for these types.
+The `JsonPulsarHeaderMapper` has a property called `addToStringClasses()` that lets you supply the names of classes that should be treated this way for outbound mapping.
+During inbound mapping, they are mapped as `String`.
+By default, only `org.springframework.util.MimeType` and `org.springframework.http.MediaType` are mapped this way.
+
+=== Inbound/Outbound Patterns
+On the inbound side, by default, all Pulsar headers (message metadata plus user properties) are mapped to `MessageHeaders`.
+On the outbound side, by default, all `MessageHeaders` are mapped, except `id`, `timestamp`, and the headers that represent the Pulsar message metadata.
+You can specify which headers are mapped for inbound and outbound messages by configuring the `inboundPatterns` and `outboundPatterns` on a mapper bean you provide.
+
+Patterns are rather simple and can contain a leading wildcard (`\*`), a trailing wildcard, or both (for example, `*.cat.*`).
+You can negate patterns with a leading `!`.
+The first pattern that matches a header name (whether positive or negative) wins.
+
+IMPORTANT: When you provide your own patterns, we recommend including `!id` and `!timestamp`, since these headers are read-only on the inbound side.
