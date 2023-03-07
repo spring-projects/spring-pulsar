@@ -51,7 +51,7 @@ jobs:
           retention-days: 3
 
       - name: Capture Jacoco Results
-        if: contains(github.event.pull_request.labels.*.name, 'upload-jacoco')
+        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
         uses: actions/upload-artifact@v3
         with:
           name: jacoco-results
