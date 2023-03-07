@@ -1,6 +1,4 @@
 
-== Message Headers
-
 === Pulsar Headers
 Pulsar does not have a first-class "`header`" concept but instead provides a map for custom user properties as well as methods to access the message metadata typically stored in a message header (eg. `id` and `event-time`).
 As such, the terms "`Pulsar message header`" and "`Pulsar message metadata`" are used interchangeably.
