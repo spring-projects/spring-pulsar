@@ -49,3 +49,11 @@ jobs:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
+
+      - name: Capture Jacoco Results
+        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-results
+          path: '*/build/reports/jacoco/**/*.*'
+          retention-days: 3
