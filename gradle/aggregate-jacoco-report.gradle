@@ -1,0 +1,57 @@
+apply plugin: 'jacoco'
+
+jacoco {
+	toolVersion '0.8.7'
+}
+
+tasks.withType(Test) {
+	jacoco.includeNoLocationClasses = true
+}
+
+project.afterEvaluate {
+
+	tasks.create(name: 'aggregateJacocoTestReport', type: JacocoReport) {
+
+		group = 'verification'
+		description = 'Generates aggregate code coverage report for all projects test tasks'
+
+		reports {
+			html.enabled = true
+			xml.enabled = true
+		}
+
+		def excludes = [
+				'**/pulsar/**/aot/**'
+		]
+
+		def modulesToAggregate = subprojects.findAll { proj ->
+			def isSampleApp = proj.getParent().getPath().contains('spring-pulsar-sample-apps')
+			def path = "${proj.projectDir}/src/main/java"
+			!(isSampleApp) && (new File(path)).exists()
+		}
+
+		def classes = modulesToAggregate.collect {
+			proj -> "${proj.buildDir}/classes/java/main"
+		}.collect {
+			path -> fileTree(dir: path, excludes: excludes)
+		}
+		classDirectories.from = files(classes)
+
+		def sources = modulesToAggregate.collect {
+			proj -> "${proj.projectDir}/src/main/java"
+		}.flatten()
+		sourceDirectories.from = files(sources)
+
+		def executions = modulesToAggregate.findAll { proj ->
+			def path = "${proj.buildDir}/jacoco/test.exec"
+			(new File(path)).exists()
+		}.collect {
+			proj -> "${proj.buildDir}/jacoco/test.exec"
+		}
+		executionData.from = files(executions)
+	}
+
+	tasks.named('check') {
+		dependsOn tasks.named('aggregateJacocoTestReport', JacocoReport)
+	}
+}
