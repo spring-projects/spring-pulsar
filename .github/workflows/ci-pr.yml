@@ -38,6 +38,19 @@ jobs:
         run: |
           ./gradlew clean build -x integrationTest --continue --scan
 
+      - name: Create Aggregated Jacoco Report
+        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        run: |
+          ./gradlew aggregateJacocoTestReport --info
+
+      - name: Upload Aggregated Jacoco Report
+        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-results
+          path: 'build/reports/jacoco/**/*.*'
+          retention-days: 3
+
       - name: Run integration tests
         run: |
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
@@ -48,12 +61,4 @@ jobs:
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
-          retention-days: 3
-
-      - name: Capture Jacoco Results
-        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        uses: actions/upload-artifact@v3
-        with:
-          name: jacoco-results
-          path: '*/build/reports/jacoco/**/*.*'
           retention-days: 3

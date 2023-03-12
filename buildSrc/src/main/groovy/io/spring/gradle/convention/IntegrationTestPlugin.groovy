@@ -83,7 +83,7 @@ class IntegrationTestPlugin implements Plugin<Project> {
 			testClassesDirs = project.sourceSets.integrationTest.output.classesDirs
 			classpath = project.sourceSets.integrationTest.runtimeClasspath
 
-			mustRunAfter project.tasks.test
+			shouldRunAfter project.tasks.test
 
 			useJUnitPlatform()
 		}
