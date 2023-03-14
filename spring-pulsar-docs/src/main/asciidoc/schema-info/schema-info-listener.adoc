@@ -9,20 +9,7 @@ IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PRO
 As an alternative to specifying the schema on the `{listener-class}` for complex types, the schema resolver can be configured with mappings for the types.
 This removes the need to set the schema on the listener as the framework consults the resolver using the incoming message type.
 
-The following example shows a schema resolver customizer that adds mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
-
-====
-[source, java]
-----
-@Bean
-public SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer() {
-	return (schemaResolver) -> {
-		schemaResolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
-		schemaResolver.addCustomSchemaMapping(Address.class, Schema.JSON(Address.class));
-	}
-}
-----
-====
+include::custom-schema-mapping.adoc[]
 
 With this configuration in place, there is no need to set the schema on the listener, for example:
 

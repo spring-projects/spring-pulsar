@@ -1,0 +1,38 @@
+Schema mappings can be configured with the `spring.pulsar.defaults.type-mappings` property.
+The following example uses `application.yml` to add mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
+
+[source,yaml,indent=0,subs="verbatim"]
+----
+spring:
+  pulsar:
+    defaults:
+      type-mappings:
+        - message-type: com.acme.User
+          schema-info:
+            schema-type: AVRO
+            message-type: com.acme.User
+        - message-type: com.acme.Address
+          schema-info:
+            schema-type: JSON
+            message-type: com.acme.Address
+----
+
+NOTE: The `message-type` is the fully-qualified name of the message class.
+
+The preferred method of adding mappings is via the property mentioned above.
+However, if more control is needed you can provide a schema resolver customizer to add the mapping(s).
+
+The following example uses a schema resolver customizer to add mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
+
+====
+[source, java]
+----
+@Bean
+public SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer() {
+	return (schemaResolver) -> {
+		schemaResolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
+		schemaResolver.addCustomSchemaMapping(Address.class, Schema.JSON(Address.class));
+	}
+}
+----
+====

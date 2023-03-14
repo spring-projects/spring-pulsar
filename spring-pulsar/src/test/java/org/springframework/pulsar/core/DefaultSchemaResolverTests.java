@@ -289,9 +289,13 @@ class DefaultSchemaResolverTests {
 			}
 
 			@Test
-			void customMessageType() {
-				assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
-						() -> resolver.resolveSchema(SchemaType.NONE, ResolvableType.forType(Foo.class)).orElseThrow());
+			void customMessageTypeDefaultsToJson() {
+				assertThat(resolver.resolveSchema(SchemaType.NONE, ResolvableType.forType(Foo.class)).orElseThrow())
+						.extracting(Schema::getSchemaInfo).isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
+			}
+
+			@Test
+			void customMessageTypeRespectsCustomMappings() {
 				resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 				assertThat(resolver.resolveSchema(SchemaType.NONE, ResolvableType.forType(Foo.class)).orElseThrow())
 						.isEqualTo(Schema.STRING);

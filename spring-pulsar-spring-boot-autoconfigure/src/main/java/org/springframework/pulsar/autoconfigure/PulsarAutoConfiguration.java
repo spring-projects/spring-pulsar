@@ -111,9 +111,17 @@ public class PulsarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean(SchemaResolver.class)
-	public DefaultSchemaResolver schemaResolver(
+	public DefaultSchemaResolver schemaResolver(PulsarProperties pulsarProperties,
 			Optional<SchemaResolverCustomizer<DefaultSchemaResolver>> schemaResolverCustomizer) {
-		DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
+		var schemaResolver = new DefaultSchemaResolver();
+		if (pulsarProperties.getDefaults().getTypeMappings() != null) {
+			pulsarProperties.getDefaults().getTypeMappings().stream().filter((tm) -> tm.schemaInfo() != null)
+					.forEach((tm) -> {
+						var schema = schemaResolver.resolveSchema(tm.schemaInfo().schemaType(),
+								tm.schemaInfo().messageType(), tm.schemaInfo().messageKeyType()).orElseThrow();
+						schemaResolver.addCustomSchemaMapping(tm.messageType(), schema);
+					});
+		}
 		schemaResolverCustomizer.ifPresent((customizer) -> customizer.customize(schemaResolver));
 		return schemaResolver;
 	}
@@ -121,9 +129,9 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(TopicResolver.class)
 	public DefaultTopicResolver topicResolver(PulsarProperties pulsarProperties) {
-		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
+		var topicResolver = new DefaultTopicResolver();
 		if (pulsarProperties.getDefaults().getTypeMappings() != null) {
-			pulsarProperties.getDefaults().getTypeMappings()
+			pulsarProperties.getDefaults().getTypeMappings().stream().filter((tm) -> tm.topicName() != null)
 					.forEach((tm) -> topicResolver.addCustomTopicMapping(tm.messageType(), tm.topicName()));
 		}
 		return topicResolver;

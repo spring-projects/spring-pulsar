@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.pulsar.client.api.ProxyProtocol;
@@ -29,6 +30,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -1327,9 +1329,9 @@ public class PulsarProperties {
 	public static class Defaults {
 
 		/**
-		 * List of mappings from message type to topic name to use as a default topic when
-		 * a topic is not explicitly specified when producing or consuming messages of the
-		 * mapped type.
+		 * List of mappings from message type to topic name and schema info to use as a
+		 * defaults when a topic name and/or schema is not explicitly specified when
+		 * producing or consuming messages of the mapped type.
 		 */
 		private List<TypeMapping> typeMappings = new ArrayList<>();
 
@@ -1344,11 +1346,36 @@ public class PulsarProperties {
 	}
 
 	/**
-	 * A mapping from message type to topic and schema - used as defaults for the type.
+	 * A mapping from message type to topic and/or schema info to use (at least one of
+	 * {@code topicName} or {@code schemaInfo} must be specified.
 	 * @param messageType the message type
-	 * @param topicName the default topic name to use for the type
+	 * @param topicName the topic name
+	 * @param schemaInfo the schema info
 	 */
-	record TypeMapping(Class<?> messageType, String topicName) {
+	public record TypeMapping(Class<?> messageType, @Nullable String topicName, @Nullable SchemaInfo schemaInfo) {
+		public TypeMapping {
+			Objects.requireNonNull(messageType, "messageType must not be null");
+			if (topicName == null && schemaInfo == null) {
+				throw new IllegalArgumentException("At least one of topicName or schemaInfo must not be null");
+			}
+		}
+	}
+
+	/**
+	 * Represents a schema - holds enough information to construct an actual schema
+	 * instance.
+	 * @param schemaType schema type
+	 * @param messageType message type (not required for primitive schema types or key
+	 * value type)
+	 * @param messageKeyType message key type (required for key value type)
+	 */
+	public record SchemaInfo(SchemaType schemaType, @Nullable Class<?> messageType, @Nullable Class<?> messageKeyType) {
+		public SchemaInfo {
+			Objects.requireNonNull(schemaType, "schemaType must not be null");
+			if (schemaType == SchemaType.NONE) {
+				throw new IllegalArgumentException("schemaType NONE not supported");
+			}
+		}
 	}
 
 	static class Properties extends HashMap<String, Object> {

@@ -16,11 +16,10 @@
 
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
-import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.cloud.stream.binder.AbstractMessageChannelBinder;
@@ -32,7 +31,6 @@ import org.springframework.cloud.stream.binder.ExtendedPropertiesBinder;
 import org.springframework.cloud.stream.binder.HeaderMode;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
-import org.springframework.core.ResolvableType;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.endpoint.MessageProducerSupport;
 import org.springframework.integration.handler.AbstractMessageProducingHandler;
@@ -101,16 +99,16 @@ public class PulsarMessageChannelBinder extends
 			ExtendedProducerProperties<PulsarProducerProperties> producerProperties, MessageChannel errorChannel) {
 		final Schema<Object> schema;
 		if (producerProperties.isUseNativeEncoding()) {
-			schema = resolveSchema(producerProperties.getExtension().getSchemaType(),
-					producerProperties.getExtension().getMessageType(),
-					producerProperties.getExtension().getMessageKeyType(),
-					producerProperties.getExtension().getMessageValueType());
-			Objects.requireNonNull(schema, "Could not determine producer schema for " + destination.getName());
+			var schemaType = Optional.ofNullable(producerProperties.getExtension().getSchemaType())
+					.orElse(SchemaType.NONE);
+			schema = this.schemaResolver
+					.resolveSchema(schemaType, producerProperties.getExtension().getMessageType(),
+							producerProperties.getExtension().getMessageKeyType())
+					.orElseThrow(() -> "Could not determine producer schema for " + destination.getName());
 		}
 		else {
 			schema = null;
 		}
-
 		var baseProducerProps = new ProducerConfigProperties().buildProperties();
 		var binderProducerProps = this.binderConfigProps.getProducer().buildProperties();
 		var bindingProducerProps = producerProperties.getExtension().buildProperties();
@@ -152,11 +150,12 @@ public class PulsarMessageChannelBinder extends
 		});
 
 		if (properties.isUseNativeDecoding()) {
-			var schema = resolveSchema(properties.getExtension().getSchemaType(),
-					properties.getExtension().getMessageType(), properties.getExtension().getMessageKeyType(),
-					properties.getExtension().getMessageValueType());
-			containerProperties.setSchema(
-					Objects.requireNonNull(schema, "Could not determine consumer schema for " + destination.getName()));
+			var schemaType = Optional.ofNullable(properties.getExtension().getSchemaType()).orElse(SchemaType.NONE);
+			var schema = this.schemaResolver
+					.resolveSchema(schemaType, properties.getExtension().getMessageType(),
+							properties.getExtension().getMessageKeyType())
+					.orElseThrow(() -> "Could not determine consumer schema for " + destination.getName());
+			containerProperties.setSchema(schema);
 		}
 		else {
 			containerProperties.setSchema(Schema.BYTES);
@@ -184,40 +183,6 @@ public class PulsarMessageChannelBinder extends
 			return null;
 		}
 		return new PulsarBinderHeaderMapper(this.headerMapper);
-	}
-
-	// VisibleForTesting
-	@Nullable
-	Schema<Object> resolveSchema(@Nullable SchemaType schemaType, @Nullable Class<?> messageType,
-			@Nullable Class<?> messageKeyType, @Nullable Class<?> messageValueType) {
-		if (schemaType == null) {
-			schemaType = SchemaType.NONE;
-		}
-		ResolvableType resolvableType = null;
-		if (schemaType.isStruct()) {
-			resolvableType = ResolvableType.forClass(Objects.requireNonNull(messageType,
-					"'message-type' required for 'schema-type' " + schemaType.name()));
-		}
-		else if (schemaType == SchemaType.KEY_VALUE) {
-			resolvableType = ResolvableType.forClassWithGenerics(KeyValue.class,
-					Objects.requireNonNull(messageKeyType, "'message-key-type' required for 'schema-type' KEY_VALUE"),
-					Objects.requireNonNull(messageValueType,
-							"'message-value-type' required for 'schema-type' KEY_VALUE"));
-		}
-		else if (schemaType == SchemaType.NONE) {
-			if (messageType != null) {
-				resolvableType = ResolvableType.forClass(messageType);
-			}
-			else if (messageKeyType != null && messageValueType != null) {
-				resolvableType = ResolvableType.forClassWithGenerics(KeyValue.class, messageKeyType, messageValueType);
-			}
-			if (resolvableType == null) {
-				throw new IllegalArgumentException(
-						"'message-type' OR ('message-key-type' AND 'message-value-type') required for 'schema-type' NONE");
-			}
-		}
-		// TODO if schema == null then default lookup bean Schema<?> w/ name == binding
-		return this.schemaResolver.resolveSchema(schemaType, resolvableType).get().orElse(null);
 	}
 
 	@Override

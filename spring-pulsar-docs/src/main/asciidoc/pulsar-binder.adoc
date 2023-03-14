@@ -174,11 +174,11 @@ spring:
               message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
           timeProcessor-out-0:
             producer:
-              schema-type: JSON
+              schema-type: AVRO
               message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
           timeLogger-in-0:
             consumer:
-              schema-type: JSON
+              schema-type: AVRO
               message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
 
 ----
@@ -190,6 +190,8 @@ If we decide to use native encoding and decoding, in the case of Pulsar, we need
 This information is provided as extended binding properties.
 As you can see above in the configuration, the properties are - `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.schema-type` for schema information and `spring.cloud.stream.pulsar.bindings.<binding-name>.producer|consumer.message-type` for the actual target type.
 If you have both keys and values on the message, you can use `message-key-type` and `message-value-type` to specify their target types.
+
+TIP: Any configured <<pulsar.adoc#schema-info-template-imperative,custom schema mappings>> will be consulted when the `schema-type` property is omitted.
 
 === Message Header Conversion
 Each message typically has header information that needs to be carried along as the message traverses between Pulsar and Spring Messaging via Spring Cloud Stream input and output bindings.
