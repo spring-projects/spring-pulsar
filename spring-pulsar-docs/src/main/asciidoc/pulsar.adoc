@@ -91,6 +91,7 @@ template.newMessage(msg)
 ----
 ====
 
+[[schema-info-template-imperative]]
 :template-class: PulsarTemplate
 include::schema-info/schema-info-template.adoc[leveloffset=+1]
 
@@ -318,6 +319,7 @@ void listen(String message) {
 
 TIP: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` application configuration properties
 
+[[schema-info-listener-imperative]]
 :listener-class: PulsarListener
 include::schema-info/schema-info-listener.adoc[leveloffset=+1]
 

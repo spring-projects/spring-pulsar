@@ -105,6 +105,7 @@ template.newMessage(msg)
 
 TIP: Note that, when using a `MessageRouter`, the only valid setting for `spring.pulsar.reactive.sender.message-routing-mode` is `custom`.
 
+[[schema-info-template-reactive]]
 :template-class: ReactivePulsarTemplate
 include::schema-info/schema-info-template.adoc[leveloffset=+1]
 
@@ -305,6 +306,7 @@ ReactiveMessageConsumerBuilderCustomizer<String> directConsumerPropsCustomizer()
 
 CAUTION: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.reactive.consumer` Spring Boot configuration properties
 
+[[schema-info-listener-reactive]]
 :listener-class: ReactivePulsarListener
 include::schema-info/schema-info-listener.adoc[leveloffset=+1]
 
