@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -152,22 +153,6 @@ class PulsarAutoConfigurationTests {
 		this.contextRunner.withBean("customTopicResolver", TopicResolver.class, () -> customTopicResolver)
 				.run((context) -> assertThat(context).hasNotFailed().getBean(TopicResolver.class)
 						.isSameAs(customTopicResolver));
-	}
-
-	@Test
-	void defaultTypeMappingsAreAppliedToTopicResolver() {
-		record Foo() {
-		}
-		contextRunner
-				.withPropertyValues(
-						"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
-						"spring.pulsar.defaults.type-mappings[0].topic-name=foo-topic",
-						"spring.pulsar.defaults.type-mappings[1].message-type=%s".formatted(String.class.getName()),
-						"spring.pulsar.defaults.type-mappings[1].topic-name=string-topic")
-				.run((context -> assertThat(context).hasNotFailed().getBean(TopicResolver.class)
-						.asInstanceOf(InstanceOfAssertFactories.type(DefaultTopicResolver.class))
-						.extracting(DefaultTopicResolver::getCustomTopicMappings, InstanceOfAssertFactories.MAP)
-						.containsOnly(entry(Foo.class, "foo-topic"), entry(String.class, "string-topic"))));
 	}
 
 	@Test
@@ -300,6 +285,79 @@ class PulsarAutoConfigurationTests {
 					properties.extracting(PulsarContainerProperties::getSubscriptionType)
 							.isEqualTo(SubscriptionType.Shared);
 				}));
+	}
+
+	@Nested
+	class DefaultsTypeMappingsTests {
+
+		@Test
+		void topicMappingsAreAddedToTopicResolver() {
+			contextRunner
+					.withPropertyValues(
+							"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
+							"spring.pulsar.defaults.type-mappings[0].topic-name=foo-topic",
+							"spring.pulsar.defaults.type-mappings[1].message-type=%s".formatted(String.class.getName()),
+							"spring.pulsar.defaults.type-mappings[1].topic-name=string-topic")
+					.run((context -> assertThat(context).hasNotFailed().getBean(TopicResolver.class)
+							.asInstanceOf(InstanceOfAssertFactories.type(DefaultTopicResolver.class))
+							.extracting(DefaultTopicResolver::getCustomTopicMappings, InstanceOfAssertFactories.MAP)
+							.containsOnly(entry(Foo.class, "foo-topic"), entry(String.class, "string-topic"))));
+		}
+
+		@Test
+		void schemaMappingForPrimitiveIsAddedToSchemaResolver() {
+			contextRunner
+					.withPropertyValues(
+							"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
+							"spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=STRING")
+					.run((context -> assertThat(context).hasNotFailed().getBean(SchemaResolver.class)
+							.asInstanceOf(InstanceOfAssertFactories.type(DefaultSchemaResolver.class))
+							.extracting(DefaultSchemaResolver::getCustomSchemaMappings, InstanceOfAssertFactories.MAP)
+							.containsOnly(entry(Foo.class, Schema.STRING))));
+		}
+
+		@Test
+		void schemaMappingForStructIsAddedToSchemaResolver() {
+			contextRunner
+					.withPropertyValues(
+							"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
+							"spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=JSON",
+							"spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
+									.formatted(Foo.class.getName()))
+					.run((context -> assertThat(context).hasNotFailed().getBean(SchemaResolver.class)
+							.asInstanceOf(InstanceOfAssertFactories.type(DefaultSchemaResolver.class))
+							.extracting(DefaultSchemaResolver::getCustomSchemaMappings,
+									InstanceOfAssertFactories.map(Class.class, Schema.class))
+							.hasEntrySatisfying(Foo.class,
+									(schema) -> assertSchemaEquals(schema, Schema.JSON(Foo.class)))));
+		}
+
+		@Test
+		void schemaMappingForKeyValueIsAddedToSchemaResolver() {
+			contextRunner
+					.withPropertyValues(
+							"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
+							"spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=%s"
+									.formatted(SchemaType.KEY_VALUE.name()),
+							"spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
+									.formatted(Foo.class.getName()),
+							"spring.pulsar.defaults.type-mappings[0].schema-info.message-key-type=%s"
+									.formatted(String.class.getName()))
+					.run((context -> assertThat(context).hasNotFailed().getBean(SchemaResolver.class)
+							.asInstanceOf(InstanceOfAssertFactories.type(DefaultSchemaResolver.class))
+							.extracting(DefaultSchemaResolver::getCustomSchemaMappings,
+									InstanceOfAssertFactories.map(Class.class, Schema.class))
+							.hasEntrySatisfying(Foo.class, (schema) -> assertSchemaEquals(schema, Schema
+									.KeyValue(Schema.STRING, Schema.JSON(Foo.class), KeyValueEncodingType.INLINE)))));
+		}
+
+		private void assertSchemaEquals(Schema<?> left, Schema<?> right) {
+			assertThat(left.getSchemaInfo()).isEqualTo(right.getSchemaInfo());
+		}
+
+		record Foo() {
+		}
+
 	}
 
 	@Nested

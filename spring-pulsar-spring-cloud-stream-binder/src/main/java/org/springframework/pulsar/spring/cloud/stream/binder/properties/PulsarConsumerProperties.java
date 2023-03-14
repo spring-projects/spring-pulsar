@@ -42,16 +42,11 @@ public class PulsarConsumerProperties extends ConsumerConfigProperties {
 	private Class<?> messageType;
 
 	/**
-	 * Type for the Pulsar message key.
+	 * Pulsar message key type for this binding (only used when schema type is
+	 * {@code }KEY_VALUE}).
 	 */
 	@Nullable
 	private Class<?> messageKeyType;
-
-	/**
-	 * Type for the Pulsar message value.
-	 */
-	@Nullable
-	private Class<?> messageValueType;
 
 	/**
 	 * Number of topic partitions.
@@ -84,15 +79,6 @@ public class PulsarConsumerProperties extends ConsumerConfigProperties {
 
 	public void setMessageKeyType(@Nullable Class<?> messageKeyType) {
 		this.messageKeyType = messageKeyType;
-	}
-
-	@Nullable
-	public Class<?> getMessageValueType() {
-		return this.messageValueType;
-	}
-
-	public void setMessageValueType(@Nullable Class<?> messageValueType) {
-		this.messageValueType = messageValueType;
 	}
 
 	@Nullable

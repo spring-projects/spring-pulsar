@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -162,9 +163,9 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 					"--spring.cloud.function.definition=piSupplier;piLogger",
 					"--spring.cloud.stream.bindings.piLogger-in-0.destination=piSupplier-out-0",
 					"--spring.cloud.stream.bindings.piSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.piSupplier-out-0.producer.schema-type=FLOAT",
 					"--spring.cloud.stream.bindings.piLogger-in-0.consumer.use-native-decoding=true",
 					"--spring.cloud.stream.pulsar.bindings.piLogger-in-0.consumer.schema-type=FLOAT",
-					"--spring.cloud.stream.pulsar.bindings.piSupplier-out-0.producer.schema-type=FLOAT",
 					"--spring.cloud.stream.pulsar.bindings.piLogger-in-0.consumer.subscription-name=pbit-float-sub2")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: 3.14"));
@@ -172,30 +173,31 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 		}
 
 		@Test
-		void jsonTypeFoo(CapturedOutput output) {
+		void jsonTypeFooWithSchemaType(CapturedOutput output) {
 			SpringApplication app = new SpringApplication(JsonFooConfig.class);
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
 					"--spring.cloud.function.definition=fooSupplier;fooLogger",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=fooSupplier-out-0",
+					"--spring.cloud.stream.bindings.fooSupplier-out-0.destination=foo-stream-1",
+					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=foo-stream-1",
 					"--spring.cloud.stream.bindings.fooSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.schema-type=JSON",
+					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-type="
+							+ Foo.class.getName(),
 					"--spring.cloud.stream.bindings.fooLogger-in-0.consumer.use-native-decoding=true",
 					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.schema-type=JSON",
 					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-type=" + Foo.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-foo-sub1",
-					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.schema-type=JSON",
-					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-type="
-							+ Foo.class.getName())) {
+					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-foo-sub1")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: Foo[value=5150]"));
 			}
 		}
 
 		@Test
-		void jsonTypeFooWithNoSchemaTypeAndCustomFooMapping(CapturedOutput output) {
-			SpringApplication app = new SpringApplication(JsonFooWithCustomMappingConfig.class);
+		void jsonTypeFooWithoutSchemaTypeDefaultsToJsonSchema(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(JsonFooConfig.class);
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
@@ -204,78 +206,198 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 					"--spring.cloud.stream.bindings.fooSupplier-out-0.destination=foo-stream-2",
 					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=foo-stream-2",
 					"--spring.cloud.stream.bindings.fooSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-type="
+							+ Foo.class.getName(),
 					"--spring.cloud.stream.bindings.fooLogger-in-0.consumer.use-native-decoding=true",
 					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-type=" + Foo.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-foo-sub2",
-					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-type="
-							+ Foo.class.getName())) {
+					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-foo-sub2")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: Foo[value=5150]"));
 			}
 		}
 
 		@Test
-		void jsonTypeFooWithNoSchemaTypeAndNoCustomFooMapping(CapturedOutput output) {
-			SpringApplication app = new SpringApplication(JsonFooConfig.class);
+		void avroTypeUserWithSchemaType(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(AvroUserConfig.class);
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
-					"--spring.cloud.function.definition=fooSupplier;fooLogger",
-					"--spring.cloud.stream.bindings.fooSupplier-out-0.destination=foo-stream-3",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=foo-stream-3",
-					"--spring.cloud.stream.bindings.fooSupplier-out-0.producer.use-native-encoding=true",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.consumer.use-native-decoding=true",
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-type=" + Foo.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-foo-sub3",
-					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-type="
-							+ Foo.class.getName())) {
-				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION)).until(
-						() -> output.toString().contains("Could not determine producer schema for foo-stream-3"));
+					"--spring.cloud.function.definition=userSupplier;userLogger",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.destination=user-stream-1",
+					"--spring.cloud.stream.bindings.userLogger-in-0.destination=user-stream-1",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.schema-type=AVRO",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.bindings.userLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.schema-type=AVRO",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-user-sub1")) {
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: User{name='user21', age=21}"));
 			}
 		}
 
 		@Test
-		void jsonTypeFooConsumerWithNoSchemaTypeAndNoCustomFooMapping(CapturedOutput output) {
-			SpringApplication app = new SpringApplication(JsonFooConsumerConfig.class);
+		void avroTypeUserWithoutSchemaTypeWithCustomMappingsViaProps(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(AvroUserConfig.class);
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
-					"--spring.cloud.function.definition=fooSupplier;fooLogger",
-					"--spring.cloud.stream.bindings.fooSupplier-out-0.destination=foo-stream-4",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=foo-stream-4",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.consumer.use-native-decoding=true",
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-type=" + Foo.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-foo-sub4")) {
-				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION)).until(
-						() -> output.toString().contains("Could not determine consumer schema for foo-stream-4"));
+					"--spring.cloud.function.definition=userSupplier;userLogger",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.destination=user-stream-2",
+					"--spring.cloud.stream.bindings.userLogger-in-0.destination=user-stream-2",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.bindings.userLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-user-sub2",
+					"--spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(User.class.getName()),
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO",
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
+							.formatted(User.class.getName()))) {
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: User{name='user21', age=21}"));
 			}
 		}
 
 		@Test
-		void keyValueTypeWithCustomFooMapping(CapturedOutput output) {
-			SpringApplication app = new SpringApplication(KeyValueFooConfig.class);
+		void avroTypeUserWithoutSchemaTypeWithCustomMappingsViaCustomizer(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(AvroUserConfigCustomMappings.class);
 			app.setWebApplicationType(WebApplicationType.NONE);
 			try (ConfigurableApplicationContext ignored = app.run(
 					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
 					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
-					"--spring.cloud.function.definition=fooSupplier;fooLogger",
-					"--spring.cloud.stream.bindings.fooSupplier-out-0.destination=kv-stream-1",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=kv-stream-1",
-					"--spring.cloud.stream.bindings.fooSupplier-out-0.producer.use-native-encoding=true",
-					"--spring.cloud.stream.bindings.fooLogger-in-0.consumer.use-native-decoding=true",
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.schema-type=KEY_VALUE",
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-key-type="
+					"--spring.cloud.function.definition=userSupplier;userLogger",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.destination=user-stream-3",
+					"--spring.cloud.stream.bindings.userLogger-in-0.destination=user-stream-3",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.bindings.userLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-user-sub3")) {
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: User{name='user21', age=21}"));
+			}
+		}
+
+		@Test
+		void keyValueAvroTypeWithSchemaTypeAndCustomTypeMappingsViaProps(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(KeyValueAvroUserConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=userSupplier;userLogger",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.destination=kv-stream-1",
+					"--spring.cloud.stream.bindings.userLogger-in-0.destination=kv-stream-1",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.schema-type=KEY_VALUE",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-key-type="
 							+ String.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-value-type="
+					"--spring.cloud.stream.bindings.userLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.schema-type=KEY_VALUE",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-key-type="
+							+ String.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-kv-sub1",
+					"--spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(User.class.getName()),
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO",
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
+							.formatted(User.class.getName()))) {
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: 21->User{name='user21', age=21}"));
+			}
+		}
+
+		@Test
+		void keyValueAvroTypeWithoutSchemaTypeAndCustomTypeMappingsViaProps(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(KeyValueAvroUserConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=userSupplier;userLogger",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.destination=kv-stream-2",
+					"--spring.cloud.stream.bindings.userLogger-in-0.destination=kv-stream-2",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-key-type="
+							+ String.class.getName(),
+					"--spring.cloud.stream.bindings.userLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-key-type="
+							+ String.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-kv-sub2",
+					"--spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(User.class.getName()),
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO",
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
+							.formatted(User.class.getName()))) {
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: 21->User{name='user21', age=21}"));
+			}
+		}
+
+		@Test
+		void keyValueAvroTypeWithSchemaTypeAndCustomTypeMappingsViaCustomizer(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(KeyValueAvroUserConfigCustomMappings.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=userSupplier;userLogger",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.destination=kv-stream-3",
+					"--spring.cloud.stream.bindings.userLogger-in-0.destination=kv-stream-3",
+					"--spring.cloud.stream.bindings.userSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.schema-type=KEY_VALUE",
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userSupplier-out-0.producer.message-key-type="
+							+ String.class.getName(),
+					"--spring.cloud.stream.bindings.userLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.schema-type=KEY_VALUE",
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-type="
+							+ User.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.message-key-type="
+							+ String.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-kv-sub3")) {
+				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
+						.until(() -> output.toString().contains("Hello binder: 21->User{name='user21', age=21}"));
+			}
+		}
+
+		@Test
+		void keyValueJsonTypeWithoutSchemaTypeAndWithoutCustomTypeMappings(CapturedOutput output) {
+			SpringApplication app = new SpringApplication(KeyValueJsonFooConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext ignored = app.run(
+					"--spring.pulsar.client.service-url=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--spring.pulsar.administration.service-url=" + PulsarTestContainerSupport.getHttpServiceUrl(),
+					"--spring.cloud.function.definition=fooSupplier;fooLogger",
+					"--spring.cloud.stream.bindings.fooSupplier-out-0.destination=kv-stream-4",
+					"--spring.cloud.stream.bindings.fooLogger-in-0.destination=kv-stream-4",
+					"--spring.cloud.stream.bindings.fooSupplier-out-0.producer.use-native-encoding=true",
+					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-type="
 							+ Foo.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-kv-sub1",
-					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.schema-type=KEY_VALUE",
 					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-key-type="
 							+ String.class.getName(),
-					"--spring.cloud.stream.pulsar.bindings.fooSupplier-out-0.producer.message-value-type="
-							+ Foo.class.getName())) {
+					"--spring.cloud.stream.bindings.fooLogger-in-0.consumer.use-native-decoding=true",
+					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-type=" + Foo.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.message-key-type="
+							+ String.class.getName(),
+					"--spring.cloud.stream.pulsar.bindings.fooLogger-in-0.consumer.subscription-name=pbit-kv-sub4")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: 5150->Foo[value=5150]"));
 			}
@@ -600,23 +722,6 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
 	@EnableAutoConfiguration
 	@SpringBootConfiguration
-	static class JsonFooConsumerConfig {
-
-		private final Logger logger = LoggerFactory.getLogger(getClass());
-
-		public Supplier<String> fooSupplier() {
-			return () -> "5150";
-		}
-
-		@Bean
-		public Consumer<Foo> fooLogger() {
-			return f -> this.logger.info("Hello binder: " + f);
-		}
-
-	}
-
-	@EnableAutoConfiguration
-	@SpringBootConfiguration
 	static class JsonFooConfig {
 
 		private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -647,14 +752,69 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
 	@EnableAutoConfiguration
 	@SpringBootConfiguration
-	static class KeyValueFooConfig {
+	static class AvroUserConfig {
 
 		private final Logger logger = LoggerFactory.getLogger(getClass());
 
 		@Bean
-		public SchemaResolverCustomizer<DefaultSchemaResolver> customMappings() {
-			return (resolver) -> resolver.addCustomSchemaMapping(Foo.class, JSONSchema.of(Foo.class));
+		public Supplier<User> userSupplier() {
+			return () -> new User("user21", 21);
 		}
+
+		@Bean
+		public Consumer<User> userLogger() {
+			return f -> this.logger.info("Hello binder: " + f);
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(AvroUserConfig.class)
+	static class AvroUserConfigCustomMappings {
+
+		@Bean
+		public SchemaResolverCustomizer<DefaultSchemaResolver> customMappings() {
+			return (resolver) -> resolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	static class KeyValueAvroUserConfig {
+
+		private final Logger logger = LoggerFactory.getLogger(getClass());
+
+		@Bean
+		public Supplier<KeyValue<String, User>> userSupplier() {
+			return () -> new KeyValue<>("21", new User("user21", 21));
+		}
+
+		@Bean
+		public Consumer<KeyValue<String, User>> userLogger() {
+			return f -> this.logger.info("Hello binder: " + f.getKey() + "->" + f.getValue());
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	@Import(KeyValueAvroUserConfig.class)
+	static class KeyValueAvroUserConfigCustomMappings {
+
+		@Bean
+		public SchemaResolverCustomizer<DefaultSchemaResolver> customMappings() {
+			return (resolver) -> resolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
+		}
+
+	}
+
+	@EnableAutoConfiguration
+	@SpringBootConfiguration
+	static class KeyValueJsonFooConfig {
+
+		private final Logger logger = LoggerFactory.getLogger(getClass());
 
 		@Bean
 		public Supplier<KeyValue<String, Foo>> fooSupplier() {
@@ -669,6 +829,63 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 	}
 
 	record Foo(String value) {
+	}
+
+	/**
+	 * Do not convert this to a Record as Avro does not seem to work well w/ records.
+	 */
+	static class User {
+
+		private String name;
+
+		private int age;
+
+		User() {
+		}
+
+		User(String name, int age) {
+			this.name = name;
+			this.age = age;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public int getAge() {
+			return age;
+		}
+
+		public void setAge(int age) {
+			this.age = age;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			User user = (User) o;
+			return age == user.age && Objects.equals(name, user.name);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(name, age);
+		}
+
+		@Override
+		public String toString() {
+			return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
+		}
+
 	}
 
 }

@@ -18,6 +18,7 @@ package org.springframework.pulsar.core;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
 
@@ -41,15 +42,15 @@ public final class Resolved<T> {
 	}
 
 	public static <T> Resolved<T> of(T value) {
-		return new Resolved<T>(value, null);
+		return new Resolved<>(value, null);
 	}
 
 	public static <T> Resolved<T> failed(String reason) {
-		return new Resolved<T>(null, new IllegalArgumentException(reason));
+		return new Resolved<>(null, new IllegalArgumentException(reason));
 	}
 
 	public static <T> Resolved<T> failed(RuntimeException e) {
-		return new Resolved<T>(null, e);
+		return new Resolved<>(null, e);
 	}
 
 	public Optional<T> get() {
@@ -65,6 +66,13 @@ public final class Resolved<T> {
 	public T orElseThrow() {
 		if (this.value == null && this.exception != null) {
 			throw this.exception;
+		}
+		return this.value;
+	}
+
+	public T orElseThrow(Supplier<String> wrappingErrorMessage) {
+		if (this.value == null && this.exception != null) {
+			throw new RuntimeException(wrappingErrorMessage.get(), this.exception);
 		}
 		return this.value;
 	}

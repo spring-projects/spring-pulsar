@@ -16,7 +16,10 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Objects;
+
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.ResolvableType;
@@ -68,6 +71,45 @@ public interface SchemaResolver {
 	 * @return the schema to use
 	 */
 	<T> Resolved<Schema<T>> resolveSchema(SchemaType schemaType, @Nullable ResolvableType messageType);
+
+	/**
+	 * Get the schema to use given a schema type and schema type information.
+	 * @param <T> the schema type
+	 * @param schemaType schema type
+	 * @param messageType message type (not required for primitive schema types)
+	 * @param messageKeyType message key type (must be specified when schema type is
+	 * {@code KEY_VALUE})
+	 * @return the schema to use
+	 */
+	default <T> Resolved<Schema<T>> resolveSchema(SchemaType schemaType, @Nullable Class<?> messageType,
+			@Nullable Class<?> messageKeyType) {
+		Objects.requireNonNull(schemaType, "schemaType must not be null");
+		ResolvableType resolvableType = null;
+		if (schemaType.isStruct()) {
+			if (messageType == null) {
+				return Resolved.failed("messageType must be specified for %s schema type".formatted(schemaType.name()));
+			}
+			resolvableType = ResolvableType.forClass(messageType);
+		}
+		else if (schemaType == SchemaType.KEY_VALUE) {
+			if (messageType == null) {
+				return Resolved.failed("messageType must be specified for KEY_VALUE schema type");
+			}
+			if (messageKeyType == null) {
+				return Resolved.failed("messageKeyType must be specified for KEY_VALUE schema type");
+			}
+			resolvableType = ResolvableType.forClassWithGenerics(KeyValue.class, messageKeyType, messageType);
+		}
+		else if (schemaType == SchemaType.NONE) {
+			if (messageType != null && messageKeyType != null) {
+				resolvableType = ResolvableType.forClassWithGenerics(KeyValue.class, messageKeyType, messageType);
+			}
+			else if (messageType != null) {
+				resolvableType = ResolvableType.forClass(messageType);
+			}
+		}
+		return resolveSchema(schemaType, resolvableType);
+	}
 
 	/**
 	 * Callback interface that can be implemented by beans wishing to customize the schema

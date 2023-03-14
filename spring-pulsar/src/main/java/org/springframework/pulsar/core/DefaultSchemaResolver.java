@@ -192,7 +192,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 					if (KeyValue.class.isAssignableFrom(messageType.getRawClass())) {
 						yield getMessageKeyValueSchema(messageType);
 					}
-					yield resolveSchema(messageType.getRawClass(), false).orElseThrow();
+					yield resolveSchema(messageType.getRawClass(), true).orElseThrow();
 				}
 				default -> throw new IllegalArgumentException("Unsupported schema type: " + schemaType.name());
 			};
