@@ -1,6 +1,6 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
-	id 'org.springframework.boot' version '3.0.2'
+	id 'org.springframework.boot' version '3.0.4'
 }
 
 description = 'Spring Cloud Stream Binder for Pulsar Sample Application'

@@ -52,7 +52,10 @@ If you want to build everything and run tests, use the `build` task:
 ./gradlew clean build
 ----
 
-This will build everything and run all tests except the `PulsarFunctionAdministrationIntegrationTests` which requires the _Pulsar RabbitMQ Connector_ to be downloaded prior to running.
+NOTE: Some tests rely on a Docker daemon to test against live services using https://www.testcontainers.org/[Testcontainers].
+These tests will be skipped if a local Docker daemon is not available.
+
+The above command will build everything and run all tests except the `PulsarFunctionAdministrationIntegrationTests` which requires the _Pulsar RabbitMQ Connector_ to be downloaded prior to running.
 To download the connector (one time only) and run the integration test, add a system property to the task as follows:
 
 [source,shell]
