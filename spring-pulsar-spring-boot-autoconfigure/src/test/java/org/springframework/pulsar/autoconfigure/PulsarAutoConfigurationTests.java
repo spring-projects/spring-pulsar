@@ -321,9 +321,7 @@ class PulsarAutoConfigurationTests {
 			contextRunner
 					.withPropertyValues(
 							"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
-							"spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=JSON",
-							"spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
-									.formatted(Foo.class.getName()))
+							"spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=JSON")
 					.run((context -> assertThat(context).hasNotFailed().getBean(SchemaResolver.class)
 							.asInstanceOf(InstanceOfAssertFactories.type(DefaultSchemaResolver.class))
 							.extracting(DefaultSchemaResolver::getCustomSchemaMappings,
@@ -339,8 +337,6 @@ class PulsarAutoConfigurationTests {
 							"spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(Foo.class.getName()),
 							"spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=%s"
 									.formatted(SchemaType.KEY_VALUE.name()),
-							"spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
-									.formatted(Foo.class.getName()),
 							"spring.pulsar.defaults.type-mappings[0].schema-info.message-key-type=%s"
 									.formatted(String.class.getName()))
 					.run((context -> assertThat(context).hasNotFailed().getBean(SchemaResolver.class)
