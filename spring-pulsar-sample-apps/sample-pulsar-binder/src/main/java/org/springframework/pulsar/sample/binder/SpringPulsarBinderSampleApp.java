@@ -20,17 +20,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.core.PulsarTemplate;
 
 /**
  * This sample binder app has an extra consumer that is equipped with Pulsar's DLT feature - timeLoggerToDlt.
@@ -39,6 +36,8 @@ import org.springframework.pulsar.core.PulsarTemplate;
  * When doing this, in order to minimize verbose output and just to focus on the DLT feature, comment out the
  * regular supplier below (timeSupplier) and then un-comment the ApplicationRunner below.
  * The runner only sends a single message whereas the supplier sends a message every second.
+ *
+ * @author Soby Chacko
  */
 @SpringBootApplication
 public class SpringPulsarBinderSampleApp {
@@ -90,7 +89,7 @@ public class SpringPulsarBinderSampleApp {
 
 	@PulsarListener(id = "dlqListener", topics = "notification-dlq", schemaType = SchemaType.JSON)
 	void listenDlq(EnhancedTime msg) {
-		System.out.println("From DLQ: " + msg);
+		this.logger.info("From DLQ: {}", msg);
 	}
 
 	record Time(String time) {
