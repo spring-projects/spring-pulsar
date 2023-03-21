@@ -30,12 +30,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
 
 /**
- * This sample binder app has an extra consumer that is equipped with Pulsar's DLT feature - timeLoggerToDlt.
- * However, this consumer is not part of the spring.cloud.function.definition.
- * In order to enable this, add the function timeLoggerToDlt to the definition in the application.yml file.
- * When doing this, in order to minimize verbose output and just to focus on the DLT feature, comment out the
+ * This sample binder app has an extra consumer that is equipped with Pulsar's DLT feature
+ * - timeLoggerToDlt. However, this consumer is not part of the
+ * spring.cloud.function.definition. In order to enable this, add the function
+ * timeLoggerToDlt to the definition in the application.yml file. When doing this, in
+ * order to minimize verbose output and just to focus on the DLT feature, comment out the
  * regular supplier below (timeSupplier) and then un-comment the ApplicationRunner below.
- * The runner only sends a single message whereas the supplier sends a message every second.
+ * The runner only sends a single message whereas the supplier sends a message every
+ * second.
  *
  * @author Soby Chacko
  */
@@ -53,17 +55,18 @@ public class SpringPulsarBinderSampleApp {
 		return () -> new Time(String.valueOf(System.currentTimeMillis()));
 	}
 
-//	@Bean
-//	ApplicationRunner runner(PulsarTemplate<Time> pulsarTemplate) {
-//
-//		String topic = "timeSupplier-out-0";
-//
-//		return args -> {
-//			for (int i = 0; i < 1; i++) {
-//				pulsarTemplate.send(topic, new Time(String.valueOf(System.currentTimeMillis())), Schema.JSON(Time.class));
-//			}
-//		};
-//	}
+	// @Bean
+	// ApplicationRunner runner(PulsarTemplate<Time> pulsarTemplate) {
+	//
+	// String topic = "timeSupplier-out-0";
+	//
+	// return args -> {
+	// for (int i = 0; i < 1; i++) {
+	// pulsarTemplate.send(topic, new Time(String.valueOf(System.currentTimeMillis())),
+	// Schema.JSON(Time.class));
+	// }
+	// };
+	// }
 
 	@Bean
 	public Function<Time, EnhancedTime> timeProcessor() {
