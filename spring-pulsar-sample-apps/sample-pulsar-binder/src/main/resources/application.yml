@@ -1,7 +1,7 @@
 spring:
   cloud:
     function:
-      definition: timeSupplier;timeProcessor;timeLogger;
+      definition: timeSupplier;timeProcessor;timeLogger
     stream:
       bindings:
         timeSupplier-out-0:
@@ -16,6 +16,10 @@ spring:
           producer:
             use-native-encoding: true
         timeLogger-in-0:
+          destination: timeProcessor-out-0
+          consumer:
+            use-native-decoding: true
+        timeLoggerToDlt-in-0:
           destination: timeProcessor-out-0
           consumer:
             use-native-decoding: true
@@ -35,5 +39,14 @@ spring:
               message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
           timeLogger-in-0:
             consumer:
+              schema-type: JSON
+              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
+          timeLoggerToDlt-in-0:
+            consumer:
+              subscription-type: Shared
+              negative-ack-redelivery-delay: 1s
+              dead-letter-policy:
+                dead-letter-topic: notification-dlq
+                max-redeliver-count: 5
               schema-type: JSON
               message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
