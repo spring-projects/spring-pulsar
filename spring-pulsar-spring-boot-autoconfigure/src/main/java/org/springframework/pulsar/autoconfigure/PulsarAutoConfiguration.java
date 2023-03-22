@@ -117,8 +117,8 @@ public class PulsarAutoConfiguration {
 		if (pulsarProperties.getDefaults().getTypeMappings() != null) {
 			pulsarProperties.getDefaults().getTypeMappings().stream().filter((tm) -> tm.schemaInfo() != null)
 					.forEach((tm) -> {
-						var schema = schemaResolver.resolveSchema(tm.schemaInfo().schemaType(),
-								tm.schemaInfo().messageType(), tm.schemaInfo().messageKeyType()).orElseThrow();
+						var schema = schemaResolver.resolveSchema(tm.schemaInfo().schemaType(), tm.messageType(),
+								tm.schemaInfo().messageKeyType()).orElseThrow();
 						schemaResolver.addCustomSchemaMapping(tm.messageType(), schema);
 					});
 		}

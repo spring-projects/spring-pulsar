@@ -10,11 +10,9 @@ spring:
         - message-type: com.acme.User
           schema-info:
             schema-type: AVRO
-            message-type: com.acme.User
         - message-type: com.acme.Address
           schema-info:
             schema-type: JSON
-            message-type: com.acme.Address
 ----
 
 NOTE: The `message-type` is the fully-qualified name of the message class.

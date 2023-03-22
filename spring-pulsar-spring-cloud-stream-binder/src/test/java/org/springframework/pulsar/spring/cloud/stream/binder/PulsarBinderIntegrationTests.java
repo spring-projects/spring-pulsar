@@ -258,9 +258,7 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 							+ User.class.getName(),
 					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-user-sub2",
 					"--spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(User.class.getName()),
-					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO",
-					"--spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
-							.formatted(User.class.getName()))) {
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: User{name='user21', age=21}"));
 			}
@@ -312,9 +310,7 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 							+ String.class.getName(),
 					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-kv-sub1",
 					"--spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(User.class.getName()),
-					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO",
-					"--spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
-							.formatted(User.class.getName()))) {
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: 21->User{name='user21', age=21}"));
 			}
@@ -342,9 +338,7 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 							+ String.class.getName(),
 					"--spring.cloud.stream.pulsar.bindings.userLogger-in-0.consumer.subscription-name=pbit-kv-sub2",
 					"--spring.pulsar.defaults.type-mappings[0].message-type=%s".formatted(User.class.getName()),
-					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO",
-					"--spring.pulsar.defaults.type-mappings[0].schema-info.message-type=%s"
-							.formatted(User.class.getName()))) {
+					"--spring.pulsar.defaults.type-mappings[0].schema-info.schema-type=AVRO")) {
 				Awaitility.await().atMost(Duration.ofSeconds(AWAIT_DURATION))
 						.until(() -> output.toString().contains("Hello binder: 21->User{name='user21', age=21}"));
 			}

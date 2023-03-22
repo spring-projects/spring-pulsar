@@ -329,10 +329,9 @@ public class PulsarPropertiesTests {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.defaults.type-mappings[0].message-type", Foo.class.getName());
 			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.schema-type", "JSON");
-			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-type", Foo.class.getName());
 			bind(props);
-			assertThat(properties.getDefaults().getTypeMappings()).containsExactly(
-					new TypeMapping(Foo.class, null, new SchemaInfo(SchemaType.JSON, Foo.class, null)));
+			assertThat(properties.getDefaults().getTypeMappings())
+					.containsExactly(new TypeMapping(Foo.class, null, new SchemaInfo(SchemaType.JSON, null)));
 		}
 
 		@Test
@@ -341,10 +340,9 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.defaults.type-mappings[0].message-type", Foo.class.getName());
 			props.put("spring.pulsar.defaults.type-mappings[0].topic-name", "foo-topic");
 			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.schema-type", "JSON");
-			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-type", Foo.class.getName());
 			bind(props);
-			assertThat(properties.getDefaults().getTypeMappings()).containsExactly(
-					new TypeMapping(Foo.class, "foo-topic", new SchemaInfo(SchemaType.JSON, Foo.class, null)));
+			assertThat(properties.getDefaults().getTypeMappings())
+					.containsExactly(new TypeMapping(Foo.class, "foo-topic", new SchemaInfo(SchemaType.JSON, null)));
 		}
 
 		@Test
@@ -352,18 +350,17 @@ public class PulsarPropertiesTests {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.defaults.type-mappings[0].message-type", Foo.class.getName());
 			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.schema-type", "KEY_VALUE");
-			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-type", Foo.class.getName());
 			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-key-type", String.class.getName());
 			bind(props);
 			assertThat(properties.getDefaults().getTypeMappings()).containsExactly(
-					new TypeMapping(Foo.class, null, new SchemaInfo(SchemaType.KEY_VALUE, Foo.class, String.class)));
+					new TypeMapping(Foo.class, null, new SchemaInfo(SchemaType.KEY_VALUE, String.class)));
 		}
 
 		@Test
 		void schemaTypeRequired() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.defaults.type-mappings[0].message-type", Foo.class.getName());
-			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-type", Foo.class.getName());
+			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-key-type", String.class.getName());
 			assertThatExceptionOfType(BindException.class).isThrownBy(() -> bind(props)).havingRootCause()
 					.withMessageContaining("schemaType must not be null");
 		}
@@ -375,6 +372,16 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.schema-type", "NONE");
 			assertThatExceptionOfType(BindException.class).isThrownBy(() -> bind(props)).havingRootCause()
 					.withMessageContaining("schemaType NONE not supported");
+		}
+
+		@Test
+		void messageKeyTypeOnlyAllowedForKeyValueSchemaType() {
+			Map<String, String> props = new HashMap<>();
+			props.put("spring.pulsar.defaults.type-mappings[0].message-type", Foo.class.getName());
+			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.schema-type", "JSON");
+			props.put("spring.pulsar.defaults.type-mappings[0].schema-info.message-key-type", String.class.getName());
+			assertThatExceptionOfType(BindException.class).isThrownBy(() -> bind(props)).havingRootCause()
+					.withMessageContaining("messageKeyType can only be set when schemaType is KEY_VALUE");
 		}
 
 		record Foo(String value) {

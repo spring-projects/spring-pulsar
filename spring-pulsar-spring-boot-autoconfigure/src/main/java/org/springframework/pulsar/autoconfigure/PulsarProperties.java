@@ -1365,15 +1365,16 @@ public class PulsarProperties {
 	 * Represents a schema - holds enough information to construct an actual schema
 	 * instance.
 	 * @param schemaType schema type
-	 * @param messageType message type (not required for primitive schema types or key
-	 * value type)
 	 * @param messageKeyType message key type (required for key value type)
 	 */
-	public record SchemaInfo(SchemaType schemaType, @Nullable Class<?> messageType, @Nullable Class<?> messageKeyType) {
+	public record SchemaInfo(SchemaType schemaType, @Nullable Class<?> messageKeyType) {
 		public SchemaInfo {
 			Objects.requireNonNull(schemaType, "schemaType must not be null");
 			if (schemaType == SchemaType.NONE) {
 				throw new IllegalArgumentException("schemaType NONE not supported");
+			}
+			if (schemaType != SchemaType.KEY_VALUE && messageKeyType != null) {
+				throw new IllegalArgumentException("messageKeyType can only be set when schemaType is KEY_VALUE");
 			}
 		}
 	}
