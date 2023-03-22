@@ -20,7 +20,6 @@ import java.util.Optional;
 
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.cloud.stream.binder.AbstractMessageChannelBinder;
@@ -163,9 +162,6 @@ public class PulsarMessageChannelBinder extends
 		}
 		var subscriptionName = PulsarBinderUtils.subscriptionName(properties.getExtension(), destination);
 		containerProperties.setSubscriptionName(subscriptionName);
-		if (properties.getExtension().getSubscriptionType() != SubscriptionType.Exclusive) {
-			containerProperties.setSubscriptionType(properties.getExtension().getSubscriptionType());
-		}
 
 		var baseConsumerProps = new ConsumerConfigProperties().buildProperties();
 		var binderConsumerProps = this.binderConfigProps.getConsumer().buildProperties();
@@ -173,6 +169,7 @@ public class PulsarMessageChannelBinder extends
 		var mergedConsumerProps = PulsarBinderUtils.mergePropertiesWithPrecedence(baseConsumerProps,
 				binderConsumerProps, bindingConsumerProps);
 		containerProperties.getPulsarConsumerProperties().putAll(mergedConsumerProps);
+		containerProperties.updateContainerProperties();
 
 		var container = new DefaultPulsarMessageListenerContainer<>(this.pulsarConsumerFactory, containerProperties);
 		messageDrivenChannelAdapter.setMessageListenerContainer(container);
