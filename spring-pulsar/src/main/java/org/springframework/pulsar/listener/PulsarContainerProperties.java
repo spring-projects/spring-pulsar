@@ -42,6 +42,10 @@ public class PulsarContainerProperties {
 
 	private static final Duration DEFAULT_CONSUMER_START_TIMEOUT = Duration.ofSeconds(30);
 
+	private static final String SUBSCRIPTION_NAME = "subscriptionName";
+
+	private static final String SUBSCRIPTION_TYPE = "subscriptionType";
+
 	private Duration consumerStartTimeout = DEFAULT_CONSUMER_START_TIMEOUT;
 
 	private String[] topics;
@@ -244,6 +248,17 @@ public class PulsarContainerProperties {
 
 	public void setPulsarConsumerProperties(Properties pulsarConsumerProperties) {
 		this.pulsarConsumerProperties = pulsarConsumerProperties;
+	}
+
+	public void updateContainerProperties() {
+		if (!this.pulsarConsumerProperties.isEmpty()) {
+			if (this.pulsarConsumerProperties.containsKey(SUBSCRIPTION_NAME)) {
+				this.subscriptionName = (String) this.pulsarConsumerProperties.get(SUBSCRIPTION_NAME);
+			}
+			if (this.pulsarConsumerProperties.containsKey(SUBSCRIPTION_TYPE)) {
+				this.subscriptionType = (SubscriptionType) this.pulsarConsumerProperties.get(SUBSCRIPTION_TYPE);
+			}
+		}
 	}
 
 }

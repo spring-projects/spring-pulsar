@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.SubscriptionMode;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
@@ -34,6 +35,7 @@ import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.spring.cloud.stream.binder.properties.PulsarExtendedBindingProperties;
 
 /**
@@ -109,6 +111,27 @@ public class PulsarExtendedBindingPropertiesTests {
 				.containsEntry("subscriptionMode", SubscriptionMode.NonDurable)
 				.containsEntry("receiverQueueSize", 1);
 		// @formatter:on
+	}
+
+	@Test
+	void extendedBindingsArePropagatedToContainerProperties() {
+		Map<String, String> props = new HashMap<>();
+		props.put("spring.cloud.stream.pulsar.bindings.my-foo.consumer.subscription-name", "my-foo-sbscription");
+		props.put("spring.cloud.stream.pulsar.bindings.my-foo.consumer.subscription-type", "Shared");
+
+		bind(props);
+
+		var bindingConsumerProps = properties.getExtendedConsumerProperties("my-foo").buildProperties();
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.getPulsarConsumerProperties().putAll(bindingConsumerProps);
+
+		assertThat(pulsarContainerProperties.getSubscriptionName()).isNull();
+		assertThat(pulsarContainerProperties.getSubscriptionType()).isEqualTo(SubscriptionType.Exclusive);
+
+		pulsarContainerProperties.updateContainerProperties();
+
+		assertThat(pulsarContainerProperties.getSubscriptionName()).isEqualTo("my-foo-sbscription");
+		assertThat(pulsarContainerProperties.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
 	}
 
 }
