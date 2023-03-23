@@ -17,6 +17,7 @@
 package org.springframework.pulsar.aot;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
@@ -54,11 +55,13 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 		// and introspect all public methods. The components are a mix of JDK classes,
 		// core Pulsar classes,
 		// some other shaded components available through Pulsar client.
-		Stream.of(HashSet.class, TreeMap.class, Authentication.class, AuthenticationDataProvider.class,
-				SecretsSerializer.class, PulsarAdminBuilderImpl.class, OffloadProcessStatusImpl.class, Commands.class)
-				.forEach(type -> reflectionHints.registerType(type,
-						builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-								MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS)));
+		Stream.of(HashSet.class, LinkedHashMap.class, TreeMap.class, Authentication.class,
+				AuthenticationDataProvider.class, SecretsSerializer.class, PulsarAdminBuilderImpl.class,
+				OffloadProcessStatusImpl.class, Commands.class).forEach(
+						type -> reflectionHints.registerType(type,
+								builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+										MemberCategory.INVOKE_DECLARED_METHODS,
+										MemberCategory.INTROSPECT_PUBLIC_METHODS)));
 
 		// In addition to the above member category levels, these components need field
 		// and declared class level access.
