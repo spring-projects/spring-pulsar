@@ -42,8 +42,6 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 
-import com.google.protobuf.GeneratedMessageV3;
-
 /**
  * Default schema resolver capable of handling basic message types.
  *
@@ -178,8 +176,10 @@ public class DefaultSchemaResolver implements SchemaResolver {
 				case JSON -> JSONSchema.of(requireNonNullMessageType(schemaType, messageType));
 				case AVRO -> AvroSchema.of(requireNonNullMessageType(schemaType, messageType));
 				case PROTOBUF -> {
+					// WARN! Leave GeneratedMessageV3 fully-qualified as the dependency is
+					// optional
 					Class<?> messageClass = requireNonNullMessageType(schemaType, messageType);
-					yield ProtobufSchema.of((Class<? extends GeneratedMessageV3>) messageClass);
+					yield ProtobufSchema.of((Class<? extends com.google.protobuf.GeneratedMessageV3>) messageClass);
 				}
 				case KEY_VALUE -> {
 					requireNonNullMessageType(schemaType, messageType);

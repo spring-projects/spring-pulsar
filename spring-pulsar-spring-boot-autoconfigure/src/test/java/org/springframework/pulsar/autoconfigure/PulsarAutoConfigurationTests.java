@@ -35,6 +35,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
@@ -68,6 +69,7 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
@@ -496,6 +498,17 @@ class PulsarAutoConfigurationTests {
 		void cachingProducerFactoryCanBeEnabled() {
 			contextRunner.withPropertyValues("spring.pulsar.producer.cache.enabled=true")
 					.run((context -> assertHasProducerFactoryOfType(CachingPulsarProducerFactory.class, context)));
+		}
+
+		@Test
+		void cachingEnabledButCaffeineNotOnClasspath() {
+			contextRunner.withClassLoader(new FilteredClassLoader(Caffeine.class))
+					.withPropertyValues("spring.pulsar.producer.cache.enabled=true")
+					.run((context -> assertThat(context).hasFailed().getFailure().cause()
+							.isInstanceOf(NoSuchBeanDefinitionException.class)
+							.asInstanceOf(InstanceOfAssertFactories.type(NoSuchBeanDefinitionException.class))
+							.extracting(NoSuchBeanDefinitionException::getBeanType)
+							.isEqualTo(PulsarProducerFactory.class)));
 		}
 
 		@Test
