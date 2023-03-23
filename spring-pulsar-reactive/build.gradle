@@ -6,15 +6,23 @@ description = 'Spring Pulsar Reactive Support'
 
 dependencies {
 	api project (':spring-pulsar')
-	api 'org.apache.pulsar:pulsar-client-reactive-adapter'
+	api ('org.apache.pulsar:pulsar-client-reactive-adapter') {
+		// remove when reactive client updates to 2.11
+		exclude group: 'org.apache.pulsar', module: 'pulsar-client'
+	}
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.google.code.findbugs:jsr305'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
+	optional 'com.google.protobuf:protobuf-java'
 	optional 'com.jayway.jsonpath:json-path'
 	optional 'io.projectreactor:reactor-core'
+	optional ('org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine') {
+		// remove when reactive client updates to 2.11
+		exclude group: 'org.apache.pulsar', module: 'pulsar-client-reactive-adapter'
+	}
 
 	testImplementation project(':spring-pulsar-test')
 	testRuntimeOnly 'ch.qos.logback:logback-classic'

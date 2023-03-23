@@ -5,11 +5,11 @@ plugins {
 description = 'Spring Pulsar Support'
 
 dependencies {
-	api 'com.github.ben-manes.caffeine:caffeine'
-	api 'com.google.protobuf:protobuf-java'
 	api 'io.micrometer:micrometer-observation'
 	api ('org.apache.pulsar:pulsar-client-all') {
 		exclude group: 'org.apache.logging.log4j'
+		exclude group: 'com.sun.activation', module: 'javax.activation'
+		exclude group: 'javax.validation', module: 'validation-api'
 	}
 	api 'org.springframework:spring-context'
 	api 'org.springframework:spring-messaging'
@@ -23,6 +23,8 @@ dependencies {
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
+	optional 'com.github.ben-manes.caffeine:caffeine'
+	optional 'com.google.protobuf:protobuf-java'
 	optional 'com.jayway.jsonpath:json-path'
 
 	testImplementation project(':spring-pulsar-test')

@@ -51,6 +51,7 @@ import org.springframework.pulsar.function.PulsarSink;
 import org.springframework.pulsar.function.PulsarSource;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
@@ -88,6 +89,7 @@ public class PulsarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
+	@ConditionalOnClass(Caffeine.class)
 	@ConditionalOnProperty(name = "spring.pulsar.producer.cache.enabled", havingValue = "true", matchIfMissing = true)
 	public PulsarProducerFactory<?> cachingPulsarProducerFactory(PulsarClient pulsarClient,
 			TopicResolver topicResolver) {
