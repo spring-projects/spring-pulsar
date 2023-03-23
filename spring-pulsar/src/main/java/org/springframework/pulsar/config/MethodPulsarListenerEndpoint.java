@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
@@ -159,7 +160,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 				|| StringUtils.hasText(pulsarContainerProperties.getTopicsPattern());
 		if (!hasTopicInfo) {
 			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
-					.ifResolved((topic) -> pulsarContainerProperties.setTopics(new String[] { topic }));
+					.ifResolved((topic) -> pulsarContainerProperties.setTopics(Set.of(topic)));
 		}
 
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);

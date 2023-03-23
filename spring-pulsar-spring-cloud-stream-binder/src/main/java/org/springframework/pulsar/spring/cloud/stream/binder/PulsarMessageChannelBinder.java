@@ -17,6 +17,7 @@
 package org.springframework.pulsar.spring.cloud.stream.binder;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
@@ -137,7 +138,7 @@ public class PulsarMessageChannelBinder extends
 	protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group,
 			ExtendedConsumerProperties<PulsarConsumerProperties> properties) {
 		var containerProperties = new PulsarContainerProperties();
-		containerProperties.setTopics(new String[] { destination.getName() });
+		containerProperties.setTopics(Set.of(destination.getName()));
 
 		var inboundHeaderMapper = determineInboundHeaderMapper(properties);
 

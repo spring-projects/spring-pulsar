@@ -18,6 +18,7 @@ package org.springframework.pulsar.config;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -62,7 +63,7 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
 
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
-			properties.setTopics(endpoint.getTopics().toArray(new String[0]));
+			properties.setTopics(new HashSet<>(endpoint.getTopics()));
 		}
 
 		if (StringUtils.hasText(endpoint.getTopicPattern())) {

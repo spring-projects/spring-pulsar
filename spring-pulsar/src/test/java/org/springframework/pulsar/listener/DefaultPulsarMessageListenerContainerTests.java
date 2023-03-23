@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -293,7 +294,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
 		dlqContainerProperties.setSchema(Schema.INT32);
 		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
-		dlqContainerProperties.setTopics(new String[] { "dpmlct-016-dlq-topic" });
+		dlqContainerProperties.setTopics(Set.of("dpmlct-016-dlq-topic"));
 		DefaultPulsarMessageListenerContainer<Integer> dlqContainer = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, dlqContainerProperties);
 		dlqContainer.start();
@@ -349,7 +350,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
 		dlqContainerProperties.setSchema(Schema.INT32);
 		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
-		dlqContainerProperties.setTopics(new String[] { "dlq-topic" });
+		dlqContainerProperties.setTopics(Set.of("dlq-topic"));
 		DefaultPulsarMessageListenerContainer<Integer> dlqContainer = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, dlqContainerProperties);
 		dlqContainer.start();

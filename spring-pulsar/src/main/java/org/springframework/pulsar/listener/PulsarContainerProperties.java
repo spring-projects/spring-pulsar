@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener;
 
 import java.time.Duration;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -48,7 +49,7 @@ public class PulsarContainerProperties {
 
 	private Duration consumerStartTimeout = DEFAULT_CONSUMER_START_TIMEOUT;
 
-	private String[] topics;
+	private Set<String> topics;
 
 	private String topicsPattern;
 
@@ -83,7 +84,7 @@ public class PulsarContainerProperties {
 	private Properties pulsarConsumerProperties = new Properties();
 
 	public PulsarContainerProperties(String... topics) {
-		this.topics = topics.clone();
+		this.topics = Set.of(topics);
 		this.topicsPattern = null;
 		this.schemaResolver = new DefaultSchemaResolver();
 		this.topicResolver = new DefaultTopicResolver();
@@ -186,11 +187,11 @@ public class PulsarContainerProperties {
 		this.consumerStartTimeout = consumerStartTimeout;
 	}
 
-	public String[] getTopics() {
+	public Set<String> getTopics() {
 		return this.topics;
 	}
 
-	public void setTopics(String[] topics) {
+	public void setTopics(Set<String> topics) {
 		this.topics = topics;
 	}
 
