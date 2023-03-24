@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths-ignore:
-      - '.github/**'      
+      - '.github/**'
   schedule:
     - cron: '0 10 * * *' # Once per day at 10am UTC
   workflow_dispatch:
@@ -116,17 +116,17 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Tag release (milestone)
-        if: ${{ needs.build_and_deploy.outputs.project_version == '0.1.0' || contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        if: ${{ startsWith(needs.build_and_deploy.outputs.project_version, '0.') || contains(needs.build_and_deploy.outputs.project_version, '-RC') || contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
           echo "Tagging $REPO@$VERSION release."
           git tag v$VERSION
           git push --tags origin
       - name: Create branch and tag release (GA)
-        if: ${{ needs.build_and_deploy.outputs.project_version != '0.1.0' && !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
+        if: ${{ !startsWith(needs.build_and_deploy.outputs.project_version, '0.') && !contains(needs.build_and_deploy.outputs.project_version, '-RC') && !contains(needs.build_and_deploy.outputs.project_version, '-M') }}
         run: |
           echo "Tagging $REPO@$VERSION and creating release branch."
           git checkout -b $VERSION
-          git push origin $VERSION
+          git push --set-upstream origin $VERSION
           git tag v$VERSION
           git push --tags origin
 
