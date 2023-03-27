@@ -12,7 +12,6 @@ dependencies {
 
 	optional project (':spring-pulsar')
 	optional project (':spring-pulsar-reactive')
-	optional 'com.github.ben-manes.caffeine:caffeine'
 	optional 'org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine'
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'com.google.code.findbugs:jsr305'

@@ -35,7 +35,6 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
@@ -501,14 +500,10 @@ class PulsarAutoConfigurationTests {
 		}
 
 		@Test
-		void cachingEnabledButCaffeineNotOnClasspath() {
+		void cachingEnabledAndCaffeineNotOnClasspath() {
 			contextRunner.withClassLoader(new FilteredClassLoader(Caffeine.class))
 					.withPropertyValues("spring.pulsar.producer.cache.enabled=true")
-					.run((context -> assertThat(context).hasFailed().getFailure().cause()
-							.isInstanceOf(NoSuchBeanDefinitionException.class)
-							.asInstanceOf(InstanceOfAssertFactories.type(NoSuchBeanDefinitionException.class))
-							.extracting(NoSuchBeanDefinitionException::getBeanType)
-							.isEqualTo(PulsarProducerFactory.class)));
+					.run((context -> assertHasProducerFactoryOfType(CachingPulsarProducerFactory.class, context)));
 		}
 
 		@Test
@@ -518,8 +513,7 @@ class PulsarAutoConfigurationTests {
 							"spring.pulsar.producer.cache.maximum-size=5150",
 							"spring.pulsar.producer.cache.initial-capacity=200")
 					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarProducerFactory.class)
-							.extracting("producerCache").extracting("cache")
-							.hasFieldOrPropertyWithValue("maximum", 5150L)
+							.extracting("producerCache.cache.cache").hasFieldOrPropertyWithValue("maximum", 5150L)
 							.hasFieldOrPropertyWithValue("expiresAfterAccessNanos", TimeUnit.SECONDS.toNanos(100))));
 		}
 

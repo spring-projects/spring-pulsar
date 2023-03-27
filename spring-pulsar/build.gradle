@@ -17,7 +17,7 @@ dependencies {
 	api ('org.springframework.retry:spring-retry') {
 		exclude group: 'org.springframework'
 	}
-	implementation project(':spring-pulsar-cache-provider')
+	api project(':spring-pulsar-cache-provider')
 	implementation project(path: ':spring-pulsar-cache-provider-caffeine', configuration: 'shadow')
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
