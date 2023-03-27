@@ -51,8 +51,6 @@ import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerWith
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
 
-import com.github.benmanes.caffeine.cache.Cache;
-
 /**
  * Tests for {@link CachingPulsarProducerFactory}.
  *
@@ -83,8 +81,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		var producer3 = producerFactory.createProducer(new StringSchema(), "topic1");
 		assertThat(producer1).isSameAs(producer2).isSameAs(producer3);
 
-		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(producerFactory,
-				Collections.singletonList(cacheKey));
+		CacheProvider<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(
+				producerFactory, Collections.singletonList(cacheKey));
 		Producer<String> cachedProducerWrapper = producerCache.asMap().get(cacheKey);
 		assertThat(cachedProducerWrapper).isSameAs(producer1);
 	}
@@ -207,9 +205,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Cache<ProducerCacheKey<String>, Producer<String>> getAssertedProducerCache(
+	private CacheProvider<ProducerCacheKey<String>, Producer<String>> getAssertedProducerCache(
 			PulsarProducerFactory<String> producerFactory, List<ProducerCacheKey<String>> expectedCacheKeys) {
-		Cache<ProducerCacheKey<String>, Producer<String>> producerCache = (Cache<ProducerCacheKey<String>, Producer<String>>) ReflectionTestUtils
+		CacheProvider<ProducerCacheKey<String>, Producer<String>> producerCache = (CacheProvider<ProducerCacheKey<String>, Producer<String>>) ReflectionTestUtils
 				.getField(producerFactory, "producerCache");
 		assertThat(producerCache).isNotNull();
 		if (ObjectUtils.isEmpty(expectedCacheKeys)) {

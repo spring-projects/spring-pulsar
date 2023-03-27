@@ -17,13 +17,14 @@ dependencies {
 	api ('org.springframework.retry:spring-retry') {
 		exclude group: 'org.springframework'
 	}
+	implementation project(':spring-pulsar-cache-provider')
+	implementation project(path: ':spring-pulsar-cache-provider-caffeine', configuration: 'shadow')
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.google.code.findbugs:jsr305'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
-	optional 'com.github.ben-manes.caffeine:caffeine'
 	optional 'com.google.protobuf:protobuf-java'
 	optional 'com.jayway.jsonpath:json-path'
 
