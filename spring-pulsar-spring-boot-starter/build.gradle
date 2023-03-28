@@ -7,6 +7,5 @@ description = 'Spring Pulsar Spring Boot Starter'
 dependencies {
 	api project (':spring-pulsar')
 	api project (':spring-pulsar-spring-boot-autoconfigure')
-	api 'com.github.ben-manes.caffeine:caffeine'
 	api 'org.springframework.boot:spring-boot-starter'
 }

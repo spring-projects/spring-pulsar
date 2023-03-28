@@ -41,11 +41,6 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalListener;
-import com.github.benmanes.caffeine.cache.Scheduler;
-
 /**
  * A {@link PulsarProducerFactory} that extends the {@link DefaultPulsarProducerFactory
  * default implementation} by caching the created producers.
@@ -66,7 +61,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private final Cache<ProducerCacheKey<T>, Producer<T>> producerCache;
+	private final CacheProvider<ProducerCacheKey<T>, Producer<T>> producerCache;
 
 	/**
 	 * Construct a caching producer factory with the specified values for the cache
@@ -82,15 +77,13 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			TopicResolver topicResolver, Duration cacheExpireAfterAccess, Long cacheMaximumSize,
 			Integer cacheInitialCapacity) {
 		super(pulsarClient, producerConfig, topicResolver);
-		this.producerCache = Caffeine.newBuilder().expireAfterAccess(cacheExpireAfterAccess)
-				.maximumSize(cacheMaximumSize).initialCapacity(cacheInitialCapacity)
-				.scheduler(Scheduler.systemScheduler()).evictionListener(
-						(RemovalListener<ProducerCacheKey<T>, Producer<T>>) (producerCacheKey, producer, cause) -> {
-							this.logger.debug(() -> "Producer %s evicted from cache due to %s"
-									.formatted(ProducerUtils.formatProducer(producer), cause));
-							closeProducer(producer);
-						})
-				.build();
+		var cacheFactory = CacheProviderFactory.<ProducerCacheKey<T>, Producer<T>>load();
+		this.producerCache = cacheFactory.create(cacheExpireAfterAccess, cacheMaximumSize, cacheInitialCapacity,
+				(key, producer, cause) -> {
+					this.logger.debug(() -> "Producer %s evicted from cache due to %s"
+							.formatted(ProducerUtils.formatProducer(producer), cause));
+					closeProducer(producer);
+				});
 	}
 
 	@Override
@@ -100,7 +93,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		String resolveTopicName = resolveTopicName(topic);
 		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, resolveTopicName,
 				encryptionKeys == null ? null : new HashSet<>(encryptionKeys), customizers);
-		return this.producerCache.get(producerCacheKey,
+		return this.producerCache.getOrCreateIfAbsent(producerCacheKey,
 				(st) -> createCacheableProducer(st.schema, st.topic, st.encryptionKeys, customizers));
 	}
 
@@ -119,10 +112,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	@Override
 	public void destroy() {
-		this.producerCache.asMap().forEach((producerCacheKey, producer) -> {
-			this.producerCache.invalidate(producerCacheKey);
-			closeProducer(producer);
-		});
+		this.producerCache.invalidateAll((key, producer) -> closeProducer(producer));
 	}
 
 	private void closeProducer(Producer<T> producer) {

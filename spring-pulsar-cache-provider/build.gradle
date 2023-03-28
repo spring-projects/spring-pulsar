@@ -1,0 +1,15 @@
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+}
+
+description = 'Spring Pulsar Cache Provider API'
+
+dependencies {
+	testImplementation 'org.assertj:assertj-core'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+	testLogging.showStandardStreams = true
+}
