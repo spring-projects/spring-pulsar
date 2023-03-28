@@ -33,6 +33,11 @@ shadowJar {
 
 tasks.build.dependsOn tasks.shadowJar
 
+// disable module metadata - otherwise original jar will be used when published
+tasks.withType(GenerateModuleMetadata) {
+	enabled = false
+}
+
 // delay the maven publishing - instead add shadowJar to the publication
 components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
 	skip()
