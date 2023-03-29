@@ -70,8 +70,11 @@ There are several modules in Spring Pulsar. Here is a quick overview:
 === spring-pulsar
 The main library that provides the API to access Apache Pulsar.
 
-=== spring-pulsar-reactive
-Provides the API to access Apache Pulsar using a Reactive client.
+=== spring-pulsar-cache-provider
+Provides the interfaces for the cache provider used by the main library to cache producers.
+
+=== spring-pulsar-cache-provider-caffeine
+Provides the implementation of the cache provider using a shaded version of Caffeine.
 
 === spring-pulsar-dependencies
 Provides a Gradle https://docs.gradle.org/current/userguide/java_platform_plugin.html[java-platform] that recommends dependency versions.
@@ -79,20 +82,24 @@ Provides a Gradle https://docs.gradle.org/current/userguide/java_platform_plugin
 === spring-pulsar-docs
 Provides reference docs and handles aggregating javadocs.
 
+=== spring-pulsar-reactive
+Provides the API to access Apache Pulsar using a Reactive client.
+
+=== spring-pulsar-reactive-spring-boot-starter
+Provides a dependency descriptor that can be included in your application to easily start using Spring Pulsar in Reactive and imperative fashions.
+
+=== spring-pulsar-sample-apps
+Provides sample applications to illustrate Spring Pulsar functionality as well as provide ability for quick manual verification during development.
+
 === spring-pulsar-spring-boot-autoconfigure
 Provides Spring Boot auto-configuration for Spring Pulsar.
 
 === spring-pulsar-spring-boot-starter
 Provides a dependency descriptor that can be included in your application to easily start using Spring Pulsar in an imperative fashion.
 
-=== spring-pulsar-reactive-spring-boot-starter
-Provides a dependency descriptor that can be included in your application to easily start using Spring Pulsar in Reactive and imperative fashions.
-
 === spring-pulsar-spring-cloud-stream-binder
 Provides a Spring Cloud Stream Binder implementation for Apache Pulsar.
 
-=== spring-pulsar-sample-apps
-Provides sample applications to illustrate Spring Pulsar functionality as well as provide ability for quick manual verification during development.
 
 == License
 Spring Pulsar is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].
