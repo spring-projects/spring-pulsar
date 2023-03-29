@@ -51,10 +51,9 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 	public void registerHints(RuntimeHints hints, @Nullable ClassLoader classLoader) {
 		ReflectionHints reflectionHints = hints.reflection();
 		// The following components need access to declared constructors, invoke declared
-		// methods
-		// and introspect all public methods. The components are a mix of JDK classes,
-		// core Pulsar classes,
-		// some other shaded components available through Pulsar client.
+		// methods and introspect all public methods. The components are a mix of JDK
+		// classes, core Pulsar classes, and some other shaded components available
+		// through Pulsar client.
 		Stream.of(HashSet.class, LinkedHashMap.class, TreeMap.class, Authentication.class,
 				AuthenticationDataProvider.class, SecretsSerializer.class, PulsarAdminBuilderImpl.class,
 				OffloadProcessStatusImpl.class, Commands.class).forEach(
@@ -72,12 +71,10 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 								MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
 								MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
 
+		// @formatter:off
 		// These are shaded classes and other inaccessible interfaces/classes (thus using
 		// string version of API).
-		// @formatter:off
-		Stream.of("com.github.benmanes.caffeine.cache.SSMSA",
-				"com.github.benmanes.caffeine.cache.PSAMS",
-				"org.apache.pulsar.client.admin.internal.JacksonConfigurator",
+		Stream.of("org.apache.pulsar.client.admin.internal.JacksonConfigurator",
 				"org.apache.pulsar.client.impl.conf.TopicConsumerConfigurationData",
 				"org.apache.pulsar.client.impl.conf.TopicConsumerConfigurationData$TopicNameMatcher",
 				"org.apache.pulsar.client.util.SecretsSerializer",
@@ -219,7 +216,9 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 				"org.apache.pulsar.shade.org.jvnet.hk2.internal.DynamicConfigurationServiceImpl",
 				"org.apache.pulsar.shade.org.jvnet.hk2.internal.DynamicConfigurationServiceImpl",
 				"org.apache.pulsar.shade.org.jvnet.hk2.internal.ServiceLocatorRuntimeImpl",
-				"org.apache.pulsar.shade.org.jvnet.hk2.internal.ServiceLocatorRuntimeImpl")
+				"org.apache.pulsar.shade.org.jvnet.hk2.internal.ServiceLocatorRuntimeImpl",
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.SSMSA",
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.PSAMS")
 				.forEach(type -> reflectionHints.registerTypeIfPresent(classLoader, type,
 						builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 								MemberCategory.INVOKE_PUBLIC_METHODS, MemberCategory.INVOKE_DECLARED_METHODS,
