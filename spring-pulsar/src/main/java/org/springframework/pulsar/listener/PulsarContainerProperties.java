@@ -19,6 +19,7 @@ package org.springframework.pulsar.listener;
 import java.time.Duration;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -252,13 +253,15 @@ public class PulsarContainerProperties {
 	}
 
 	public void updateContainerProperties() {
-		if (!this.pulsarConsumerProperties.isEmpty()) {
-			if (this.pulsarConsumerProperties.containsKey(SUBSCRIPTION_NAME)) {
-				this.subscriptionName = (String) this.pulsarConsumerProperties.get(SUBSCRIPTION_NAME);
-			}
-			if (this.pulsarConsumerProperties.containsKey(SUBSCRIPTION_TYPE)) {
-				this.subscriptionType = (SubscriptionType) this.pulsarConsumerProperties.get(SUBSCRIPTION_TYPE);
-			}
+		applyPropIfSpecified(SUBSCRIPTION_NAME, this::setSubscriptionName);
+		applyPropIfSpecified(SUBSCRIPTION_TYPE, this::setSubscriptionType);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> void applyPropIfSpecified(String key, Consumer<T> setter) {
+		if (this.pulsarConsumerProperties.containsKey(key)) {
+			T value = (T) this.pulsarConsumerProperties.get(key);
+			setter.accept(value);
 		}
 	}
 
