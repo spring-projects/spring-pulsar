@@ -67,7 +67,7 @@ public class PulsarAnnotationDrivenConfiguration {
 		containerProperties.setSchemaResolver(schemaResolver);
 		containerProperties.setTopicResolver(topicResolver);
 		containerProperties.setSubscriptionType(this.pulsarProperties.getConsumer().getSubscriptionType());
-		containerProperties.setObservationConvention(observationConventionProvider.getIfUnique());
+		containerProperties.setObservationEnabled(this.pulsarProperties.getListener().isObservationsEnabled());
 
 		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 		PulsarProperties.Listener listenerProperties = this.pulsarProperties.getListener();
@@ -79,8 +79,7 @@ public class PulsarAnnotationDrivenConfiguration {
 		map.from(listenerProperties::getMaxNumMessages).to(containerProperties::setMaxNumMessages);
 
 		return new ConcurrentPulsarListenerContainerFactory<>(consumerFactoryProvider.getIfAvailable(),
-				containerProperties, this.pulsarProperties.getListener().isObservationsEnabled()
-						? observationRegistryProvider.getIfUnique() : null);
+				containerProperties);
 	}
 
 	@Bean

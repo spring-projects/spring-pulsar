@@ -49,9 +49,6 @@ import org.springframework.pulsar.function.PulsarFunction;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarSink;
 import org.springframework.pulsar.function.PulsarSource;
-import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
-
-import io.micrometer.observation.ObservationRegistry;
 
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Apache Pulsar.
@@ -101,12 +98,9 @@ public class PulsarAutoConfiguration {
 	@ConditionalOnMissingBean
 	public PulsarTemplate<?> pulsarTemplate(PulsarProducerFactory<?> pulsarProducerFactory,
 			ObjectProvider<ProducerInterceptor> interceptorsProvider, SchemaResolver schemaResolver,
-			TopicResolver topicResolver, ObjectProvider<ObservationRegistry> observationRegistryProvider,
-			ObjectProvider<PulsarTemplateObservationConvention> observationConventionProvider) {
+			TopicResolver topicResolver) {
 		return new PulsarTemplate<>(pulsarProducerFactory, interceptorsProvider.orderedStream().toList(),
-				schemaResolver, topicResolver, this.properties.getTemplate().isObservationsEnabled()
-						? observationRegistryProvider.getIfUnique() : null,
-				observationConventionProvider.getIfUnique());
+				schemaResolver, topicResolver, this.properties.getTemplate().isObservationsEnabled());
 	}
 
 	@Bean

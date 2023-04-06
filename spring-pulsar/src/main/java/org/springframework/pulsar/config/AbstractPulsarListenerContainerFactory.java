@@ -24,15 +24,12 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.AbstractPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 import org.springframework.pulsar.support.JavaUtils;
 import org.springframework.pulsar.support.MessageConverter;
-
-import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Base {@link PulsarListenerContainerFactory} implementation.
@@ -51,8 +48,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 
 	private final PulsarContainerProperties containerProperties;
 
-	private final ObservationRegistry observationRegistry;
-
 	private Boolean autoStartup;
 
 	private Integer phase;
@@ -66,18 +61,13 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 	private ApplicationContext applicationContext;
 
 	protected AbstractPulsarListenerContainerFactory(PulsarConsumerFactory<? super T> consumerFactory,
-			PulsarContainerProperties containerProperties, @Nullable ObservationRegistry observationRegistry) {
+			PulsarContainerProperties containerProperties) {
 		this.consumerFactory = consumerFactory;
 		this.containerProperties = containerProperties;
-		this.observationRegistry = observationRegistry;
 	}
 
 	protected PulsarConsumerFactory<? super T> getConsumerFactory() {
 		return this.consumerFactory;
-	}
-
-	protected ObservationRegistry getObservationRegistry() {
-		return this.observationRegistry;
 	}
 
 	public PulsarContainerProperties getContainerProperties() {
@@ -171,7 +161,7 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		instanceProperties.setMaxNumMessages(this.containerProperties.getMaxNumMessages());
 		instanceProperties.setMaxNumBytes(this.containerProperties.getMaxNumBytes());
 		instanceProperties.setBatchTimeoutMillis(this.containerProperties.getBatchTimeoutMillis());
-		instanceProperties.setObservationConvention(this.containerProperties.getObservationConvention());
+		instanceProperties.setObservationEnabled(this.containerProperties.isObservationEnabled());
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
 				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)

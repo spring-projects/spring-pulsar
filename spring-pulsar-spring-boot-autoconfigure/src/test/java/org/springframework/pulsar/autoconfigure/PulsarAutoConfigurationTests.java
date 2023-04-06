@@ -65,11 +65,8 @@ import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
-import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
-import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
-import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Autoconfiguration tests for {@link PulsarAutoConfiguration}.
@@ -420,61 +417,42 @@ class PulsarAutoConfigurationTests {
 
 		@Test
 		void templateObservationsEnabledByDefault() {
-			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
-			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
-					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
-							.extracting("observationRegistry").isSameAs(observationRegistry)));
+			contextRunner.run((context -> assertThat(context).getBean(PulsarTemplate.class)
+					.hasFieldOrPropertyWithValue("observationEnabled", true)));
+		}
+
+		@Test
+		void templateObservationsEnabledExplicitly() {
+			contextRunner.withPropertyValues("spring.pulsar.template.observations-enabled=true")
+					.run((context -> assertThat(context).getBean(PulsarTemplate.class)
+							.hasFieldOrPropertyWithValue("observationEnabled", true)));
 		}
 
 		@Test
 		void templateObservationsCanBeDisabled() {
-			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
 			contextRunner.withPropertyValues("spring.pulsar.template.observations-enabled=false")
-					.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
-					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
-							.extracting("observationRegistry").isNull()));
-		}
-
-		@Test
-		void templateObservationsWithCustomConvention() {
-			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
-			PulsarTemplateObservationConvention customConvention = mock(PulsarTemplateObservationConvention.class);
-			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
-					.withBean("customConvention", PulsarTemplateObservationConvention.class, () -> customConvention)
-					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarTemplate.class)
-							.extracting("observationConvention").isSameAs(customConvention)));
+					.run((context -> assertThat(context).getBean(PulsarTemplate.class)
+							.hasFieldOrPropertyWithValue("observationEnabled", false)));
 		}
 
 		@Test
 		void listenerObservationsEnabledByDefault() {
-			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
-			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
-					.run((context -> assertThat(context).hasNotFailed()
-							.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("observationRegistry")
-							.isSameAs(observationRegistry)));
+			contextRunner.run((context -> assertThat(context).getBean(ConcurrentPulsarListenerContainerFactory.class)
+					.hasFieldOrPropertyWithValue("containerProperties.observationEnabled", true)));
+		}
+
+		@Test
+		void listenerObservationsEnabledExplicitly() {
+			contextRunner.withPropertyValues("spring.pulsar.listener.observations-enabled=true")
+					.run((context -> assertThat(context).getBean(ConcurrentPulsarListenerContainerFactory.class)
+							.hasFieldOrPropertyWithValue("containerProperties.observationEnabled", true)));
 		}
 
 		@Test
 		void listenerObservationsCanBeDisabled() {
-			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
 			contextRunner.withPropertyValues("spring.pulsar.listener.observations-enabled=false")
-					.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
-					.run((context -> assertThat(context).hasNotFailed()
-							.getBean(ConcurrentPulsarListenerContainerFactory.class).extracting("observationRegistry")
-							.isNull()));
-		}
-
-		@Test
-		void listenerObservationsWithCustomConvention() {
-			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
-			PulsarListenerObservationConvention customConvention = mock(PulsarListenerObservationConvention.class);
-			contextRunner.withBean("observationRegistry", ObservationRegistry.class, () -> observationRegistry)
-					.withBean("customConvention", PulsarListenerObservationConvention.class, () -> customConvention)
-					.run((context -> assertThat(context).hasNotFailed()
-							.getBean(ConcurrentPulsarListenerContainerFactory.class)
-							.extracting(ConcurrentPulsarListenerContainerFactory<Object>::getContainerProperties)
-							.extracting(PulsarContainerProperties::getObservationConvention)
-							.isSameAs(customConvention)));
+					.run((context -> assertThat(context).getBean(ConcurrentPulsarListenerContainerFactory.class)
+							.hasFieldOrPropertyWithValue("containerProperties.observationEnabled", false)));
 		}
 
 	}
