@@ -12,7 +12,7 @@ env:
 jobs:
   build_and_verify:
     name: Build and Verify
-    if: github.repository == 'spring-projects-experimental/spring-pulsar'
+    if: github.repository == 'spring-projects/spring-pulsar'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo

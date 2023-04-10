@@ -15,7 +15,7 @@ env:
 jobs:
   deploy_docs:
     name: Deploy docs to Artifactory (release)
-    if: github.repository == 'spring-projects-experimental/spring-pulsar'
+    if: github.repository == 'spring-projects/spring-pulsar'
     runs-on: ubuntu-latest
     steps:
       - id: checkout-source

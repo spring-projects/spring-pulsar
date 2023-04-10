@@ -1,6 +1,6 @@
 = Spring for Apache Pulsar
 :docs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/reference
-:github: https://github.com/spring-projects-experimental/spring-pulsar
+:github: https://github.com/spring-projects/spring-pulsar
 
 Spring Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
 
@@ -17,7 +17,7 @@ Are you having trouble with Spring Pulsar? We want to help!
 If you are new to Spring, try one of the https://spring.io/guides[guides].
 // TODO (NYI): * If you are upgrading, read the {github}/wiki[release notes] for upgrade instructions and "new and noteworthy" features.
 * Ask a question -- we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`].
-* Report bugs with Spring Pulsar at {github}/issues[github.com/spring-projects-experimental/spring-pulsar/issues].
+* Report bugs with Spring Pulsar at {github}/issues[github.com/spring-projects/spring-pulsar/issues].
 
 
 

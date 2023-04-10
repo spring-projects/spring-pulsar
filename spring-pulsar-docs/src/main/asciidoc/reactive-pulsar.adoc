@@ -355,7 +355,7 @@ In contrast to imperative concurrency that can not currently be used with `Exclu
 [[reactive-pulsar-headers]]
 === Pulsar Headers
 The Pulsar message metadata can be consumed as Spring message headers.
-The list of available headers can be found in https://github.com/spring-projects-experimental/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
+The list of available headers can be found in https://github.com/spring-projects/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
 
 ==== Accessing In OneByOne Listener
 The following example shows how you can access Pulsar Headers when using a one-by-one message listener:

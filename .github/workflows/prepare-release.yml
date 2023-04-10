@@ -14,7 +14,7 @@ permissions:
 jobs:
   update_release_version:
     name: Initiate Release
-    if: github.repository == 'spring-projects-experimental/spring-pulsar'
+    if: github.repository == 'spring-projects/spring-pulsar'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -10,7 +10,7 @@
 :spring-boot-version: current
 :spring-cloud-stream-version: current
 
-:github: https://github.com/spring-projects-experimental/spring-pulsar
+:github: https://github.com/spring-projects/spring-pulsar
 :javadocs: https://docs.spring.io/spring-pulsar/docs/{spring-pulsar-version}/api
 :spring-boot-docs: https://docs.spring.io/spring-boot/docs/{spring-boot-version}/reference/htmlsingle
 :spring-cloud-stream-docs: https://docs.spring.io/spring-cloud-stream/docs/{spring-cloud-stream-version}/reference/html/
