@@ -6,8 +6,8 @@ plugins {
 description = 'Spring Cloud Stream Binder for Pulsar Sample Application'
 
 dependencies {
-	implementation project(':spring-pulsar-spring-cloud-stream-binder')
-	implementation project(':spring-pulsar-spring-boot-starter')
+	implementation 'org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder'
+	implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter'
 }
 
 bootRun {

@@ -1,5 +1,7 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
+	id "de.undercouch.download" version "5.3.0"
+	id 'spring-pulsar.integration-test-conventions'
 }
 
 description = 'Spring Pulsar Support'
@@ -43,8 +45,39 @@ dependencies {
 	testImplementation 'org.springframework:spring-test'
 	testImplementation 'org.springframework.boot:spring-boot-test'
 
+	intTestImplementation 'org.springframework.boot:spring-boot-starter-amqp'
+	intTestImplementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter'
+	intTestImplementation 'org.testcontainers:junit-jupiter'
+	intTestImplementation 'org.testcontainers:pulsar'
+	intTestImplementation 'org.testcontainers:rabbitmq'
 }
 
 test {
 	testLogging.showStandardStreams = true
+}
+
+integrationTest {
+	maxHeapSize '2048m'
+}
+
+task downloadRabbitConnector {
+	onlyIf {
+		System.getProperty("downloadRabbitConnector") == "true"
+	}
+	doLast {
+		try {
+			download.run {
+				println "Downloading Rabbit connector to 'src/intTest/resources/connectors/' (one time only if not already downloaded)..."
+				src 'https://archive.apache.org/dist/pulsar/pulsar-2.10.2/connectors/pulsar-io-rabbitmq-2.10.2.nar'
+				dest "$buildDir/../src/intTest/resources/connectors/pulsar-io-rabbitmq-2.10.2.nar"
+				overwrite false
+			}
+		} catch (Exception ex) {
+			println "Failed to download rabbit connector: $ex"
+		}
+	}
+}
+
+project.afterEvaluate {
+	compileTestJava.dependsOn downloadRabbitConnector
 }

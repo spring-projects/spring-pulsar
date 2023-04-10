@@ -1,5 +1,6 @@
 plugins {
 	id "java-gradle-plugin"
+	id 'groovy-gradle-plugin'
 	id "java"
 	id "groovy"
 }
@@ -69,10 +70,6 @@ tasks.named('test', Test).configure {
 
 gradlePlugin {
 	plugins {
-		configurationPropertiesPlugin {
-			id = "org.springframework.pulsar.configuration-properties"
-			implementationClass = 'org.springframework.pulsar.gradle.docs.configprops.ConfigurationPropertiesPlugin'
-		}
 		jacocoConventionsPlugin {
 			id = "org.springframework.pulsar.jacoco"
 			implementationClass = "org.springframework.pulsar.gradle.JacocoConventionsPlugin"
@@ -105,10 +102,6 @@ gradlePlugin {
 		artifactoryPlugin {
 			id = "io.spring.convention.artfiactory"
 			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
-		}
-		integrationTestPlugin {
-			id = "io.spring.convention.integration-test"
-			implementationClass = "io.spring.gradle.convention.IntegrationTestPlugin"
 		}
 		repositoryConventionPlugin {
 			id = "io.spring.convention.repository"

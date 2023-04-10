@@ -6,7 +6,7 @@ plugins {
 description = 'Reactive Spring Pulsar Sample Application'
 
 dependencies {
-	implementation project(':spring-pulsar-reactive-spring-boot-starter')
+	implementation 'org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter'
 	implementation 'com.google.code.findbugs:jsr305'
 }
 

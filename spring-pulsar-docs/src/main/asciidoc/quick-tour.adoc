@@ -5,10 +5,7 @@ include::attributes.adoc[]
 We will take a quick tour of Spring for Apache Pulsar by showing a sample Spring Boot application that produces and consumes.
 This is a complete application and does not require any additional configuration, as long as you have a Pulsar cluster running on the default location - `localhost:6650`.
 
-NOTE: We recommend using a Spring-Boot-First approach for Spring for Apache Pulsar-based application, as that simplifies things tremendously. To do so, you can add the `spring-pulsar-spring-boot-starter` module as a dependency.
-
 == Dependencies
-
 Spring Boot applications need only the `spring-pulsar-spring-boot-starter` dependency. The following listings show how to define the dependency for Maven and Gradle, respectively:
 
 [source,xml,indent=0,subs="verbatim,attributes",role="primary"]
@@ -18,7 +15,7 @@ Spring Boot applications need only the `spring-pulsar-spring-boot-starter` depen
     <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar-spring-boot-starter</artifactId>
-        <version>{spring-pulsar-version}</version>
+        <version>{spring-pulsar-starter-version}</version>
     </dependency>
 </dependencies>
 ----
@@ -27,7 +24,7 @@ Spring Boot applications need only the `spring-pulsar-spring-boot-starter` depen
 .Gradle
 ----
 dependencies {
-    implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter:{spring-pulsar-version}'
+    implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter:{spring-pulsar-starter-version}'
 }
 ----
 

@@ -18,7 +18,7 @@ We need to include the following dependency on your application to use Apache Pu
     <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar-spring-cloud-stream-binder</artifactId>
-        <version>{spring-pulsar-version}</version>
+        <version>{spring-pulsar-binder-version}</version>
     </dependency>
 </dependencies>
 ----
@@ -27,7 +27,7 @@ We need to include the following dependency on your application to use Apache Pu
 .Gradle
 ----
 dependencies {
-    implementation 'org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:{spring-pulsar-version}'
+    implementation 'org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:{spring-pulsar-binder-version}'
 }
 ----
 
