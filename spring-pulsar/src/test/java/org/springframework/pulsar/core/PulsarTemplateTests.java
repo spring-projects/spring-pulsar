@@ -221,7 +221,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
 		topicResolver.addCustomTopicMapping(Foo.class, topic);
 		PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
-				new DefaultSchemaResolver(), topicResolver, null, null);
+				new DefaultSchemaResolver(), topicResolver, false);
 		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 		ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo, Schema.JSON(Foo.class));
 		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
@@ -288,7 +288,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 			schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
 			PulsarTemplate<Foo> pulsarTemplate = new PulsarTemplate<>(producerFactory, Collections.emptyList(),
-					schemaResolver, new DefaultTopicResolver(), null, null);
+					schemaResolver, new DefaultTopicResolver(), false);
 			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 			ThrowingConsumer<PulsarTemplate<Foo>> sendFunction = (template) -> template.newMessage(foo).send();
 			sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);

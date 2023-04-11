@@ -31,6 +31,9 @@ import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
@@ -51,7 +54,8 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Alexander Preuß
  * @author Christophe Bornet
  */
-public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
+public class PulsarTemplate<T>
+		implements PulsarOperations<T>, ApplicationContextAware, BeanNameAware, SmartInitializingSingleton {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -63,11 +67,25 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	private final TopicResolver topicResolver;
 
+	/**
+	 * Whether to record observations.
+	 */
+	private boolean observationEnabled;
+
+	/**
+	 * The registry to record observations with.
+	 */
 	@Nullable
-	private final ObservationRegistry observationRegistry;
+	private ObservationRegistry observationRegistry;
+
+	/**
+	 * The optional custom observation convention to use when recording observations.
+	 */
+	@Nullable
+	private PulsarTemplateObservationConvention observationConvention;
 
 	@Nullable
-	private final PulsarTemplateObservationConvention observationConvention;
+	private ApplicationContext applicationContext;
 
 	private String beanName = "";
 
@@ -82,12 +100,12 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 
 	/**
 	 * Construct a template instance with interceptors that uses the default schema
-	 * resolver and default topic resolver.
+	 * resolver and default topic resolver and enables observation recording.
 	 * @param producerFactory the factory used to create the backing Pulsar producers.
 	 * @param interceptors the interceptors to add to the producer.
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors) {
-		this(producerFactory, interceptors, new DefaultSchemaResolver(), new DefaultTopicResolver(), null, null);
+		this(producerFactory, interceptors, new DefaultSchemaResolver(), new DefaultTopicResolver(), true);
 	}
 
 	/**
@@ -96,21 +114,40 @@ public class PulsarTemplate<T> implements PulsarOperations<T>, BeanNameAware {
 	 * @param interceptors the list of interceptors to add to the producer
 	 * @param schemaResolver the schema resolver to use
 	 * @param topicResolver the topic resolver to use
-	 * @param observationRegistry the registry to record observations with or {@code null}
-	 * to not record observations
-	 * @param observationConvention the optional custom observation convention to use when
-	 * recording observations
+	 * @param observationEnabled whether to record observations
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors,
-			SchemaResolver schemaResolver, TopicResolver topicResolver,
-			@Nullable ObservationRegistry observationRegistry,
-			@Nullable PulsarTemplateObservationConvention observationConvention) {
+			SchemaResolver schemaResolver, TopicResolver topicResolver, boolean observationEnabled) {
 		this.producerFactory = producerFactory;
 		this.interceptors = interceptors;
 		this.schemaResolver = schemaResolver;
 		this.topicResolver = topicResolver;
-		this.observationRegistry = observationRegistry;
-		this.observationConvention = observationConvention;
+		this.observationEnabled = observationEnabled;
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) {
+		this.applicationContext = applicationContext;
+	}
+
+	/**
+	 * If observations are enabled, attempt to obtain the Observation registry and
+	 * convention.
+	 */
+	@Override
+	public void afterSingletonsInstantiated() {
+		if (!this.observationEnabled) {
+			this.logger.debug(() -> "Observations are not enabled - not recording");
+			return;
+		}
+		if (this.applicationContext == null) {
+			this.logger.warn(() -> "Observations enabled but application context null - not recording");
+			return;
+		}
+		this.observationRegistry = this.applicationContext.getBeanProvider(ObservationRegistry.class)
+				.getIfUnique(() -> this.observationRegistry);
+		this.observationConvention = this.applicationContext.getBeanProvider(PulsarTemplateObservationConvention.class)
+				.getIfUnique(() -> this.observationConvention);
 	}
 
 	@Override

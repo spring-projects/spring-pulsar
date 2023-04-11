@@ -183,13 +183,17 @@ public class ObservationTests implements PulsarTestContainerSupport {
 		PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory,
 				ObservationRegistry observationRegistry) {
 			return new PulsarTemplate<>(pulsarProducerFactory, null, new DefaultSchemaResolver(),
-					new DefaultTopicResolver(), observationRegistry, new DefaultPulsarTemplateObservationConvention() {
-						@Override
-						public KeyValues getLowCardinalityKeyValues(PulsarMessageSenderContext context) {
-							return super.getLowCardinalityKeyValues(context).and(SENDER_EXTRA_TAG,
-									context.getBeanName());
-						}
-					});
+					new DefaultTopicResolver(), true);
+		}
+
+		@Bean
+		PulsarTemplateObservationConvention pulsarTemplateConvention() {
+			return new DefaultPulsarTemplateObservationConvention() {
+				@Override
+				public KeyValues getLowCardinalityKeyValues(PulsarMessageSenderContext context) {
+					return super.getLowCardinalityKeyValues(context).and(SENDER_EXTRA_TAG, context.getBeanName());
+				}
+			};
 		}
 
 		@Bean
@@ -199,9 +203,15 @@ public class ObservationTests implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarListenerContainerFactory pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory, ObservationRegistry observationRegistry) {
+				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
 			PulsarContainerProperties containerProperties = new PulsarContainerProperties();
-			containerProperties.setObservationConvention(new DefaultPulsarListenerObservationConvention() {
+			containerProperties.setObservationEnabled(true);
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProperties);
+		}
+
+		@Bean
+		PulsarListenerObservationConvention pulsarListenerConvention() {
+			return new DefaultPulsarListenerObservationConvention() {
 				@Override
 				public KeyValues getLowCardinalityKeyValues(PulsarMessageReceiverContext context) {
 					// Only add the extra tag for the 1st listener
@@ -210,9 +220,7 @@ public class ObservationTests implements PulsarTestContainerSupport {
 					}
 					return super.getLowCardinalityKeyValues(context).and(RECEIVER_EXTRA_TAG, context.getListenerId());
 				}
-			});
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProperties,
-					observationRegistry);
+			};
 		}
 
 		@Bean

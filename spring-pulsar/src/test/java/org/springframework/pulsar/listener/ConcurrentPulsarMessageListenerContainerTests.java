@@ -36,13 +36,17 @@ import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.backoff.BackOff;
+
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * @author Soby Chacko
@@ -60,7 +64,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		containerProperties.setMaxNumMessages(120);
 		containerProperties.setMaxNumBytes(32000);
 		ConcurrentPulsarListenerContainerFactory<String> containerFactory = new ConcurrentPulsarListenerContainerFactory<>(
-				consumerFactory, containerProperties, null);
+				consumerFactory, containerProperties);
 		containerFactory.setConcurrency(1);
 		PulsarListenerEndpoint pulsarListenerEndpoint = mock(PulsarListenerEndpoint.class);
 		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
@@ -135,14 +139,17 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	void observationConfigAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-		PulsarListenerObservationConvention customObservationConvention = mock(
-				PulsarListenerObservationConvention.class);
-		concurrentContainer.getContainerProperties().setObservationConvention(customObservationConvention);
+		ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+		PulsarListenerObservationConvention observationConvention = mock(PulsarListenerObservationConvention.class);
+		concurrentContainer.getContainerProperties().setObservationEnabled(true);
+		concurrentContainer.getContainerProperties().setObservationRegistry(observationRegistry);
+		concurrentContainer.getContainerProperties().setObservationConvention(observationConvention);
 		concurrentContainer.start();
 
 		DefaultPulsarMessageListenerContainer<String> childContainer = concurrentContainer.getContainers().get(0);
-		assertThat(childContainer.getContainerProperties().getObservationConvention())
-				.isSameAs(customObservationConvention);
+		assertThat(childContainer.getContainerProperties().isObservationEnabled()).isTrue();
+		assertThat(childContainer.getContainerProperties().getObservationRegistry()).isSameAs(observationRegistry);
+		assertThat(childContainer.getContainerProperties().getObservationConvention()).isSameAs(observationConvention);
 	}
 
 	@Test
@@ -188,13 +195,104 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		});
 
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = new ConcurrentPulsarMessageListenerContainer<>(
-				consumerFactory, pulsarContainerProperties, null);
+				consumerFactory, pulsarContainerProperties);
 
 		return new PulsarListenerMockComponents(consumerFactory, consumer, concurrentContainer);
 	}
 
 	private record PulsarListenerMockComponents(PulsarConsumerFactory<String> consumerFactory,
 			Consumer<String> consumer, ConcurrentPulsarMessageListenerContainer<String> concurrentContainer) {
+	}
+
+	@Nested
+	class ObservationConfigurationTests {
+
+		@Test
+		void uniqueRegistryAndConventionBeansAvailable() throws Exception {
+			PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+			ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+			GenericApplicationContext appContext = new GenericApplicationContext();
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			PulsarListenerObservationConvention observationConvention = mock(PulsarListenerObservationConvention.class);
+			appContext.registerBean("obsReg", ObservationRegistry.class, () -> observationRegistry);
+			appContext.registerBean("obsConv", PulsarListenerObservationConvention.class, () -> observationConvention);
+			appContext.refresh();
+			concurrentContainer.setApplicationContext(appContext);
+			concurrentContainer.getContainerProperties().setObservationEnabled(true);
+			concurrentContainer.start();
+			PulsarContainerProperties containerProps = concurrentContainer.getContainerProperties();
+			assertThat(containerProps.isObservationEnabled()).isTrue();
+			assertThat(containerProps.getObservationRegistry()).isSameAs(observationRegistry);
+			assertThat(containerProps.getObservationConvention()).isSameAs(observationConvention);
+		}
+
+		@Test
+		void enabledPropertySetToFalse() throws Exception {
+			PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+			ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+			GenericApplicationContext appContext = new GenericApplicationContext();
+			ObservationRegistry observationRegistry = mock(ObservationRegistry.class);
+			PulsarListenerObservationConvention observationConvention = mock(PulsarListenerObservationConvention.class);
+			appContext.registerBean("obsReg", ObservationRegistry.class, () -> observationRegistry);
+			appContext.registerBean("obsConv", PulsarListenerObservationConvention.class, () -> observationConvention);
+			appContext.refresh();
+			concurrentContainer.setApplicationContext(appContext);
+			concurrentContainer.getContainerProperties().setObservationEnabled(false);
+			concurrentContainer.start();
+			PulsarContainerProperties containerProps = concurrentContainer.getContainerProperties();
+			assertThat(containerProps.isObservationEnabled()).isFalse();
+			assertThat(containerProps.getObservationConvention()).isNull();
+			assertThat(containerProps.getObservationRegistry()).isNull();
+		}
+
+		@Test
+		void noAppContextAvailable() throws Exception {
+			PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+			ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+			concurrentContainer.getContainerProperties().setObservationEnabled(true);
+			concurrentContainer.start();
+			PulsarContainerProperties containerProps = concurrentContainer.getContainerProperties();
+			assertThat(containerProps.isObservationEnabled()).isTrue();
+			assertThat(containerProps.getObservationConvention()).isNull();
+			assertThat(containerProps.getObservationRegistry()).isNull();
+		}
+
+		@Test
+		void noRegistryOrConventionBeansAvailable() throws Exception {
+			PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+			ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+			GenericApplicationContext appContext = new GenericApplicationContext();
+			appContext.refresh();
+			concurrentContainer.setApplicationContext(appContext);
+			concurrentContainer.getContainerProperties().setObservationEnabled(true);
+			concurrentContainer.start();
+			PulsarContainerProperties containerProps = concurrentContainer.getContainerProperties();
+			assertThat(containerProps.isObservationEnabled()).isTrue();
+			assertThat(containerProps.getObservationConvention()).isNull();
+			assertThat(containerProps.getObservationRegistry()).isNull();
+		}
+
+		@Test
+		void noUniqueRegistryOrConventionBeansAvailable() throws Exception {
+			PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
+			ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
+			GenericApplicationContext appContext = new GenericApplicationContext();
+			appContext.registerBean("obsReg1", ObservationRegistry.class, () -> mock(ObservationRegistry.class));
+			appContext.registerBean("obsReg2", ObservationRegistry.class, () -> mock(ObservationRegistry.class));
+			appContext.registerBean("obsConv1", PulsarListenerObservationConvention.class,
+					() -> mock(PulsarListenerObservationConvention.class));
+			appContext.registerBean("obsConv2", PulsarListenerObservationConvention.class,
+					() -> mock(PulsarListenerObservationConvention.class));
+			appContext.refresh();
+			concurrentContainer.setApplicationContext(appContext);
+			concurrentContainer.getContainerProperties().setObservationEnabled(true);
+			concurrentContainer.start();
+			PulsarContainerProperties containerProps = concurrentContainer.getContainerProperties();
+			assertThat(containerProps.isObservationEnabled()).isTrue();
+			assertThat(containerProps.getObservationRegistry()).isNull();
+			assertThat(containerProps.getObservationConvention()).isNull();
+		}
+
 	}
 
 }
