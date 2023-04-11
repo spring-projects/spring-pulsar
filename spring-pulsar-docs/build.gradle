@@ -10,15 +10,12 @@ ext {
 }
 
 configurations {
-	configurationProperties
 	observationDocs
 }
 
 dependencies {
 	api project (':spring-pulsar')
 	api 'org.springframework.boot:spring-boot-starter'
-	configurationProperties(project(path: ":spring-pulsar-spring-boot-autoconfigure", configuration: "configurationPropertiesMetadata"))
-	configurationProperties(project(path: ":spring-pulsar-spring-cloud-stream-binder", configuration: "configurationPropertiesMetadata"))
 	observationDocs "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 
@@ -44,12 +41,9 @@ task aggregatedJavadoc(type: Javadoc) {
 	title = "${rootProject.description} ${version} API"
 
 	project.rootProject.gradle.projectsEvaluated {
-		Set<String> excludedProjects = ['spring-pulsar-sample-apps:sample-app1',
-										'spring-pulsar-sample-apps:sample-app2',
-										'spring-pulsar-sample-apps:sample-reactive']
 		Set<Project> publishedProjects = rootProject.subprojects.findAll { it != project}
 			.findAll { it.plugins.hasPlugin(JavaPlugin) && it.plugins.hasPlugin(MavenPublishPlugin) }
-			.findAll { !excludedProjects.contains(it.name) }
+			.findAll { !it.name.startsWith('sample-') && !it.name.equals('spring-pulsar-test') }
 		dependsOn publishedProjects.javadoc
 		source publishedProjects.javadoc.source
 		classpath = project.files(publishedProjects.javadoc.classpath)
@@ -73,11 +67,6 @@ task aggregatedJavadoc(type: Javadoc) {
 	}
 }
 
-task documentConfigurationProperties(type: org.springframework.pulsar.gradle.docs.configprops.DocumentConfigurationProperties) {
-	configurationPropertyMetadata = configurations.configurationProperties
-	outputDir = file("${buildDir}/docs/generated/")
-}
-
 def observationsInputDir = file("${rootDir}/spring-pulsar/src/main/java/org/springframework/pulsar/observation").absolutePath
 def observationsOutputDir = file("${buildDir}/docs/generated/observation/").absolutePath
 
@@ -97,9 +86,11 @@ tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 		jvmArgs "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", "--add-opens", "java.base/java.io=ALL-UNNAMED"
 	}
 	doFirst {
-		attributes "spring-pulsar-version": project.version,
-				"spring-boot-version": project(':spring-pulsar-dependencies').springBootVersion ?: 'current',
-				"spring-cloud-stream-version": project(':spring-pulsar-dependencies').springCloudStreamVersion ?: 'current'
+		attributes "spring-boot-version": project(':spring-pulsar-dependencies').springBootVersion ?: 'current',
+				"spring-cloud-stream-version": project(':spring-pulsar-dependencies').springCloudStreamVersion ?: 'current',
+				"spring-pulsar-version": project.version,
+				"spring-pulsar-binder-version": project(':spring-pulsar-dependencies').springPulsarBinderVersion ?: 'current',
+				"spring-pulsar-starter-version": project(':spring-pulsar-dependencies').springPulsarStarterVersion ?: 'current'
 	}
 }
 
@@ -122,7 +113,7 @@ task asciidoctorMultipage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 }
 
 syncDocumentationSourceForAsciidoctor {
-	dependsOn documentConfigurationProperties, generateObservabilityDocs
+	dependsOn generateObservabilityDocs
 	from("${buildDir}/docs/generated") {
 		into "asciidoc"
 	}
@@ -132,7 +123,7 @@ syncDocumentationSourceForAsciidoctor {
 }
 
 syncDocumentationSourceForAsciidoctorMultipage {
-	dependsOn documentConfigurationProperties, generateObservabilityDocs
+	dependsOn generateObservabilityDocs
 	from("${buildDir}/docs/generated") {
 		into "asciidoc"
 	}
@@ -142,7 +133,7 @@ syncDocumentationSourceForAsciidoctorMultipage {
 }
 
 syncDocumentationSourceForAsciidoctorPdf {
-	dependsOn documentConfigurationProperties, generateObservabilityDocs
+	dependsOn generateObservabilityDocs
 	from("${buildDir}/docs/generated") {
 		into "asciidoc"
 	}

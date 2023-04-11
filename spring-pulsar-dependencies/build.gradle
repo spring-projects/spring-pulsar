@@ -13,6 +13,8 @@ ext {
 	pulsarVersion = '2.11.0'
 	pulsarClientReactiveVersion = '0.2.0'
 	springBootVersion = '3.0.5'
+	springPulsarStarterVersion = '0.2.1-SNAPSHOT'
+	springPulsarBinderVersion = '0.2.0'
 	springCloudStreamVersion = '4.0.1'
 }
 
@@ -27,5 +29,8 @@ dependencies {
 		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine:$pulsarClientReactiveVersion"
 		api "org.springframework.cloud:spring-cloud-stream:$springCloudStreamVersion"
 		api "org.springframework.cloud:spring-cloud-stream-test-support:$springCloudStreamVersion"
+		api "org.springframework.pulsar:spring-pulsar-spring-boot-starter:$springPulsarStarterVersion"
+		api "org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter:$springPulsarStarterVersion"
+		api "org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:$springPulsarBinderVersion"
 	}
 }

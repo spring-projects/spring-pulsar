@@ -85,20 +85,8 @@ Provides reference docs and handles aggregating javadocs.
 === spring-pulsar-reactive
 Provides the API to access Apache Pulsar using a Reactive client.
 
-=== spring-pulsar-reactive-spring-boot-starter
-Provides a dependency descriptor that can be included in your application to easily start using Spring Pulsar in Reactive and imperative fashions.
-
 === spring-pulsar-sample-apps
 Provides sample applications to illustrate Spring Pulsar functionality as well as provide ability for quick manual verification during development.
-
-=== spring-pulsar-spring-boot-autoconfigure
-Provides Spring Boot auto-configuration for Spring Pulsar.
-
-=== spring-pulsar-spring-boot-starter
-Provides a dependency descriptor that can be included in your application to easily start using Spring Pulsar in an imperative fashion.
-
-=== spring-pulsar-spring-cloud-stream-binder
-Provides a Spring Cloud Stream Binder implementation for Apache Pulsar.
 
 
 == License

@@ -20,6 +20,14 @@ However, the following is not yet supported:
 * Accessing Pulsar headers via `@Header` in streaming mode
 * Observations
 
+== Preface
+
+NOTE: We recommend using a Spring-Boot-First approach for Spring for Apache Pulsar-based applications, as that simplifies things tremendously.
+To do so, you can add the `spring-pulsar-reactive-spring-boot-starter` module as a dependency.
+
+NOTE: The majority of this reference expects the reader to be using the starter and gives most directions for configuration with that in mind.
+However, an effort is made to call out when instructions are specific to the Spring Boot starter usage.
+
 include::reactive-quick-tour.adoc[leveloffset=+1]
 
 == Design
@@ -44,7 +52,7 @@ This can be adjusted by setting the `spring.pulsar.client.service-url` property 
 TIP: The value must be a valid {apache-pulsar-docs}/client-libraries-java/#connection-urls[Pulsar Protocol] URL
 
 There are many other application properties (inherited from the adapted imperative client) available to configure.
-See the <<application-properties.adoc#appendix.application-properties.pulsar-client,Appendix>> for properties prefixed with `spring.pulsar.client`.
+See the {spring-boot-pulsar-config-props}[`spring.pulsar.client.*`] application properties.
 
 [[reactive-client-authentication]]
 === Authentication
@@ -113,7 +121,7 @@ include::schema-info/schema-info-template.adoc[leveloffset=+1]
 === ReactivePulsarSenderFactory
 The `ReactivePulsarTemplate` relies on a `ReactivePulsarSenderFactory` to actually create the underlying sender.
 
-Spring Boot provides this sender factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-sender,`spring.pulsar.reactive.sender`>> prefixed application properties.
+Spring Boot provides this sender factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.sender.*`] application properties.
 
 NOTE: If topic information is not specified when using the sender factory APIs directly, the same <<topic-resolution-process-reactive,topic resolution process>> used by the `ReactivePulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
@@ -122,7 +130,7 @@ Each underlying Pulsar producer consumes resources.
 To improve performance and avoid continual creation of producers, the `ReactiveMessageSenderCache` in the underlying Apache Pulsar Reactive client caches the producers that it creates.
 They are cached in an LRU fashion and evicted when they have not been used within a configured time period.
 
-You can configure the cache settings by specifying any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-sender,`spring.pulsar.reactive.sender.cache`>> prefixed application properties.
+You can configure the cache settings by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.sender.cache.*`] application properties.
 
 [[reactive-message-consumption]]
 == Message Consumption
@@ -262,7 +270,7 @@ Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<Foo
 ==== Configuration - Application Properties
 The listener ultimately relies on `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer.
 
-Spring Boot provides this consumer factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-consumer,`spring.pulsar.reactive.consumer`>> prefixed application properties.
+Spring Boot provides this consumer factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.consumer.*`] application-properties.
 
 [[reactive-consumer-customizer]]
 ==== Consumer Customization
@@ -355,7 +363,7 @@ In contrast to imperative concurrency that can not currently be used with `Exclu
 [[reactive-pulsar-headers]]
 === Pulsar Headers
 The Pulsar message metadata can be consumed as Spring message headers.
-The list of available headers can be found in https://github.com/spring-projects/spring-pulsar/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
+The list of available headers can be found in {github}/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
 
 ==== Accessing In OneByOne Listener
 The following example shows how you can access Pulsar Headers when using a one-by-one message listener:
@@ -500,7 +508,7 @@ The easy way to solve this is to provide a DLQ topic name always.
 === Pulsar Reader Support
 The framework provides support for using {apache-pulsar-docs}/concepts-clients/#reader-interface[Pulsar Reader] in a Reactive fashion via the `ReactivePulsarReaderFactory`.
 
-Spring Boot provides this reader factory which can be configured with any of the <<application-properties.adoc#appendix.application-properties.pulsar-reactive-reader,`spring.pulsar.reactive.reader`>> prefixed application properties.
+Spring Boot provides this reader factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.reader.*`] application properties.
 
 [[topic-resolution-process-reactive]]
 == Topic Resolution

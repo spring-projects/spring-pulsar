@@ -7,7 +7,7 @@ group = 'org.springframework.pulsar.sample'
 description = 'Sample Signup App (Pulsar Functions)'
 
 dependencies {
-	implementation project(':spring-pulsar-spring-boot-starter')
+	implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-data-cassandra'
 	implementation 'com.devskiller:jfairy:0.6.5'

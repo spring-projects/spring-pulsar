@@ -13,7 +13,7 @@ By default, the application tries to connect to a local Pulsar instance at `\htt
 This can be adjusted by setting the `spring.pulsar.administration.service-url` property to a different value in the form `(http|https)://<host>:<port>`.
 
 There are many application properties available to configure the client.
-See the <<application-properties.adoc#appendix.application-properties.pulsar-administration,Appendix>> for application properties prefixed with `spring.pulsar.administration`.
+See the {spring-boot-pulsar-config-props}[`spring.pulsar.administration.*`] application properties.
 
 [[pulsar-admin-authentication]]
 === Authentication
