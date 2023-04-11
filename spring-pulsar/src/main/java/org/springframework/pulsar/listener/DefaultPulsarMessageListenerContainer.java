@@ -51,7 +51,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.ConsumerBuilderConfigurationUtil;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -66,7 +65,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Default implementation for {@link PulsarMessageListenerContainer}.
@@ -97,12 +95,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
 			PulsarContainerProperties pulsarContainerProperties) {
-		this(pulsarConsumerFactory, pulsarContainerProperties, null);
-	}
-
-	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
-			PulsarContainerProperties pulsarContainerProperties, @Nullable ObservationRegistry observationRegistry) {
-		super(pulsarConsumerFactory, pulsarContainerProperties, observationRegistry);
+		super(pulsarConsumerFactory, pulsarContainerProperties);
 		this.thisOrParentContainer = this;
 	}
 
@@ -122,8 +115,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			containerProperties.setConsumerTaskExecutor(consumerExecutor);
 		}
 
-		this.listenerConsumer = new Listener(messageListener, this.getContainerProperties(),
-				this.getObservationRegistry());
+		this.listenerConsumer = new Listener(messageListener, this.getContainerProperties());
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
 		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
@@ -229,8 +221,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final PulsarContainerProperties containerProperties;
 
-		private final ObservationRegistry observationRegistry;
-
 		private Consumer<T> consumer;
 
 		private final Set<MessageId> nackableMessages = new HashSet<>();
@@ -246,8 +236,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		private final SubscriptionType subscriptionType;
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		Listener(MessageListener<?> messageListener, PulsarContainerProperties containerProperties,
-				@Nullable ObservationRegistry observationRegistry) {
+		Listener(MessageListener<?> messageListener, PulsarContainerProperties containerProperties) {
 
 			this.containerProperties = containerProperties;
 			this.isBatchListener = this.containerProperties.isBatchListener();
@@ -266,7 +255,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.listener = null;
 				this.batchMessageListener = null;
 			}
-			this.observationRegistry = observationRegistry;
 			this.pulsarConsumerErrorHandler = getPulsarConsumerErrorHandler();
 			this.consumerBuilderCustomizer = getConsumerBuilderCustomizer();
 			try {
@@ -480,13 +468,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private Observation newObservation(Message<T> message) {
-			if (this.observationRegistry == null) {
+			if (this.containerProperties.getObservationRegistry() == null) {
 				return Observation.NOOP;
 			}
 			return PulsarListenerObservation.LISTENER_OBSERVATION.observation(
 					this.containerProperties.getObservationConvention(),
 					DefaultPulsarListenerObservationConvention.INSTANCE,
-					() -> new PulsarMessageReceiverContext(message, getBeanName()), this.observationRegistry);
+					() -> new PulsarMessageReceiverContext(message, getBeanName()),
+					this.containerProperties.getObservationRegistry());
 		}
 
 		private void dispatchMessageToListener(Message<T> message, AtomicBoolean inRetryMode) {

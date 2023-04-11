@@ -33,6 +33,8 @@ import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.Assert;
 
+import io.micrometer.observation.ObservationRegistry;
+
 /**
  * Contains runtime properties for a listener container.
  *
@@ -79,6 +81,10 @@ public class PulsarContainerProperties {
 	private boolean batchListener;
 
 	private AckMode ackMode = AckMode.BATCH;
+
+	private boolean observationEnabled;
+
+	private ObservationRegistry observationRegistry;
 
 	private PulsarListenerObservationConvention observationConvention;
 
@@ -162,6 +168,22 @@ public class PulsarContainerProperties {
 		this.ackMode = ackMode;
 	}
 
+	public boolean isObservationEnabled() {
+		return this.observationEnabled;
+	}
+
+	public void setObservationEnabled(boolean observationEnabled) {
+		this.observationEnabled = observationEnabled;
+	}
+
+	public ObservationRegistry getObservationRegistry() {
+		return this.observationRegistry;
+	}
+
+	void setObservationRegistry(ObservationRegistry observationRegistry) {
+		this.observationRegistry = observationRegistry;
+	}
+
 	public PulsarListenerObservationConvention getObservationConvention() {
 		return this.observationConvention;
 	}
@@ -170,7 +192,7 @@ public class PulsarContainerProperties {
 	 * Set a custom observation convention.
 	 * @param observationConvention the convention.
 	 */
-	public void setObservationConvention(PulsarListenerObservationConvention observationConvention) {
+	void setObservationConvention(PulsarListenerObservationConvention observationConvention) {
 		this.observationConvention = observationConvention;
 	}
 

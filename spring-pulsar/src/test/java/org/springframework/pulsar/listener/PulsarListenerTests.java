@@ -128,7 +128,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		PulsarListenerContainerFactory pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
 			ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
-					pulsarConsumerFactory, new PulsarContainerProperties(), null);
+					pulsarConsumerFactory, new PulsarContainerProperties());
 			return pulsarListenerContainerFactory;
 		}
 
@@ -707,7 +707,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				PulsarContainerProperties containerProps = new PulsarContainerProperties();
 				containerProps.setSchemaResolver(schemaResolver);
 				ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
-						pulsarConsumerFactory, containerProps, null);
+						pulsarConsumerFactory, containerProps);
 				return pulsarListenerContainerFactory;
 			}
 
@@ -787,7 +787,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				PulsarContainerProperties containerProps = new PulsarContainerProperties();
 				containerProps.setTopicResolver(topicResolver);
 				ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory = new ConcurrentPulsarListenerContainerFactory<>(
-						pulsarConsumerFactory, containerProps, null);
+						pulsarConsumerFactory, containerProps);
 				return pulsarListenerContainerFactory;
 			}
 

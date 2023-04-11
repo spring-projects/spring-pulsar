@@ -19,13 +19,10 @@ package org.springframework.pulsar.listener;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
-
-import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Base implementation for the {@link PulsarMessageListenerContainer}.
@@ -40,8 +37,6 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 	private final PulsarConsumerFactory<T> pulsarConsumerFactory;
 
 	private final PulsarContainerProperties pulsarContainerProperties;
-
-	private final ObservationRegistry observationRegistry;
 
 	protected final Object lifecycleMonitor = new Object();
 
@@ -59,10 +54,9 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
-			PulsarContainerProperties pulsarContainerProperties, @Nullable ObservationRegistry observationRegistry) {
+			PulsarContainerProperties pulsarContainerProperties) {
 		this.pulsarConsumerFactory = (PulsarConsumerFactory<T>) pulsarConsumerFactory;
 		this.pulsarContainerProperties = pulsarContainerProperties;
-		this.observationRegistry = observationRegistry;
 	}
 
 	public PulsarConsumerFactory<T> getPulsarConsumerFactory() {
@@ -71,10 +65,6 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 
 	public PulsarContainerProperties getContainerProperties() {
 		return this.pulsarContainerProperties;
-	}
-
-	public ObservationRegistry getObservationRegistry() {
-		return this.observationRegistry;
 	}
 
 	@Override

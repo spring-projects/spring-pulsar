@@ -25,8 +25,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.util.Assert;
 
 import io.micrometer.observation.ObservationRegistry;
@@ -50,8 +50,8 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	private final List<AsyncTaskExecutor> executors = new ArrayList<>();
 
 	public ConcurrentPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
-			PulsarContainerProperties pulsarContainerProperties, @Nullable ObservationRegistry observationRegistry) {
-		super(pulsarConsumerFactory, pulsarContainerProperties, observationRegistry);
+			PulsarContainerProperties pulsarContainerProperties) {
+		super(pulsarConsumerFactory, pulsarContainerProperties);
 	}
 
 	public int getConcurrency() {
@@ -80,6 +80,20 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 
 			setRunning(true);
 
+			// Set observation registry accordingly
+			if (containerProperties.isObservationEnabled()) {
+				ApplicationContext applicationContext = getApplicationContext();
+				if (applicationContext == null) {
+					this.logger.warn(() -> "Observations enabled but application context null - not recording");
+				}
+				else {
+					applicationContext.getBeanProvider(ObservationRegistry.class)
+							.ifUnique(containerProperties::setObservationRegistry);
+					applicationContext.getBeanProvider(PulsarListenerObservationConvention.class)
+							.ifUnique(containerProperties::setObservationConvention);
+				}
+			}
+
 			for (int i = 0; i < this.concurrency; i++) {
 				DefaultPulsarMessageListenerContainer<T> container = constructContainer(containerProperties);
 				configureChildContainer(i, container);
@@ -90,8 +104,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	}
 
 	private DefaultPulsarMessageListenerContainer<T> constructContainer(PulsarContainerProperties containerProperties) {
-		return new DefaultPulsarMessageListenerContainer<>(this.getPulsarConsumerFactory(), containerProperties,
-				this.getObservationRegistry());
+		return new DefaultPulsarMessageListenerContainer<>(this.getPulsarConsumerFactory(), containerProperties);
 	}
 
 	private void configureChildContainer(int index, DefaultPulsarMessageListenerContainer<T> container) {

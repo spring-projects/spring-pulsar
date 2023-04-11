@@ -140,10 +140,9 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 		}
 
 		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory,
-				ObservationRegistry observationRegistry) {
+		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
 			return new PulsarTemplate<>(pulsarProducerFactory, null, new DefaultSchemaResolver(),
-					new DefaultTopicResolver(), observationRegistry, null);
+					new DefaultTopicResolver(), true);
 		}
 
 		@Bean
@@ -153,9 +152,10 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		PulsarListenerContainerFactory pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory, ObservationRegistry observationRegistry) {
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new PulsarContainerProperties(), observationRegistry);
+				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
+			PulsarContainerProperties containerProps = new PulsarContainerProperties();
+			containerProps.setObservationEnabled(true);
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
 		}
 
 		@Bean
