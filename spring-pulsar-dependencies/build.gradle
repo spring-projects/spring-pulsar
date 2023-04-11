@@ -13,7 +13,7 @@ ext {
 	pulsarVersion = '2.11.0'
 	pulsarClientReactiveVersion = '0.2.0'
 	springBootVersion = '3.0.5'
-	springPulsarStarterVersion = '0.2.0'
+	springPulsarStarterVersion = '0.2.1-SNAPSHOT'
 	springPulsarBinderVersion = '0.2.0'
 	springCloudStreamVersion = '4.0.1'
 }
