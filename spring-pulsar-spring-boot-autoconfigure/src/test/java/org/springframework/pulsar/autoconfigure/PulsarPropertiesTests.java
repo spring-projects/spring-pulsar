@@ -95,6 +95,8 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.client.use-tls", "true");
 			props.put("spring.pulsar.client.tls-hostname-verification-enable", "true");
 			props.put("spring.pulsar.client.tls-trust-certs-file-path", "my-trust-certs-file-path");
+			props.put("spring.pulsar.client.tls-certificate-file-path", "my-certificate-file-path");
+			props.put("spring.pulsar.client.tls-key-file-path", "my-key-file-path");
 			props.put("spring.pulsar.client.tls-allow-insecure-connection", "true");
 			props.put("spring.pulsar.client.use-key-store-tls", "true");
 			props.put("spring.pulsar.client.ssl-provider", "my-ssl-provider");
@@ -137,6 +139,8 @@ public class PulsarPropertiesTests {
 					.containsEntry("useTcpNoDelay", false).containsEntry("useTls", true)
 					.containsEntry("tlsHostnameVerificationEnable", true)
 					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
+					.containsEntry("tlsCertificateFilePath", "my-certificate-file-path")
+					.containsEntry("tlsKeyFilePath", "my-key-file-path")
 					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
 					.containsEntry("sslProvider", "my-ssl-provider")
 					.containsEntry("tlsTrustStoreType", "my-trust-store-type")
@@ -226,6 +230,8 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.administration.auto-cert-refresh-time", "15s");
 			props.put("spring.pulsar.administration.tls-hostname-verification-enable", "true");
 			props.put("spring.pulsar.administration.tls-trust-certs-file-path", "my-trust-certs-file-path");
+			props.put("spring.pulsar.administration.tls-certificate-file-path", "my-certificate-file-path");
+			props.put("spring.pulsar.administration.tls-key-file-path", "my-key-file-path");
 			props.put("spring.pulsar.administration.tls-allow-insecure-connection", "true");
 			props.put("spring.pulsar.administration.use-key-store-tls", "true");
 			props.put("spring.pulsar.administration.ssl-provider", "my-ssl-provider");
@@ -249,6 +255,8 @@ public class PulsarPropertiesTests {
 					.containsEntry("requestTimeoutMs", 14_000).containsEntry("autoCertRefreshSeconds", 15)
 					.containsEntry("tlsHostnameVerificationEnable", true)
 					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
+					.containsEntry("tlsCertificateFilePath", "my-certificate-file-path")
+					.containsEntry("tlsKeyFilePath", "my-key-file-path")
 					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
 					.containsEntry("sslProvider", "my-ssl-provider")
 					.containsEntry("tlsTrustStoreType", "my-trust-store-type")
