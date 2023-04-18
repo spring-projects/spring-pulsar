@@ -261,6 +261,16 @@ public class PulsarProperties {
 		private String tlsTrustCertsFilePath;
 
 		/**
+		 * Path for the TLS certificate file.
+		 */
+		private String tlsCertificateFilePath;
+
+		/**
+		 * Path for the TLS private key file.
+		 */
+		private String tlsKeyFilePath;
+
+		/**
 		 * Whether the client accepts untrusted TLS certificates from the broker.
 		 */
 		private Boolean tlsAllowInsecureConnection = false;
@@ -523,6 +533,22 @@ public class PulsarProperties {
 			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
 		}
 
+		public String getTlsCertificateFilePath() {
+			return this.tlsCertificateFilePath;
+		}
+
+		public void setTlsCertificateFilePath(String tlsCertificateFilePath) {
+			this.tlsCertificateFilePath = tlsCertificateFilePath;
+		}
+
+		public String getTlsKeyFilePath() {
+			return this.tlsKeyFilePath;
+		}
+
+		public void setTlsKeyFilePath(String tlsKeyFilePath) {
+			this.tlsKeyFilePath = tlsKeyFilePath;
+		}
+
 		public Boolean getTlsAllowInsecureConnection() {
 			return this.tlsAllowInsecureConnection;
 		}
@@ -771,6 +797,8 @@ public class PulsarProperties {
 			map.from(this::getUseTls).to(properties.in("useTls"));
 			map.from(this::getTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
+			map.from(this::getTlsCertificateFilePath).to(properties.in("tlsCertificateFilePath"));
+			map.from(this::getTlsKeyFilePath).to(properties.in("tlsKeyFilePath"));
 			map.from(this::getTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
 			map.from(this::getUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
 			map.from(this::getSslProvider).to(properties.in("sslProvider"));
@@ -966,6 +994,16 @@ public class PulsarProperties {
 		private String tlsTrustCertsFilePath;
 
 		/**
+		 * Path for the TLS certificate file.
+		 */
+		private String tlsCertificateFilePath;
+
+		/**
+		 * Path for the TLS private key file.
+		 */
+		private String tlsKeyFilePath;
+
+		/**
 		 * Whether the client accepts untrusted TLS certificates from the broker.
 		 */
 		private Boolean tlsAllowInsecureConnection = false;
@@ -1073,6 +1111,22 @@ public class PulsarProperties {
 
 		public void setTlsTrustCertsFilePath(String tlsTrustCertsFilePath) {
 			this.tlsTrustCertsFilePath = tlsTrustCertsFilePath;
+		}
+
+		public String getTlsCertificateFilePath() {
+			return this.tlsCertificateFilePath;
+		}
+
+		public void setTlsCertificateFilePath(String tlsCertificateFilePath) {
+			this.tlsCertificateFilePath = tlsCertificateFilePath;
+		}
+
+		public String getTlsKeyFilePath() {
+			return this.tlsKeyFilePath;
+		}
+
+		public void setTlsKeyFilePath(String tlsKeyFilePath) {
+			this.tlsKeyFilePath = tlsKeyFilePath;
 		}
 
 		public Boolean isTlsAllowInsecureConnection() {
@@ -1193,6 +1247,8 @@ public class PulsarProperties {
 			map.from(this::getAuthentication).as(AuthParameterUtils::maybeConvertToEncodedParamString)
 					.to(properties.in("authParams"));
 			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
+			map.from(this::getTlsCertificateFilePath).to(properties.in("tlsCertificateFilePath"));
+			map.from(this::getTlsKeyFilePath).to(properties.in("tlsKeyFilePath"));
 			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
 			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
 			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
