@@ -17,6 +17,7 @@ package io.spring.gradle.convention
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 
 import org.springframework.pulsar.gradle.ProjectUtils
 
@@ -38,10 +39,14 @@ class ArtifactoryPlugin implements Plugin<Project> {
 						password = artifactoryPassword
 					}
 				}
-				defaults {
-					publications('mavenJava')
-					properties {
-						mavenJava '*:*:*:docs@zip', 'zip.name': 'spring-pulsar', 'zip.displayname': 'Spring Pulsar', 'zip.type': 'docs', 'zip.deployed': false
+			}
+		}
+
+		project.plugins.withType(MavenPublishPlugin) {
+			project.artifactory {
+				publish {
+					defaults {
+						publications('mavenJava')
 					}
 				}
 			}

@@ -182,6 +182,9 @@ publishing {
 
 artifactoryPublish {
 	publications(publishing.publications.mavenJava)
+	properties {
+		mavenJava '*:*:*:docs@zip', 'zip.name': 'spring-pulsar', 'zip.displayname': 'Spring Pulsar', 'zip.type': 'docs', 'zip.deployed': false
+	}
 }
 
 tasks.register('deployDocs') {
