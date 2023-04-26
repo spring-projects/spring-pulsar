@@ -11,7 +11,7 @@ ext {
 	protobufJavaVersion = '3.21.5'
 	testcontainersVersion = '1.17.6'
 	pulsarVersion = '2.11.0'
-	pulsarClientReactiveVersion = '0.2.0'
+	pulsarClientReactiveVersion = '0.3.0'
 	springBootVersion = '3.0.5'
 	springPulsarStarterVersion = '0.2.1-SNAPSHOT'
 	springPulsarBinderVersion = '0.2.0'
