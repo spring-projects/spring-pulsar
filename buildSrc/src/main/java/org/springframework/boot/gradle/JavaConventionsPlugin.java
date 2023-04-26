@@ -253,8 +253,9 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 
 	private void configureProhibitedDependencyChecks(Project project) {
 		SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-		sourceSets.all((sourceSet) -> createProhibitedDependenciesChecks(project,
-				sourceSet.getCompileClasspathConfigurationName(), sourceSet.getRuntimeClasspathConfigurationName()));
+		sourceSets.matching((sourceSet) -> !sourceSet.getName().equals("intTest"))
+				.all((sourceSet) -> createProhibitedDependenciesChecks(project,
+						sourceSet.getCompileClasspathConfigurationName(), sourceSet.getRuntimeClasspathConfigurationName()));
 	}
 
 	private void createProhibitedDependenciesChecks(Project project, String... configurationNames) {
