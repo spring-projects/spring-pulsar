@@ -16,17 +16,23 @@
 
 package org.springframework.pulsar.gradle;
 
-import io.spring.gradle.convention.RepositoryConventionPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
+import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 
 import org.springframework.boot.gradle.JavaConventionsPlugin;
 import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
 import org.springframework.pulsar.gradle.docs.asciidoc.AsciidoctorConventionsPlugin;
-import org.springframework.pulsar.gradle.publish.SpringPublishPlugin;
+import org.springframework.pulsar.gradle.publish.MavenPublishingConventionsPlugin;
+import org.springframework.pulsar.gradle.publish.PublishArtifactsPlugin;
+import org.springframework.pulsar.gradle.publish.PublishLocalPlugin;
+import org.springframework.pulsar.gradle.publish.SpringSigningPlugin;
+
+import io.spring.gradle.convention.ArtifactoryPlugin;
+import io.spring.gradle.convention.RepositoryConventionPlugin;
 
 /**
  * @author Rob Winch
@@ -42,7 +48,12 @@ public class SpringDocsModulePlugin implements Plugin<Project> {
 		pluginManager.apply(JavaLibraryPlugin.class);
 		pluginManager.apply(JavaConventionsPlugin.class);
 		pluginManager.apply(AsciidoctorConventionsPlugin.class);
-		pluginManager.apply(SpringPublishPlugin.class);
+		pluginManager.apply(MavenPublishPlugin.class);
+		pluginManager.apply(SpringSigningPlugin.class);
+		pluginManager.apply(MavenPublishingConventionsPlugin.class);
+		pluginManager.apply(PublishLocalPlugin.class);
+		pluginManager.apply(PublishArtifactsPlugin.class);
+		pluginManager.apply(ArtifactoryPlugin.class);
 		pluginManager.apply(OptionalDependenciesPlugin.class);
 	}
 }

@@ -59,7 +59,7 @@ import org.springframework.pulsar.gradle.ProjectLinks;
  * @author Mike Smithson
  * @author Chris Bono
  */
-class MavenPublishingConventionsPlugin implements Plugin<Project> {
+public class MavenPublishingConventionsPlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
