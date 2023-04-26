@@ -47,6 +47,9 @@ class ArtifactoryPlugin implements Plugin<Project> {
 				publish {
 					defaults {
 						publications('mavenJava')
+						properties {
+							mavenJava '*:*:*:docs@zip', 'zip.name': 'spring-pulsar', 'zip.displayname': 'Spring Pulsar', 'zip.type': 'docs', 'zip.deployed': false
+						}
 					}
 				}
 			}
