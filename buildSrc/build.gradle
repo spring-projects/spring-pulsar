@@ -45,7 +45,7 @@ dependencies {
 	implementation "org.apache.maven:maven-embedder:3.6.2"
 	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
 	implementation 'org.codehaus.groovy:groovy-all:2.5.17'
-	implementation 'org.jfrog.buildinfo:build-info-extractor-gradle:4.29.0'
+	implementation 'org.jfrog.buildinfo:build-info-extractor-gradle:4.31.9'
 
 	implementation "org.gradle:test-retry-gradle-plugin:1.4.0"
 	implementation 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1'
