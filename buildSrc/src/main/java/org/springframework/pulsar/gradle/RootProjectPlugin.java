@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.gradle;
 
+import io.spring.gradle.convention.ArtifactoryPlugin;
+
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -34,8 +36,10 @@ public class RootProjectPlugin implements Plugin<Project> {
 		PluginManager pluginManager = project.getPluginManager();
 		pluginManager.apply(BasePlugin.class);
 		pluginManager.apply(SpringNexusPublishPlugin.class);
-		project.getRepositories().mavenCentral();
+		pluginManager.apply(ArtifactoryPlugin.class);
 		pluginManager.apply(SonarQubeConventionsPlugin.class);
+
+		project.getRepositories().mavenCentral();
 
 		Task finalizeDeployArtifacts = project.task("finalizeDeployArtifacts");
 		if (ProjectUtils.isRelease(project) && project.hasProperty("ossrhUsername")) {
