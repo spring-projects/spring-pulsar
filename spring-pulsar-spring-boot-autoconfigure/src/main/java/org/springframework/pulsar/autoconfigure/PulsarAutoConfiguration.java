@@ -19,6 +19,7 @@ package org.springframework.pulsar.autoconfigure;
 import java.util.Optional;
 
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -30,14 +31,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
+import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
+import org.springframework.pulsar.core.PulsarClientBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarReaderFactory;
@@ -71,8 +73,21 @@ public class PulsarAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public PulsarClientFactoryBean pulsarClientFactoryBean() {
-		return new PulsarClientFactoryBean(this.properties.buildClientProperties());
+	public PulsarClientBuilderConfigurer pulsarClientBuilderConfigurer(PulsarProperties pulsarProperties,
+			ObjectProvider<PulsarClientBuilderCustomizer> customizers) {
+		return new PulsarClientBuilderConfigurer(pulsarProperties, customizers.orderedStream().toList());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public PulsarClient pulsarClient(PulsarClientBuilderConfigurer configurer) {
+		var clientFactory = new DefaultPulsarClientFactory(configurer::configure);
+		try {
+			return clientFactory.createClient();
+		}
+		catch (PulsarClientException ex) {
+			throw new IllegalArgumentException("Failed to create client: " + ex.getMessage(), ex);
+		}
 	}
 
 	@Bean

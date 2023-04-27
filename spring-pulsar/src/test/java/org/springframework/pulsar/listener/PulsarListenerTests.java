@@ -39,6 +39,7 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -61,10 +62,10 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
+import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
@@ -109,8 +110,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		public PulsarClientFactoryBean pulsarClientFactoryBean() {
-			return new PulsarClientFactoryBean(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
+		public PulsarClient pulsarClient() throws PulsarClientException {
+			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
 		}
 
 		@Bean

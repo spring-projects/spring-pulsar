@@ -39,8 +39,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarReader;
 import org.springframework.pulsar.config.DefaultPulsarReaderContainerFactory;
-import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarReaderContainerFactory;
+import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
@@ -78,8 +78,8 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		public PulsarClientFactoryBean pulsarClientFactoryBean() {
-			return new PulsarClientFactoryBean(Map.of("serviceUrl", PulsarTestContainerSupport.getPulsarBrokerUrl()));
+		public PulsarClient pulsarClient() throws PulsarClientException {
+			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
 		}
 
 		@Bean
