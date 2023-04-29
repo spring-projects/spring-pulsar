@@ -24,8 +24,8 @@ TIP: The value must be a valid {apache-pulsar-docs}/client-libraries-java/#conne
 
 You can further configure the client by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.client.*`] application properties.
 
-NOTE: If you are not using the starter, you will need to configure and register the `PulsarClientFactoryBean` yourself.
-It has a constructor that accepts a map of Pulsar https://pulsar.apache.org/docs/2.11.x/client-libraries-java/#client[native properties].
+NOTE: If you are not using the starter, you will need to configure and register the `PulsarClient` yourself.
+There is a `DefaultPulsarClientFactory` that accepts a builder customizer that can be used to help with this.
 
 [[client-authentication]]
 === Authentication
