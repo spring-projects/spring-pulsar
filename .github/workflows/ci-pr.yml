@@ -2,7 +2,9 @@ name: CI PRs
 
 on:
   pull_request:
-    branches: [ "main", "0.2.x" ]
+    branches:
+      - 'main'
+      - '0.2.x'
     paths-ignore:
       - '.github/**'
 env:
