@@ -110,10 +110,6 @@ public class PulsarProperties {
 		return new HashMap<>(this.consumer.buildProperties());
 	}
 
-	public Map<String, Object> buildClientProperties() {
-		return new HashMap<>(this.client.buildProperties());
-	}
-
 	public Map<String, Object> buildProducerProperties() {
 		return new HashMap<>(this.producer.buildProperties());
 	}
@@ -771,67 +767,6 @@ public class PulsarProperties {
 
 		public void setSocks5ProxyPassword(String socks5ProxyPassword) {
 			this.socks5ProxyPassword = socks5ProxyPassword;
-		}
-
-		public Map<String, Object> buildProperties() {
-			if (StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
-				throw new IllegalArgumentException(
-						"Cannot set both spring.pulsar.client.authParams and spring.pulsar.client.authentication.*");
-			}
-
-			PulsarProperties.Properties properties = new Properties();
-
-			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
-			map.from(this::getListenerName).to(properties.in("listenerName"));
-			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
-			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(this::getAuthentication).as(AuthParameterUtils::maybeConvertToEncodedParamString)
-					.to(properties.in("authParams"));
-			map.from(this::getOperationTimeout).as(Duration::toMillis).to(properties.in("operationTimeoutMs"));
-			map.from(this::getLookupTimeout).as(Duration::toMillis).to(properties.in("lookupTimeoutMs"));
-			map.from(this::getNumIoThreads).to(properties.in("numIoThreads"));
-			map.from(this::getNumListenerThreads).to(properties.in("numListenerThreads"));
-			map.from(this::getNumConnectionsPerBroker).to(properties.in("connectionsPerBroker"));
-			map.from(this::getUseTcpNoDelay).to(properties.in("useTcpNoDelay"));
-			map.from(this::getUseTls).to(properties.in("useTls"));
-			map.from(this::getTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
-			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
-			map.from(this::getTlsCertificateFilePath).to(properties.in("tlsCertificateFilePath"));
-			map.from(this::getTlsKeyFilePath).to(properties.in("tlsKeyFilePath"));
-			map.from(this::getTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
-			map.from(this::getUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
-			map.from(this::getSslProvider).to(properties.in("sslProvider"));
-			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
-			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
-			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
-			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
-			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
-			map.from(this::getStatsInterval).as(Duration::toSeconds).to(properties.in("statsIntervalSeconds"));
-			map.from(this::getMaxConcurrentLookupRequest).to(properties.in("concurrentLookupRequest"));
-			map.from(this::getMaxLookupRequest).to(properties.in("maxLookupRequest"));
-			map.from(this::getMaxLookupRedirects).to(properties.in("maxLookupRedirects"));
-			map.from(this::getMaxNumberOfRejectedRequestPerConnection)
-					.to(properties.in("maxNumberOfRejectedRequestPerConnection"));
-			map.from(this::getKeepAliveInterval).asInt(Duration::toSeconds)
-					.to(properties.in("keepAliveIntervalSeconds"));
-			map.from(this::getConnectionTimeout).asInt(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(properties.in("requestTimeoutMs"));
-			map.from(this::getInitialBackoffInterval).as(Duration::toNanos)
-					.to(properties.in("initialBackoffIntervalNanos"));
-			map.from(this::getMaxBackoffInterval).as(Duration::toNanos).to(properties.in("maxBackoffIntervalNanos"));
-			map.from(this::getEnableBusyWait).to(properties.in("enableBusyWait"));
-			map.from(this::getMemoryLimit).as(DataSize::toBytes).to(properties.in("memoryLimitBytes"));
-			map.from(this::getProxyServiceUrl).to(properties.in("proxyServiceUrl"));
-			map.from(this::getProxyProtocol).to(properties.in("proxyProtocol"));
-			map.from(this::getEnableTransaction).to(properties.in("enableTransaction"));
-			map.from(this::getDnsLookupBindAddress).to(properties.in("dnsLookupBindAddress"));
-			map.from(this::getDnsLookupBindPort).to(properties.in("dnsLookupBindPort"));
-			map.from(this::getSocks5ProxyAddress).to(properties.in("socks5ProxyAddress"));
-			map.from(this::getSocks5ProxyUsername).to(properties.in("socks5ProxyUsername"));
-			map.from(this::getSocks5ProxyPassword).to(properties.in("socks5ProxyPassword"));
-
-			return properties;
 		}
 
 	}

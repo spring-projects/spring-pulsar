@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +35,6 @@ import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.ProxyProtocol;
-import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
@@ -55,6 +55,7 @@ import org.springframework.boot.context.properties.source.ConfigurationPropertyS
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 import org.springframework.pulsar.autoconfigure.PulsarProperties.SchemaInfo;
 import org.springframework.pulsar.autoconfigure.PulsarProperties.TypeMapping;
+import org.springframework.util.unit.DataSize;
 
 /**
  * Unit tests for {@link PulsarProperties}.
@@ -83,7 +84,7 @@ public class PulsarPropertiesTests {
 
 		@Test
 		void clientProperties() {
-			Map<String, String> props = new HashMap<>();
+			var props = new HashMap<String, String>();
 			props.put("spring.pulsar.client.service-url", "my-service-url");
 			props.put("spring.pulsar.client.listener-name", "my-listener");
 			props.put("spring.pulsar.client.operation-timeout", "1s");
@@ -127,86 +128,72 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.client.socks5-proxy-password", "my-socks5-proxy-password");
 
 			bind(props);
-			Map<String, Object> clientProps = properties.buildClientProperties();
 
-			// Verify that the props can be loaded in a ClientBuilder
-			assertThatNoException().isThrownBy(() -> PulsarClient.builder().loadConf(clientProps));
-
-			assertThat(clientProps).containsEntry("serviceUrl", "my-service-url")
-					.containsEntry("listenerName", "my-listener").containsEntry("operationTimeoutMs", 1_000L)
-					.containsEntry("lookupTimeoutMs", 2_000L).containsEntry("numIoThreads", 3)
-					.containsEntry("numListenerThreads", 4).containsEntry("connectionsPerBroker", 5)
-					.containsEntry("useTcpNoDelay", false).containsEntry("useTls", true)
-					.containsEntry("tlsHostnameVerificationEnable", true)
-					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
-					.containsEntry("tlsCertificateFilePath", "my-certificate-file-path")
-					.containsEntry("tlsKeyFilePath", "my-key-file-path")
-					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
-					.containsEntry("sslProvider", "my-ssl-provider")
-					.containsEntry("tlsTrustStoreType", "my-trust-store-type")
-					.containsEntry("tlsTrustStorePath", "my-trust-store-path")
-					.containsEntry("tlsTrustStorePassword", "my-trust-store-password")
-					.hasEntrySatisfying("tlsCiphers",
-							ciphers -> assertThat(ciphers)
-									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-									.containsExactly("my-tls-cipher"))
-					.hasEntrySatisfying("tlsProtocols",
-							protocols -> assertThat(protocols)
-									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-									.containsExactly("my-tls-protocol"))
-					.containsEntry("statsIntervalSeconds", 6L).containsEntry("concurrentLookupRequest", 7)
-					.containsEntry("maxLookupRequest", 8).containsEntry("maxLookupRedirects", 9)
-					.containsEntry("maxNumberOfRejectedRequestPerConnection", 10)
-					.containsEntry("keepAliveIntervalSeconds", 11).containsEntry("connectionTimeoutMs", 12_000)
-					.containsEntry("requestTimeoutMs", 13_000)
-					.containsEntry("initialBackoffIntervalNanos", 14_000_000_000L)
-					.containsEntry("maxBackoffIntervalNanos", 15_000_000_000L).containsEntry("enableBusyWait", true)
-					.containsEntry("memoryLimitBytes", 16L).containsEntry("proxyServiceUrl", "my-proxy-service-url")
-					.containsEntry("proxyProtocol", ProxyProtocol.SNI).containsEntry("enableTransaction", true)
-					.containsEntry("dnsLookupBindAddress", "my-dns-lookup-bind-address")
-					.containsEntry("dnsLookupBindPort", 17)
-					.containsEntry("socks5ProxyAddress", "my-socks5-proxy-address")
-					.containsEntry("socks5ProxyUsername", "my-socks5-proxy-username")
-					.containsEntry("socks5ProxyPassword", "my-socks5-proxy-password");
+			PulsarProperties.Client clientProps = PulsarPropertiesTests.this.properties.getClient();
+			assertThat(clientProps.getServiceUrl()).isEqualTo("my-service-url");
+			assertThat(clientProps.getListenerName()).isEqualTo("my-listener");
+			assertThat(clientProps.getOperationTimeout()).isEqualTo(Duration.ofMillis(1000));
+			assertThat(clientProps.getLookupTimeout()).isEqualTo(Duration.ofMillis(2000));
+			assertThat(clientProps.getNumIoThreads()).isEqualTo(3);
+			assertThat(clientProps.getNumListenerThreads()).isEqualTo(4);
+			assertThat(clientProps.getNumConnectionsPerBroker()).isEqualTo(5);
+			assertThat(clientProps.getUseTcpNoDelay()).isFalse();
+			assertThat(clientProps.getUseTls()).isTrue();
+			assertThat(clientProps.getTlsHostnameVerificationEnable()).isTrue();
+			assertThat(clientProps.getTlsTrustCertsFilePath()).isEqualTo("my-trust-certs-file-path");
+			assertThat(clientProps.getTlsCertificateFilePath()).isEqualTo("my-certificate-file-path");
+			assertThat(clientProps.getTlsKeyFilePath()).isEqualTo("my-key-file-path");
+			assertThat(clientProps.getTlsAllowInsecureConnection()).isTrue();
+			assertThat(clientProps.getUseKeyStoreTls()).isTrue();
+			assertThat(clientProps.getSslProvider()).isEqualTo("my-ssl-provider");
+			assertThat(clientProps.getTlsTrustStoreType()).isEqualTo("my-trust-store-type");
+			assertThat(clientProps.getTlsTrustStorePath()).isEqualTo("my-trust-store-path");
+			assertThat(clientProps.getTlsTrustStorePassword()).isEqualTo("my-trust-store-password");
+			assertThat(clientProps.getTlsCiphers()).containsExactly("my-tls-cipher");
+			assertThat(clientProps.getTlsProtocols()).containsExactly("my-tls-protocol");
+			assertThat(clientProps.getStatsInterval()).isEqualTo(Duration.ofSeconds(6));
+			assertThat(clientProps.getMaxConcurrentLookupRequest()).isEqualTo(7);
+			assertThat(clientProps.getMaxLookupRequest()).isEqualTo(8);
+			assertThat(clientProps.getMaxLookupRedirects()).isEqualTo(9);
+			assertThat(clientProps.getMaxNumberOfRejectedRequestPerConnection()).isEqualTo(10);
+			assertThat(clientProps.getKeepAliveInterval()).isEqualTo(Duration.ofSeconds(11));
+			assertThat(clientProps.getConnectionTimeout()).isEqualTo(Duration.ofMillis(12000));
+			assertThat(clientProps.getRequestTimeout()).isEqualTo(Duration.ofMillis(13_000));
+			assertThat(clientProps.getInitialBackoffInterval()).isEqualTo(Duration.ofMillis(14000));
+			assertThat(clientProps.getMaxBackoffInterval()).isEqualTo(Duration.ofMillis(15000));
+			assertThat(clientProps.getEnableBusyWait()).isTrue();
+			assertThat(clientProps.getMemoryLimit()).isEqualTo(DataSize.ofBytes(16));
+			assertThat(clientProps.getProxyServiceUrl()).isEqualTo("my-proxy-service-url");
+			assertThat(clientProps.getProxyProtocol()).isEqualTo(ProxyProtocol.SNI);
+			assertThat(clientProps.getEnableTransaction()).isTrue();
+			assertThat(clientProps.getDnsLookupBindAddress()).isEqualTo("my-dns-lookup-bind-address");
+			assertThat(clientProps.getDnsLookupBindPort()).isEqualTo(17);
+			assertThat(clientProps.getSocks5ProxyAddress()).isEqualTo("my-socks5-proxy-address");
+			assertThat(clientProps.getSocks5ProxyUsername()).isEqualTo("my-socks5-proxy-username");
+			assertThat(clientProps.getSocks5ProxyPassword()).isEqualTo("my-socks5-proxy-password");
 		}
 
 		@Test
 		void authenticationUsingAuthParamsString() {
-			Map<String, String> props = new HashMap<>();
+			var props = new HashMap<String, String>();
 			props.put("spring.pulsar.client.auth-plugin-class-name",
 					"org.apache.pulsar.client.impl.auth.AuthenticationToken");
 			props.put("spring.pulsar.client.auth-params", authParamsStr);
 			bind(props);
-			assertThat(properties.getClient().getAuthParams()).isEqualTo(authParamsStr);
-			assertThat(properties.getClient().getAuthPluginClassName()).isEqualTo(authPluginClassName);
-			Map<String, Object> clientProps = properties.buildClientProperties();
-
-			assertThat(clientProps).containsEntry("authPluginClassName", authPluginClassName)
-					.containsEntry("authParams", authParamsStr);
+			var clientProps = PulsarPropertiesTests.this.properties.getClient();
+			assertThat(clientProps.getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			assertThat(clientProps.getAuthParams()).isEqualTo(authParamsStr);
 		}
 
 		@Test
 		void authenticationUsingAuthenticationMap() {
-			Map<String, String> props = new HashMap<>();
+			var props = new HashMap<String, String>();
 			props.put("spring.pulsar.client.auth-plugin-class-name", authPluginClassName);
 			props.put("spring.pulsar.client.authentication.token", authToken);
 			bind(props);
-			assertThat(properties.getClient().getAuthentication()).containsEntry("token", authToken);
-			assertThat(properties.getClient().getAuthPluginClassName()).isEqualTo(authPluginClassName);
-			Map<String, Object> clientProps = properties.buildClientProperties();
-			assertThat(clientProps).containsEntry("authPluginClassName", authPluginClassName)
-					.containsEntry("authParams", authParamsStr);
-		}
-
-		@Test
-		void authenticationNotAllowedUsingBothAuthParamsStringAndAuthenticationMap() {
-			Map<String, String> props = new HashMap<>();
-			props.put("spring.pulsar.client.auth-plugin-class-name", authPluginClassName);
-			props.put("spring.pulsar.client.auth-params", authParamsStr);
-			props.put("spring.pulsar.client.authentication.token", authToken);
-			bind(props);
-			assertThatIllegalArgumentException().isThrownBy(properties::buildClientProperties).withMessageContaining(
-					"Cannot set both spring.pulsar.client.authParams and spring.pulsar.client.authentication.*");
+			var clientProps = PulsarPropertiesTests.this.properties.getClient();
+			assertThat(clientProps.getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			assertThat(clientProps.getAuthentication()).containsEntry("token", authToken);
 		}
 
 	}

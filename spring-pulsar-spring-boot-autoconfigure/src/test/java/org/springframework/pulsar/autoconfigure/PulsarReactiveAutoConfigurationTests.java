@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -49,7 +48,6 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
@@ -261,20 +259,14 @@ class PulsarReactiveAutoConfigurationTests {
 
 	@Test
 	@SuppressWarnings("rawtypes")
-	void beansAreInjectedInReactivePulsarClient() throws Exception {
-		try (PulsarClient client = mock(PulsarClient.class)) {
-			PulsarClientFactoryBean factoryBean = new PulsarClientFactoryBean(Collections.emptyMap()) {
-				@Override
-				protected PulsarClient createInstance() {
-					return client;
-				}
-			};
-			this.contextRunner.withBean("customPulsarClient", PulsarClientFactoryBean.class, () -> factoryBean)
-					.run((context -> assertThat(context).hasNotFailed().getBean(ReactivePulsarClient.class)
-							.extracting("reactivePulsarResourceAdapter")
-							.extracting("pulsarClientSupplier", InstanceOfAssertFactories.type(Supplier.class))
-							.extracting(Supplier::get).isSameAs(client)));
-		}
+	void beansAreInjectedInReactivePulsarClient() {
+		this.contextRunner.run((context -> {
+			PulsarClient pulsarClient = context.getBean(PulsarClient.class);
+			assertThat(context).hasNotFailed().getBean(ReactivePulsarClient.class)
+					.extracting("reactivePulsarResourceAdapter")
+					.extracting("pulsarClientSupplier", InstanceOfAssertFactories.type(Supplier.class))
+					.extracting(Supplier::get).isSameAs(pulsarClient);
+		}));
 	}
 
 	@Test

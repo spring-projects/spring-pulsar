@@ -18,11 +18,16 @@ package org.springframework.pulsar.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.ClientBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
@@ -46,7 +51,6 @@ import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarBootstrapConfiguration;
 import org.springframework.pulsar.annotation.PulsarListenerAnnotationBeanPostProcessor;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarClientFactoryBean;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory;
@@ -55,6 +59,7 @@ import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarAdministration;
+import org.springframework.pulsar.core.PulsarClientBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarReaderFactory;
@@ -105,8 +110,8 @@ class PulsarAutoConfigurationTests {
 
 	@Test
 	void defaultBeansAreAutoConfigured() {
-		this.contextRunner.run((context) -> assertThat(context).hasNotFailed()
-				.hasSingleBean(PulsarClientFactoryBean.class).hasSingleBean(PulsarProducerFactory.class)
+		this.contextRunner.run((context) -> assertThat(context).hasSingleBean(PulsarClientBuilderConfigurer.class)
+				.hasSingleBean(PulsarClient.class).hasSingleBean(PulsarProducerFactory.class)
 				.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
 				.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
 				.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
@@ -115,14 +120,19 @@ class PulsarAutoConfigurationTests {
 	}
 
 	@Test
-	void customPulsarClientFactoryBeanIsRespected() {
-		PulsarClientFactoryBean clientFactoryBean = new PulsarClientFactoryBean(
-				new PulsarProperties().buildClientProperties());
+	void customPulsarClientBuilderConfigurerIsRespected() {
+		var customConfigurer = new PulsarClientBuilderConfigurer(new PulsarProperties(), Collections.emptyList());
 		this.contextRunner
-				.withBean("customPulsarClientFactoryBean", PulsarClientFactoryBean.class, () -> clientFactoryBean)
-				.run((context) -> assertThat(context)
-						.getBean("&customPulsarClientFactoryBean", PulsarClientFactoryBean.class)
-						.isSameAs(clientFactoryBean));
+				.withBean("customPulsarClientConfigurer", PulsarClientBuilderConfigurer.class, () -> customConfigurer)
+				.run((context) -> assertThat(context).getBean(PulsarClientBuilderConfigurer.class)
+						.isSameAs(customConfigurer));
+	}
+
+	@Test
+	void customPulsarClientIsRespected() {
+		var customClient = mock(PulsarClient.class);
+		this.contextRunner.withBean("customPulsarClient", PulsarClient.class, () -> customClient)
+				.run((context) -> assertThat(context).getBean(PulsarClient.class).isSameAs(customClient));
 	}
 
 	@Test
@@ -358,15 +368,28 @@ class PulsarAutoConfigurationTests {
 	class ClientAutoConfigurationTests {
 
 		@Test
-		void authParamMapConvertedToEncodedParamString() {
-			contextRunner.withPropertyValues(
-					"spring.pulsar.client.auth-plugin-class-name=org.apache.pulsar.client.impl.auth.AuthenticationBasic",
-					"spring.pulsar.client.authentication.userId=username",
-					"spring.pulsar.client.authentication.password=topsecret")
-					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarClientFactoryBean.class)
-							.extracting("config", InstanceOfAssertFactories.map(String.class, Object.class))
-							.doesNotContainKey("authParamMap").doesNotContainKey("userId").doesNotContainKey("password")
-							.containsEntry("authParams", "{\"password\":\"topsecret\",\"userId\":\"username\"}")));
+		void clientConfigurerWithNoUserDefinedCustomizers() {
+			contextRunner.run((context) -> {
+				assertThat(context).getBean(PulsarClientBuilderConfigurer.class)
+						.hasFieldOrPropertyWithValue("customizers", Collections.emptyList());
+			});
+		}
+
+		@Test
+		void clientConfigurerWithUserDefinedCustomizers() {
+			contextRunner.withUserConfiguration(ClientCustomizersTestConfiguration.class)
+					.run((context) -> assertThat(context).getBean(PulsarClientBuilderConfigurer.class)
+							.extracting("customizers", InstanceOfAssertFactories.LIST)
+							.containsExactly(ClientCustomizersTestConfiguration.clientCustomizerBar,
+									ClientCustomizersTestConfiguration.clientCustomizerFoo));
+		}
+
+		@Test
+		void clientConfigurerIsApplied() {
+			var clientConfigurer = spy(
+					new PulsarClientBuilderConfigurer(new PulsarProperties(), Collections.emptyList()));
+			contextRunner.withBean("clientConfigurer", PulsarClientBuilderConfigurer.class, () -> clientConfigurer)
+					.run((context) -> verify(clientConfigurer).configure(any(ClientBuilder.class)));
 		}
 
 	}
@@ -563,6 +586,26 @@ class PulsarAutoConfigurationTests {
 		@Order(100)
 		ProducerInterceptor interceptorBar() {
 			return interceptorBar;
+		}
+
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class ClientCustomizersTestConfiguration {
+
+		static PulsarClientBuilderCustomizer clientCustomizerFoo = mock(PulsarClientBuilderCustomizer.class);
+		static PulsarClientBuilderCustomizer clientCustomizerBar = mock(PulsarClientBuilderCustomizer.class);
+
+		@Bean
+		@Order(200)
+		PulsarClientBuilderCustomizer clientCustomizerFoo() {
+			return clientCustomizerFoo;
+		}
+
+		@Bean
+		@Order(100)
+		PulsarClientBuilderCustomizer clientCustomizerBar() {
+			return clientCustomizerBar;
 		}
 
 	}
