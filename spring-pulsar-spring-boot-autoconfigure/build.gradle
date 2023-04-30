@@ -56,5 +56,5 @@ task downloadRabbitConnector {
 }
 
 project.afterEvaluate {
-	compileTestJava.dependsOn downloadRabbitConnector
+	integrationTest.dependsOn downloadRabbitConnector
 }
