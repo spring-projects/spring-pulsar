@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
@@ -74,9 +73,8 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
 					MessageId.earliest, Schema.STRING, Collections.emptyList())) {
 
-				Map<String, Object> prodConfig = Map.of("topicName", "basic-pulsar-reader-topic");
 				PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-						prodConfig);
+						"basic-pulsar-reader-topic");
 				PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 				pulsarTemplate.send("hello john doe");
 
@@ -87,9 +85,8 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@Test
 		void readingFromTheMiddleOfTheTopic() throws Exception {
-			Map<String, Object> prodConfig = Map.of("topicName", "reading-from-the-middle-of-topic");
 			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					prodConfig);
+					"reading-from-the-middle-of-topic");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			MessageId[] messageIds = new MessageId[10];
 
@@ -113,9 +110,8 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		void readingFromTheEndOfTheTopic() throws Exception {
 			Message<String> message;
 
-			Map<String, Object> prodConfig = Map.of("topicName", "basic-pulsar-reader-topic");
 			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					prodConfig);
+					"basic-pulsar-reader-topic");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.send("hello john doe");
 

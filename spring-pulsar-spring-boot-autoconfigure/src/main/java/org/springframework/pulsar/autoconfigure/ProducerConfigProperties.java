@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.HashingScheme;
@@ -32,6 +33,7 @@ import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.autoconfigure.PulsarProperties.Cache;
 import org.springframework.pulsar.autoconfigure.PulsarProperties.Properties;
+import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.util.unit.DataSize;
 
 /**
@@ -399,6 +401,43 @@ public class ProducerConfigProperties {
 		map.from(this::getProperties).to(properties.in("properties"));
 
 		return properties;
+	}
+
+	@SuppressWarnings("deprecation")
+	public ProducerBuilderCustomizer<?> buildProducerBuilderCustomizer() {
+		return (producerBuilder) -> {
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+			map.from(this::getTopicName).to(producerBuilder::topic);
+			map.from(this::getProducerName).to(producerBuilder::producerName);
+			map.from(this::getSendTimeout).asInt(Duration::toMillis).to(producerBuilder,
+					(pb, val) -> pb.sendTimeout(val, TimeUnit.MILLISECONDS));
+			map.from(this::getBlockIfQueueFull).to(producerBuilder::blockIfQueueFull);
+			map.from(this::getMaxPendingMessages).to(producerBuilder::maxPendingMessages);
+			map.from(this::getMaxPendingMessagesAcrossPartitions)
+					.to(producerBuilder::maxPendingMessagesAcrossPartitions);
+			map.from(this::getMessageRoutingMode).to(producerBuilder::messageRoutingMode);
+			map.from(this::getHashingScheme).to(producerBuilder::hashingScheme);
+			map.from(this::getCryptoFailureAction).to(producerBuilder::cryptoFailureAction);
+			map.from(this::getBatchingMaxPublishDelay).as(Duration::toMillis).to(producerBuilder,
+					(pb, val) -> pb.batchingMaxPublishDelay(val, TimeUnit.MILLISECONDS));
+			map.from(this::getBatchingPartitionSwitchFrequencyByPublishDelay)
+					.to(producerBuilder::roundRobinRouterBatchingPartitionSwitchFrequency);
+			map.from(this::getBatchingMaxMessages).to(producerBuilder::batchingMaxMessages);
+			map.from(this::getBatchingMaxBytes).asInt(DataSize::toBytes).to(producerBuilder::batchingMaxBytes);
+			map.from(this::getBatchingEnabled).to(producerBuilder::enableBatching);
+			map.from(this::getChunkingEnabled).to(producerBuilder::enableChunking);
+			map.from(this::getEncryptionKeys)
+					.to((encryptionKeys) -> encryptionKeys.forEach(producerBuilder::addEncryptionKey));
+			map.from(this::getCompressionType).to(producerBuilder::compressionType);
+			map.from(this::getInitialSequenceId).to(producerBuilder::initialSequenceId);
+			map.from(this::getAutoUpdatePartitions).to(producerBuilder::autoUpdatePartitions);
+			map.from(this::getAutoUpdatePartitionsInterval).asInt(Duration::toMillis).to(producerBuilder,
+					(pb, val) -> pb.autoUpdatePartitionsInterval(val, TimeUnit.MILLISECONDS));
+			map.from(this::getMultiSchema).to(producerBuilder::enableMultiSchema);
+			map.from(this::getProducerAccessMode).to(producerBuilder::accessMode);
+			map.from(this::getLazyStartPartitionedProducers).to(producerBuilder::enableLazyStartPartitionedProducers);
+			map.from(this::getProperties).to(producerBuilder::properties);
+		};
 	}
 
 }

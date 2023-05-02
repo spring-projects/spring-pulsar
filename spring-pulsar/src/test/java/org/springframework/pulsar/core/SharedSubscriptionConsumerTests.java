@@ -76,9 +76,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			container3 = createAndStartContainer(pulsarConsumerFactory, latch3, "three", messageCountByKey3,
 					SubscriptionType.Shared);
 
-			Map<String, Object> prodConfig = Map.of("topicName", "shared-subscription-single-msg-test-topic");
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, prodConfig);
+					pulsarClient, "shared-subscription-single-msg-test-topic");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 			pulsarTemplate.newMessage("hello john doe").sendAsync();
@@ -132,7 +131,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			Thread.sleep(5_000);
 
 			DefaultPulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Map.of("topicName", "key-shared-batch-disabled-topic", "batchingEnabled", "false"));
+					"key-shared-batch-disabled-topic", (pb) -> pb.enableBatching(false));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 			for (int i = 0; i < 10; i++) {
 				pulsarTemplate.newMessage("alice-" + i)

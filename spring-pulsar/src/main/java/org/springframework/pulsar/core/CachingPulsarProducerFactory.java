@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -67,16 +66,17 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	 * Construct a caching producer factory with the specified values for the cache
 	 * configuration.
 	 * @param pulsarClient the client used to create the producers
-	 * @param producerConfig the configuration to use when creating a producer
+	 * @param defaultTopic the default topic to use for the producers
+	 * @param defaultConfigCustomizer the default configuration to apply to the producers
 	 * @param topicResolver the topic resolver to use
 	 * @param cacheExpireAfterAccess time period to expire unused entries in the cache
 	 * @param cacheMaximumSize maximum size of cache (entries)
 	 * @param cacheInitialCapacity the initial size of cache
 	 */
-	public CachingPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> producerConfig,
-			TopicResolver topicResolver, Duration cacheExpireAfterAccess, Long cacheMaximumSize,
-			Integer cacheInitialCapacity) {
-		super(pulsarClient, producerConfig, topicResolver);
+	public CachingPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
+			ProducerBuilderCustomizer<T> defaultConfigCustomizer, TopicResolver topicResolver,
+			Duration cacheExpireAfterAccess, Long cacheMaximumSize, Integer cacheInitialCapacity) {
+		super(pulsarClient, defaultTopic, defaultConfigCustomizer, topicResolver);
 		var cacheFactory = CacheProviderFactory.<ProducerCacheKey<T>, Producer<T>>load();
 		this.producerCache = cacheFactory.create(cacheExpireAfterAccess, cacheMaximumSize, cacheInitialCapacity,
 				(key, producer, cause) -> {
@@ -90,8 +90,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolveTopicName = resolveTopicName(topic);
-		ProducerCacheKey<T> producerCacheKey = new ProducerCacheKey<>(schema, resolveTopicName,
+		var resolveTopicName = resolveTopicName(topic);
+		var producerCacheKey = new ProducerCacheKey<>(schema, resolveTopicName,
 				encryptionKeys == null ? null : new HashSet<>(encryptionKeys), customizers);
 		return this.producerCache.getOrCreateIfAbsent(producerCacheKey,
 				(st) -> createCacheableProducer(st.schema, st.topic, st.encryptionKeys, customizers));
@@ -100,7 +100,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	private Producer<T> createCacheableProducer(Schema<T> schema, String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		try {
-			Producer<T> producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
+			var producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
 			return new ProducerWithCloseCallback<>(producer,
 					(p) -> this.logger.trace(() -> "Client closed producer %s but will skip actual closing"
 							.formatted(ProducerUtils.formatProducer(producer))));
@@ -174,7 +174,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			if (o == null || getClass() != o.getClass()) {
 				return false;
 			}
-			ProducerCacheKey<?> that = (ProducerCacheKey<?>) o;
+			var that = (ProducerCacheKey<?>) o;
 			return this.topic.equals(that.topic) && this.schemaHash.equals(that.schemaHash)
 					&& Objects.equals(this.encryptionKeys, that.encryptionKeys)
 					&& Objects.equals(this.customizers, that.customizers);

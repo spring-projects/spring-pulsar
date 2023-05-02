@@ -170,7 +170,7 @@ public class ObservationTests implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient, Collections.emptyMap());
+			return new DefaultPulsarProducerFactory<>(pulsarClient);
 		}
 
 		@Bean

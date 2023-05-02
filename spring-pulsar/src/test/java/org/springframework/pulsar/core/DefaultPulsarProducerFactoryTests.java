@@ -18,13 +18,12 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
-import java.util.Map;
-
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Test;
+
+import org.springframework.lang.Nullable;
 
 /**
  * Tests for {@link DefaultPulsarProducerFactory}.
@@ -35,8 +34,7 @@ class DefaultPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Test
 	void createProducerMultipleTimeDoesNotCacheProducer() throws PulsarClientException {
-		Map<String, Object> producerConfig = Collections.emptyMap();
-		PulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, producerConfig);
+		PulsarProducerFactory<String> producerFactory = newProducerFactory();
 		try (Producer<String> producer1 = producerFactory.createProducer(schema, "topic1")) {
 			try (Producer<String> producer2 = producerFactory.createProducer(schema, "topic1")) {
 				try (Producer<String> producer3 = producerFactory.createProducer(schema, "topic1")) {
@@ -47,9 +45,9 @@ class DefaultPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Override
-	protected PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
-			Map<String, Object> producerConfig) {
-		return new DefaultPulsarProducerFactory<>(pulsarClient, producerConfig);
+	protected PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
+			@Nullable ProducerBuilderCustomizer<String> defaultConfigCustomizer) {
+		return new DefaultPulsarProducerFactory<>(pulsarClient, defaultTopic, defaultConfigCustomizer);
 	}
 
 }

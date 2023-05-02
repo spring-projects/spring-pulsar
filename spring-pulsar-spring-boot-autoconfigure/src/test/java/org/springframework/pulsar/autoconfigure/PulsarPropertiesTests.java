@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -389,6 +390,57 @@ public class PulsarPropertiesTests {
 
 		@Test
 		void producerProperties() {
+			var props = new HashMap<String, String>();
+			props.put("spring.pulsar.producer.topic-name", "my-topic");
+			props.put("spring.pulsar.producer.producer-name", "my-producer");
+			props.put("spring.pulsar.producer.send-timeout", "2s");
+			props.put("spring.pulsar.producer.block-if-queue-full", "true");
+			props.put("spring.pulsar.producer.max-pending-messages", "3");
+			props.put("spring.pulsar.producer.max-pending-messages-across-partitions", "4");
+			props.put("spring.pulsar.producer.message-routing-mode", "custompartition");
+			props.put("spring.pulsar.producer.hashing-scheme", "murmur3_32hash");
+			props.put("spring.pulsar.producer.crypto-failure-action", "send");
+			props.put("spring.pulsar.producer.batching-max-publish-delay", "5s");
+			props.put("spring.pulsar.producer.batching-partition-switch-frequency-by-publish-delay", "6");
+			props.put("spring.pulsar.producer.batching-max-messages", "7");
+			props.put("spring.pulsar.producer.batching-max-bytes", "8");
+			props.put("spring.pulsar.producer.batching-enabled", "false");
+			props.put("spring.pulsar.producer.chunking-enabled", "true");
+			props.put("spring.pulsar.producer.encryption-keys[0]", "my-key");
+			props.put("spring.pulsar.producer.compression-type", "lz4");
+			props.put("spring.pulsar.producer.initial-sequence-id", "9");
+			props.put("spring.pulsar.producer.producer-access-mode", "exclusive");
+			props.put("spring.pulsar.producer.lazy-start=partitioned-producers", "true");
+			props.put("spring.pulsar.producer.properties[my-prop]", "my-prop-value");
+
+			bind(props);
+
+			var producerProps = properties.getProducer();
+			assertThat(producerProps.getTopicName()).isEqualTo("my-topic");
+			assertThat(producerProps.getProducerName()).isEqualTo("my-producer");
+			assertThat(producerProps.getSendTimeout()).isEqualTo(Duration.ofMillis(2000));
+			assertThat(producerProps.getBlockIfQueueFull()).isTrue();
+			assertThat(producerProps.getMaxPendingMessages()).isEqualTo(3);
+			assertThat(producerProps.getMaxPendingMessagesAcrossPartitions()).isEqualTo(4);
+			assertThat(producerProps.getMessageRoutingMode()).isEqualTo(MessageRoutingMode.CustomPartition);
+			assertThat(producerProps.getHashingScheme()).isEqualTo(HashingScheme.Murmur3_32Hash);
+			assertThat(producerProps.getCryptoFailureAction()).isEqualTo(ProducerCryptoFailureAction.SEND);
+			assertThat(producerProps.getBatchingMaxPublishDelay()).isEqualTo(Duration.ofMillis(5000));
+			assertThat(producerProps.getBatchingPartitionSwitchFrequencyByPublishDelay()).isEqualTo(6);
+			assertThat(producerProps.getBatchingMaxMessages()).isEqualTo(7);
+			assertThat(producerProps.getBatchingMaxBytes()).isEqualTo(DataSize.ofBytes(8));
+			assertThat(producerProps.getBatchingEnabled()).isFalse();
+			assertThat(producerProps.getChunkingEnabled()).isTrue();
+			assertThat(producerProps.getEncryptionKeys()).containsExactly("my-key");
+			assertThat(producerProps.getCompressionType()).isEqualTo(CompressionType.LZ4);
+			assertThat(producerProps.getInitialSequenceId()).isEqualTo(9);
+			assertThat(producerProps.getProducerAccessMode()).isEqualTo(ProducerAccessMode.Exclusive);
+			assertThat(producerProps.getLazyStartPartitionedProducers()).isTrue();
+			assertThat(producerProps.getProperties()).containsExactly(entry("my-prop", "my-prop-value"));
+		}
+
+		@Test
+		void producerPropertiesAsMap() {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.producer.topic-name", "my-topic");
 			props.put("spring.pulsar.producer.producer-name", "my-producer");

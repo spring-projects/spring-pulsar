@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
@@ -58,6 +60,7 @@ import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
+import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarClientBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -369,10 +372,8 @@ class PulsarAutoConfigurationTests {
 
 		@Test
 		void clientConfigurerWithNoUserDefinedCustomizers() {
-			contextRunner.run((context) -> {
-				assertThat(context).getBean(PulsarClientBuilderConfigurer.class)
-						.hasFieldOrPropertyWithValue("customizers", Collections.emptyList());
-			});
+			contextRunner.run((context) -> assertThat(context).getBean(PulsarClientBuilderConfigurer.class)
+					.hasFieldOrPropertyWithValue("customizers", Collections.emptyList()));
 		}
 
 		@Test
@@ -520,18 +521,28 @@ class PulsarAutoConfigurationTests {
 
 		@Test
 		void beansAreInjectedInNonCachingProducerFactory() {
-			contextRunner.withPropertyValues("spring.pulsar.producer.cache.enabled=false")
-					.run((context -> assertThat(context).hasNotFailed().getBean(DefaultPulsarProducerFactory.class)
+			contextRunner.withUserConfiguration(ProducerCustomizerConfig.class)
+					.withPropertyValues("spring.pulsar.producer.topic-name=foo-topic",
+							"spring.pulsar.producer.cache.enabled=false")
+					.run((context) -> assertThat(context).getBean(DefaultPulsarProducerFactory.class)
+							.hasFieldOrPropertyWithValue("defaultTopic", "foo-topic")
+							.hasFieldOrPropertyWithValue("defaultConfigCustomizer",
+									ProducerCustomizerConfig.testCustomizer)
 							.hasFieldOrPropertyWithValue("pulsarClient", context.getBean(PulsarClient.class))
-							.hasFieldOrPropertyWithValue("topicResolver", context.getBean(TopicResolver.class))));
+							.hasFieldOrPropertyWithValue("topicResolver", context.getBean(TopicResolver.class)));
 		}
 
 		@Test
 		void beansAreInjectedInCachingProducerFactory() {
-			contextRunner.withPropertyValues("spring.pulsar.producer.cache.enabled=true")
-					.run((context -> assertThat(context).hasNotFailed().getBean(CachingPulsarProducerFactory.class)
+			contextRunner.withUserConfiguration(ProducerCustomizerConfig.class)
+					.withPropertyValues("spring.pulsar.producer.topic-name=foo-topic",
+							"spring.pulsar.producer.cache.enabled=true")
+					.run((context) -> assertThat(context).getBean(CachingPulsarProducerFactory.class)
+							.hasFieldOrPropertyWithValue("defaultTopic", "foo-topic")
+							.hasFieldOrPropertyWithValue("defaultConfigCustomizer",
+									ProducerCustomizerConfig.testCustomizer)
 							.hasFieldOrPropertyWithValue("pulsarClient", context.getBean(PulsarClient.class))
-							.hasFieldOrPropertyWithValue("topicResolver", context.getBean(TopicResolver.class))));
+							.hasFieldOrPropertyWithValue("topicResolver", context.getBean(TopicResolver.class)));
 		}
 
 		private void assertHasProducerFactoryOfType(Class<?> producerFactoryType,
@@ -606,6 +617,31 @@ class PulsarAutoConfigurationTests {
 		@Order(100)
 		PulsarClientBuilderCustomizer clientCustomizerBar() {
 			return clientCustomizerBar;
+		}
+
+	}
+
+	/*
+	 * Use '@TestConfiguration' and exact name of the PulsarProperties bean that is
+	 * created via the '@EnableConfigurationProperties' on the actual auto-config in order
+	 * to 'replace' the PulsarProperties bean - all so we can make sure the returned
+	 * producer builder customizer is the one we expect.
+	 */
+	@TestConfiguration(proxyBeanMethods = false)
+	static class ProducerCustomizerConfig {
+
+		@SuppressWarnings("rawtypes")
+		static ProducerBuilderCustomizer testCustomizer = (producerBuilder) -> {
+		};
+
+		@Bean(name = "spring.pulsar-org.springframework.pulsar.autoconfigure.PulsarProperties")
+		PulsarProperties pulsarProperties() {
+			var pulsarProps = new PulsarProperties();
+			var producerProps = spy(pulsarProps.getProducer());
+			when(producerProps.buildProducerBuilderCustomizer()).thenReturn(testCustomizer);
+			var spyPulsarProps = spy(pulsarProps);
+			when(spyPulsarProps.getProducer()).thenReturn(producerProps);
+			return spyPulsarProps;
 		}
 
 	}

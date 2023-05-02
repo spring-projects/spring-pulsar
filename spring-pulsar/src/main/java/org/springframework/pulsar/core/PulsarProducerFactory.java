@@ -18,7 +18,6 @@ package org.springframework.pulsar.core;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
@@ -78,9 +77,11 @@ public interface PulsarProducerFactory<T> {
 			@Nullable List<ProducerBuilderCustomizer<T>> customizers) throws PulsarClientException;
 
 	/**
-	 * Return a map of configuration options to use when creating producers.
-	 * @return the map of configuration options
+	 * Get the default topic to use for all created producers.
+	 * @return the default topic to use for all created producers or null if no default
+	 * set
 	 */
-	Map<String, Object> getProducerConfig();
+	@Nullable
+	String getDefaultTopic();
 
 }
