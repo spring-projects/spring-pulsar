@@ -644,7 +644,7 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 		public PulsarProducerFactory<?> pulsarProducerFactory(PulsarClient pulsarClient,
 				PulsarProperties pulsarProperties, TopicResolver topicResolver) {
 			var customizer = (ProducerBuilderCustomizer<String>) pulsarProperties.getProducer()
-					.buildProducerBuilderCustomizer();
+					.toProducerBuilderCustomizer();
 			return new TrackingProducerFactory(pulsarClient, pulsarProperties.getProducer().getTopicName(), customizer,
 					topicResolver);
 		}

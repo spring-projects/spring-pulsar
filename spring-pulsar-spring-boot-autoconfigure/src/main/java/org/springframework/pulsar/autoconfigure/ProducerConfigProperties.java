@@ -32,7 +32,6 @@ import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.autoconfigure.PulsarProperties.Cache;
-import org.springframework.pulsar.autoconfigure.PulsarProperties.Properties;
 import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.util.unit.DataSize;
 
@@ -367,44 +366,8 @@ public class ProducerConfigProperties {
 		return this.cache;
 	}
 
-	public Map<String, Object> buildProperties() {
-		PulsarProperties.Properties properties = new Properties();
-
-		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-
-		map.from(this::getTopicName).to(properties.in("topicName"));
-		map.from(this::getProducerName).to(properties.in("producerName"));
-		map.from(this::getSendTimeout).asInt(Duration::toMillis).to(properties.in("sendTimeoutMs"));
-		map.from(this::getBlockIfQueueFull).to(properties.in("blockIfQueueFull"));
-		map.from(this::getMaxPendingMessages).to(properties.in("maxPendingMessages"));
-		map.from(this::getMaxPendingMessagesAcrossPartitions).to(properties.in("maxPendingMessagesAcrossPartitions"));
-		map.from(this::getMessageRoutingMode).to(properties.in("messageRoutingMode"));
-		map.from(this::getHashingScheme).to(properties.in("hashingScheme"));
-		map.from(this::getCryptoFailureAction).to(properties.in("cryptoFailureAction"));
-		map.from(this::getBatchingMaxPublishDelay).as(it -> it.toNanos() / 1000)
-				.to(properties.in("batchingMaxPublishDelayMicros"));
-		map.from(this::getBatchingPartitionSwitchFrequencyByPublishDelay)
-				.to(properties.in("batchingPartitionSwitchFrequencyByPublishDelay"));
-		map.from(this::getBatchingMaxMessages).to(properties.in("batchingMaxMessages"));
-		map.from(this::getBatchingMaxBytes).asInt(DataSize::toBytes).to(properties.in("batchingMaxBytes"));
-		map.from(this::getBatchingEnabled).to(properties.in("batchingEnabled"));
-		map.from(this::getChunkingEnabled).to(properties.in("chunkingEnabled"));
-		map.from(this::getEncryptionKeys).to(properties.in("encryptionKeys"));
-		map.from(this::getCompressionType).to(properties.in("compressionType"));
-		map.from(this::getInitialSequenceId).to(properties.in("initialSequenceId"));
-		map.from(this::getAutoUpdatePartitions).to(properties.in("autoUpdatePartitions"));
-		map.from(this::getAutoUpdatePartitionsInterval).as(Duration::toSeconds)
-				.to(properties.in("autoUpdatePartitionsIntervalSeconds"));
-		map.from(this::getMultiSchema).to(properties.in("multiSchema"));
-		map.from(this::getProducerAccessMode).to(properties.in("accessMode"));
-		map.from(this::getLazyStartPartitionedProducers).to(properties.in("lazyStartPartitionedProducers"));
-		map.from(this::getProperties).to(properties.in("properties"));
-
-		return properties;
-	}
-
 	@SuppressWarnings("deprecation")
-	public ProducerBuilderCustomizer<?> buildProducerBuilderCustomizer() {
+	public ProducerBuilderCustomizer<?> toProducerBuilderCustomizer() {
 		return (producerBuilder) -> {
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 			map.from(this::getTopicName).to(producerBuilder::topic);

@@ -638,7 +638,7 @@ class PulsarAutoConfigurationTests {
 		PulsarProperties pulsarProperties() {
 			var pulsarProps = new PulsarProperties();
 			var producerProps = spy(pulsarProps.getProducer());
-			when(producerProps.buildProducerBuilderCustomizer()).thenReturn(testCustomizer);
+			when(producerProps.toProducerBuilderCustomizer()).thenReturn(testCustomizer);
 			var spyPulsarProps = spy(pulsarProps);
 			when(spyPulsarProps.getProducer()).thenReturn(producerProps);
 			return spyPulsarProps;
