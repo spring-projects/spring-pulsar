@@ -85,9 +85,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 			return invocation.callRealMethod();
 		}).when(containerConsumer).acknowledge(any(MessageId.class));
 
-		Map<String, Object> prodConfig = Map.of("topicName", "cons-ack-tests-011");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"cons-ack-tests-011");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -115,9 +114,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 				pulsarConsumerFactory, pulsarContainerProperties);
 		Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "cons-ack-tests-012");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"cons-ack-tests-012");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -160,9 +158,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 			return invocation.callRealMethod();
 		}).when(containerConsumer).acknowledge(any(MessageId.class));
 
-		Map<String, Object> prodConfig = Map.of("topicName", "cons-ack-tests-013");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"cons-ack-tests-013");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -226,9 +223,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 			return invocation.callRealMethod();
 		}).when(containerConsumer).acknowledge(any(MessageId.class));
 
-		Map<String, Object> prodConfig = Map.of("topicName", "cons-ack-tests-014");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"cons-ack-tests-014");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -272,9 +268,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 				pulsarConsumerFactory, pulsarContainerProperties);
 		Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "cons-ack-tests-015");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"cons-ack-tests-015");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -316,9 +311,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 				pulsarConsumerFactory, pulsarContainerProperties);
 		Consumer<String> containerConsumer = ConsumerTestUtils.startContainerAndSpyOnConsumer(container);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "cons-ack-tests-016");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"cons-ack-tests-016");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync("hello john doe");
@@ -352,9 +346,8 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container1.start();
 
-		Map<String, Object> prodConfig = Collections.singletonMap("topicName", "duplicate-message-test");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"duplicate-message-test");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		pulsarTemplate.send("hello john doe");
 

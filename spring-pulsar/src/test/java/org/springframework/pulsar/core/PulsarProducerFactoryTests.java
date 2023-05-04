@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.pulsar.client.api.Producer;
@@ -42,6 +41,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
@@ -91,15 +91,15 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	}
 
 	protected PulsarProducerFactory<String> newProducerFactory() {
-		return producerFactory(pulsarClient, Collections.emptyMap());
+		return producerFactory(pulsarClient, null, null);
 	}
 
 	protected PulsarProducerFactory<String> newProducerFactoryWithDefaultTopic(String defaultTopic) {
-		return producerFactory(pulsarClient, Collections.singletonMap("topicName", defaultTopic));
+		return producerFactory(pulsarClient, defaultTopic, null);
 	}
 
 	private PulsarProducerFactory<String> newProducerFactoryWithDefaultKeys(Set<String> defaultKeys) {
-		return producerFactory(pulsarClient, Collections.singletonMap("encryptionKeys", defaultKeys));
+		return producerFactory(pulsarClient, null, (pb) -> defaultKeys.forEach(pb::addEncryptionKey));
 	}
 
 	/**
@@ -114,11 +114,12 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	/**
 	 * Subclasses override to provide concrete {@link PulsarProducerFactory} instance.
 	 * @param pulsarClient the Pulsar client
-	 * @param producerConfig the Pulsar producers config
+	 * @param defaultTopic the default topic to use for the producers
+	 * @param defaultConfigCustomizer the default configuration to apply to the producers
 	 * @return a Pulsar producer factory instance to use for the tests
 	 */
 	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
-			Map<String, Object> producerConfig);
+			@Nullable String defaultTopic, @Nullable ProducerBuilderCustomizer<String> defaultConfigCustomizer);
 
 	@Test
 	@SuppressWarnings("unchecked")
@@ -223,19 +224,20 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 
 		@Test
 		void withDefaultEncryptionKeys() throws PulsarClientException {
-			var keys = Set.of("key");
-			var producerFactory = newProducerFactoryWithDefaultKeys(keys);
+			var defaultKeys = Set.of("default-key");
+			var producerFactory = newProducerFactoryWithDefaultKeys(defaultKeys);
 			try (var producer = producerFactory.createProducer(schema, "topic0")) {
-				assertThatProducerHasEncryptionKeys(producer, keys);
+				assertThatProducerHasEncryptionKeys(producer, defaultKeys);
 			}
 		}
 
 		@Test
 		void specificEncryptionKeys() throws PulsarClientException {
-			var keys = Set.of("key");
-			var producerFactory = newProducerFactory();
-			try (var producer = producerFactory.createProducer(schema, "topic0", keys, null)) {
-				assertThatProducerHasEncryptionKeys(producer, keys);
+			var defaultKeys = Set.of("default-key");
+			var userSpecifiedKeys = Set.of("user-key");
+			var producerFactory = newProducerFactoryWithDefaultKeys(defaultKeys);
+			try (var producer = producerFactory.createProducer(schema, "topic0", userSpecifiedKeys, null)) {
+				assertThatProducerHasEncryptionKeys(producer, userSpecifiedKeys);
 			}
 		}
 

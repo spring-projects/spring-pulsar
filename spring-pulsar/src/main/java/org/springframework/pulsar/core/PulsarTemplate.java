@@ -221,7 +221,7 @@ public class PulsarTemplate<T>
 			@Nullable Schema<T> schema, @Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
-		String defaultTopic = Objects.toString(this.producerFactory.getProducerConfig().get("topicName"), null);
+		String defaultTopic = Objects.toString(this.producerFactory.getDefaultTopic(), null);
 		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow();
 		this.logger.trace(() -> "Sending msg to '%s' topic".formatted(topicName));
 

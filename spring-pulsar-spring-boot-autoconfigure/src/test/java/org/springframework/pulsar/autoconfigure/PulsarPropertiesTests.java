@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -41,7 +42,6 @@ import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
-import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ReaderConfigurationData;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -58,7 +58,7 @@ import org.springframework.pulsar.autoconfigure.PulsarProperties.TypeMapping;
 import org.springframework.util.unit.DataSize;
 
 /**
- * Unit tests for {@link PulsarProperties}.
+ * Tests for {@link PulsarProperties}.
  *
  * @author Chris Bono
  * @author Christophe Bornet
@@ -389,7 +389,7 @@ public class PulsarPropertiesTests {
 
 		@Test
 		void producerProperties() {
-			Map<String, String> props = new HashMap<>();
+			var props = new HashMap<String, String>();
 			props.put("spring.pulsar.producer.topic-name", "my-topic");
 			props.put("spring.pulsar.producer.producer-name", "my-producer");
 			props.put("spring.pulsar.producer.send-timeout", "2s");
@@ -413,32 +413,29 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.producer.properties[my-prop]", "my-prop-value");
 
 			bind(props);
-			Map<String, Object> producerProps = properties.buildProducerProperties();
 
-			// Verify that the props can be loaded in a ProducerBuilder
-			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(producerProps,
-					new ProducerConfigurationData(), ProducerConfigurationData.class));
-
-			assertThat(producerProps).containsEntry("topicName", "my-topic")
-					.containsEntry("producerName", "my-producer").containsEntry("sendTimeoutMs", 2_000)
-					.containsEntry("blockIfQueueFull", true).containsEntry("maxPendingMessages", 3)
-					.containsEntry("maxPendingMessagesAcrossPartitions", 4)
-					.containsEntry("messageRoutingMode", MessageRoutingMode.CustomPartition)
-					.containsEntry("hashingScheme", HashingScheme.Murmur3_32Hash)
-					.containsEntry("cryptoFailureAction", ProducerCryptoFailureAction.SEND)
-					.containsEntry("batchingMaxPublishDelayMicros", 5_000_000L)
-					.containsEntry("batchingPartitionSwitchFrequencyByPublishDelay", 6)
-					.containsEntry("batchingMaxMessages", 7).containsEntry("batchingMaxBytes", 8)
-					.containsEntry("batchingEnabled", false).containsEntry("chunkingEnabled", true)
-					.hasEntrySatisfying("encryptionKeys",
-							keys -> assertThat(keys).asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-									.containsExactly("my-key"))
-					.containsEntry("compressionType", CompressionType.LZ4).containsEntry("initialSequenceId", 9L)
-					.containsEntry("accessMode", ProducerAccessMode.Exclusive)
-					.containsEntry("lazyStartPartitionedProducers", true).hasEntrySatisfying("properties",
-							properties -> assertThat(properties)
-									.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
-									.containsEntry("my-prop", "my-prop-value"));
+			var producerProps = properties.getProducer();
+			assertThat(producerProps.getTopicName()).isEqualTo("my-topic");
+			assertThat(producerProps.getProducerName()).isEqualTo("my-producer");
+			assertThat(producerProps.getSendTimeout()).isEqualTo(Duration.ofMillis(2000));
+			assertThat(producerProps.getBlockIfQueueFull()).isTrue();
+			assertThat(producerProps.getMaxPendingMessages()).isEqualTo(3);
+			assertThat(producerProps.getMaxPendingMessagesAcrossPartitions()).isEqualTo(4);
+			assertThat(producerProps.getMessageRoutingMode()).isEqualTo(MessageRoutingMode.CustomPartition);
+			assertThat(producerProps.getHashingScheme()).isEqualTo(HashingScheme.Murmur3_32Hash);
+			assertThat(producerProps.getCryptoFailureAction()).isEqualTo(ProducerCryptoFailureAction.SEND);
+			assertThat(producerProps.getBatchingMaxPublishDelay()).isEqualTo(Duration.ofMillis(5000));
+			assertThat(producerProps.getBatchingPartitionSwitchFrequencyByPublishDelay()).isEqualTo(6);
+			assertThat(producerProps.getBatchingMaxMessages()).isEqualTo(7);
+			assertThat(producerProps.getBatchingMaxBytes()).isEqualTo(DataSize.ofBytes(8));
+			assertThat(producerProps.getBatchingEnabled()).isFalse();
+			assertThat(producerProps.getChunkingEnabled()).isTrue();
+			assertThat(producerProps.getEncryptionKeys()).containsExactly("my-key");
+			assertThat(producerProps.getCompressionType()).isEqualTo(CompressionType.LZ4);
+			assertThat(producerProps.getInitialSequenceId()).isEqualTo(9);
+			assertThat(producerProps.getProducerAccessMode()).isEqualTo(ProducerAccessMode.Exclusive);
+			assertThat(producerProps.getLazyStartPartitionedProducers()).isTrue();
+			assertThat(producerProps.getProperties()).containsExactly(entry("my-prop", "my-prop-value"));
 		}
 
 	}

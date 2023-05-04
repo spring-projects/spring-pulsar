@@ -74,9 +74,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		pulsarContainerProperties.setMessageListener(messageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-1");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-1");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		PulsarTemplate<String> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);
 
@@ -127,9 +126,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		pulsarContainerProperties.setMessageListener(messageListener);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-2");
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-2");
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		PulsarTemplate<String> mockPulsarTemplate = mock(PulsarTemplate.class);
 
@@ -174,9 +172,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		pulsarContainerProperties.setMessageListener(messageListener);
 		pulsarContainerProperties.setSchema(Schema.INT32);
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-3");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-3");
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		PulsarTemplate<Integer> mockPulsarTemplate = mock(PulsarTemplate.class, RETURNS_DEEP_STUBS);
 
@@ -252,9 +249,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-4");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-4");
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
@@ -321,9 +317,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-5");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-5");
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
@@ -389,9 +384,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-6");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-6");
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
@@ -463,9 +457,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-7");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-7");
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);
@@ -533,9 +526,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		container.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "default-error-handler-tests-8");
 		DefaultPulsarProducerFactory<Integer> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"default-error-handler-tests-8");
 		PulsarTemplate<Integer> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < 10; i++) {
 			pulsarTemplate.sendAsync(i);

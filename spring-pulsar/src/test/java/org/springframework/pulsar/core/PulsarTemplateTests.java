@@ -29,9 +29,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -192,8 +190,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("interceptorInvocationTestProvider")
 	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws Exception {
-		PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client,
-				Collections.singletonMap("topicName", topic));
+		PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client, topic);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
 		pulsarTemplate.send("test-interceptor");
 		for (ProducerInterceptor interceptor : interceptors) {
@@ -214,8 +211,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	void sendMessageWithTopicInferredByTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
 		String topic = "ptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
 		PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-				producerFactoryHasDefaultTopic ? Collections.singletonMap("topicName", "fake-topic")
-						: Collections.emptyMap());
+				producerFactoryHasDefaultTopic ? "fake-topic" : null);
 		// Topic mappings allows not specifying the topic when sending (nor having
 		// default on producer)
 		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
@@ -229,8 +225,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
 	void sendMessageWithoutTopicFails() {
-		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client,
-				Collections.emptyMap());
+		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message"))
 				.withMessage("Topic must be specified when no default topic is configured");
@@ -238,11 +233,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	private <T> Message<T> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
 			Schema<T> schema, T expectedValue, Boolean withDefaultTopic) throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		if (withDefaultTopic) {
-			config.put("topicName", topic);
-		}
-		PulsarProducerFactory<T> senderFactory = new DefaultPulsarProducerFactory<>(client, config);
+		PulsarProducerFactory<T> senderFactory = new DefaultPulsarProducerFactory<>(client,
+				withDefaultTopic ? topic : null);
 		PulsarTemplate<T> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 		return sendAndConsume(pulsarTemplate, sendFunction, topic, schema, expectedValue);
 	}
@@ -282,8 +274,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		@Test
 		void withSchemaInferredByTypeMappings() throws Exception {
 			String topic = "ptt-schemaInferred-topic";
-			PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client,
-					Collections.singletonMap("topicName", topic));
+			PulsarProducerFactory<Foo> producerFactory = new DefaultPulsarProducerFactory<>(client, topic);
 			// Custom schema resolver allows not specifying the schema when sending
 			DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 			schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
@@ -301,9 +292,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void sendNullWithDefaultTopicFails() {
-			HashMap<String, Object> config = new HashMap<>();
-			config.put("topicName", "sendNullWithDefaultTopicFails");
-			PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client, config);
+			PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client,
+					"sendNullWithDefaultTopicFails");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING))
 					.withMessage("Topic must be specified when the message is null");
@@ -311,8 +301,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void sendNullWithoutSchemaFails() {
-			PulsarProducerFactory<Object> senderFactory = new DefaultPulsarProducerFactory<>(client,
-					Collections.emptyMap());
+			PulsarProducerFactory<Object> senderFactory = new DefaultPulsarProducerFactory<>(client);
 			PulsarTemplate<Object> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
 					.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
