@@ -23,7 +23,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +71,7 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 
 		@BeforeEach
 		void createConsumerFactory() {
-			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, Collections.emptyMap());
+			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, null);
 		}
 
 		@Test
@@ -170,11 +169,11 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 
 		@BeforeEach
 		void createConsumerFactory() {
-			Map<String, Object> defaultConfig = new HashMap<>();
-			defaultConfig.put("topicNames", Collections.singleton(defaultTopic));
-			defaultConfig.put("properties", defaultMetadataProperties);
-			defaultConfig.put("subscriptionName", defaultSubscription);
-			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, defaultConfig);
+			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, (consumerBuilder) -> {
+				consumerBuilder.topic(defaultTopic);
+				consumerBuilder.subscriptionName(defaultSubscription);
+				consumerBuilder.properties(defaultMetadataProperties);
+			});
 		}
 
 		@Test

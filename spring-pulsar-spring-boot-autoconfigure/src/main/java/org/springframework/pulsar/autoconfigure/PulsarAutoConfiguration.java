@@ -150,7 +150,8 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-		return new DefaultPulsarConsumerFactory<>(pulsarClient, this.properties.buildConsumerProperties());
+		return new DefaultPulsarConsumerFactory<>(pulsarClient,
+				this.properties.getConsumer().toConsumerBuilderCustomizer());
 	}
 
 	@Bean

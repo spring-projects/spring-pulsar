@@ -106,10 +106,6 @@ public class PulsarProperties {
 		return this.defaults;
 	}
 
-	public Map<String, Object> buildConsumerProperties() {
-		return new HashMap<>(this.consumer.buildProperties());
-	}
-
 	public Map<String, Object> buildAdminProperties() {
 		return new HashMap<>(this.admin.buildProperties());
 	}

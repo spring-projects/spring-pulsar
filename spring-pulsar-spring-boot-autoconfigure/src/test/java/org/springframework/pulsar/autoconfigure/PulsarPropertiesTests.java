@@ -30,7 +30,6 @@ import java.util.Map;
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
-import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
@@ -41,7 +40,6 @@ import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
-import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ReaderConfigurationData;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -445,7 +443,7 @@ public class PulsarPropertiesTests {
 
 		@Test
 		void consumerProperties() {
-			Map<String, String> props = new HashMap<>();
+			var props = new HashMap<String, String>();
 			props.put("spring.pulsar.consumer.topics[0]", "my-topic");
 			props.put("spring.pulsar.consumer.topics-pattern", "my-pattern");
 			props.put("spring.pulsar.consumer.subscription-name", "my-subscription");
@@ -484,53 +482,47 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.consumer.expire-time-of-incomplete-chunked-message", "12s");
 
 			bind(props);
-			Map<String, Object> consumerProps = properties.buildConsumerProperties();
 
-			// Verify that the props can be loaded in a ConsumerBuilder
-			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(consumerProps,
-					new ConsumerConfigurationData<>(), ConsumerConfigurationData.class));
-
-			assertThat(consumerProps)
-					.hasEntrySatisfying("topicNames",
-							topics -> assertThat(topics)
-									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-									.containsExactly("my-topic"))
-					.hasEntrySatisfying("topicsPattern", p -> assertThat(p.toString()).isEqualTo("my-pattern"))
-					.containsEntry("subscriptionName", "my-subscription")
-					.containsEntry("subscriptionType", SubscriptionType.Shared)
-					.hasEntrySatisfying("subscriptionProperties",
-							properties -> assertThat(properties)
-									.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
-									.containsEntry("my-sub-prop", "my-sub-prop-value"))
-					.containsEntry("subscriptionMode", SubscriptionMode.NonDurable)
-					.containsEntry("receiverQueueSize", 1).containsEntry("acknowledgementsGroupTimeMicros", 2_000_000L)
-					.containsEntry("negativeAckRedeliveryDelayMicros", 3_000_000L)
-					.containsEntry("maxTotalReceiverQueueSizeAcrossPartitions", 5)
-					.containsEntry("consumerName", "my-consumer").containsEntry("ackTimeoutMillis", 6_000L)
-					.containsEntry("tickDurationMillis", 7_000L).containsEntry("priorityLevel", 8)
-					.containsEntry("cryptoFailureAction", ConsumerCryptoFailureAction.DISCARD)
-					.hasEntrySatisfying("properties",
-							properties -> assertThat(properties)
-									.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
-									.containsEntry("my-prop", "my-prop-value"))
-					.containsEntry("readCompacted", true)
-					.containsEntry("subscriptionInitialPosition", SubscriptionInitialPosition.Earliest)
-					.containsEntry("patternAutoDiscoveryPeriod", 9)
-					.containsEntry("regexSubscriptionMode", RegexSubscriptionMode.AllTopics)
-					.hasEntrySatisfying("deadLetterPolicy", dlp -> {
-						DeadLetterPolicy deadLetterPolicy = (DeadLetterPolicy) dlp;
-						assertThat(deadLetterPolicy.getMaxRedeliverCount()).isEqualTo(4);
-						assertThat(deadLetterPolicy.getRetryLetterTopic()).isEqualTo("my-retry-topic");
-						assertThat(deadLetterPolicy.getDeadLetterTopic()).isEqualTo("my-dlt-topic");
-						assertThat(deadLetterPolicy.getInitialSubscriptionName()).isEqualTo("my-initial-subscription");
-					}).containsEntry("retryEnable", true).containsEntry("autoUpdatePartitions", false)
-					.containsEntry("autoUpdatePartitionsIntervalSeconds", 10L)
-					.containsEntry("replicateSubscriptionState", true).containsEntry("resetIncludeHead", true)
-					.containsEntry("batchIndexAckEnabled", true).containsEntry("ackReceiptEnabled", true)
-					.containsEntry("poolMessages", true).containsEntry("startPaused", true)
-					.containsEntry("autoAckOldestChunkedMessageOnQueueFull", false)
-					.containsEntry("maxPendingChunkedMessage", 11)
-					.containsEntry("expireTimeOfIncompleteChunkedMessageMillis", 12_000L);
+			var consumerProps = properties.getConsumer();
+			assertThat(consumerProps.getTopics()).containsExactly("my-topic");
+			assertThat(consumerProps.getTopicsPattern().toString()).isEqualTo("my-pattern");
+			assertThat(consumerProps.getSubscriptionName()).isEqualTo("my-subscription");
+			assertThat(consumerProps.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
+			assertThat(consumerProps.getSubscriptionProperties())
+					.containsExactly(entry("my-sub-prop", "my-sub-prop-value"));
+			assertThat(consumerProps.getSubscriptionMode()).isEqualTo(SubscriptionMode.NonDurable);
+			assertThat(consumerProps.getReceiverQueueSize()).isEqualTo(1);
+			assertThat(consumerProps.getAcknowledgementsGroupTime()).isEqualTo(Duration.ofMillis(2_000));
+			assertThat(consumerProps.getNegativeAckRedeliveryDelay()).isEqualTo(Duration.ofMillis(3_000));
+			assertThat(consumerProps.getMaxTotalReceiverQueueSizeAcrossPartitions()).isEqualTo(5);
+			assertThat(consumerProps.getConsumerName()).isEqualTo("my-consumer");
+			assertThat(consumerProps.getAckTimeout()).isEqualTo(Duration.ofMillis(6_000));
+			assertThat(consumerProps.getTickDuration()).isEqualTo(Duration.ofMillis(7_000));
+			assertThat(consumerProps.getPriorityLevel()).isEqualTo(8);
+			assertThat(consumerProps.getCryptoFailureAction()).isEqualTo(ConsumerCryptoFailureAction.DISCARD);
+			assertThat(consumerProps.getProperties()).containsExactly(entry("my-prop", "my-prop-value"));
+			assertThat(consumerProps.getReadCompacted()).isTrue();
+			assertThat(consumerProps.getSubscriptionInitialPosition()).isEqualTo(SubscriptionInitialPosition.Earliest);
+			assertThat(consumerProps.getPatternAutoDiscoveryPeriod()).isEqualTo(9);
+			assertThat(consumerProps.getRegexSubscriptionMode()).isEqualTo(RegexSubscriptionMode.AllTopics);
+			assertThat(consumerProps.getDeadLetterPolicy()).satisfies(dlp -> {
+				assertThat(dlp.getMaxRedeliverCount()).isEqualTo(4);
+				assertThat(dlp.getRetryLetterTopic()).isEqualTo("my-retry-topic");
+				assertThat(dlp.getDeadLetterTopic()).isEqualTo("my-dlt-topic");
+				assertThat(dlp.getInitialSubscriptionName()).isEqualTo("my-initial-subscription");
+			});
+			assertThat(consumerProps.getRetryEnable()).isTrue();
+			assertThat(consumerProps.getAutoUpdatePartitions()).isFalse();
+			assertThat(consumerProps.getAutoUpdatePartitionsInterval()).isEqualTo(Duration.ofMillis(10_000));
+			assertThat(consumerProps.getReplicateSubscriptionState()).isTrue();
+			assertThat(consumerProps.getResetIncludeHead()).isTrue();
+			assertThat(consumerProps.getBatchIndexAckEnabled()).isTrue();
+			assertThat(consumerProps.getAckReceiptEnabled()).isTrue();
+			assertThat(consumerProps.getPoolMessages()).isTrue();
+			assertThat(consumerProps.getStartPaused()).isTrue();
+			assertThat(consumerProps.getAutoAckOldestChunkedMessageOnQueueFull()).isFalse();
+			assertThat(consumerProps.getMaxPendingChunkedMessage()).isEqualTo(11);
+			assertThat(consumerProps.getExpireTimeOfIncompleteChunkedMessage()).isEqualTo(Duration.ofMillis(12_000));
 		}
 
 	}

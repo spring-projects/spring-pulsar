@@ -17,11 +17,13 @@
 package org.springframework.pulsar.autoconfigure;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
@@ -35,7 +37,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.autoconfigure.PulsarProperties.Properties;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 
 /**
  * Configuration properties used to specify Pulsar consumers.
@@ -483,51 +485,52 @@ public class ConsumerConfigProperties {
 		this.expireTimeOfIncompleteChunkedMessage = expireTimeOfIncompleteChunkedMessage;
 	}
 
-	public Map<String, Object> buildProperties() {
-		PulsarProperties.Properties properties = new Properties();
-
-		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-
-		map.from(this::getTopics).to(properties.in("topicNames"));
-		map.from(this::getTopicsPattern).to(properties.in("topicsPattern"));
-		map.from(this::getSubscriptionName).to(properties.in("subscriptionName"));
-		map.from(this::getSubscriptionType).to(properties.in("subscriptionType"));
-		map.from(this::getSubscriptionProperties).to(properties.in("subscriptionProperties"));
-		map.from(this::getSubscriptionMode).to(properties.in("subscriptionMode"));
-		map.from(this::getReceiverQueueSize).to(properties.in("receiverQueueSize"));
-		map.from(this::getAcknowledgementsGroupTime).as(it -> it.toNanos() / 1000)
-				.to(properties.in("acknowledgementsGroupTimeMicros"));
-		map.from(this::getNegativeAckRedeliveryDelay).as(it -> it.toNanos() / 1000)
-				.to(properties.in("negativeAckRedeliveryDelayMicros"));
-		map.from(this::getMaxTotalReceiverQueueSizeAcrossPartitions)
-				.to(properties.in("maxTotalReceiverQueueSizeAcrossPartitions"));
-		map.from(this::getConsumerName).to(properties.in("consumerName"));
-		map.from(this::getAckTimeout).as(Duration::toMillis).to(properties.in("ackTimeoutMillis"));
-		map.from(this::getTickDuration).as(Duration::toMillis).to(properties.in("tickDurationMillis"));
-		map.from(this::getPriorityLevel).to(properties.in("priorityLevel"));
-		map.from(this::getCryptoFailureAction).to(properties.in("cryptoFailureAction"));
-		map.from(this::getProperties).to(properties.in("properties"));
-		map.from(this::getReadCompacted).to(properties.in("readCompacted"));
-		map.from(this::getSubscriptionInitialPosition).to(properties.in("subscriptionInitialPosition"));
-		map.from(this::getPatternAutoDiscoveryPeriod).to(properties.in("patternAutoDiscoveryPeriod"));
-		map.from(this::getRegexSubscriptionMode).to(properties.in("regexSubscriptionMode"));
-		map.from(this::getDeadLetterPolicy).to(properties.in("deadLetterPolicy"));
-		map.from(this::getRetryEnable).to(properties.in("retryEnable"));
-		map.from(this::getAutoUpdatePartitions).to(properties.in("autoUpdatePartitions"));
-		map.from(this::getAutoUpdatePartitionsInterval).as(Duration::toSeconds)
-				.to(properties.in("autoUpdatePartitionsIntervalSeconds"));
-		map.from(this::getReplicateSubscriptionState).to(properties.in("replicateSubscriptionState"));
-		map.from(this::getResetIncludeHead).to(properties.in("resetIncludeHead"));
-		map.from(this::getBatchIndexAckEnabled).to(properties.in("batchIndexAckEnabled"));
-		map.from(this::getAckReceiptEnabled).to(properties.in("ackReceiptEnabled"));
-		map.from(this::getPoolMessages).to(properties.in("poolMessages"));
-		map.from(this::getStartPaused).to(properties.in("startPaused"));
-		map.from(this::getAutoAckOldestChunkedMessageOnQueueFull)
-				.to(properties.in("autoAckOldestChunkedMessageOnQueueFull"));
-		map.from(this::getMaxPendingChunkedMessage).to(properties.in("maxPendingChunkedMessage"));
-		map.from(this::getExpireTimeOfIncompleteChunkedMessage).as(Duration::toMillis)
-				.to(properties.in("expireTimeOfIncompleteChunkedMessageMillis"));
-		return properties;
+	@SuppressWarnings("deprecation")
+	public ConsumerBuilderCustomizer<?> toConsumerBuilderCustomizer() {
+		return (consumerBuilder) -> {
+			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+			map.from(this::getTopics).as(ArrayList::new).to(consumerBuilder::topics);
+			map.from(this::getTopicsPattern).to(consumerBuilder::topicsPattern);
+			map.from(this::getSubscriptionName).to(consumerBuilder::subscriptionName);
+			map.from(this::getSubscriptionType).to(consumerBuilder::subscriptionType);
+			map.from(this::getSubscriptionProperties).to(consumerBuilder::subscriptionProperties);
+			map.from(this::getSubscriptionMode).to(consumerBuilder::subscriptionMode);
+			map.from(this::getReceiverQueueSize).to(consumerBuilder::receiverQueueSize);
+			map.from(this::getAcknowledgementsGroupTime).as(Duration::toMillis).to(consumerBuilder,
+					(cb, val) -> cb.acknowledgmentGroupTime(val, TimeUnit.MILLISECONDS));
+			map.from(this::getNegativeAckRedeliveryDelay).as(Duration::toMillis).to(consumerBuilder,
+					(cb, val) -> cb.negativeAckRedeliveryDelay(val, TimeUnit.MILLISECONDS));
+			map.from(this::getMaxTotalReceiverQueueSizeAcrossPartitions)
+					.to(consumerBuilder::maxTotalReceiverQueueSizeAcrossPartitions);
+			map.from(this::getConsumerName).to(consumerBuilder::consumerName);
+			map.from(this::getAckTimeout).as(Duration::toMillis).to(consumerBuilder,
+					(cb, val) -> cb.ackTimeout(val, TimeUnit.MILLISECONDS));
+			map.from(this::getTickDuration).as(Duration::toMillis).to(consumerBuilder,
+					(cb, val) -> cb.ackTimeoutTickTime(val, TimeUnit.MILLISECONDS));
+			map.from(this::getPriorityLevel).to(consumerBuilder::priorityLevel);
+			map.from(this::getCryptoFailureAction).to(consumerBuilder::cryptoFailureAction);
+			map.from(this::getProperties).to(consumerBuilder::properties);
+			map.from(this::getReadCompacted).to(consumerBuilder::readCompacted);
+			map.from(this::getSubscriptionInitialPosition).to(consumerBuilder::subscriptionInitialPosition);
+			map.from(this::getPatternAutoDiscoveryPeriod).to(consumerBuilder::patternAutoDiscoveryPeriod);
+			map.from(this::getRegexSubscriptionMode).to(consumerBuilder::subscriptionTopicsMode);
+			map.from(this::getDeadLetterPolicy).to(consumerBuilder::deadLetterPolicy);
+			map.from(this::getRetryEnable).to(consumerBuilder::enableRetry);
+			map.from(this::getAutoUpdatePartitions).to(consumerBuilder::autoUpdatePartitions);
+			map.from(this::getAutoUpdatePartitionsInterval).asInt(Duration::toMillis).to(consumerBuilder,
+					(cb, val) -> cb.autoUpdatePartitionsInterval(val, TimeUnit.MILLISECONDS));
+			map.from(this::getReplicateSubscriptionState).to(consumerBuilder::replicateSubscriptionState);
+			map.from(this::getResetIncludeHead).whenTrue().to((b) -> consumerBuilder.startMessageIdInclusive());
+			map.from(this::getBatchIndexAckEnabled).to(consumerBuilder::enableBatchIndexAcknowledgment);
+			map.from(this::getAckReceiptEnabled).to(consumerBuilder::isAckReceiptEnabled);
+			map.from(this::getPoolMessages).to(consumerBuilder::poolMessages);
+			map.from(this::getStartPaused).to(consumerBuilder::startPaused);
+			map.from(this::getAutoAckOldestChunkedMessageOnQueueFull)
+					.to(consumerBuilder::autoAckOldestChunkedMessageOnQueueFull);
+			map.from(this::getMaxPendingChunkedMessage).to(consumerBuilder::maxPendingChunkedMessage);
+			map.from(this::getExpireTimeOfIncompleteChunkedMessage).as(Duration::toMillis).to(consumerBuilder,
+					(cb, val) -> cb.expireTimeOfIncompleteChunkedMessage(val, TimeUnit.MILLISECONDS));
+		};
 	}
 
 }

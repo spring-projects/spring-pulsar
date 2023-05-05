@@ -19,8 +19,6 @@ package org.springframework.pulsar.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.Serial;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -48,18 +46,16 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 	void testFailOverConsumersOnPartitionedTopic() throws Exception {
 		PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
 				.build();
-
 		String topicName = "persistent://public/default/my-part-topic-1";
-		int numPartitions = 3;
-		admin.topics().createPartitionedTopic(topicName, numPartitions);
-
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("my-part-topic-1"), "subscriptionName",
-				"my-part-subscription-1");
+		admin.topics().createPartitionedTopic(topicName, 3);
 
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("my-part-topic-1");
+					consumerBuilder.subscriptionName("my-part-subscription-1");
+				});
 
 		CountDownLatch latch1 = new CountDownLatch(1);
 		CountDownLatch latch2 = new CountDownLatch(1);

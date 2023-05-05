@@ -18,7 +18,6 @@ package org.springframework.pulsar.core;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,7 @@ import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.ConsumerBuilderImpl;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
@@ -41,22 +41,25 @@ import org.springframework.util.CollectionUtils;
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
 
-	private final Map<String, Object> consumerConfig;
-
 	private final PulsarClient pulsarClient;
+
+	@Nullable
+	private final ConsumerBuilderCustomizer<T> defaultConfigCustomizer;
 
 	/**
 	 * Construct a consumer factory instance.
 	 * @param pulsarClient the client used to consume
-	 * @param consumerConfig default configuration to apply to the created consumer or
-	 * empty map to use no default configuration
+	 * @param defaultConfigCustomizer the default configuration to apply to the consumers
+	 * or null to use no default configuration
 	 */
-	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient, Map<String, Object> consumerConfig) {
+	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient,
+			ConsumerBuilderCustomizer<T> defaultConfigCustomizer) {
 		this.pulsarClient = pulsarClient;
-		this.consumerConfig = Collections.unmodifiableMap(consumerConfig);
+		this.defaultConfigCustomizer = defaultConfigCustomizer;
 	}
 
 	@Override
@@ -72,25 +75,35 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			@Nullable List<ConsumerBuilderCustomizer<T>> customizers) throws PulsarClientException {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
-		Map<String, Object> config = new HashMap<>(this.consumerConfig);
-		if (topics != null) {
-			config.put("topicNames", new HashSet<>(topics));
+
+		// Apply the default config customizer (preserve the topic)
+		if (this.defaultConfigCustomizer != null) {
+			this.defaultConfigCustomizer.customize(consumerBuilder);
 		}
-		if (metadataProperties != null) {
-			config.put("properties", new TreeMap<>(metadataProperties));
+		if (topics != null) {
+			replaceTopicsOnBuilder(consumerBuilder, topics);
 		}
 		if (subscriptionName != null) {
-			config.put("subscriptionName", subscriptionName);
+			consumerBuilder.subscriptionName(subscriptionName);
 		}
-		ConsumerBuilderConfigurationUtil.loadConf(consumerBuilder, config);
+		if (metadataProperties != null) {
+			replaceMetadataPropertiesOnBuilder(consumerBuilder, metadataProperties);
+		}
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
 		return consumerBuilder.subscribe();
 	}
 
-	public Map<String, Object> getConsumerConfig() {
-		return this.consumerConfig;
+	private void replaceTopicsOnBuilder(ConsumerBuilder<T> builder, Collection<String> topics) {
+		var builderImpl = (ConsumerBuilderImpl<T>) builder;
+		builderImpl.getConf().setTopicNames(new HashSet<>(topics));
+	}
+
+	private void replaceMetadataPropertiesOnBuilder(ConsumerBuilder<T> builder,
+			Map<String, String> metadataProperties) {
+		var builderImpl = (ConsumerBuilderImpl<T>) builder;
+		builderImpl.getConf().setProperties(new TreeMap<>(metadataProperties));
 	}
 
 }
