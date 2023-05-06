@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -197,7 +196,7 @@ public class ObservationTests implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, Collections.emptyMap());
+			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
 		}
 
 		@Bean

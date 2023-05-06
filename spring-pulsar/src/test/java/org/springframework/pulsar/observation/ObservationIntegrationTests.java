@@ -18,7 +18,6 @@ package org.springframework.pulsar.observation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,7 +146,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, Collections.emptyMap());
+			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
 		}
 
 		@Bean
