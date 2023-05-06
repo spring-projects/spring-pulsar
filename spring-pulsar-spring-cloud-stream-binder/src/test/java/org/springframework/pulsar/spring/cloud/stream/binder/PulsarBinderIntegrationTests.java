@@ -649,10 +649,13 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 					topicResolver);
 		}
 
+		@SuppressWarnings("unchecked")
 		@Bean
 		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient,
 				PulsarProperties pulsarProperties) {
-			return new TrackingConsumerFactory(pulsarClient, pulsarProperties.buildConsumerProperties());
+			var customizer = (ConsumerBuilderCustomizer<String>) pulsarProperties.getConsumer()
+					.toConsumerBuilderCustomizer();
+			return new TrackingConsumerFactory(pulsarClient, customizer);
 		}
 
 	}
@@ -683,8 +686,8 @@ class PulsarBinderIntegrationTests implements PulsarTestContainerSupport {
 
 		List<org.apache.pulsar.client.api.Consumer<String>> consumersCreated = new ArrayList<>();
 
-		TrackingConsumerFactory(PulsarClient pulsarClient, Map<String, Object> consumerConfig) {
-			super(pulsarClient, consumerConfig);
+		TrackingConsumerFactory(PulsarClient pulsarClient, ConsumerBuilderCustomizer<String> defaultConsumerConfig) {
+			super(pulsarClient, defaultConsumerConfig);
 		}
 
 		@Override

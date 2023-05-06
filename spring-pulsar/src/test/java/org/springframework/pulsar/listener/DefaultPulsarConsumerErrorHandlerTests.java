@@ -28,9 +28,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -56,13 +54,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void happyPathErrorHandlingForRecordMessageListener() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-1"),
-				"subscriptionName", "default-error-handler-tests-sub-1");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-1");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-1");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -104,13 +102,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void errorHandlingForRecordMessageListenerWithTransientError() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-2"),
-				"subscriptionName", "default-error-handler-tests-sub-2");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-2");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-2");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -150,13 +148,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void everyOtherRecordThrowsNonTransientExceptionsRecordMessageListener() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-3"),
-				"subscriptionName", "default-error-handler-tests-sub-3");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-3");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-3");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -206,13 +204,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerFirstOneOnlyErrorAndRecover() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-4"),
-				"subscriptionName", "default-error-handler-tests-sub-4");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-4");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-4");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -275,13 +273,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsInTheMiddle() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-5"),
-				"subscriptionName", "default-error-handler-tests-sub-5");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-5");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-5");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -342,13 +340,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsTwiceInTheMiddle() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-6"),
-				"subscriptionName", "default-error-handler-tests-sub-6");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-6");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-6");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -409,13 +407,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsInTheMiddleButTransientError() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-7"),
-				"subscriptionName", "default-error-handler-tests-sub-7");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-7");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-7");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -475,13 +473,13 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchListenerFailsTransientErrorFollowedByNonTransient() throws Exception {
-		Map<String, Object> config = Map.of("topicNames", Collections.singleton("default-error-handler-tests-8"),
-				"subscriptionName", "default-error-handler-tests-sub-8");
-
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 				.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				config);
+				(consumerBuilder) -> {
+					consumerBuilder.topic("default-error-handler-tests-8");
+					consumerBuilder.subscriptionName("default-error-handler-tests-sub-8");
+				});
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);

@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -118,7 +117,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, new HashMap<>());
+			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
 		}
 
 		@Bean
@@ -1085,9 +1084,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@Bean
 			public ConsumerBuilderCustomizer<String> myCustomizer() {
-				return cb -> {
-					cb.subscriptionName("test-changed-subscription-name");
-				};
+				return cb -> cb.subscriptionName("test-changed-subscription-name");
 			}
 
 		}
