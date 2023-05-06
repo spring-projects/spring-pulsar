@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.ClientBuilder;
@@ -68,6 +67,7 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver.SchemaResolverCustomizer;
 import org.springframework.pulsar.core.TopicResolver;
@@ -115,12 +115,13 @@ class PulsarAutoConfigurationTests {
 	@Test
 	void defaultBeansAreAutoConfigured() {
 		this.contextRunner.run((context) -> assertThat(context).hasSingleBean(PulsarClientBuilderConfigurer.class)
-				.hasSingleBean(PulsarClient.class).hasSingleBean(PulsarProducerFactory.class)
-				.hasSingleBean(PulsarTemplate.class).hasSingleBean(PulsarConsumerFactory.class)
+				.hasSingleBean(PulsarClient.class).hasSingleBean(PulsarAdministration.class)
+				.hasSingleBean(PulsarProducerFactory.class).hasSingleBean(PulsarTemplate.class)
+				.hasSingleBean(PulsarConsumerFactory.class).hasSingleBean(PulsarReaderFactory.class)
 				.hasSingleBean(ConcurrentPulsarListenerContainerFactory.class)
 				.hasSingleBean(PulsarListenerAnnotationBeanPostProcessor.class)
-				.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(PulsarAdministration.class)
-				.hasSingleBean(DefaultSchemaResolver.class).hasSingleBean(DefaultTopicResolver.class));
+				.hasSingleBean(PulsarListenerEndpointRegistry.class).hasSingleBean(DefaultSchemaResolver.class)
+				.hasSingleBean(DefaultTopicResolver.class));
 	}
 
 	@Nested
@@ -225,11 +226,32 @@ class PulsarAutoConfigurationTests {
 
 	}
 
+	@Nested
+	class ReaderFactoryTests {
+
+		@Test
+		void customPulsarReaderFactoryIsRespected() {
+			PulsarReaderFactory<String> readerFactory = mock(PulsarReaderFactory.class);
+			contextRunner.withBean("customPulsarReaderFactory", PulsarReaderFactory.class, () -> readerFactory)
+					.run((context) -> assertThat(context).getBean(PulsarReaderFactory.class).isSameAs(readerFactory));
+		}
+
+		@Test
+		void beansAreInjectedInReaderFactory() {
+			contextRunner.withUserConfiguration(SpyCustomizersConfig.class)
+					.run((context) -> assertThat(context).getBean(DefaultPulsarReaderFactory.class)
+							.hasFieldOrPropertyWithValue("pulsarClient", context.getBean(PulsarClient.class))
+							.hasFieldOrPropertyWithValue("defaultConfigCustomizer",
+									SpyCustomizersConfig.testReaderCustomizer));
+		}
+
+	}
+
 	/*
 	 * Use '@TestConfiguration' and exact name of the PulsarProperties bean that is
 	 * created via the '@EnableConfigurationProperties' on the actual auto-config in order
 	 * to 'replace' the PulsarProperties bean - all of this effort is to make sure the
-	 * returned producer/consumer builder customizer is the one we expect.
+	 * returned producer/consumer/reader builder customizer is the one we expect.
 	 */
 	@TestConfiguration(proxyBeanMethods = false)
 	static class SpyCustomizersConfig {
@@ -242,46 +264,28 @@ class PulsarAutoConfigurationTests {
 		static ConsumerBuilderCustomizer testConsumerCustomizer = (consumerBuilder) -> {
 		};
 
+		@SuppressWarnings("rawtypes")
+		static ReaderBuilderCustomizer testReaderCustomizer = (readerBuilder) -> {
+		};
+
 		@Bean(name = "spring.pulsar-org.springframework.pulsar.autoconfigure.PulsarProperties")
 		PulsarProperties pulsarProperties() {
 			var pulsarProps = new PulsarProperties();
+
 			var producerProps = spy(pulsarProps.getProducer());
 			when(producerProps.toProducerBuilderCustomizer()).thenReturn(testProducerCustomizer);
+
 			var consumerProps = spy(pulsarProps.getConsumer());
 			when(consumerProps.toConsumerBuilderCustomizer()).thenReturn(testConsumerCustomizer);
+
+			var readerProps = spy(pulsarProps.getReader());
+			when(readerProps.toReaderBuilderCustomizer()).thenReturn(testReaderCustomizer);
 
 			var spyPulsarProps = spy(pulsarProps);
 			when(spyPulsarProps.getProducer()).thenReturn(producerProps);
 			when(spyPulsarProps.getConsumer()).thenReturn(consumerProps);
+			when(spyPulsarProps.getReader()).thenReturn(readerProps);
 			return spyPulsarProps;
-		}
-
-	}
-
-	@Nested
-	class ReaderFactoryTests {
-
-		@Test
-		void readerFactoryIsAutoConfiguredByDefault() {
-			contextRunner.run((context) -> assertThat(context).hasNotFailed().hasSingleBean(PulsarReaderFactory.class)
-					.getBean(PulsarReaderFactory.class).isExactlyInstanceOf(DefaultPulsarReaderFactory.class));
-		}
-
-		@Test
-		void readerFactoryCanBeConfigured() {
-			contextRunner.withPropertyValues("spring.pulsar.reader.topic-names=foo",
-					"spring.pulsar.reader.receiver-queue-size=200", "spring.pulsar.reader.reader-name=test-reader",
-					"spring.pulsar.reader.subscription-name=test-subscription",
-					"spring.pulsar.reader.subscription-role-prefix=test-prefix",
-					"spring.pulsar.reader.read-compacted=true", "spring.pulsar.reader.reset-include-head=true")
-					.run((context -> assertThat(context).hasNotFailed().getBean(PulsarReaderFactory.class)
-							.extracting("readerConfig").hasFieldOrPropertyWithValue("topicNames", List.of("foo"))
-							.hasFieldOrPropertyWithValue("receiverQueueSize", 200)
-							.hasFieldOrPropertyWithValue("readerName", "test-reader")
-							.hasFieldOrPropertyWithValue("subscriptionName", "test-subscription")
-							.hasFieldOrPropertyWithValue("subscriptionRolePrefix", "test-prefix")
-							.hasFieldOrPropertyWithValue("readCompacted", true)
-							.hasFieldOrPropertyWithValue("resetIncludeHead", true)));
 		}
 
 	}

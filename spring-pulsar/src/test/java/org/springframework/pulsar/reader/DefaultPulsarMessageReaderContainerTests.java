@@ -18,7 +18,6 @@ package org.springframework.pulsar.reader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -68,9 +67,12 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 	@Test
 	void basicDefaultReader() throws Exception {
 		var latch = new CountDownLatch(1);
-		var config = Map.of("topicNames", Collections.singleton("dprlct-001"), "subscriptionName", "dprlct-sub-001");
 
-		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
+		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient,
+				(readerBuilder -> {
+					readerBuilder.topic("dprlct-001");
+					readerBuilder.subscriptionName("dprlct-sub-001");
+				}));
 		var readerContainerProperties = new PulsarReaderContainerProperties();
 		readerContainerProperties.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("hello john doe");
@@ -99,9 +101,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 	void topicProvidedThroughContainerProperties() throws Exception {
 		var latch = new CountDownLatch(1);
 		var containerProps = new PulsarReaderContainerProperties();
-		var config = Collections.<String, Object>emptyMap();
 
-		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
+		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient);
 		containerProps.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("hello buzz doe");
 			latch.countDown();
@@ -136,8 +137,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 		containerProps.setTopics(List.of("dprlct-003"));
 		containerProps.setSchema(Schema.STRING);
 
-		var readerConfig = Collections.<String, Object>emptyMap();
-		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient, readerConfig);
+		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient);
 		DefaultPulsarMessageReaderContainer<String> container = null;
 		try {
 			container = new DefaultPulsarMessageReaderContainer<>(readerFactory, containerProps);

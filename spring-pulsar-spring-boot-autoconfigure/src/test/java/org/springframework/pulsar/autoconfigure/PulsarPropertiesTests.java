@@ -19,12 +19,15 @@ package org.springframework.pulsar.autoconfigure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 import static org.assertj.core.api.Assertions.entry;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
@@ -35,14 +38,14 @@ import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.ProxyProtocol;
+import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
-import org.apache.pulsar.client.impl.conf.ConfigurationDataUtils;
-import org.apache.pulsar.client.impl.conf.ReaderConfigurationData;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -556,10 +559,9 @@ public class PulsarPropertiesTests {
 	@Nested
 	class ReaderPropertiesTests {
 
-		@Test
-		void readerProperties() {
+		@BeforeEach
+		void bindProperties() {
 			Map<String, String> props = new HashMap<>();
-
 			props.put("spring.pulsar.reader.topic-names", "my-topic");
 			props.put("spring.pulsar.reader.receiver-queue-size", "100");
 			props.put("spring.pulsar.reader.reader-name", "my-reader");
@@ -568,21 +570,43 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.reader.read-compacted", "true");
 			props.put("spring.pulsar.reader.reset-include-head", "true");
 			bind(props);
+		}
 
-			Map<String, Object> readerProps = properties.buildReaderProperties();
+		@Test
+		void readerProperties() {
+			var readerProps = properties.getReader();
+			assertThat(readerProps.getTopicNames()).containsExactly("my-topic");
+			assertThat(readerProps.getReceiverQueueSize()).isEqualTo(100);
+			assertThat(readerProps.getReaderName()).isEqualTo("my-reader");
+			assertThat(readerProps.getSubscriptionName()).isEqualTo("my-subscription");
+			assertThat(readerProps.getSubscriptionRolePrefix()).isEqualTo("sub-role");
+			assertThat(readerProps.getReadCompacted()).isTrue();
+			assertThat(readerProps.getResetIncludeHead()).isTrue();
+		}
 
-			// Verify that the props can be loaded in a ReaderBuilder
-			assertThatNoException().isThrownBy(() -> ConfigurationDataUtils.loadData(readerProps,
-					new ReaderConfigurationData<>(), ReaderConfigurationData.class));
+		@SuppressWarnings("unchecked")
+		@Test
+		void toReaderCustomizer() {
+			var readerBuilder = mock(ReaderBuilder.class);
+			var customizer = properties.getReader().toReaderBuilderCustomizer();
+			customizer.customize(readerBuilder);
+			verify(readerBuilder).topics(List.of("my-topic"));
+			verify(readerBuilder).receiverQueueSize(100);
+			verify(readerBuilder).readerName("my-reader");
+			verify(readerBuilder).subscriptionName("my-subscription");
+			verify(readerBuilder).subscriptionRolePrefix("sub-role");
+			verify(readerBuilder).readCompacted(true);
+			verify(readerBuilder).startMessageIdInclusive();
+		}
 
-			assertThat(readerProps)
-					.hasEntrySatisfying("topicNames",
-							topics -> assertThat(topics).asInstanceOf(InstanceOfAssertFactories.list(String.class))
-									.containsExactly("my-topic"))
-					.containsEntry("receiverQueueSize", 100).containsEntry("readerName", "my-reader")
-					.containsEntry("subscriptionName", "my-subscription")
-					.containsEntry("subscriptionRolePrefix", "sub-role").containsEntry("readCompacted", true)
-					.containsEntry("resetIncludeHead", true);
+		@SuppressWarnings("unchecked")
+		@Test
+		void toReaderCustomizerResetDoesNotIncludeHead() {
+			properties.getReader().setResetIncludeHead(false);
+			var readerBuilder = mock(ReaderBuilder.class);
+			var customizer = properties.getReader().toReaderBuilderCustomizer();
+			customizer.customize(readerBuilder);
+			verify(readerBuilder, never()).startMessageIdInclusive();
 		}
 
 	}
