@@ -31,6 +31,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -108,10 +109,6 @@ public class PulsarProperties {
 
 	public Map<String, Object> buildAdminProperties() {
 		return new HashMap<>(this.admin.buildProperties());
-	}
-
-	public Map<String, Object> buildReaderProperties() {
-		return new HashMap<>(this.reader.buildProperties());
 	}
 
 	public static class Template {
@@ -1290,21 +1287,17 @@ public class PulsarProperties {
 			this.resetIncludeHead = resetIncludeHead;
 		}
 
-		public Map<String, Object> buildProperties() {
-
-			PulsarProperties.Properties properties = new Properties();
-
-			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-
-			map.from(this::getTopicNames).to(properties.in("topicNames"));
-			map.from(this::getReceiverQueueSize).to(properties.in("receiverQueueSize"));
-			map.from(this::getReaderName).to(properties.in("readerName"));
-			map.from(this::getSubscriptionName).to(properties.in("subscriptionName"));
-			map.from(this::getSubscriptionRolePrefix).to(properties.in("subscriptionRolePrefix"));
-			map.from(this::getReadCompacted).to(properties.in("readCompacted"));
-			map.from(this::getResetIncludeHead).to(properties.in("resetIncludeHead"));
-
-			return properties;
+		public ReaderBuilderCustomizer<?> toReaderBuilderCustomizer() {
+			return (readerBuilder) -> {
+				PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+				map.from(this::getTopicNames).as(ArrayList::new).to(readerBuilder::topics);
+				map.from(this::getReceiverQueueSize).to(readerBuilder::receiverQueueSize);
+				map.from(this::getReaderName).to(readerBuilder::readerName);
+				map.from(this::getSubscriptionName).to(readerBuilder::subscriptionName);
+				map.from(this::getSubscriptionRolePrefix).to(readerBuilder::subscriptionRolePrefix);
+				map.from(this::getReadCompacted).to(readerBuilder::readCompacted);
+				map.from(this::getResetIncludeHead).whenTrue().to((b) -> readerBuilder.startMessageIdInclusive());
+			};
 		}
 
 	}

@@ -174,7 +174,7 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public PulsarReaderFactory<?> pulsarReaderFactory(PulsarClient pulsarClient) {
-		return new DefaultPulsarReaderFactory<>(pulsarClient, this.properties.buildReaderProperties());
+		return new DefaultPulsarReaderFactory<>(pulsarClient, this.properties.getReader().toReaderBuilderCustomizer());
 	}
 
 }

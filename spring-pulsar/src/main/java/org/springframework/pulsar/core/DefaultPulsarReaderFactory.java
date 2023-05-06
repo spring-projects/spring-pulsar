@@ -16,9 +16,9 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import org.apache.pulsar.client.api.MessageId;
@@ -27,6 +27,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.ReaderBuilderImpl;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
@@ -41,15 +42,27 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 
 	private final PulsarClient pulsarClient;
 
-	private final Map<String, Object> readerConfig;
+	@Nullable
+	private final ReaderBuilderCustomizer<T> defaultConfigCustomizer;
 
+	/**
+	 * Construct a reader factory instance with no default configuration.
+	 * @param pulsarClient the client used to consume
+	 */
 	public DefaultPulsarReaderFactory(PulsarClient pulsarClient) {
-		this(pulsarClient, Collections.emptyMap());
+		this(pulsarClient, null);
 	}
 
-	public DefaultPulsarReaderFactory(PulsarClient pulsarClient, Map<String, Object> readerConfig) {
+	/**
+	 * Construct a reader factory instance.
+	 * @param pulsarClient the client used to consume
+	 * @param defaultConfigCustomizer the default configuration to apply to the readers or
+	 * null to use no default configuration
+	 */
+	public DefaultPulsarReaderFactory(PulsarClient pulsarClient,
+			@Nullable ReaderBuilderCustomizer<T> defaultConfigCustomizer) {
 		this.pulsarClient = pulsarClient;
-		this.readerConfig = readerConfig;
+		this.defaultConfigCustomizer = defaultConfigCustomizer;
 	}
 
 	@Override
@@ -57,18 +70,30 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 			@Nullable List<ReaderBuilderCustomizer<T>> customizers) throws PulsarClientException {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		ReaderBuilder<T> readerBuilder = this.pulsarClient.newReader(schema);
-		if (!CollectionUtils.isEmpty(topics)) {
-			readerBuilder.topics(topics);
-		}
-		readerBuilder.startMessageId(messageId);
 
-		readerBuilder.loadConf(this.readerConfig);
+		// Apply the default config customizer (preserve the topics)
+		if (this.defaultConfigCustomizer != null) {
+			this.defaultConfigCustomizer.customize(readerBuilder);
+		}
+
+		if (!CollectionUtils.isEmpty(topics)) {
+			replaceTopicsOnBuilder(readerBuilder, topics);
+		}
+
+		if (messageId != null) {
+			readerBuilder.startMessageId(messageId);
+		}
 
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(readerBuilder));
 		}
 
 		return readerBuilder.create();
+	}
+
+	private void replaceTopicsOnBuilder(ReaderBuilder<T> builder, Collection<String> topics) {
+		var builderImpl = (ReaderBuilderImpl<T>) builder;
+		builderImpl.getConf().setTopicNames(new HashSet<>(topics));
 	}
 
 }
