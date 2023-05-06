@@ -18,9 +18,8 @@ package org.springframework.pulsar.core;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import org.apache.pulsar.client.api.Producer;
@@ -28,6 +27,7 @@ import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.ProducerBuilderImpl;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
@@ -46,20 +46,58 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private final Map<String, Object> producerConfig;
-
 	private final PulsarClient pulsarClient;
+
+	@Nullable
+	private final String defaultTopic;
+
+	@Nullable
+	private final ProducerBuilderCustomizer<T> defaultConfigCustomizer;
 
 	private final TopicResolver topicResolver;
 
-	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> config) {
-		this(pulsarClient, config, new DefaultTopicResolver());
+	/**
+	 * Construct a producer factory that uses a default topic resolver.
+	 * @param pulsarClient the client used to create the producers
+	 */
+	public DefaultPulsarProducerFactory(PulsarClient pulsarClient) {
+		this(pulsarClient, null, (pb) -> {
+		}, new DefaultTopicResolver());
 	}
 
-	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, Map<String, Object> config,
-			TopicResolver topicResolver) {
+	/**
+	 * Construct a producer factory that uses a default topic resolver.
+	 * @param pulsarClient the client used to create the producers
+	 * @param defaultTopic the default topic to use for the producers
+	 */
+	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic) {
+		this(pulsarClient, defaultTopic, (pb) -> {
+		}, new DefaultTopicResolver());
+	}
+
+	/**
+	 * Construct a producer factory that uses a default topic resolver.
+	 * @param pulsarClient the client used to create the producers
+	 * @param defaultTopic the default topic to use for the producers
+	 * @param defaultConfigCustomizer the default configuration to apply to the producers
+	 */
+	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
+			@Nullable ProducerBuilderCustomizer<T> defaultConfigCustomizer) {
+		this(pulsarClient, defaultTopic, defaultConfigCustomizer, new DefaultTopicResolver());
+	}
+
+	/**
+	 * Construct a producer factory that uses the specified parameters.
+	 * @param pulsarClient the client used to create the producers
+	 * @param defaultTopic the default topic to use for the producers
+	 * @param defaultConfigCustomizer the default configuration to apply to the producers
+	 * @param topicResolver the topic resolver to use
+	 */
+	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
+			@Nullable ProducerBuilderCustomizer<T> defaultConfigCustomizer, TopicResolver topicResolver) {
 		this.pulsarClient = pulsarClient;
-		this.producerConfig = Collections.unmodifiableMap(config);
+		this.defaultTopic = defaultTopic;
+		this.defaultConfigCustomizer = defaultConfigCustomizer;
 		this.topicResolver = topicResolver;
 	}
 
@@ -99,36 +137,42 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolvedTopic = resolveTopicName(topic);
+		var resolvedTopic = resolveTopicName(topic);
 		this.logger.trace(() -> "Creating producer for '%s' topic".formatted(resolvedTopic));
-		ProducerBuilder<T> producerBuilder = this.pulsarClient.newProducer(schema);
+		var producerBuilder = this.pulsarClient.newProducer(schema);
 
-		Map<String, Object> config = new HashMap<>(this.producerConfig);
-
-		// Replace default keys - workaround as they can't be replaced through the builder
-		if (encryptionKeys != null) {
-			config.put("encryptionKeys", encryptionKeys);
+		// Apply the default config customizer (preserve the topic)
+		if (this.defaultConfigCustomizer != null) {
+			this.defaultConfigCustomizer.customize(producerBuilder);
 		}
-		ProducerBuilderConfigurationUtil.loadConf(producerBuilder, config);
 		producerBuilder.topic(resolvedTopic);
 
+		// Replace default keys - workaround as they can't be replaced through the builder
+		maybeSetEncryptionKeys(producerBuilder, encryptionKeys);
+
+		// Apply any user-specified customizers (preserve the topic)
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(producerBuilder));
 		}
-		// make sure the customizer do not override the topic
 		producerBuilder.topic(resolvedTopic);
 
 		return producerBuilder.create();
 	}
 
 	protected String resolveTopicName(String userSpecifiedTopic) {
-		String defaultTopic = Objects.toString(getProducerConfig().get("topicName"), null);
-		return this.topicResolver.resolveTopic(userSpecifiedTopic, () -> defaultTopic).orElseThrow();
+		return this.topicResolver.resolveTopic(userSpecifiedTopic, this::getDefaultTopic).orElseThrow();
 	}
 
 	@Override
-	public Map<String, Object> getProducerConfig() {
-		return this.producerConfig;
+	public String getDefaultTopic() {
+		return this.defaultTopic;
+	}
+
+	private void maybeSetEncryptionKeys(ProducerBuilder<T> builder, @Nullable Collection<String> encryptionKeys) {
+		if (encryptionKeys != null) {
+			var builderImpl = (ProducerBuilderImpl<T>) builder;
+			builderImpl.getConf().setEncryptionKeys(new HashSet<>(encryptionKeys));
+		}
 	}
 
 }

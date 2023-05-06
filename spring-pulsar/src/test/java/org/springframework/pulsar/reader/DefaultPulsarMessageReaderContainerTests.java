@@ -44,6 +44,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  * Basic tests for {@link DefaultPulsarMessageReaderContainer}.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class DefaultPulsarMessageReaderContainerTests implements PulsarTestContainerSupport {
 
@@ -83,9 +84,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, readerContainerProperties);
 			container.start();
 
-			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-001");
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, prodConfig);
+					pulsarClient, "dprlct-001", (pb) -> pb.topic("dprlct-001"));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.sendAsync("hello john doe");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -113,10 +113,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 		try {
 			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, containerProps);
 			container.start();
-
-			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-002");
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, prodConfig);
+					pulsarClient, "dprlct-002", (pb) -> pb.topic("dprlct-002"));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.sendAsync("hello buzz doe");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -145,7 +143,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 			container = new DefaultPulsarMessageReaderContainer<>(readerFactory, containerProps);
 
 			var prodConfig = Map.<String, Object>of("topicName", "dprlct-003");
-			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, "dprlct-003",
+					(pb) -> pb.topic("dprlct-003"));
 			var pulsarTemplate = new PulsarTemplate<>(producerFactory);
 
 			// The following sends will not be received by the reader as we are using the

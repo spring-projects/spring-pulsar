@@ -19,9 +19,7 @@ package org.springframework.pulsar.reader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -56,6 +54,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
  * {@link PulsarReader} integration tests.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 @SpringJUnitConfig
 @DirtiesContext
@@ -73,8 +72,7 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			Map<String, Object> config = Collections.emptyMap();
-			return new DefaultPulsarProducerFactory<>(pulsarClient, config);
+			return new DefaultPulsarProducerFactory<>(pulsarClient);
 		}
 
 		@Bean
@@ -89,15 +87,13 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 
 		@Bean
 		public PulsarReaderFactory<?> pulsarReaderFactory(PulsarClient pulsarClient) {
-			Map<String, Object> config = new HashMap<>();
-			return new DefaultPulsarReaderFactory<>(pulsarClient, config);
+			return new DefaultPulsarReaderFactory<>(pulsarClient, new HashMap<>());
 		}
 
 		@Bean
 		PulsarReaderContainerFactory pulsarReaderContainerFactory(PulsarReaderFactory<Object> pulsarReaderFactory) {
-			DefaultPulsarReaderContainerFactory<?> pulsarReaderContainerFactory = new DefaultPulsarReaderContainerFactory<>(
-					pulsarReaderFactory, new PulsarReaderContainerProperties());
-			return pulsarReaderContainerFactory;
+			return new DefaultPulsarReaderContainerFactory<>(pulsarReaderFactory,
+					new PulsarReaderContainerProperties());
 		}
 
 	}

@@ -131,7 +131,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient, Collections.emptyMap());
+			return new DefaultPulsarProducerFactory<>(pulsarClient);
 		}
 
 		@Bean

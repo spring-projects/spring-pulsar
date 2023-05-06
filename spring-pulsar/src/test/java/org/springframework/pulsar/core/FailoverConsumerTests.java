@@ -86,10 +86,8 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container3.start();
 
-		Map<String, Object> prodConfig = Map.of("topicName", "my-part-topic-1", "messageRoutingMode",
-				MessageRoutingMode.CustomPartition);
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				prodConfig);
+				"my-part-topic-1", (pb) -> pb.messageRoutingMode(MessageRoutingMode.CustomPartition));
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 		pulsarTemplate.newMessage("hello john doe")
