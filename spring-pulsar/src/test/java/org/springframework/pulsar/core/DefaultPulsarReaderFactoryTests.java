@@ -64,7 +64,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@BeforeEach
 		void createReaderFactory() {
-			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, Collections.emptyMap());
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient);
 		}
 
 		@Test
@@ -127,6 +127,63 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 			}
 		}
 
+		@Test
+		void useFactoryDefaults() throws Exception {
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, (readerBuilder) -> {
+				readerBuilder.topic("basic-pulsar-reader-topic");
+				readerBuilder.startMessageId(MessageId.earliest);
+			});
+			// The following code expects the above topic and startMessageId to be used
+			Message<String> message;
+			try (Reader<String> reader = pulsarReaderFactory.createReader(null, null, Schema.STRING,
+					Collections.emptyList())) {
+				PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+						"basic-pulsar-reader-topic");
+				PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+				pulsarTemplate.send("hello john doe");
+				message = reader.readNext();
+			}
+			assertThat(message.getValue()).isEqualTo("hello john doe");
+		}
+
+		@Test
+		void overrideFactoryDefaults() throws Exception {
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, (readerBuilder) -> {
+				readerBuilder.topic("foo-topic");
+				readerBuilder.startMessageId(MessageId.latest);
+			});
+			// The following code expects the above topic and startMessageId to be ignored
+			// (overridden)
+			Message<String> message;
+			try (Reader<String> reader = pulsarReaderFactory.createReader(List.of("basic-pulsar-reader-topic"),
+					MessageId.earliest, Schema.STRING, Collections.emptyList())) {
+
+				PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+						"basic-pulsar-reader-topic");
+				PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+				pulsarTemplate.send("hello john doe");
+
+				message = reader.readNext();
+			}
+			assertThat(message.getValue()).isEqualTo("hello john doe");
+		}
+
+		@Test
+		void customizersAreAppliedLast() throws Exception {
+			ReaderBuilderCustomizer<String> customizer = (readerBuilder) -> readerBuilder
+					.topic("basic-pulsar-reader-topic");
+			// The following code expects the above topic will override the passed in
+			// 'foo-topic'
+			try (var reader = pulsarReaderFactory.createReader(List.of("foo-topic"), MessageId.earliest, Schema.STRING,
+					List.of(customizer))) {
+				var pulsarProducerFactory = new DefaultPulsarProducerFactory<String>(pulsarClient,
+						"basic-pulsar-reader-topic");
+				var pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+				pulsarTemplate.send("hello john doe");
+				assertThat(reader.readNext().getValue()).isEqualTo("hello john doe");
+			}
+		}
+
 	}
 
 	@Nested
@@ -136,7 +193,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@BeforeEach
 		void createReaderFactory() {
-			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, Collections.emptyMap());
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient);
 		}
 
 		@Test
