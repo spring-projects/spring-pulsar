@@ -157,7 +157,7 @@ public class PulsarAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public PulsarAdministration pulsarAdministration() {
-		return new PulsarAdministration(this.properties.buildAdminProperties());
+		return new PulsarAdministration(this.properties.getAdministration().toPulsarAdminBuilderCustomizer());
 	}
 
 	@Bean

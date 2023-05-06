@@ -29,7 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
@@ -129,8 +128,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(
-					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
+			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
 		}
 
 		@Bean

@@ -18,19 +18,22 @@ package org.springframework.pulsar.autoconfigure;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.api.ProxyProtocol;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.PulsarAdminBuilderCustomizer;
 import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.util.CollectionUtils;
@@ -105,10 +108,6 @@ public class PulsarProperties {
 
 	public Defaults getDefaults() {
 		return this.defaults;
-	}
-
-	public Map<String, Object> buildAdminProperties() {
-		return new HashMap<>(this.admin.buildProperties());
 	}
 
 	public static class Template {
@@ -1157,38 +1156,52 @@ public class PulsarProperties {
 			this.autoCertRefreshTime = autoCertRefreshTime;
 		}
 
-		public Map<String, Object> buildProperties() {
+		public PulsarAdminBuilderCustomizer toPulsarAdminBuilderCustomizer() {
+			return (adminBuilder) -> {
+				PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+				map.from(this::getServiceUrl).to(adminBuilder::serviceHttpUrl);
+				applyAuthentication(adminBuilder);
+				map.from(this::getTlsTrustCertsFilePath).to(adminBuilder::tlsTrustCertsFilePath);
+				map.from(this::getTlsCertificateFilePath).to(adminBuilder::tlsCertificateFilePath);
+				map.from(this::getTlsKeyFilePath).to(adminBuilder::tlsKeyFilePath);
+				map.from(this::isTlsAllowInsecureConnection).to(adminBuilder::allowTlsInsecureConnection);
+				map.from(this::isTlsHostnameVerificationEnable).to(adminBuilder::enableTlsHostnameVerification);
+				map.from(this::isUseKeyStoreTls).to(adminBuilder::useKeyStoreTls);
+				map.from(this::getSslProvider).to(adminBuilder::sslProvider);
+				map.from(this::getTlsTrustStoreType).to(adminBuilder::tlsTrustStoreType);
+				map.from(this::getTlsTrustStorePath).to(adminBuilder::tlsTrustStorePath);
+				map.from(this::getTlsTrustStorePassword).to(adminBuilder::tlsTrustStorePassword);
+				map.from(this::getTlsCiphers).to(adminBuilder::tlsCiphers);
+				map.from(this::getTlsProtocols).to(adminBuilder::tlsProtocols);
+				map.from(this::getConnectionTimeout).asInt(Duration::toMillis).to(adminBuilder,
+						(ab, val) -> ab.connectionTimeout(val, TimeUnit.MILLISECONDS));
+				map.from(this::getReadTimeout).asInt(Duration::toMillis).to(adminBuilder,
+						(ab, val) -> ab.readTimeout(val, TimeUnit.MILLISECONDS));
+				map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(adminBuilder,
+						(ab, val) -> ab.requestTimeout(val, TimeUnit.MILLISECONDS));
+				map.from(this::getAutoCertRefreshTime).asInt(Duration::toMillis).to(adminBuilder,
+						(ab, val) -> ab.autoCertRefreshTime(val, TimeUnit.MILLISECONDS));
+			};
+		}
+
+		private void applyAuthentication(PulsarAdminBuilder adminBuilder) {
 			if (StringUtils.hasText(this.getAuthParams()) && !CollectionUtils.isEmpty(this.getAuthentication())) {
 				throw new IllegalArgumentException(
 						"Cannot set both spring.pulsar.administration.authParams and spring.pulsar.administration.authentication.*");
 			}
-			PulsarProperties.Properties properties = new Properties();
-
-			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-			map.from(this::getServiceUrl).to(properties.in("serviceUrl"));
-			map.from(this::getAuthPluginClassName).to(properties.in("authPluginClassName"));
-			map.from(this::getAuthParams).to(properties.in("authParams"));
-			map.from(this::getAuthentication).as(AuthParameterUtils::maybeConvertToEncodedParamString)
-					.to(properties.in("authParams"));
-			map.from(this::getTlsTrustCertsFilePath).to(properties.in("tlsTrustCertsFilePath"));
-			map.from(this::getTlsCertificateFilePath).to(properties.in("tlsCertificateFilePath"));
-			map.from(this::getTlsKeyFilePath).to(properties.in("tlsKeyFilePath"));
-			map.from(this::isTlsAllowInsecureConnection).to(properties.in("tlsAllowInsecureConnection"));
-			map.from(this::isTlsHostnameVerificationEnable).to(properties.in("tlsHostnameVerificationEnable"));
-			map.from(this::isUseKeyStoreTls).to(properties.in("useKeyStoreTls"));
-			map.from(this::getSslProvider).to(properties.in("sslProvider"));
-			map.from(this::getTlsTrustStoreType).to(properties.in("tlsTrustStoreType"));
-			map.from(this::getTlsTrustStorePath).to(properties.in("tlsTrustStorePath"));
-			map.from(this::getTlsTrustStorePassword).to(properties.in("tlsTrustStorePassword"));
-			map.from(this::getTlsCiphers).to(properties.in("tlsCiphers"));
-			map.from(this::getTlsProtocols).to(properties.in("tlsProtocols"));
-			map.from(this::getConnectionTimeout).asInt(Duration::toMillis).to(properties.in("connectionTimeoutMs"));
-			map.from(this::getReadTimeout).asInt(Duration::toMillis).to(properties.in("readTimeoutMs"));
-			map.from(this::getRequestTimeout).asInt(Duration::toMillis).to(properties.in("requestTimeoutMs"));
-			map.from(this::getAutoCertRefreshTime).asInt(Duration::toSeconds)
-					.to(properties.in("autoCertRefreshSeconds"));
-
-			return properties;
+			var authPluginClass = this.getAuthPluginClassName();
+			if (StringUtils.hasText(authPluginClass)) {
+				var authParams = this.getAuthParams();
+				if (this.getAuthentication() != null) {
+					authParams = AuthParameterUtils.maybeConvertToEncodedParamString(this.getAuthentication());
+				}
+				try {
+					adminBuilder.authentication(authPluginClass, authParams);
+				}
+				catch (PulsarClientException.UnsupportedAuthenticationException ex) {
+					throw new IllegalArgumentException("Unable to configure authentication: " + ex.getMessage(), ex);
+				}
+			}
 		}
 
 	}
@@ -1353,14 +1366,6 @@ public class PulsarProperties {
 				throw new IllegalArgumentException("messageKeyType can only be set when schemaType is KEY_VALUE");
 			}
 		}
-	}
-
-	static class Properties extends HashMap<String, Object> {
-
-		<V> java.util.function.Consumer<V> in(String key) {
-			return (value) -> put(key, value);
-		}
-
 	}
 
 }

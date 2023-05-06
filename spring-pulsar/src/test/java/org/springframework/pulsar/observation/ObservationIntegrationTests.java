@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 
@@ -159,8 +158,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(
-					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
+			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
 		}
 
 		@Bean
