@@ -85,10 +85,4 @@ public interface PulsarConsumerFactory<T> {
 			@Nullable Map<String, String> metadataProperties, @Nullable List<ConsumerBuilderCustomizer<T>> customizers)
 			throws PulsarClientException;
 
-	/**
-	 * Return the configuration options to use when creating consumers.
-	 * @return the configuration options
-	 */
-	Map<String, Object> getConsumerConfig();
-
 }

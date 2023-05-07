@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -30,7 +28,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
@@ -107,7 +104,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient, new HashMap<>());
+			return new DefaultPulsarProducerFactory<>(pulsarClient);
 		}
 
 		@Bean
@@ -139,8 +136,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(
-					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
+			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
 		}
 
 		@Bean
@@ -347,8 +343,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void jsonSchema() throws Exception {
-			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("json-topic", new User("Jason", i), JSONSchema.of(User.class));
@@ -358,8 +353,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void avroSchema() throws Exception {
-			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("avro-topic", new User("Avi", i), AvroSchema.of(User.class));
@@ -370,7 +364,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void keyvalueSchema() throws Exception {
 			PulsarProducerFactory<KeyValue<String, Integer>> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, Collections.emptyMap());
+					pulsarClient);
 			PulsarTemplate<KeyValue<String, Integer>> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<KeyValue<String, Integer>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.INT32,
 					KeyValueEncodingType.INLINE);
@@ -382,8 +376,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void protobufSchema() throws Exception {
-			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient);
 			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("protobuf-topic", Proto.Person.newBuilder().setId(i).setName("Paul").build(),
@@ -494,8 +488,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void jsonSchema() throws Exception {
-			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
 			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("json-custom-schema-topic", new User2("Jason", i), JSONSchema.of(User2.class));
@@ -505,8 +498,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void avroSchema() throws Exception {
-			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
 			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("avro-custom-schema-topic", new User("Avi", i), AvroSchema.of(User.class));
@@ -517,7 +509,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void keyvalueSchema() throws Exception {
 			PulsarProducerFactory<KeyValue<String, User2>> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, Collections.emptyMap());
+					pulsarClient);
 			PulsarTemplate<KeyValue<String, User2>> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<KeyValue<String, User2>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(User2.class),
 					KeyValueEncodingType.INLINE);
@@ -530,8 +522,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void protobufSchema() throws Exception {
-			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<Proto.Person> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+					pulsarClient);
 			PulsarTemplate<Proto.Person> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("protobuf-custom-schema-topic",
@@ -664,8 +656,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void complexMessageTypeTopicMapping() throws Exception {
-			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
 			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
 			Schema<User2> schema = Schema.JSON(User2.class);
 			for (int i = 0; i < 3; i++) {
@@ -676,8 +667,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void primitiveMessageTypeTopicMapping() throws Exception {
-			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Collections.emptyMap());
+			PulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
 			PulsarTemplate<String> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
 				template.send("rplt-topicMapping-string-topic", "Susan " + i, Schema.STRING);

@@ -18,20 +18,16 @@ package org.springframework.pulsar.core;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
-import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.PulsarClientException.UnsupportedAuthenticationException;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -40,7 +36,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * An administration class that delegates to {@link PulsarAdmin} to create and manage
@@ -55,28 +50,27 @@ public class PulsarAdministration
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private final PulsarAdminBuilder adminBuilder;
-
 	@Nullable
 	private ApplicationContext applicationContext;
 
+	@Nullable
+	private final PulsarAdminBuilderCustomizer adminCustomizer;
+
 	/**
-	 * Construct a {@code PulsarAdministration} instance using the given configuration for
-	 * the underlying {@link PulsarAdmin}.
-	 * @param adminConfig the {@link PulsarAdmin} configuration
+	 * Construct a default instance using the specified service url.
+	 * @param serviceHttpUrl the admin http service url
 	 */
-	public PulsarAdministration(Map<String, Object> adminConfig) {
-		this.adminBuilder = PulsarAdmin.builder();
-		loadConf(this.adminBuilder, adminConfig);
+	public PulsarAdministration(String serviceHttpUrl) {
+		this((adminBuilder) -> adminBuilder.serviceHttpUrl(serviceHttpUrl));
 	}
 
 	/**
-	 * Construct a {@code PulsarAdministration} instance using the given builder for the
-	 * underlying {@link PulsarAdmin}.
-	 * @param adminBuilder the {@link PulsarAdminBuilder}
+	 * Construct an instance with the specified customizations.
+	 * @param adminCustomizer the customizer to apply to the builder or null to use the
+	 * default admin builder without modifications
 	 */
-	public PulsarAdministration(PulsarAdminBuilder adminBuilder) {
-		this.adminBuilder = adminBuilder;
+	public PulsarAdministration(@Nullable PulsarAdminBuilderCustomizer adminCustomizer) {
+		this.adminCustomizer = adminCustomizer;
 	}
 
 	@Override
@@ -89,39 +83,6 @@ public class PulsarAdministration
 		this.applicationContext = applicationContext;
 	}
 
-	private void loadConf(PulsarAdminBuilder builder, Map<String, Object> adminConfig) {
-		var conf = new HashMap<>(adminConfig);
-
-		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
-		// timeout settings from the config props
-		if (conf.remove("connectionTimeoutMs") instanceof Integer connectTimeout) {
-			builder.connectionTimeout(connectTimeout, TimeUnit.MILLISECONDS);
-		}
-		if (conf.remove("readTimeoutMs") instanceof Integer readTimeout) {
-			builder.readTimeout(readTimeout, TimeUnit.MILLISECONDS);
-		}
-		if (conf.remove("requestTimeoutMs") instanceof Integer requestTimeout) {
-			builder.requestTimeout(requestTimeout, TimeUnit.MILLISECONDS);
-		}
-		if (conf.remove("autoCertRefreshSeconds") instanceof Integer autoCertRefreshTime) {
-			builder.autoCertRefreshTime(autoCertRefreshTime, TimeUnit.SECONDS);
-		}
-		builder.loadConf(conf);
-
-		// Workaround the fact that the PulsarAdminImpl does not attempt to construct the
-		// authentication from the config props
-		var authPluginClassName = (String) conf.get("authPluginClassName");
-		var authParams = (String) conf.get("authParams");
-		if (StringUtils.hasText(authPluginClassName) && StringUtils.hasText(authParams)) {
-			try {
-				builder.authentication(authPluginClassName, authParams);
-			}
-			catch (UnsupportedAuthenticationException ex) {
-				throw new RuntimeException("Unable to create admin auth: " + ex.getMessage(), ex);
-			}
-		}
-	}
-
 	private void initialize() {
 		var topics = Objects.requireNonNull(this.applicationContext, "Application context was not set")
 				.getBeansOfType(PulsarTopic.class, false, false).values();
@@ -129,7 +90,11 @@ public class PulsarAdministration
 	}
 
 	public PulsarAdmin createAdminClient() throws PulsarClientException {
-		return this.adminBuilder.build();
+		var adminBuilder = PulsarAdmin.builder();
+		if (this.adminCustomizer != null) {
+			this.adminCustomizer.customize(adminBuilder);
+		}
+		return adminBuilder.build();
 	}
 
 	@Override

@@ -18,7 +18,6 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -57,9 +56,10 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		try {
 			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 			DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-					pulsarClient,
-					Map.of("topicNames", Collections.singleton("shared-subscription-single-msg-test-topic"),
-							"subscriptionName", "shared-subscription-single-msg-test-sub"));
+					pulsarClient, (consumerBuilder) -> {
+						consumerBuilder.topic("shared-subscription-single-msg-test-topic");
+						consumerBuilder.subscriptionName("shared-subscription-single-msg-test-sub");
+					});
 
 			CountDownLatch latch1 = new CountDownLatch(1);
 			CountDownLatch latch2 = new CountDownLatch(1);
@@ -76,9 +76,8 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			container3 = createAndStartContainer(pulsarConsumerFactory, latch3, "three", messageCountByKey3,
 					SubscriptionType.Shared);
 
-			Map<String, Object> prodConfig = Map.of("topicName", "shared-subscription-single-msg-test-topic");
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, prodConfig);
+					pulsarClient, "shared-subscription-single-msg-test-topic");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 			pulsarTemplate.newMessage("hello john doe").sendAsync();
@@ -114,8 +113,10 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		try {
 			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-					Map.of("topicNames", Collections.singleton("key-shared-batch-disabled-topic"), "subscriptionName",
-							"key-shared-batch-disabled-sub"));
+					(consumerBuilder) -> {
+						consumerBuilder.topic("key-shared-batch-disabled-topic");
+						consumerBuilder.subscriptionName("key-shared-batch-disabled-sub");
+					});
 
 			CountDownLatch latch = new CountDownLatch(30);
 
@@ -132,7 +133,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			Thread.sleep(5_000);
 
 			DefaultPulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					Map.of("topicName", "key-shared-batch-disabled-topic", "batchingEnabled", "false"));
+					"key-shared-batch-disabled-topic", (pb) -> pb.enableBatching(false));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 			for (int i = 0; i < 10; i++) {
 				pulsarTemplate.newMessage("alice-" + i)

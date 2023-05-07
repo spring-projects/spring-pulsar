@@ -18,7 +18,6 @@ package org.springframework.pulsar.reader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -44,6 +43,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  * Basic tests for {@link DefaultPulsarMessageReaderContainer}.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class DefaultPulsarMessageReaderContainerTests implements PulsarTestContainerSupport {
 
@@ -67,9 +67,12 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 	@Test
 	void basicDefaultReader() throws Exception {
 		var latch = new CountDownLatch(1);
-		var config = Map.of("topicNames", Collections.singleton("dprlct-001"), "subscriptionName", "dprlct-sub-001");
 
-		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
+		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient,
+				(readerBuilder -> {
+					readerBuilder.topic("dprlct-001");
+					readerBuilder.subscriptionName("dprlct-sub-001");
+				}));
 		var readerContainerProperties = new PulsarReaderContainerProperties();
 		readerContainerProperties.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("hello john doe");
@@ -83,9 +86,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, readerContainerProperties);
 			container.start();
 
-			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-001");
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, prodConfig);
+					pulsarClient, "dprlct-001", (pb) -> pb.topic("dprlct-001"));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.sendAsync("hello john doe");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -99,9 +101,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 	void topicProvidedThroughContainerProperties() throws Exception {
 		var latch = new CountDownLatch(1);
 		var containerProps = new PulsarReaderContainerProperties();
-		var config = Collections.<String, Object>emptyMap();
 
-		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, config);
+		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient);
 		containerProps.setReaderListener((ReaderListener<?>) (reader, msg) -> {
 			assertThat(msg.getValue()).isEqualTo("hello buzz doe");
 			latch.countDown();
@@ -113,10 +114,8 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 		try {
 			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, containerProps);
 			container.start();
-
-			Map<String, Object> prodConfig = Map.of("topicName", "dprlct-002");
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, prodConfig);
+					pulsarClient, "dprlct-002", (pb) -> pb.topic("dprlct-002"));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.sendAsync("hello buzz doe");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -138,14 +137,14 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 		containerProps.setTopics(List.of("dprlct-003"));
 		containerProps.setSchema(Schema.STRING);
 
-		var readerConfig = Collections.<String, Object>emptyMap();
-		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient, readerConfig);
+		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient);
 		DefaultPulsarMessageReaderContainer<String> container = null;
 		try {
 			container = new DefaultPulsarMessageReaderContainer<>(readerFactory, containerProps);
 
 			var prodConfig = Map.<String, Object>of("topicName", "dprlct-003");
-			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, prodConfig);
+			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, "dprlct-003",
+					(pb) -> pb.topic("dprlct-003"));
 			var pulsarTemplate = new PulsarTemplate<>(producerFactory);
 
 			// The following sends will not be received by the reader as we are using the

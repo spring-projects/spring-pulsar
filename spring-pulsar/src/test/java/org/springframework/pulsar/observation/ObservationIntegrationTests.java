@@ -18,14 +18,12 @@ package org.springframework.pulsar.observation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 
@@ -131,7 +129,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient, Collections.emptyMap());
+			return new DefaultPulsarProducerFactory<>(pulsarClient);
 		}
 
 		@Bean
@@ -147,7 +145,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, Collections.emptyMap());
+			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
 		}
 
 		@Bean
@@ -160,8 +158,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(
-					PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl()));
+			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
 		}
 
 		@Bean

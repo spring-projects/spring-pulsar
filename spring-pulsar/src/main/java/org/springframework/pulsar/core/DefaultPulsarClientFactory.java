@@ -37,7 +37,7 @@ public class DefaultPulsarClientFactory implements PulsarClientFactory {
 	 * @param serviceUrl the service url
 	 */
 	public DefaultPulsarClientFactory(String serviceUrl) {
-		this((clientBuilder -> clientBuilder.serviceUrl(serviceUrl)));
+		this((clientBuilder) -> clientBuilder.serviceUrl(serviceUrl));
 	}
 
 	/**
