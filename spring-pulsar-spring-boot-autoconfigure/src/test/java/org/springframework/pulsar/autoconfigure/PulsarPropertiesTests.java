@@ -19,7 +19,6 @@ package org.springframework.pulsar.autoconfigure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,8 +28,10 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.ConsumerCryptoFailureAction;
 import org.apache.pulsar.client.api.HashingScheme;
@@ -38,13 +39,13 @@ import org.apache.pulsar.client.api.MessageRoutingMode;
 import org.apache.pulsar.client.api.ProducerAccessMode;
 import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
 import org.apache.pulsar.client.api.ProxyProtocol;
+import org.apache.pulsar.client.api.PulsarClientException.UnsupportedAuthenticationException;
 import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -228,63 +229,89 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.administration.tls-trust-store-password", "my-trust-store-password");
 			props.put("spring.pulsar.administration.tls-ciphers[0]", "my-tls-cipher");
 			props.put("spring.pulsar.administration.tls-protocols[0]", "my-tls-protocol");
-
 			bind(props);
-			Map<String, Object> adminProps = properties.buildAdminProperties();
 
-			// Verify that the props can NOT be loaded directly via a ClientBuilder due to
-			// the
-			// unknown readTimeout and autoCertRefreshTime properties
-			assertThatRuntimeException().isThrownBy(() -> PulsarAdmin.builder().loadConf(adminProps)).havingCause()
-					.withMessageContaining("Unrecognized field \"autoCertRefreshSeconds\"");
+			var adminProps = properties.getAdministration();
 
-			assertThat(adminProps).containsEntry("serviceUrl", "my-service-url")
-					.containsEntry("connectionTimeoutMs", 12_000).containsEntry("readTimeoutMs", 13_000)
-					.containsEntry("requestTimeoutMs", 14_000).containsEntry("autoCertRefreshSeconds", 15)
-					.containsEntry("tlsHostnameVerificationEnable", true)
-					.containsEntry("tlsTrustCertsFilePath", "my-trust-certs-file-path")
-					.containsEntry("tlsCertificateFilePath", "my-certificate-file-path")
-					.containsEntry("tlsKeyFilePath", "my-key-file-path")
-					.containsEntry("tlsAllowInsecureConnection", true).containsEntry("useKeyStoreTls", true)
-					.containsEntry("sslProvider", "my-ssl-provider")
-					.containsEntry("tlsTrustStoreType", "my-trust-store-type")
-					.containsEntry("tlsTrustStorePath", "my-trust-store-path")
-					.containsEntry("tlsTrustStorePassword", "my-trust-store-password")
-					.hasEntrySatisfying("tlsCiphers",
-							ciphers -> assertThat(ciphers)
-									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-									.containsExactly("my-tls-cipher"))
-					.hasEntrySatisfying("tlsProtocols",
-							protocols -> assertThat(protocols)
-									.asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-									.containsExactly("my-tls-protocol"));
+			// Verify properties
+			assertThat(adminProps.getServiceUrl()).isEqualTo("my-service-url");
+			assertThat(adminProps.getConnectionTimeout()).isEqualTo(Duration.ofMillis(12_000));
+			assertThat(adminProps.getReadTimeout()).isEqualTo(Duration.ofMillis(13_000));
+			assertThat(adminProps.getRequestTimeout()).isEqualTo(Duration.ofMillis(14_000));
+			assertThat(adminProps.getAutoCertRefreshTime()).isEqualTo(Duration.ofMillis(15_000));
+			assertThat(adminProps.isTlsHostnameVerificationEnable()).isTrue();
+			assertThat(adminProps.getTlsTrustCertsFilePath()).isEqualTo("my-trust-certs-file-path");
+			assertThat(adminProps.getTlsCertificateFilePath()).isEqualTo("my-certificate-file-path");
+			assertThat(adminProps.getTlsKeyFilePath()).isEqualTo("my-key-file-path");
+			assertThat(adminProps.isTlsAllowInsecureConnection()).isTrue();
+			assertThat(adminProps.isUseKeyStoreTls()).isTrue();
+			assertThat(adminProps.getSslProvider()).isEqualTo("my-ssl-provider");
+			assertThat(adminProps.getTlsTrustStoreType()).isEqualTo("my-trust-store-type");
+			assertThat(adminProps.getTlsTrustStorePath()).isEqualTo("my-trust-store-path");
+			assertThat(adminProps.getTlsTrustStorePassword()).isEqualTo("my-trust-store-password");
+			assertThat(adminProps.getTlsCiphers()).containsExactly("my-tls-cipher");
+			assertThat(adminProps.getTlsProtocols()).containsExactly("my-tls-protocol");
+
+			// Verify customizer
+			var adminBuilder = mock(PulsarAdminBuilder.class);
+			var adminCustomizer = adminProps.toPulsarAdminBuilderCustomizer();
+			adminCustomizer.customize(adminBuilder);
+			verify(adminBuilder).serviceHttpUrl("my-service-url");
+			verify(adminBuilder).connectionTimeout(12_000, TimeUnit.MILLISECONDS);
+			verify(adminBuilder).readTimeout(13_000, TimeUnit.MILLISECONDS);
+			verify(adminBuilder).requestTimeout(14_000, TimeUnit.MILLISECONDS);
+			verify(adminBuilder).autoCertRefreshTime(15_000, TimeUnit.MILLISECONDS);
+			verify(adminBuilder).enableTlsHostnameVerification(true);
+			verify(adminBuilder).tlsTrustCertsFilePath("my-trust-certs-file-path");
+			verify(adminBuilder).tlsCertificateFilePath("my-certificate-file-path");
+			verify(adminBuilder).tlsKeyFilePath("my-key-file-path");
+			verify(adminBuilder).allowTlsInsecureConnection(true);
+			verify(adminBuilder).useKeyStoreTls(true);
+			verify(adminBuilder).sslProvider("my-ssl-provider");
+			verify(adminBuilder).tlsTrustStoreType("my-trust-store-type");
+			verify(adminBuilder).tlsTrustStorePath("my-trust-store-path");
+			verify(adminBuilder).tlsTrustStorePassword("my-trust-store-password");
+			verify(adminBuilder).tlsCiphers(Set.of("my-tls-cipher"));
+			verify(adminBuilder).tlsProtocols(Set.of("my-tls-protocol"));
 		}
 
 		@Test
-		void authenticationUsingAuthParamsString() {
+		void authenticationUsingAuthParamsString() throws UnsupportedAuthenticationException {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.administration.auth-plugin-class-name",
 					"org.apache.pulsar.client.impl.auth.AuthenticationToken");
 			props.put("spring.pulsar.administration.auth-params", authParamsStr);
 			bind(props);
-			assertThat(properties.getAdministration().getAuthParams()).isEqualTo(authParamsStr);
-			assertThat(properties.getAdministration().getAuthPluginClassName()).isEqualTo(authPluginClassName);
-			Map<String, Object> adminProps = properties.buildAdminProperties();
-			assertThat(adminProps).containsEntry("authPluginClassName", authPluginClassName).containsEntry("authParams",
-					authParamsStr);
+
+			// Verify properties
+			var adminProps = properties.getAdministration();
+			assertThat(adminProps.getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			assertThat(adminProps.getAuthParams()).isEqualTo(authParamsStr);
+
+			// Verify customizer
+			var adminBuilder = mock(PulsarAdminBuilder.class);
+			var adminCustomizer = adminProps.toPulsarAdminBuilderCustomizer();
+			adminCustomizer.customize(adminBuilder);
+			verify(adminBuilder).authentication(authPluginClassName, authParamsStr);
 		}
 
 		@Test
-		void authenticationUsingAuthenticationMap() {
+		void authenticationUsingAuthenticationMap() throws UnsupportedAuthenticationException {
 			Map<String, String> props = new HashMap<>();
 			props.put("spring.pulsar.administration.auth-plugin-class-name", authPluginClassName);
 			props.put("spring.pulsar.administration.authentication.token", authToken);
 			bind(props);
-			assertThat(properties.getAdministration().getAuthentication()).containsEntry("token", authToken);
-			assertThat(properties.getAdministration().getAuthPluginClassName()).isEqualTo(authPluginClassName);
-			Map<String, Object> adminProps = properties.buildAdminProperties();
-			assertThat(adminProps).containsEntry("authPluginClassName", authPluginClassName).containsEntry("authParams",
-					authParamsStr);
+
+			// Verify properties
+			var adminProps = properties.getAdministration();
+			assertThat(adminProps.getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			assertThat(adminProps.getAuthentication()).containsEntry("token", authToken);
+
+			// Verify customizer
+			var adminBuilder = mock(PulsarAdminBuilder.class);
+			var adminCustomizer = adminProps.toPulsarAdminBuilderCustomizer();
+			adminCustomizer.customize(adminBuilder);
+			verify(adminBuilder).authentication(authPluginClassName, authParamsStr);
 		}
 
 		@Test
@@ -294,8 +321,18 @@ public class PulsarPropertiesTests {
 			props.put("spring.pulsar.administration.auth-params", authParamsStr);
 			props.put("spring.pulsar.administration.authentication.token", authToken);
 			bind(props);
-			assertThatIllegalArgumentException().isThrownBy(properties::buildAdminProperties).withMessageContaining(
-					"Cannot set both spring.pulsar.administration.authParams and spring.pulsar.administration.authentication.*");
+
+			// Verify properties
+			var adminProps = properties.getAdministration();
+			assertThat(adminProps.getAuthPluginClassName()).isEqualTo(authPluginClassName);
+			assertThat(adminProps.getAuthentication()).containsEntry("token", authToken);
+			assertThat(adminProps.getAuthParams()).isEqualTo(authParamsStr);
+
+			// Verify customizer
+			var adminCustomizer = adminProps.toPulsarAdminBuilderCustomizer();
+			assertThatIllegalArgumentException()
+					.isThrownBy(() -> adminCustomizer.customize(mock(PulsarAdminBuilder.class))).withMessageContaining(
+							"Cannot set both spring.pulsar.administration.authParams and spring.pulsar.administration.authentication.*");
 		}
 
 	}
