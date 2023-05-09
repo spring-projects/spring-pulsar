@@ -26,7 +26,7 @@ dependencies {
 		api "com.google.protobuf:protobuf-java:$protobufJavaVersion"
 		api "org.apache.pulsar:pulsar-client-all:$pulsarVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-adapter:$pulsarClientReactiveVersion"
-		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine:$pulsarClientReactiveVersion"
+		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded:$pulsarClientReactiveVersion"
 		api "org.springframework.cloud:spring-cloud-stream:$springCloudStreamVersion"
 		api "org.springframework.cloud:spring-cloud-stream-test-support:$springCloudStreamVersion"
 		api "org.springframework.pulsar:spring-pulsar-spring-boot-starter:$springPulsarStarterVersion"
