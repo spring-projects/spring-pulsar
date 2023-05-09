@@ -11,7 +11,7 @@ dependencies {
 		// spring-pulsar includes a pulsar-client with its unwanted transitive deps excluded
 		exclude group: "org.apache.pulsar", module: "pulsar-client"
 	}
-	implementation("org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded") {
+	api("org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded") {
 		// (above) we include a pulsar-client-reactive-adapter whose pulsar-client with
 		// unwanted transitive deps excluded
 		exclude group: "org.apache.pulsar", module: "pulsar-client-reactive-adapter"
