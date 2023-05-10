@@ -11,6 +11,6 @@
 :spring-cloud-stream-docs: https://docs.spring.io/spring-cloud-stream/docs/{spring-cloud-stream-version}/reference/html/
 :spring-cloud-function: https://spring.io/projects/spring-cloud-function
 
-:apache-pulsar-docs: https://pulsar.apache.org/docs/2.11.x
+:apache-pulsar-docs: https://pulsar.apache.org/docs/3.0.x
 :apache-pulsar-io-docs: {apache-pulsar-docs}/io-connectors
 :apache-pulsar-function-docs: {apache-pulsar-docs}/functions-overview
