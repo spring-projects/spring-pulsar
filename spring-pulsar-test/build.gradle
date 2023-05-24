@@ -5,7 +5,7 @@ plugins {
 description = 'Spring Pulsar Test Module'
 
 dependencies {
-	implementation 'org.junit.jupiter:junit-jupiter-api'
+    implementation 'org.junit.jupiter:junit-jupiter-api'
     implementation 'org.testcontainers:pulsar'
     implementation 'org.testcontainers:junit-jupiter'
 }
