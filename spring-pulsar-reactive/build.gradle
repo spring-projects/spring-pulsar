@@ -1,6 +1,5 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
-	id 'spring-pulsar.integration-test-conventions'
 }
 
 description = 'Spring Pulsar Reactive Support'
@@ -38,16 +37,8 @@ dependencies {
 	testImplementation 'org.springframework:spring-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
-
-	intTestImplementation 'org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter'
-	intTestImplementation 'org.testcontainers:junit-jupiter'
-	intTestImplementation 'org.testcontainers:pulsar'
 }
 
 test {
 	testLogging.showStandardStreams = true
-}
-
-integrationTest {
-	maxHeapSize '2048m'
 }

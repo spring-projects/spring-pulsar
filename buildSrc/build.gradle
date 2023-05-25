@@ -6,13 +6,20 @@ plugins {
 }
 
 repositories {
-	gradlePluginPortal()
 	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
-	if (version.endsWith('SNAPSHOT')) {
-		maven { url 'https://repo.spring.io/snapshot' }
+	gradlePluginPortal()
+}
+
+new File(new File("$projectDir").parentFile, "gradle.properties").withInputStream {
+	def properties = new Properties()
+	properties.load(it)
+	ext.set("springFrameworkVersion", properties["springFrameworkVersion"])
+	if (properties["springFrameworkVersion"].contains("-")) {
+		repositories {
+			maven { url "https://repo.spring.io/milestone" }
+			maven { url "https://repo.spring.io/snapshot" }
+		}
 	}
-	jcenter()
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -32,13 +39,13 @@ configurations {
 }
 
 ext {
-	springBootVersion = '3.0.5'
+	springBootVersion = '3.1.1-SNAPSHOT'
 }
 
 dependencies {
 	implementation localGroovy()
-	implementation 'commons-codec:commons-codec'
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'commons-codec:commons-codec:1.15'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.4'
 	implementation 'io.github.gradle-nexus:publish-plugin:1.1.0'
 	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34")
 	implementation 'io.spring.nohttp:nohttp-gradle:0.0.10'
@@ -46,26 +53,11 @@ dependencies {
 	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
 	implementation 'org.codehaus.groovy:groovy-all:2.5.17'
 	implementation 'org.jfrog.buildinfo:build-info-extractor-gradle:4.31.9'
-
 	implementation "org.gradle:test-retry-gradle-plugin:1.4.0"
 	implementation 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1'
-	implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
+	implementation(platform("org.springframework:spring-framework-bom:${springFrameworkVersion}"))
 	implementation 'org.springframework:spring-core'
 	implementation 'org.springframework:spring-web'
-
-	testImplementation 'org.assertj:assertj-core'
-	testImplementation 'org.apache.logging.log4j:log4j-core'
-	testImplementation 'org.junit.jupiter:junit-jupiter'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-tasks.named('test', Test).configure {
-	onlyIf { !project.hasProperty("buildSrc.skipTests") }
-	useJUnitPlatform()
-	jvmArgs(
-			'--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-			'--add-opens', 'java.base/java.util=ALL-UNNAMED'
-	)
 }
 
 gradlePlugin {
