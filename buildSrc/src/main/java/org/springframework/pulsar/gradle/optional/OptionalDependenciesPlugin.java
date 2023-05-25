@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.gradle.optional;
+package org.springframework.pulsar.gradle.optional;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

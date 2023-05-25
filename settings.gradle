@@ -1,27 +1,16 @@
 pluginManagement {
 	repositories {
-		gradlePluginPortal()
 		mavenCentral()
-		maven { url 'https://repo.spring.io/plugins-milestone' }
-		maven { url 'https://repo.spring.io/plugins-snapshot' }
-		jcenter()
+		gradlePluginPortal()
+		maven { url "https://repo.spring.io/release" }
+		maven { url "https://repo.spring.io/snapshot" }
 	}
 }
 
 plugins {
-	id 'com.gradle.enterprise' version '3.10.2'
-	id 'io.spring.ge.conventions' version '0.0.7'
+	id "com.gradle.enterprise" version "3.12.6"
+	id "io.spring.ge.conventions" version "0.0.13"
 }
-
-settings.gradle.projectsLoaded {
-	gradleEnterprise {
-		buildScan {
-			publishOnFailure()
-		}
-	}
-}
-
-rootProject.name = 'spring-pulsar-dist'
 
 include 'spring-pulsar'
 include 'spring-pulsar-cache-provider'
@@ -38,3 +27,13 @@ include 'spring-pulsar-sample-apps:sample-pulsar-reader'
 include 'spring-pulsar-docs'
 include 'spring-pulsar-test'
 include 'integration-tests'
+
+rootProject.name = "spring-pulsar-dist"
+
+settings.gradle.projectsLoaded {
+	gradleEnterprise {
+		buildScan {
+			publishOnFailure()
+		}
+	}
+}

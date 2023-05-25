@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.gradle;
+package org.springframework.pulsar.gradle;
 
 import java.io.FileWriter;
 import java.io.IOException;

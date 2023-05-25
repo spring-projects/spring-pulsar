@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.gradle;
+package org.springframework.pulsar.gradle;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,9 +24,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import io.spring.javaformat.gradle.SpringJavaFormatPlugin;
-import io.spring.javaformat.gradle.tasks.CheckFormat;
-import io.spring.javaformat.gradle.tasks.Format;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -50,12 +47,13 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat;
 import org.gradle.api.tasks.testing.logging.TestLogEvent;
 import org.gradle.external.javadoc.CoreJavadocOptions;
 
-import org.springframework.boot.gradle.classpath.CheckClasspathForProhibitedDependencies;
-import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
-import org.springframework.boot.gradle.testing.TestFailuresPlugin;
-import org.springframework.boot.gradle.toolchain.ToolchainPlugin;
-import org.springframework.pulsar.gradle.classpath.LenientCheckClasspathForProhibitedDependencies;
-import org.springframework.util.StringUtils;
+import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
+import org.springframework.pulsar.gradle.testing.TestFailuresPlugin;
+import org.springframework.pulsar.gradle.toolchain.ToolchainPlugin;
+
+import io.spring.javaformat.gradle.SpringJavaFormatPlugin;
+import io.spring.javaformat.gradle.tasks.CheckFormat;
+import io.spring.javaformat.gradle.tasks.Format;
 
 /**
  * Conventions that are applied in the presence of the {@link JavaBasePlugin}. When the
@@ -110,7 +108,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 	@Override
 	public void apply(Project project) {
 		project.getPlugins().withType(JavaBasePlugin.class, (java) -> {
-			project.getPlugins().apply(TestFailuresPlugin.class);
 			configureSpringJavaFormat(project);
 			configureJavaConventions(project);
 			configureJavadocConventions(project);
@@ -118,8 +115,80 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 			configureJarManifestConventions(project);
 			configureDependencyManagement(project);
 			configureToolchain(project);
-			configureProhibitedDependencyChecks(project);
 		});
+	}
+
+	private void configureSpringJavaFormat(Project project) {
+		project.getPlugins().apply(SpringJavaFormatPlugin.class);
+		project.getTasks().withType(Format.class, (Format) -> Format.setEncoding("UTF-8"));
+		project.getPlugins().apply(CheckstylePlugin.class);
+		CheckstyleExtension checkstyle = project.getExtensions().getByType(CheckstyleExtension.class);
+		checkstyle.setToolVersion("8.45.1");
+		checkstyle.getConfigDirectory().set(project.getRootProject().file("src/checkstyle"));
+		String version = SpringJavaFormatPlugin.class.getPackage().getImplementationVersion();
+		DependencySet checkstyleDependencies = project.getConfigurations().getByName("checkstyle").getDependencies();
+		checkstyleDependencies
+				.add(project.getDependencies().create("io.spring.javaformat:spring-javaformat-checkstyle:" + version));
+	}
+
+	private void configureJavaConventions(Project project) {
+		if (!project.hasProperty("toolchainVersion")) {
+			JavaPluginExtension javaPluginExtension = project.getExtensions().getByType(JavaPluginExtension.class);
+			javaPluginExtension.setSourceCompatibility(JavaVersion.toVersion(SOURCE_AND_TARGET_COMPATIBILITY));
+		}
+		project.getTasks().withType(JavaCompile.class, (compile) -> {
+			compile.getOptions().setEncoding("UTF-8");
+			List<String> args = compile.getOptions().getCompilerArgs();
+			if (!args.contains("-parameters")) {
+				args.add("-parameters");
+			}
+			if (project.hasProperty("toolchainVersion")) {
+				compile.setSourceCompatibility(SOURCE_AND_TARGET_COMPATIBILITY);
+				compile.setTargetCompatibility(SOURCE_AND_TARGET_COMPATIBILITY);
+			}
+			else if (buildingWithJava17(project)) {
+				args.addAll(Arrays.asList("-Werror", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:rawtypes",
+						"-Xlint:varargs"));
+			}
+		});
+	}
+
+	private boolean buildingWithJava17(Project project) {
+		return !project.hasProperty("toolchainVersion") && JavaVersion.current() == JavaVersion.VERSION_17;
+	}
+
+	private void configureJavadocConventions(Project project) {
+		project.getTasks().withType(Javadoc.class, (javadoc) -> {
+			CoreJavadocOptions options = (CoreJavadocOptions) javadoc.getOptions();
+			options.source("17");
+			options.encoding("UTF-8");
+			options.addStringOption("Xdoclint:none", "-quiet");
+		});
+	}
+
+	private void configureTestConventions(Project project) {
+		project.getPlugins().apply(TestFailuresPlugin.class);
+		project.getTasks().withType(Test.class, (test) -> {
+			test.useJUnitPlatform();
+			test.setMaxHeapSize("1024M");
+			test.testLogging(testLoggingContainer -> {
+				testLoggingContainer.setEvents(Set.of(TestLogEvent.SKIPPED, TestLogEvent.FAILED));
+				testLoggingContainer.setShowStandardStreams(project.hasProperty("showStandardStreams"));
+				testLoggingContainer.setShowExceptions(true);
+				testLoggingContainer.setShowStackTraces(true);
+				testLoggingContainer.setExceptionFormat(TestExceptionFormat.FULL);
+			});
+			test.jvmArgs(
+					"--add-opens", "java.base/java.lang=ALL-UNNAMED",
+					"--add-opens", "java.base/java.util=ALL-UNNAMED",
+					"--add-opens", "java.base/sun.net=ALL-UNNAMED"
+					);
+			test.getTestLogging().setShowStandardStreams(true);
+			project.getTasks().withType(Checkstyle.class, test::mustRunAfter);
+			project.getTasks().withType(CheckFormat.class, test::mustRunAfter);
+		});
+		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> project.getDependencies()
+				.add(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, "org.junit.platform:junit-platform-launcher"));
 	}
 
 	private void configureJarManifestConventions(Project project) {
@@ -159,77 +228,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		return project.getDescription();
 	}
 
-	private void configureTestConventions(Project project) {
-		project.getTasks().withType(Test.class, (test) -> {
-			test.useJUnitPlatform();
-			test.setMaxHeapSize("1024M");
-			test.testLogging(testLoggingContainer -> {
-				testLoggingContainer.setEvents(Set.of(TestLogEvent.SKIPPED, TestLogEvent.FAILED));
-				testLoggingContainer.setShowStandardStreams(project.hasProperty("showStandardStreams"));
-				testLoggingContainer.setShowExceptions(true);
-				testLoggingContainer.setShowStackTraces(true);
-				testLoggingContainer.setExceptionFormat(TestExceptionFormat.FULL);
-			});
-			test.jvmArgs(
-					"--add-opens", "java.base/java.lang=ALL-UNNAMED",
-					"--add-opens", "java.base/java.util=ALL-UNNAMED",
-					"--add-opens", "java.base/sun.net=ALL-UNNAMED"
-					);
-			project.getTasks().withType(Checkstyle.class, test::mustRunAfter);
-			project.getTasks().withType(CheckFormat.class, test::mustRunAfter);
-		});
-		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> project.getDependencies()
-				.add(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, "org.junit.platform:junit-platform-launcher"));
-	}
-
-	private void configureJavadocConventions(Project project) {
-		project.getTasks().withType(Javadoc.class, (javadoc) -> {
-			CoreJavadocOptions options = (CoreJavadocOptions) javadoc.getOptions();
-			options.source("17");
-			options.encoding("UTF-8");
-			options.addStringOption("Xdoclint:none", "-quiet");
-		});
-	}
-
-	private void configureJavaConventions(Project project) {
-		if (!project.hasProperty("toolchainVersion")) {
-			JavaPluginExtension javaPluginExtension = project.getExtensions().getByType(JavaPluginExtension.class);
-			javaPluginExtension.setSourceCompatibility(JavaVersion.toVersion(SOURCE_AND_TARGET_COMPATIBILITY));
-		}
-		project.getTasks().withType(JavaCompile.class, (compile) -> {
-			compile.getOptions().setEncoding("UTF-8");
-			List<String> args = compile.getOptions().getCompilerArgs();
-			if (!args.contains("-parameters")) {
-				args.add("-parameters");
-			}
-			if (project.hasProperty("toolchainVersion")) {
-				compile.setSourceCompatibility(SOURCE_AND_TARGET_COMPATIBILITY);
-				compile.setTargetCompatibility(SOURCE_AND_TARGET_COMPATIBILITY);
-			}
-			else if (buildingWithJava17(project)) {
-				args.addAll(Arrays.asList("-Werror", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:rawtypes",
-						"-Xlint:varargs"));
-			}
-		});
-	}
-
-	private boolean buildingWithJava17(Project project) {
-		return !project.hasProperty("toolchainVersion") && JavaVersion.current() == JavaVersion.VERSION_17;
-	}
-
-	private void configureSpringJavaFormat(Project project) {
-		project.getPlugins().apply(SpringJavaFormatPlugin.class);
-		project.getTasks().withType(Format.class, (Format) -> Format.setEncoding("UTF-8"));
-		project.getPlugins().apply(CheckstylePlugin.class);
-		CheckstyleExtension checkstyle = project.getExtensions().getByType(CheckstyleExtension.class);
-		checkstyle.setToolVersion("8.45.1");
-		checkstyle.getConfigDirectory().set(project.getRootProject().file("src/checkstyle"));
-		String version = SpringJavaFormatPlugin.class.getPackage().getImplementationVersion();
-		DependencySet checkstyleDependencies = project.getConfigurations().getByName("checkstyle").getDependencies();
-		checkstyleDependencies
-				.add(project.getDependencies().create("io.spring.javaformat:spring-javaformat-checkstyle:" + version));
-	}
-
 	private void configureDependencyManagement(Project project) {
 		ConfigurationContainer configurations = project.getConfigurations();
 		Configuration dependencyManagement = configurations.create("dependencyManagement", (configuration) -> {
@@ -249,29 +247,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 
 	private void configureToolchain(Project project) {
 		project.getPlugins().apply(ToolchainPlugin.class);
-	}
-
-	private void configureProhibitedDependencyChecks(Project project) {
-		SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-		sourceSets.matching((sourceSet) -> !sourceSet.getName().equals("intTest"))
-				.all((sourceSet) -> createProhibitedDependenciesChecks(project,
-						sourceSet.getCompileClasspathConfigurationName(), sourceSet.getRuntimeClasspathConfigurationName()));
-	}
-
-	private void createProhibitedDependenciesChecks(Project project, String... configurationNames) {
-		ConfigurationContainer configurations = project.getConfigurations();
-		for (String configurationName : configurationNames) {
-			Configuration configuration = configurations.getByName(configurationName);
-			createProhibitedDependenciesCheck(configuration, project);
-		}
-	}
-
-	private void createProhibitedDependenciesCheck(Configuration classpath, Project project) {
-		CheckClasspathForProhibitedDependencies checkClasspathForProhibitedDependencies = project.getTasks().create(
-				"check" + StringUtils.capitalize(classpath.getName() + "ForProhibitedDependencies"),
-				LenientCheckClasspathForProhibitedDependencies.class);
-		checkClasspathForProhibitedDependencies.setClasspath(classpath);
-		project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(checkClasspathForProhibitedDependencies);
 	}
 
 }

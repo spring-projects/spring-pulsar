@@ -62,21 +62,25 @@ dependencies {
 
 gradlePlugin {
 	plugins {
+		artifactoryPlugin {
+			id = "io.spring.convention.artfiactory"
+			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
+		}
 		jacocoConventionsPlugin {
 			id = "org.springframework.pulsar.jacoco"
-			implementationClass = "org.springframework.pulsar.gradle.JacocoConventionsPlugin"
+			implementationClass = "org.springframework.pulsar.gradle.check.JacocoConventionsPlugin"
 		}
 		optionalDependenciesPlugin {
 			id = "org.springframework.pulsar.optional-dependencies"
-			implementationClass = "org.springframework.boot.gradle.optional.OptionalDependenciesPlugin"
+			implementationClass = "org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin"
+		}
+		repositoryConventionPlugin {
+			id = "io.spring.convention.repository"
+			implementationClass = "io.spring.gradle.convention.RepositoryConventionPlugin"
 		}
 		rootProjectPlugin {
 			id = "org.springframework.pulsar.root-project"
 			implementationClass = "org.springframework.pulsar.gradle.RootProjectPlugin"
-		}
-		sonarQubeConventionsPlugin {
-			id = "org.springframework.pulsar.sonarqube"
-			implementationClass = "org.springframework.pulsar.gradle.SonarQubeConventionsPlugin"
 		}
 		springDocsModulePlugin {
 			id = "org.springframework.pulsar.spring-docs-module"
@@ -86,18 +90,13 @@ gradlePlugin {
 			id = "org.springframework.pulsar.spring-module"
 			implementationClass = "org.springframework.pulsar.gradle.SpringModulePlugin"
 		}
+		sonarQubeConventionsPlugin {
+			id = "org.springframework.pulsar.sonarqube"
+			implementationClass = "org.springframework.pulsar.gradle.check.SonarQubeConventionsPlugin"
+		}
 		updateProjectVersion {
 			id = "org.springframework.pulsar.update-version"
 			implementationClass = "org.springframework.pulsar.gradle.versions.UpdateProjectVersionPlugin"
-		}
-		// groovy plugins
-		artifactoryPlugin {
-			id = "io.spring.convention.artfiactory"
-			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
-		}
-		repositoryConventionPlugin {
-			id = "io.spring.convention.repository"
-			implementationClass = "io.spring.gradle.convention.RepositoryConventionPlugin"
 		}
 	}
 }

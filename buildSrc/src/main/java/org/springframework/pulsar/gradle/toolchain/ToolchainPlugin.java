@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.gradle.toolchain;
+package org.springframework.pulsar.gradle.toolchain;
 
 import java.util.ArrayList;
 import java.util.Collections;

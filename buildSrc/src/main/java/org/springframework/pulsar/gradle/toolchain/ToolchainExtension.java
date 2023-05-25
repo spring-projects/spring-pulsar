@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.gradle.toolchain;
+package org.springframework.pulsar.gradle.toolchain;
 
 import org.gradle.api.Project;
 import org.gradle.api.provider.ListProperty;

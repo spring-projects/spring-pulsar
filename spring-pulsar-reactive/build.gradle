@@ -32,13 +32,8 @@ dependencies {
 	testImplementation 'org.awaitility:awaitility'
 	testImplementation 'org.hamcrest:hamcrest'
 	testImplementation 'org.junit.jupiter:junit-jupiter'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:pulsar'
-}
-
-test {
-	testLogging.showStandardStreams = true
 }
