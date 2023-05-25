@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.gradle.docs.asciidoc;
+package org.springframework.pulsar.gradle.docs;
 
 import java.io.File;
 import java.net.URI;

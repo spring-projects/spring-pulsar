@@ -23,9 +23,8 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 
-import org.springframework.boot.gradle.JavaConventionsPlugin;
-import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
-import org.springframework.pulsar.gradle.docs.asciidoc.AsciidoctorConventionsPlugin;
+import org.springframework.pulsar.gradle.docs.AsciidoctorConventionsPlugin;
+import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
 import org.springframework.pulsar.gradle.publish.MavenPublishingConventionsPlugin;
 import org.springframework.pulsar.gradle.publish.PublishArtifactsPlugin;
 import org.springframework.pulsar.gradle.publish.PublishLocalPlugin;
@@ -35,7 +34,6 @@ import io.spring.gradle.convention.ArtifactoryPlugin;
 import io.spring.gradle.convention.RepositoryConventionPlugin;
 
 /**
- * @author Rob Winch
  * @author Chris Bono
  */
 public class SpringDocsModulePlugin implements Plugin<Project> {

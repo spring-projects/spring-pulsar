@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.gradle.testing;
+package org.springframework.pulsar.gradle.testing;
 
 import java.util.List;
 import java.util.Map;

@@ -23,9 +23,8 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 
-import org.springframework.boot.gradle.JavaConventionsPlugin;
-import org.springframework.boot.gradle.optional.OptionalDependenciesPlugin;
-import org.springframework.pulsar.gradle.docs.asciidoc.AsciidoctorConventionsPlugin;
+import org.springframework.pulsar.gradle.check.JacocoConventionsPlugin;
+import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
 import org.springframework.pulsar.gradle.publish.MavenPublishingConventionsPlugin;
 import org.springframework.pulsar.gradle.publish.PublishAllJavaComponentsPlugin;
 import org.springframework.pulsar.gradle.publish.PublishArtifactsPlugin;
@@ -42,12 +41,12 @@ public class SpringModulePlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(final Project project) {
+
 		PluginManager pluginManager = project.getPluginManager();
 		pluginManager.apply(JavaPlugin.class);
 		pluginManager.apply(RepositoryConventionPlugin.class);
 		pluginManager.apply(JavaLibraryPlugin.class);
 		pluginManager.apply(JavaConventionsPlugin.class);
-		pluginManager.apply(AsciidoctorConventionsPlugin.class);
 		pluginManager.apply(MavenPublishPlugin.class);
 		pluginManager.apply(SpringSigningPlugin.class);
 		pluginManager.apply(MavenPublishingConventionsPlugin.class);

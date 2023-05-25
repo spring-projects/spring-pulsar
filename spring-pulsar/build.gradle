@@ -38,13 +38,8 @@ dependencies {
 	testImplementation 'org.awaitility:awaitility'
 	testImplementation 'org.hamcrest:hamcrest'
 	testImplementation 'org.junit.jupiter:junit-jupiter'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
 	// OutputCaptureExtension used by PulsarFunctionAdministrationTests
 	testImplementation 'org.springframework.boot:spring-boot-test'
-}
-
-test {
-	testLogging.showStandardStreams = true
 }

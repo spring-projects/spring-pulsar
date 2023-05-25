@@ -1,4 +1,4 @@
-package org.springframework.pulsar.gradle;
+package org.springframework.pulsar.gradle.check;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -18,12 +18,9 @@ public class JacocoConventionsPlugin implements Plugin<Project> {
 	@Override
 	public void apply(final Project project) {
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> {
-
 			project.getPluginManager().apply(JacocoPlugin.class);
-
 			project.getExtensions().configure(JacocoPluginExtension.class,
 					(jacocoExtension) -> jacocoExtension.setToolVersion("0.8.7"));
-
 			project.getTasks().withType(Test.class, (test) ->
 					project.getTasks().withType(JacocoReport.class, test::finalizedBy));
 		});

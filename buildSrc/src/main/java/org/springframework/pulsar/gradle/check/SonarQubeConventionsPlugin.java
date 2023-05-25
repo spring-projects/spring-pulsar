@@ -1,9 +1,11 @@
-package org.springframework.pulsar.gradle;
+package org.springframework.pulsar.gradle.check;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.sonarqube.gradle.SonarQubeExtension;
 import org.sonarqube.gradle.SonarQubePlugin;
+
+import org.springframework.pulsar.gradle.ProjectLinks;
 
 /**
  * Adds a version of SonarQube to use and configures it.
