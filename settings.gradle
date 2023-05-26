@@ -30,6 +30,9 @@ include 'integration-tests'
 
 rootProject.name = "spring-pulsar-dist"
 
+rootProject.children.findAll { !it.name.startsWith('sample-') }
+		.each {project -> project.buildFileName = "${project.name}.gradle" }
+
 settings.gradle.projectsLoaded {
 	gradleEnterprise {
 		buildScan {
