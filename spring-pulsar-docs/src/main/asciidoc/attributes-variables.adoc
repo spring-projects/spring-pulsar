@@ -1,8 +1,11 @@
 :spring-boot-version: current
+:spring-framework-version: current
 :spring-cloud-stream-version: current
 :spring-pulsar-version: current
 :spring-pulsar-binder-version: current
 :spring-pulsar-starter-version: current
+:pulsar-client-version: current
+:pulsar-client-reactive-version: current
 
 :github: https://github.com/spring-projects/spring-pulsar
 :javadocs: https://docs.spring.io/spring-pulsar/docs/{spring-pulsar-version}/api

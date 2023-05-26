@@ -4,27 +4,35 @@ This project provides a basic Spring-friendly API for developing https://pulsar.
 On a very high level, Spring for Apache Pulsar provides a `PulsarTemplate` for publishing to a Pulsar topic and a `PulsarListener` annotation for consuming from a Pulsar topic.
 In addition, it also provides various convenience APIs for Spring developers to ramp up their development journey into Apache Pulsar.
 
-== Minimum Supported Versions
+== Supported Versions
 
-The minimum supported versions for the underlying libraries required by the framework are as follows:
+The supported versions for the underlying libraries required by the framework are as follows:
 |===
-| Library | Version
+| Library | Minimum Version | Version Used
+
+| Apache Pulsar
+| 3.0.0
+| {pulsar-client-version}
+
+| Spring Framework
+| 6.0.9
+| {spring-framework-version}
+
+| Spring Boot
+| 3.2.0
+| {spring-boot-version}
 
 | Java
 | 17
-
-| Apache Pulsar
-| 2.10.0
-
-| Spring Boot
-| 3.0.0
-
-| Spring Framework
-| 6.0.0
+| -
 
 | Gradle
-| 7.5
+| 7.4
+| -
+
 |===
+
+NOTE: The **Version Used** is the version of the library targeted by Spring Pulsar  {spring-pulsar-version} (the version of the framework this reference guide belongs to).
 
 == Building the Project
 If you have cloned the project locally, follow these steps to build the project from the source code.

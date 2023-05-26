@@ -86,10 +86,13 @@ tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 	}
 	doFirst {
 		attributes "spring-boot-version": project.springBootVersion ?: 'current',
+				"spring-framework-version": project.springFrameworkVersion ?: 'current',
 				"spring-cloud-stream-version": project.springCloudStreamVersion ?: 'current',
 				"spring-pulsar-version": project.version,
 				"spring-pulsar-binder-version": project.springPulsarBinderVersion ?: 'current',
-				"spring-pulsar-starter-version": project.springPulsarStarterVersion ?: 'current'
+				"spring-pulsar-starter-version": project.springPulsarStarterVersion ?: 'current',
+				"pulsar-client-version": project.pulsarClientVersion ?: 'current',
+				"pulsar-client-reactive-version": project.pulsarClientReactiveVersion ?: 'current'
 	}
 }
 
