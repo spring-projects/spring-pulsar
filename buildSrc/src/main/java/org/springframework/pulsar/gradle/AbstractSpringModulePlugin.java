@@ -16,19 +16,34 @@
 
 package org.springframework.pulsar.gradle;
 
+import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaLibraryPlugin;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
 
-import org.springframework.pulsar.gradle.docs.AsciidoctorConventionsPlugin;
+import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
+import org.springframework.pulsar.gradle.publish.SpringMavenPlugin;
+
+import io.spring.gradle.convention.RepositoryConventionPlugin;
 
 /**
  * @author Chris Bono
  */
-public class SpringDocsModulePlugin extends AbstractSpringModulePlugin {
+public abstract class AbstractSpringModulePlugin implements Plugin<Project> {
 
 	@Override
-	protected void additionalPlugins(Project project) {
+	public void apply(final Project project) {
 		PluginManager pluginManager = project.getPluginManager();
-		pluginManager.apply(AsciidoctorConventionsPlugin.class);
+		pluginManager.apply(JavaPlugin.class);
+		pluginManager.apply(JavaLibraryPlugin.class);
+		pluginManager.apply(RepositoryConventionPlugin.class);
+		pluginManager.apply(SpringMavenPlugin.class);
+		pluginManager.apply(JavaConventionsPlugin.class);
+		pluginManager.apply(OptionalDependenciesPlugin.class);
+		additionalPlugins(project);
 	}
+
+	protected abstract void additionalPlugins(Project project);
+
 }

@@ -16,45 +16,21 @@
 
 package org.springframework.pulsar.gradle;
 
-import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaLibraryPlugin;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
-import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 
 import org.springframework.pulsar.gradle.check.JacocoConventionsPlugin;
-import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
-import org.springframework.pulsar.gradle.publish.MavenPublishingConventionsPlugin;
 import org.springframework.pulsar.gradle.publish.PublishAllJavaComponentsPlugin;
-import org.springframework.pulsar.gradle.publish.PublishArtifactsPlugin;
-import org.springframework.pulsar.gradle.publish.PublishLocalPlugin;
-import org.springframework.pulsar.gradle.publish.SpringSigningPlugin;
-
-import io.spring.gradle.convention.ArtifactoryPlugin;
-import io.spring.gradle.convention.RepositoryConventionPlugin;
 
 /**
  * @author Chris Bono
  */
-public class SpringModulePlugin implements Plugin<Project> {
+public class SpringModulePlugin extends AbstractSpringModulePlugin {
 
 	@Override
-	public void apply(final Project project) {
-
+	protected void additionalPlugins(Project project) {
 		PluginManager pluginManager = project.getPluginManager();
-		pluginManager.apply(JavaPlugin.class);
-		pluginManager.apply(RepositoryConventionPlugin.class);
-		pluginManager.apply(JavaLibraryPlugin.class);
-		pluginManager.apply(JavaConventionsPlugin.class);
-		pluginManager.apply(MavenPublishPlugin.class);
-		pluginManager.apply(SpringSigningPlugin.class);
-		pluginManager.apply(MavenPublishingConventionsPlugin.class);
 		pluginManager.apply(PublishAllJavaComponentsPlugin.class);
-		pluginManager.apply(PublishLocalPlugin.class);
-		pluginManager.apply(PublishArtifactsPlugin.class);
-		pluginManager.apply(ArtifactoryPlugin.class);
-		pluginManager.apply(OptionalDependenciesPlugin.class);
 		pluginManager.apply(JacocoConventionsPlugin.class);
 	}
 }
