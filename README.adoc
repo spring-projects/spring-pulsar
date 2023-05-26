@@ -49,20 +49,27 @@ If you want to build everything and run tests, use the `build` task:
 
 [source,shell]
 ----
-./gradlew clean build
+./gradlew build
 ----
 
 NOTE: Some tests rely on a Docker daemon to test against live services using https://www.testcontainers.org/[Testcontainers].
 These tests will be skipped if a local Docker daemon is not available.
 
-The above command will build everything and run all tests except the `PulsarFunctionAdministrationIntegrationTests` which requires the _Pulsar RabbitMQ Connector_ to be downloaded prior to running.
+The above command will build everything and run all unit tests and integration tests except the `PulsarFunctionAdministrationIntegrationTests` which requires the _Pulsar RabbitMQ Connector_ to be downloaded prior to running.
 To download the connector (one time only) and run the integration test, add a system property to the task as follows:
 
 [source,shell]
 ----
-./gradlew clean build -DdownloadRabbitConnector=true
+./gradlew build -DdownloadRabbitConnector=true
 ----
 
+By default, the `build` command will run unit tests followed by integration tests.
+If you want skip tests, use the `-x test` and/or `-x integrationTest` options:
+
+[source,shell]
+----
+./gradlew build -x test -x integrationTest
+----
 
 == Modules
 There are several modules in Spring Pulsar. Here is a quick overview:

@@ -6,31 +6,30 @@ javaPlatform {
 	allowDependencies()
 }
 
-ext {
-	googleJsr305Version = '3.0.2'
-	protobufJavaVersion = '3.21.5'
-	testcontainersVersion = '1.17.6'
-	pulsarVersion = '3.0.0'
-	pulsarClientReactiveVersion = '0.3.0'
-	springBootVersion = '3.0.5'
-	springPulsarStarterVersion = '0.2.1-SNAPSHOT'
-	springPulsarBinderVersion = '0.2.1-SNAPSHOT'
-	springCloudStreamVersion = '4.0.1'
-}
-
 dependencies {
-	api platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
-	api platform("org.testcontainers:testcontainers-bom:$testcontainersVersion")
+	api platform("com.fasterxml.jackson:jackson-bom:2.15.0")
+	api platform("io.micrometer:micrometer-bom:1.11.0")
+	api platform("io.micrometer:micrometer-tracing-bom:1.1.1")
+	api platform("io.projectreactor:reactor-bom:2022.0.7")
+	api platform("io.zipkin.brave:brave-bom:5.15.1")
+	api platform("org.assertj:assertj-bom:3.24.2")
+	api platform("org.awaitility:awaitility:4.2.0")
+	api platform("org.junit:junit-bom:5.9.3")
+	api platform("org.mockito:mockito-bom:5.3.1")
+	api platform("org.springframework:spring-framework-bom:$springFrameworkVersion")
+	api platform("org.testcontainers:testcontainers-bom:1.18.0")
+
 	constraints {
-		api "com.google.code.findbugs:jsr305:$googleJsr305Version"
-		api "com.google.protobuf:protobuf-java:$protobufJavaVersion"
-		api "org.apache.pulsar:pulsar-client-all:$pulsarVersion"
+		api "ch.qos.logback:logback-classic:1.4.7"
+		api "com.github.ben-manes.caffeine:caffeine:3.1.6"
+		api "com.google.code.findbugs:jsr305:3.0.2"
+		api "com.google.protobuf:protobuf-java:3.21.5"
+		api "com.jayway.jsonpath:json-path:2.8.0"
+		api "org.apache.pulsar:pulsar-client-all:$pulsarClientVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-adapter:$pulsarClientReactiveVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded:$pulsarClientReactiveVersion"
-		api "org.springframework.cloud:spring-cloud-stream:$springCloudStreamVersion"
-		api "org.springframework.cloud:spring-cloud-stream-test-support:$springCloudStreamVersion"
-		api "org.springframework.pulsar:spring-pulsar-spring-boot-starter:$springPulsarStarterVersion"
-		api "org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter:$springPulsarStarterVersion"
-		api "org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:$springPulsarBinderVersion"
+		// spring-pulsar tests (OutputCaptureExtension)
+		api "org.springframework.boot:spring-boot-test:$springBootVersion"
+		api "org.springframework.retry:spring-retry:2.0.1"
 	}
 }

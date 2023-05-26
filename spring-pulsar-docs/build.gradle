@@ -15,7 +15,6 @@ configurations {
 
 dependencies {
 	api project (':spring-pulsar')
-	api 'org.springframework.boot:spring-boot-starter'
 	observationDocs "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 
@@ -86,11 +85,11 @@ tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 		jvmArgs "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", "--add-opens", "java.base/java.io=ALL-UNNAMED"
 	}
 	doFirst {
-		attributes "spring-boot-version": project(':spring-pulsar-dependencies').springBootVersion ?: 'current',
-				"spring-cloud-stream-version": project(':spring-pulsar-dependencies').springCloudStreamVersion ?: 'current',
+		attributes "spring-boot-version": project.springBootVersion ?: 'current',
+				"spring-cloud-stream-version": project.springCloudStreamVersion ?: 'current',
 				"spring-pulsar-version": project.version,
-				"spring-pulsar-binder-version": project(':spring-pulsar-dependencies').springPulsarBinderVersion ?: 'current',
-				"spring-pulsar-starter-version": project(':spring-pulsar-dependencies').springPulsarStarterVersion ?: 'current'
+				"spring-pulsar-binder-version": project.springPulsarBinderVersion ?: 'current',
+				"spring-pulsar-starter-version": project.springPulsarStarterVersion ?: 'current'
 	}
 }
 

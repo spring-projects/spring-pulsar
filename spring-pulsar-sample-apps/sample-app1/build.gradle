@@ -1,15 +1,19 @@
 plugins {
-	id 'org.springframework.pulsar.spring-module'
-	id 'org.springframework.boot' version '3.0.5'
+	id 'java'
+	id 'org.springframework.boot' version '3.1.1-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.0'
 }
 
 description = 'Spring Pulsar Sample Application (Send and Receive)'
 
-dependencies {
-	implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter'
-	implementation 'com.google.code.findbugs:jsr305'
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
 
-	// observability
+dependencies {
+	implementation "org.springframework.pulsar:spring-pulsar-spring-boot-starter:${springPulsarStarterVersion}"
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
@@ -22,12 +26,4 @@ bootRun {
 			"--add-opens", "java.base/java.util=ALL-UNNAMED",
 			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
 	]
-}
-
-project.afterEvaluate {
-	project.tasks.publishArtifacts.enabled(false)
-	project.tasks.artifactoryPublish.enabled(false)
-	project.tasks.publishToOssrh.enabled(false)
-	project.tasks.publishMavenJavaPublicationToOssrhRepository.enabled(false)
-	project.tasks.publishAllPublicationsToOssrhRepository.enabled(false)
 }
