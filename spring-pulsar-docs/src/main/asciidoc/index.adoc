@@ -7,6 +7,10 @@ include::authors.adoc[]
 
 include::copyright.adoc[]
 
+ifeval::[{is-snapshot-version} == true]
+CAUTION: You are viewing documentation for a SNAPSHOT version ({spring-pulsar-version}). While it is usually in-sync with the underlying code, it is subject to change and not guaranteed to be up-to-date with the underlying code.
+endif::[]
+
 include::intro.adoc[leveloffset=+1]
 
 include::getting-help.adoc[leveloffset=+2]

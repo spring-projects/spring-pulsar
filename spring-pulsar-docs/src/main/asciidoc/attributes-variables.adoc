@@ -6,6 +6,7 @@
 :spring-pulsar-starter-version: current
 :pulsar-client-version: current
 :pulsar-client-reactive-version: current
+:is-snapshot-version:  false
 
 :github: https://github.com/spring-projects/spring-pulsar
 :javadocs: https://docs.spring.io/spring-pulsar/docs/{spring-pulsar-version}/api
