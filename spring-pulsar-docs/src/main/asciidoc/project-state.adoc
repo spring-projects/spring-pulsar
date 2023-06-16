@@ -3,6 +3,7 @@ While the code and functionality of the framework is thoroughly tested and ready
 
 The evolution of the project (by version) is as follows:
 
+[discrete]
 == Version 0.2.x
 All components (`the core + Spring Boot autoconfiguration + Spring Cloud Stream binder`) reside in the `spring-pulsar` Github repository.
 
@@ -11,6 +12,7 @@ This is considered an "experimental" GA, defined as:
 - code and functionality is production ready, but decision has not been made to support the project permanently
 - available on Maven Central using a major version of `0` to indicate its nature
 
+[discrete]
 == Version 1.0.x
 This is the "full" GA and the components are split as follows (in-progress):
 
