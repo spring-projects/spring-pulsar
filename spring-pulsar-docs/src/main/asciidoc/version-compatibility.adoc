@@ -21,7 +21,10 @@ The following is the compatibility matrix:
 | 17+
 |===
 
+[NOTE]
+====
+In version `1.0.0` the auto-configuration moved into Spring Boot `3.2.x` and therefore `3.2.x` is the minimum Spring Boot version supported when using version `1.0.x` of the framework.
 
-NOTE: In version `1.0.0` the auto-configuration moved into Spring Boot `3.2.x` and therefore `3.2.x` is the minimum Spring Boot version supported when using version `1.0.x` of the framework.
-Prior to version `1.0.0`, the auto-configuration support exists in the framework itself.
+However, prior to version `1.0.0`, the auto-configuration support exists in the framework itself.
 ^**(*)**^This makes it theoretically possible to use later versions of Spring Boot besides `3.0.x` which it is tested against and guaranteed to work with. In other words, it may work with `3.1.x` but it has not been tested against it.
+====
