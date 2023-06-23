@@ -493,6 +493,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				inRetryMode.compareAndSet(true, false);
 			}
 			catch (Exception e) {
+				DefaultPulsarMessageListenerContainer.this.logger.debug(e,
+						() -> "Error dispatching the message to the listener.");
 				if (this.pulsarConsumerErrorHandler != null) {
 					invokeRecordListenerErrorHandler(inRetryMode, message, e);
 				}
