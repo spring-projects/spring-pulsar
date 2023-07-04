@@ -21,7 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.annotation.PulsarTopic;
 import org.springframework.util.StringUtils;
 
 /**
@@ -100,7 +102,16 @@ public class DefaultTopicResolver implements TopicResolver {
 		if (messageType == null) {
 			return Resolved.failed("Topic must be specified when the message is null");
 		}
-		String topic = this.customTopicMappings.getOrDefault(messageType, defaultTopicSupplier.get());
+		String topic = this.customTopicMappings.get(messageType);
+		if (topic == null) {
+			PulsarTopic annotation = AnnotationUtils.findAnnotation(messageType, PulsarTopic.class);
+			if (annotation != null) {
+				topic = annotation.topic();
+			}
+		}
+		if (topic == null) {
+			topic = defaultTopicSupplier.get();
+		}
 		return topic == null ? Resolved.failed("Topic must be specified when no default topic is configured")
 				: Resolved.of(topic);
 	}
