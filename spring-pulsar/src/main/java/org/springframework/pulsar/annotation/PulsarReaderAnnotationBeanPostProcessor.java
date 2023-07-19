@@ -107,7 +107,7 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		this.registrar.setBeanFactory(this.beanFactory);
 
 		this.beanFactory.getBeanProvider(PulsarReaderConfigurer.class)
-				.forEach(c -> c.configurePulsarReaders(this.registrar));
+			.forEach(c -> c.configurePulsarReaders(this.registrar));
 
 		if (this.registrar.getEndpointRegistry() == null) {
 			if (this.endpointRegistry == null) {

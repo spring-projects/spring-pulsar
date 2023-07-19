@@ -35,11 +35,14 @@ public class CaffeineCacheProviderFactory<K, V> implements CacheProviderFactory<
 	@Override
 	public CacheProvider<K, V> create(Duration cacheExpireAfterAccess, Long cacheMaximumSize,
 			Integer cacheInitialCapacity, EvictionListener<K, V> evictionListener) {
-		Cache<K, V> cache = Caffeine.newBuilder().expireAfterAccess(cacheExpireAfterAccess)
-				.maximumSize(cacheMaximumSize).initialCapacity(cacheInitialCapacity)
-				.scheduler(Scheduler.systemScheduler()).evictionListener((RemovalListener<K, V>) (key, value,
-						cause) -> evictionListener.onEviction(key, value, cause.toString()))
-				.build();
+		Cache<K, V> cache = Caffeine.newBuilder()
+			.expireAfterAccess(cacheExpireAfterAccess)
+			.maximumSize(cacheMaximumSize)
+			.initialCapacity(cacheInitialCapacity)
+			.scheduler(Scheduler.systemScheduler())
+			.evictionListener((RemovalListener<K, V>) (key, value, cause) -> evictionListener.onEviction(key, value,
+					cause.toString()))
+			.build();
 		return new CaffeineCacheProvider<>(cache);
 	}
 

@@ -57,8 +57,8 @@ class SchemaResolverTests {
 		@Test
 		void structSchemasRequireMessageType() {
 			assertThatIllegalArgumentException()
-					.isThrownBy(() -> resolver.resolveSchema(SchemaType.JSON, null, null).orElseThrow())
-					.withMessage("messageType must be specified for JSON schema type");
+				.isThrownBy(() -> resolver.resolveSchema(SchemaType.JSON, null, null).orElseThrow())
+				.withMessage("messageType must be specified for JSON schema type");
 		}
 
 		@Test
@@ -71,15 +71,15 @@ class SchemaResolverTests {
 		@Test
 		void keyValueSchemaRequiresMessageKeyType() {
 			assertThatIllegalArgumentException()
-					.isThrownBy(() -> resolver.resolveSchema(SchemaType.KEY_VALUE, Foo.class, null).orElseThrow())
-					.withMessage("messageKeyType must be specified for KEY_VALUE schema type");
+				.isThrownBy(() -> resolver.resolveSchema(SchemaType.KEY_VALUE, Foo.class, null).orElseThrow())
+				.withMessage("messageKeyType must be specified for KEY_VALUE schema type");
 		}
 
 		@Test
 		void keyValueSchemaRequiresMessageType() {
 			assertThatIllegalArgumentException()
-					.isThrownBy(() -> resolver.resolveSchema(SchemaType.KEY_VALUE, null, String.class).orElseThrow())
-					.withMessage("messageType must be specified for KEY_VALUE schema type");
+				.isThrownBy(() -> resolver.resolveSchema(SchemaType.KEY_VALUE, null, String.class).orElseThrow())
+				.withMessage("messageType must be specified for KEY_VALUE schema type");
 		}
 
 		@Test

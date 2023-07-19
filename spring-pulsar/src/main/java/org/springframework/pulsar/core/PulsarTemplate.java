@@ -145,9 +145,9 @@ public class PulsarTemplate<T>
 			return;
 		}
 		this.observationRegistry = this.applicationContext.getBeanProvider(ObservationRegistry.class)
-				.getIfUnique(() -> this.observationRegistry);
+			.getIfUnique(() -> this.observationRegistry);
 		this.observationConvention = this.applicationContext.getBeanProvider(PulsarTemplateObservationConvention.class)
-				.getIfUnique(() -> this.observationConvention);
+			.getIfUnique(() -> this.observationConvention);
 	}
 
 	@Override
@@ -210,7 +210,8 @@ public class PulsarTemplate<T>
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
 		try {
 			return doSendAsync(topic, message, schema, encryptionKeys, typedMessageBuilderCustomizer,
-					producerCustomizer).get();
+					producerCustomizer)
+				.get();
 		}
 		catch (Exception ex) {
 			throw PulsarClientException.unwrap(ex);

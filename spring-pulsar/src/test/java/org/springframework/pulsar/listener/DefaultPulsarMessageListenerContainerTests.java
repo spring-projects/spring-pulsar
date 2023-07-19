@@ -63,8 +63,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void basicDefaultConsumer() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-012");
@@ -73,7 +74,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		CountDownLatch latch = new CountDownLatch(1);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -91,8 +92,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	@Disabled
 	@Test
 	void containerPauseAndResumeFeatureUsingWaitAndNotify() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("containerPauseResumeWaitNotify-topic");
@@ -160,8 +162,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void subscriptionInitialPositionEarliest() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-013");
@@ -171,7 +174,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		CountDownLatch latch = new CountDownLatch(5);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -191,8 +194,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void subscriptionInitialPositionDefaultLatest() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-014");
@@ -224,10 +228,13 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void negativeAckRedeliveryBackoff() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
-		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
-				.maxDelayMs(5 * 1000).build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
+		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder()
+			.minDelayMs(1000)
+			.maxDelayMs(5 * 1000)
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
 				new DefaultPulsarConsumerFactory<>(pulsarClient, (consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-015");
@@ -263,7 +270,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		// but the probability for that is low as we have a long enough backoff
 		// multiplier.
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(6)).negativeAcknowledge(any(Message.class)));
+			.untilAsserted(() -> verify(containerConsumer, times(6)).negativeAcknowledge(any(Message.class)));
 
 		container.stop();
 		pulsarClient.close();
@@ -271,10 +278,13 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void deadLetterPolicyDefault() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
-		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(1)
-				.deadLetterTopic("dpmlct-016-dlq-topic").build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder()
+			.maxRedeliverCount(1)
+			.deadLetterTopic("dpmlct-016-dlq-topic")
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-016");
@@ -288,7 +298,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		PulsarContainerProperties dlqContainerProperties = new PulsarContainerProperties();
 		dlqContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
 		dlqContainerProperties.setSchema(Schema.INT32);
 		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		dlqContainerProperties.setTopics(Set.of("dpmlct-016-dlq-topic"));
@@ -327,10 +337,13 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 	@Test
 	void deadLetterPolicyCustom() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
-		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(5).deadLetterTopic("dlq-topic")
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder()
+			.maxRedeliverCount(5)
+			.deadLetterTopic("dlq-topic")
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-017");
@@ -344,7 +357,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		PulsarContainerProperties dlqContainerProperties = new PulsarContainerProperties();
 		dlqContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> dlqLatch.countDown());
 		dlqContainerProperties.setSchema(Schema.INT32);
 		dlqContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		dlqContainerProperties.setTopics(Set.of("dlq-topic"));
@@ -361,8 +374,9 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		});
 		pulsarContainerProperties.setSchema(Schema.INT32);
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
-		pulsarContainerProperties.getPulsarConsumerProperties().put("deadLetterPolicy",
-				DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlq-topic").build());
+		pulsarContainerProperties.getPulsarConsumerProperties()
+			.put("deadLetterPolicy",
+					DeadLetterPolicy.builder().maxRedeliverCount(1).deadLetterTopic("dlq-topic").build());
 
 		DefaultPulsarMessageListenerContainer<Integer> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);

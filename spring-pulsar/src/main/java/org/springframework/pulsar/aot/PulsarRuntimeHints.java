@@ -54,22 +54,23 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 		// methods and introspect all public methods. The components are a mix of JDK
 		// classes, core Pulsar classes, and some other shaded components available
 		// through Pulsar client.
-		Stream.of(HashSet.class, LinkedHashMap.class, TreeMap.class, Authentication.class,
-				AuthenticationDataProvider.class, SecretsSerializer.class, PulsarAdminBuilderImpl.class,
-				OffloadProcessStatusImpl.class, Commands.class).forEach(
-						type -> reflectionHints.registerType(type,
-								builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-										MemberCategory.INVOKE_DECLARED_METHODS,
-										MemberCategory.INTROSPECT_PUBLIC_METHODS)));
+		Stream
+			.of(HashSet.class, LinkedHashMap.class, TreeMap.class, Authentication.class,
+					AuthenticationDataProvider.class, SecretsSerializer.class, PulsarAdminBuilderImpl.class,
+					OffloadProcessStatusImpl.class, Commands.class)
+			.forEach(type -> reflectionHints.registerType(type,
+					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS)));
 
 		// In addition to the above member category levels, these components need field
 		// and declared class level access.
-		Stream.of(ClientConfigurationData.class, ConsumerConfigurationData.class, ProducerConfigurationData.class,
-				ListTopicsOptions.class)
-				.forEach(type -> reflectionHints.registerType(type,
-						builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-								MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
-								MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
+		Stream
+			.of(ClientConfigurationData.class, ConsumerConfigurationData.class, ProducerConfigurationData.class,
+					ListTopicsOptions.class)
+			.forEach(type -> reflectionHints.registerType(type,
+					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
+							MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
 
 		// @formatter:off
 		// These are shaded classes and other inaccessible interfaces/classes (thus using
@@ -232,16 +233,18 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 		// Although the other interfaces are public, due to ConnectionHandler$Connection
 		// being protected forces all of them to be registered using the string version
 		// of the API because all of them need to be registered through a single call.
-		hints.proxies().registerJdkProxy(TypeReference.of("org.apache.pulsar.shade.io.netty.util.TimerTask"),
-				TypeReference.of("org.apache.pulsar.client.impl.ConnectionHandler$Connection"),
-				TypeReference.of("org.apache.pulsar.client.api.Producer"),
-				TypeReference.of("org.springframework.aop.SpringProxy"),
-				TypeReference.of("org.springframework.aop.framework.Advised"),
-				TypeReference.of("org.springframework.core.DecoratingProxy"));
+		hints.proxies()
+			.registerJdkProxy(TypeReference.of("org.apache.pulsar.shade.io.netty.util.TimerTask"),
+					TypeReference.of("org.apache.pulsar.client.impl.ConnectionHandler$Connection"),
+					TypeReference.of("org.apache.pulsar.client.api.Producer"),
+					TypeReference.of("org.springframework.aop.SpringProxy"),
+					TypeReference.of("org.springframework.aop.framework.Advised"),
+					TypeReference.of("org.springframework.core.DecoratingProxy"));
 
 		// Register required properties files
-		hints.resources().registerPatternIfPresent(classLoader, "org/apache/pulsar/shade/org/asynchttpclient/config/",
-				builder -> builder.includes("*.properties"));
+		hints.resources()
+			.registerPatternIfPresent(classLoader, "org/apache/pulsar/shade/org/asynchttpclient/config/",
+					builder -> builder.includes("*.properties"));
 	}
 
 }

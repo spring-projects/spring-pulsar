@@ -27,10 +27,10 @@ import org.springframework.pulsar.PulsarException;
 
 /**
  * Represents a Pulsar Source backed by a {@link SourceConfig}.
+ *
  * @param config the source details
  * @param stopPolicy the action to take on the source when the server is stopped
  * @param updateOptions the options to use during an update operation (optional)
- *
  * @author Chris Bono
  */
 public record PulsarSource(SourceConfig config, FunctionStopPolicy stopPolicy,

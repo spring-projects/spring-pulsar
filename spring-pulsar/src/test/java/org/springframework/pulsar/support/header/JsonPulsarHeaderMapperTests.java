@@ -93,7 +93,8 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 		@ValueSource(booleans = { true, false })
 		void pulsarMessageWithUpstreamNth(boolean nowTrusted) throws JsonProcessingException {
 			var mapper = JsonPulsarHeaderMapper.builder()
-					.trustedPackages(nowTrusted ? UUID.class.getPackageName() : "com.acme").build();
+				.trustedPackages(nowTrusted ? UUID.class.getPackageName() : "com.acme")
+				.build();
 			var uuid = UUID.randomUUID();
 			var serializedUuid = "\"%s\"".formatted(uuid.toString());
 			var upstreamNth = new NonTrustedHeaderType(serializedUuid, UUID.class.getName());
@@ -118,9 +119,9 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 			headers.put("foo", "bar");
 			headers.put("uuid", uuid);
 			assertThat(mapper().toPulsarHeaders(new MessageHeaders(headers))).containsEntry("foo", "bar")
-					.containsEntry("uuid", "\"%s\"".formatted(uuid.toString()))
-					.extractingByKey(JSON_TYPES, InstanceOfAssertFactories.STRING)
-					.contains("\"uuid\":\"java.util.UUID\"");
+				.containsEntry("uuid", "\"%s\"".formatted(uuid.toString()))
+				.extractingByKey(JSON_TYPES, InstanceOfAssertFactories.STRING)
+				.contains("\"uuid\":\"java.util.UUID\"");
 		}
 
 		@Test
@@ -129,7 +130,7 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 			var uuid = UUID.randomUUID();
 			var headers = Collections.<String, Object>singletonMap("uuid", uuid);
 			assertThat(mapper.toPulsarHeaders(new MessageHeaders(headers))).containsEntry("uuid", uuid.toString())
-					.doesNotContainKey(JSON_TYPES);
+				.doesNotContainKey(JSON_TYPES);
 		}
 
 	}
@@ -175,8 +176,8 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 			var payloadEnc = Base64.getEncoder().encodeToString(payload);
 			var headers = Map.<String, Object>of("payload", payload);
 			var pulsarHeaders = mapper().toPulsarHeaders(new MessageHeaders(headers));
-			assertThat(pulsarHeaders).containsEntry("payload", "\"%s\"".formatted(payloadEnc)).containsEntry(JSON_TYPES,
-					"{\"payload\":\"[B\"}");
+			assertThat(pulsarHeaders).containsEntry("payload", "\"%s\"".formatted(payloadEnc))
+				.containsEntry(JSON_TYPES, "{\"payload\":\"[B\"}");
 			var pulsarMessage = mockPulsarMessage(true, pulsarHeaders);
 			var springHeaders = mapper().toSpringHeaders(pulsarMessage);
 			assertThat(springHeaders).containsEntry("payload", payload);

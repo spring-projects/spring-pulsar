@@ -77,7 +77,7 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 				appContext.refresh();
 
 				ObservationIntegrationTestAppListeners listeners = appContext
-						.getBean(ObservationIntegrationTestAppListeners.class);
+					.getBean(ObservationIntegrationTestAppListeners.class);
 				PulsarTemplate<String> template = appContext.getBean(PulsarTemplate.class);
 
 				String msg = "hello-" + System.currentTimeMillis();
@@ -88,38 +88,42 @@ public class ObservationIntegrationTests extends SampleTestRunner implements Pul
 				boolean listen2Completed = listeners.latchesByMessageListen2.get(msg).await(10, TimeUnit.SECONDS);
 				assertThat(listen1Completed).withFailMessage(
 						"Message %s not received in listen1 (latchesByMessageListen1 = %s and latchesByMessageListen2 = %s)",
-						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2).isTrue();
+						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2)
+					.isTrue();
 				assertThat(listen2Completed).withFailMessage(
 						"Message %s not received in listen2 (latchesByMessageListen1 = %s and latchesByMessageListen2 = %s)",
-						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2).isTrue();
+						msg, listeners.latchesByMessageListen1, listeners.latchesByMessageListen2)
+					.isTrue();
 			}
 
 			List<FinishedSpan> finishedSpans = bb.getFinishedSpans();
 			SpansAssert.assertThat(finishedSpans).haveSameTraceId().hasSize(4);
 
 			List<FinishedSpan> producerSpans = finishedSpans.stream()
-					.filter(span -> span.getKind().equals(Kind.PRODUCER)).toList();
+				.filter(span -> span.getKind().equals(Kind.PRODUCER))
+				.toList();
 			SpanAssert.assertThat(producerSpans.get(0)).hasTag("spring.pulsar.template.name", "pulsarTemplate");
 			SpanAssert.assertThat(producerSpans.get(1)).hasTag("spring.pulsar.template.name", "pulsarTemplate");
 
 			List<FinishedSpan> consumerSpans = finishedSpans.stream()
-					.filter(span -> span.getKind().equals(Kind.CONSUMER)).toList();
+				.filter(span -> span.getKind().equals(Kind.CONSUMER))
+				.toList();
 			SpanAssert.assertThat(consumerSpans.get(0)).hasTagWithKey("spring.pulsar.listener.id");
 			assertThat(consumerSpans.get(0).getTags().get("spring.pulsar.listener.id")).isIn("obs1-id-0", "obs2-id-0");
 			SpanAssert.assertThat(consumerSpans.get(1)).hasTagWithKey("spring.pulsar.listener.id");
 			assertThat(consumerSpans.get(1).getTags().get("spring.pulsar.listener.id")).isIn("obs1-id-0", "obs2-id-0");
 			assertThat(consumerSpans.get(0).getTags().get("spring.pulsar.listener.id"))
-					.isNotEqualTo(consumerSpans.get(1).getTags().get("spring.pulsar.listener.id"));
+				.isNotEqualTo(consumerSpans.get(1).getTags().get("spring.pulsar.listener.id"));
 
 			MeterRegistryAssert.assertThat(getMeterRegistry())
-					.hasTimerWithNameAndTags("spring.pulsar.template",
-							KeyValues.of("spring.pulsar.template.name", "pulsarTemplate"))
-					.hasTimerWithNameAndTags("spring.pulsar.template",
-							KeyValues.of("spring.pulsar.template.name", "pulsarTemplate"))
-					.hasTimerWithNameAndTags("spring.pulsar.listener",
-							KeyValues.of("spring.pulsar.listener.id", "obs1-id-0"))
-					.hasTimerWithNameAndTags("spring.pulsar.listener",
-							KeyValues.of("spring.pulsar.listener.id", "obs2-id-0"));
+				.hasTimerWithNameAndTags("spring.pulsar.template",
+						KeyValues.of("spring.pulsar.template.name", "pulsarTemplate"))
+				.hasTimerWithNameAndTags("spring.pulsar.template",
+						KeyValues.of("spring.pulsar.template.name", "pulsarTemplate"))
+				.hasTimerWithNameAndTags("spring.pulsar.listener",
+						KeyValues.of("spring.pulsar.listener.id", "obs1-id-0"))
+				.hasTimerWithNameAndTags("spring.pulsar.listener",
+						KeyValues.of("spring.pulsar.listener.id", "obs2-id-0"));
 		};
 	}
 

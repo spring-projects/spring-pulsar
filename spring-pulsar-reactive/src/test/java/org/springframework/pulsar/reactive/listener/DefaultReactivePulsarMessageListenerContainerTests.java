@@ -63,8 +63,9 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageConsumerSpec config = new MutableReactiveMessageConsumerSpec();
 		config.setTopicNames(Collections.singletonList(topic));
 		config.setSubscriptionName("drpmlct-sb-012");
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, config);
@@ -95,8 +96,9 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageConsumerSpec config = new MutableReactiveMessageConsumerSpec();
 		config.setTopicNames(Collections.singletonList(topic));
 		config.setSubscriptionName("drpmlct-sb-013");
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, config);
@@ -104,8 +106,9 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		pulsarConsumerFactory.createConsumer(Schema.STRING).consumeNothing().block(Duration.ofSeconds(10));
 		CountDownLatch latch = new CountDownLatch(5);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
-		pulsarContainerProperties.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg
-				.doOnNext((m) -> latch.countDown()).map(MessageResult::acknowledge));
+		pulsarContainerProperties
+			.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg.doOnNext((m) -> latch.countDown())
+				.map(MessageResult::acknowledge));
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -125,17 +128,19 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 	void containerProperties() throws Exception {
 		String topic = "drpmlct-sb-014";
 		String subscriptionName = "drpmlct-sb-014";
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, null);
 		// Ensure subscription is created
 		pulsarConsumerFactory
-				.createConsumer(Schema.STRING,
-						Collections.singletonList(
-								c -> c.topics(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
-				.consumeNothing().block(Duration.ofSeconds(10));
+			.createConsumer(Schema.STRING,
+					Collections.singletonList(
+							c -> c.topics(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
+			.consumeNothing()
+			.block(Duration.ofSeconds(10));
 		CountDownLatch latch = new CountDownLatch(1);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
 		pulsarContainerProperties.setMessageHandler(
@@ -158,9 +163,10 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
 		assertThat(container).extracting("pipeline", InstanceOfAssertFactories.type(ReactiveMessagePipeline.class))
-				.hasFieldOrPropertyWithValue("concurrency", 5)
-				.hasFieldOrPropertyWithValue("handlingTimeout", Duration.ofMillis(7)).extracting("groupingFunction")
-				.isInstanceOf(DefaultMessageGroupingFunction.class);
+			.hasFieldOrPropertyWithValue("concurrency", 5)
+			.hasFieldOrPropertyWithValue("handlingTimeout", Duration.ofMillis(7))
+			.extracting("groupingFunction")
+			.isInstanceOf(DefaultMessageGroupingFunction.class);
 
 		container.stop();
 		pulsarClient.close();
@@ -172,15 +178,16 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageConsumerSpec config = new MutableReactiveMessageConsumerSpec();
 		config.setTopicNames(Collections.singletonList(topic));
 		config.setSubscriptionName("drpmlct-sb-015");
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, config);
 
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
 		pulsarContainerProperties
-				.setMessageHandler((ReactivePulsarOneByOneMessageHandler<String>) (msg) -> Mono.empty());
+			.setMessageHandler((ReactivePulsarOneByOneMessageHandler<String>) (msg) -> Mono.empty());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -189,11 +196,11 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		Thread.sleep(2_000);
 
 		StepVerifier
-				.create(pulsarConsumerFactory
-						.createConsumer(Schema.STRING,
-								Collections.singletonList(c -> c.subscriptionType(SubscriptionType.Shared)))
-						.consumeNothing())
-				.expectError().verify(Duration.ofSeconds(10));
+			.create(pulsarConsumerFactory.createConsumer(Schema.STRING,
+					Collections.singletonList(c -> c.subscriptionType(SubscriptionType.Shared)))
+				.consumeNothing())
+			.expectError()
+			.verify(Duration.ofSeconds(10));
 
 		container.stop();
 		pulsarClient.close();
@@ -205,15 +212,16 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		MutableReactiveMessageConsumerSpec config = new MutableReactiveMessageConsumerSpec();
 		config.setTopicNames(Collections.singletonList(topic));
 		config.setSubscriptionName("drpmlct-sb-016");
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, config);
 
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
 		pulsarContainerProperties
-				.setMessageHandler((ReactivePulsarOneByOneMessageHandler<String>) (msg) -> Mono.empty());
+			.setMessageHandler((ReactivePulsarOneByOneMessageHandler<String>) (msg) -> Mono.empty());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
@@ -223,11 +231,11 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		Thread.sleep(2_000);
 
 		StepVerifier
-				.create(pulsarConsumerFactory
-						.createConsumer(Schema.STRING,
-								Collections.singletonList(c -> c.subscriptionType(SubscriptionType.Shared)))
-						.consumeNothing())
-				.expectComplete().verify(Duration.ofSeconds(10));
+			.create(pulsarConsumerFactory.createConsumer(Schema.STRING,
+					Collections.singletonList(c -> c.subscriptionType(SubscriptionType.Shared)))
+				.consumeNothing())
+			.expectComplete()
+			.verify(Duration.ofSeconds(10));
 
 		container.stop();
 		pulsarClient.close();
@@ -237,17 +245,19 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 	void containerTopicsPattern() throws Exception {
 		String topic = "drpmlct-017-foo";
 		String subscriptionName = "drpmlct-sb-017";
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, null);
 		// Ensure subscription is created
 		pulsarConsumerFactory
-				.createConsumer(Schema.STRING,
-						Collections.singletonList(
-								c -> c.topics(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
-				.consumeNothing().block(Duration.ofSeconds(10));
+			.createConsumer(Schema.STRING,
+					Collections.singletonList(
+							c -> c.topics(Collections.singletonList(topic)).subscriptionName(subscriptionName)))
+			.consumeNothing()
+			.block(Duration.ofSeconds(10));
 		CountDownLatch latch = new CountDownLatch(1);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
 		pulsarContainerProperties.setMessageHandler(
@@ -278,8 +288,9 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		config.setTopicNames(Collections.singletonList(topic));
 		config.setSubscriptionName("drpmlct-sb-018");
 		config.setNegativeAckRedeliveryDelay(Duration.ZERO);
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		ReactivePulsarClient reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
 		DefaultReactivePulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				reactivePulsarClient, config);
@@ -292,15 +303,18 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 
 		CountDownLatch latch = new CountDownLatch(6);
 		ReactivePulsarContainerProperties<String> pulsarContainerProperties = new ReactivePulsarContainerProperties<>();
-		pulsarContainerProperties.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg
-				.doOnNext((m) -> latch.countDown()).map((m) -> m.getValue().endsWith("4")
-						? MessageResult.negativeAcknowledge(m) : MessageResult.acknowledge(m)));
+		pulsarContainerProperties
+			.setMessageHandler((ReactivePulsarStreamingHandler<String>) (msg) -> msg.doOnNext((m) -> latch.countDown())
+				.map((m) -> m.getValue().endsWith("4") ? MessageResult.negativeAcknowledge(m)
+						: MessageResult.acknowledge(m)));
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Shared);
 		DefaultReactivePulsarMessageListenerContainer<String> container = new DefaultReactivePulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
-		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(1)
-				.deadLetterTopic(deadLetterTopic).build();
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder()
+			.maxRedeliverCount(1)
+			.deadLetterTopic(deadLetterTopic)
+			.build();
 		container.setConsumerCustomizer(b -> b.deadLetterPolicy(deadLetterPolicy));
 		container.start();
 		MutableReactiveMessageSenderSpec prodConfig = new MutableReactiveMessageSenderSpec();

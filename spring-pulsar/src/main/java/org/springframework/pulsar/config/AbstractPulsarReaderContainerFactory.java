@@ -138,8 +138,8 @@ public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPul
 		}
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
-				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
-				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher);
+			.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
+			.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher);
 	}
 
 }

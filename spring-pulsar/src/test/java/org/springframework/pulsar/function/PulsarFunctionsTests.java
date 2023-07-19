@@ -62,8 +62,12 @@ class PulsarFunctionsTests {
 
 		private static final String JAR = "function1.jar";
 
-		private FunctionConfig functionConfig = FunctionConfig.builder().tenant(TENANT).namespace(NAMESPACE).name(NAME)
-				.jar(JAR).build();
+		private FunctionConfig functionConfig = FunctionConfig.builder()
+			.tenant(TENANT)
+			.namespace(NAMESPACE)
+			.name(NAME)
+			.jar(JAR)
+			.build();
 
 		private PulsarFunction function = new PulsarFunction(functionConfig, null);
 
@@ -141,7 +145,8 @@ class PulsarFunctionsTests {
 			PulsarAdminException paex = new PulsarAdminException("bad-stop");
 			doThrow(paex).when(functions).stopFunction(anyString(), anyString(), anyString());
 			assertThatThrownBy(() -> function.stop(pulsarAdmin)).isInstanceOf(PulsarException.class)
-					.hasMessageContaining("bad-stop").hasCause(paex);
+				.hasMessageContaining("bad-stop")
+				.hasCause(paex);
 		}
 
 		@Test
@@ -158,7 +163,8 @@ class PulsarFunctionsTests {
 			PulsarAdminException paex = new PulsarAdminException("bad-delete");
 			doThrow(paex).when(functions).deleteFunction(anyString(), anyString(), anyString());
 			assertThatThrownBy(() -> function.delete(pulsarAdmin)).isInstanceOf(PulsarException.class)
-					.hasMessageContaining("bad-delete").hasCause(paex);
+				.hasMessageContaining("bad-delete")
+				.hasCause(paex);
 		}
 
 	}
@@ -170,8 +176,12 @@ class PulsarFunctionsTests {
 
 		private static final String JAR = "sink1.jar";
 
-		private SinkConfig sinkConfig = SinkConfig.builder().tenant(TENANT).namespace(NAMESPACE).name(NAME).archive(JAR)
-				.build();
+		private SinkConfig sinkConfig = SinkConfig.builder()
+			.tenant(TENANT)
+			.namespace(NAMESPACE)
+			.name(NAME)
+			.archive(JAR)
+			.build();
 
 		private PulsarSink sink = new PulsarSink(sinkConfig, null);
 
@@ -249,7 +259,8 @@ class PulsarFunctionsTests {
 			PulsarAdminException paex = new PulsarAdminException("bad-stop");
 			doThrow(paex).when(sinks).stopSink(anyString(), anyString(), anyString());
 			assertThatThrownBy(() -> sink.stop(pulsarAdmin)).isInstanceOf(PulsarException.class)
-					.hasMessageContaining("bad-stop").hasCause(paex);
+				.hasMessageContaining("bad-stop")
+				.hasCause(paex);
 		}
 
 		@Test
@@ -266,7 +277,8 @@ class PulsarFunctionsTests {
 			PulsarAdminException paex = new PulsarAdminException("bad-delete");
 			doThrow(paex).when(sinks).deleteSink(anyString(), anyString(), anyString());
 			assertThatThrownBy(() -> sink.delete(pulsarAdmin)).isInstanceOf(PulsarException.class)
-					.hasMessageContaining("bad-delete").hasCause(paex);
+				.hasMessageContaining("bad-delete")
+				.hasCause(paex);
 		}
 
 	}
@@ -278,8 +290,12 @@ class PulsarFunctionsTests {
 
 		private static final String JAR = "source1.jar";
 
-		private SourceConfig sourceConfig = SourceConfig.builder().tenant(TENANT).namespace(NAMESPACE).name(NAME)
-				.archive(JAR).build();
+		private SourceConfig sourceConfig = SourceConfig.builder()
+			.tenant(TENANT)
+			.namespace(NAMESPACE)
+			.name(NAME)
+			.archive(JAR)
+			.build();
 
 		private PulsarSource source = new PulsarSource(sourceConfig, null);
 
@@ -357,7 +373,8 @@ class PulsarFunctionsTests {
 			PulsarAdminException paex = new PulsarAdminException("bad-stop");
 			doThrow(paex).when(sources).stopSource(anyString(), anyString(), anyString());
 			assertThatThrownBy(() -> source.stop(pulsarAdmin)).isInstanceOf(PulsarException.class)
-					.hasMessageContaining("bad-stop").hasCause(paex);
+				.hasMessageContaining("bad-stop")
+				.hasCause(paex);
 		}
 
 		@Test
@@ -374,7 +391,8 @@ class PulsarFunctionsTests {
 			PulsarAdminException paex = new PulsarAdminException("bad-delete");
 			doThrow(paex).when(sources).deleteSource(anyString(), anyString(), anyString());
 			assertThatThrownBy(() -> source.delete(pulsarAdmin)).isInstanceOf(PulsarException.class)
-					.hasMessageContaining("bad-delete").hasCause(paex);
+				.hasMessageContaining("bad-delete")
+				.hasCause(paex);
 		}
 
 	}

@@ -86,8 +86,9 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	protected void assertThatProducerHasEncryptionKeys(Producer<String> producer, Set<String> encryptionKeys) {
 		producer = actualProducer(producer);
 		assertThat(producer).extracting("conf")
-				.asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
-				.extracting(ProducerConfigurationData::getEncryptionKeys).isEqualTo(encryptionKeys);
+			.asInstanceOf(InstanceOfAssertFactories.type(ProducerConfigurationData.class))
+			.extracting(ProducerConfigurationData::getEncryptionKeys)
+			.isEqualTo(encryptionKeys);
 	}
 
 	protected PulsarProducerFactory<String> newProducerFactory() {
@@ -141,7 +142,7 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 		@Test
 		void withoutSchema() {
 			assertThatNullPointerException().isThrownBy(() -> newProducerFactory().createProducer(null, "topic0"))
-					.withMessageContaining("Schema must be specified");
+				.withMessageContaining("Schema must be specified");
 		}
 
 		@Test
@@ -162,7 +163,7 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 		@Test
 		void noTopicSpecifiedWithoutDefaultTopic() {
 			assertThatIllegalArgumentException().isThrownBy(() -> newProducerFactory().createProducer(schema, null))
-					.withMessageContaining("Topic must be specified when no default topic is configured");
+				.withMessageContaining("Topic must be specified when no default topic is configured");
 		}
 
 		@Test

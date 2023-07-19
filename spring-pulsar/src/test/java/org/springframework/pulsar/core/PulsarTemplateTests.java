@@ -76,8 +76,10 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	void tearDown() throws PulsarClientException {
 		// Make sure the producer was closed by the template (albeit indirectly as
 		// client removes closed producers)
-		await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> assertThat(client).extracting("producers")
-				.asInstanceOf(InstanceOfAssertFactories.COLLECTION).isEmpty());
+		await().atMost(Duration.ofSeconds(3))
+			.untilAsserted(() -> assertThat(client).extracting("producers")
+				.asInstanceOf(InstanceOfAssertFactories.COLLECTION)
+				.isEmpty());
 		client.close();
 	}
 
@@ -104,35 +106,36 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 						true, message),
 				arguments("simpleSendWithTopicAndSchema",
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-								.send("simpleSendWithTopicAndSchema", message, Schema.STRING),
+							.send("simpleSendWithTopicAndSchema", message, Schema.STRING),
 						false, message),
 				arguments("simpleSendNullWithTopicAndSchema",
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-								.send("simpleSendNullWithTopicAndSchema", null, Schema.STRING),
+							.send("simpleSendNullWithTopicAndSchema", null, Schema.STRING),
 						false, null),
 
 				// Simple send async
 				arguments("simpleSendAsyncWithDefaultTopic",
-						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.sendAsync(message).get(3,
-								TimeUnit.SECONDS),
+						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.sendAsync(message)
+							.get(3, TimeUnit.SECONDS),
 						true, message),
 				arguments("simpleSendAsyncWithTopic",
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-								.sendAsync("simpleSendAsyncWithTopic", message).get(3, TimeUnit.SECONDS),
+							.sendAsync("simpleSendAsyncWithTopic", message)
+							.get(3, TimeUnit.SECONDS),
 						false, message),
 				arguments("simpleSendAsyncWithDefaultTopicAndSchema",
-						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-								.sendAsync(message, Schema.STRING).get(3, TimeUnit.SECONDS),
+						(ThrowingConsumer<PulsarTemplate<String>>) (
+								template) -> template.sendAsync(message, Schema.STRING).get(3, TimeUnit.SECONDS),
 						true, message),
 				arguments("simpleSendAsyncWithTopicAndSchema",
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-								.sendAsync("simpleSendAsyncWithTopicAndSchema", message, Schema.STRING)
-								.get(3, TimeUnit.SECONDS),
+							.sendAsync("simpleSendAsyncWithTopicAndSchema", message, Schema.STRING)
+							.get(3, TimeUnit.SECONDS),
 						false, message),
 				arguments("simpleSendAsyncNullWithTopicAndSchema",
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-								.sendAsync("simpleSendAsyncNullWithTopicAndSchema", null, Schema.STRING)
-								.get(3, TimeUnit.SECONDS),
+							.sendAsync("simpleSendAsyncNullWithTopicAndSchema", null, Schema.STRING)
+							.get(3, TimeUnit.SECONDS),
 						false, null),
 
 				// Fluent send
@@ -140,19 +143,23 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(message).send(),
 						true, message),
 				arguments("fluentSendWithTopic",
-						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(message)
-								.withTopic("fluentSendWithTopic").send(),
+						(ThrowingConsumer<PulsarTemplate<String>>) (
+								template) -> template.newMessage(message).withTopic("fluentSendWithTopic").send(),
 						false, message),
 				arguments("fluentSendWithDefaultTopicAndSchema",
-						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(message)
-								.withSchema(Schema.STRING).send(),
+						(ThrowingConsumer<PulsarTemplate<String>>) (
+								template) -> template.newMessage(message).withSchema(Schema.STRING).send(),
 						true, message),
 				arguments("fluentSendNullWithTopicAndSchema",
 						(ThrowingConsumer<PulsarTemplate<String>>) (template) -> template.newMessage(null)
-								.withSchema(Schema.STRING).withTopic("fluentSendNullWithTopicAndSchema").send(),
+							.withSchema(Schema.STRING)
+							.withTopic("fluentSendNullWithTopicAndSchema")
+							.send(),
 						false, null),
-				arguments("fluentSendAsync", (ThrowingConsumer<PulsarTemplate<String>>) (template) -> template
-						.newMessage(message).sendAsync().get(3, TimeUnit.SECONDS), true, message)
+				arguments("fluentSendAsync",
+						(ThrowingConsumer<PulsarTemplate<String>>) (
+								template) -> template.newMessage(message).sendAsync().get(3, TimeUnit.SECONDS),
+						true, message)
 
 		);
 	}
@@ -160,7 +167,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	@Test
 	void sendMessageWithMessageCustomizer() throws Exception {
 		ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
-				.withMessageCustomizer((mb) -> mb.key("test-key")).send();
+			.withMessageCustomizer((mb) -> mb.key("test-key"))
+			.send();
 		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING,
 				"test-message", true);
 		assertThat(msg.getKey()).isEqualTo("test-key");
@@ -169,7 +177,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	@Test
 	void sendMessageWithSenderCustomizer() throws Exception {
 		ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
-				.withProducerCustomizer((sb) -> sb.producerName("test-producer")).send();
+			.withProducerCustomizer((sb) -> sb.producerName("test-producer"))
+			.send();
 		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING,
 				"test-message", true);
 		assertThat(msg.getProducerName()).isEqualTo("test-producer");
@@ -181,7 +190,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		String topic = "ptt-encryptionKeys-topic";
 		PulsarProducerFactory<String> producerFactory = mock(PulsarProducerFactory.class);
 		when(producerFactory.createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>()))
-				.thenReturn(client.newProducer(Schema.STRING).topic(topic).create());
+			.thenReturn(client.newProducer(Schema.STRING).topic(topic).create());
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 		pulsarTemplate.newMessage("msg").withTopic(topic).withEncryptionKeys(Set.of("key")).send();
 		verify(producerFactory).createProducer(Schema.STRING, topic, Set.of("key"), new ArrayList<>());
@@ -228,7 +237,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message"))
-				.withMessage("Topic must be specified when no default topic is configured");
+			.withMessage("Topic must be specified when no default topic is configured");
 	}
 
 	private <T> Message<T> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
@@ -241,8 +250,10 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	private <T> Message<T> sendAndConsume(PulsarTemplate<T> template, ThrowingConsumer<PulsarTemplate<T>> sendFunction,
 			String topic, Schema<T> schema, T expectedValue) throws Exception {
-		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema).topic(topic)
-				.subscriptionName(topic + "-sub").subscribe()) {
+		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema)
+			.topic(topic)
+			.subscriptionName(topic + "-sub")
+			.subscribe()) {
 			sendFunction.accept(template);
 			Message<T> msg = consumer.receive(3, TimeUnit.SECONDS);
 			assertThat(msg).isNotNull();
@@ -296,7 +307,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 					"sendNullWithDefaultTopicFails");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING))
-					.withMessage("Topic must be specified when the message is null");
+				.withMessage("Topic must be specified when the message is null");
 		}
 
 		@Test
@@ -304,8 +315,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<Object> senderFactory = new DefaultPulsarProducerFactory<>(client);
 			PulsarTemplate<Object> pulsarTemplate = new PulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
-					.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
-					.withMessage("Schema must be specified when the message is null");
+				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
+				.withMessage("Schema must be specified when the message is null");
 		}
 
 	}

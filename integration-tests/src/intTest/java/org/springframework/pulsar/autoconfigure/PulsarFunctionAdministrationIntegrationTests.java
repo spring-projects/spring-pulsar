@@ -132,8 +132,9 @@ class PulsarFunctionAdministrationIntegrationTests {
 
 			// Send messages to rabbit and wait for them to come through the rabbit source
 			RabbitTemplate rabbitTemplate = context.getBean(RabbitTemplate.class);
-			List<String> messages = LongStream.range(0, RECEIVED_MESSAGE_LATCH.getCount()).mapToObj((i) -> "bar" + i)
-					.toList();
+			List<String> messages = LongStream.range(0, RECEIVED_MESSAGE_LATCH.getCount())
+				.mapToObj((i) -> "bar" + i)
+				.toList();
 			messages.forEach(msg -> rabbitTemplate.convertAndSend(RABBIT_QUEUE, msg));
 
 			assertThat(RECEIVED_MESSAGE_LATCH.await(10, TimeUnit.SECONDS)).isTrue();
@@ -180,20 +181,23 @@ class PulsarFunctionAdministrationIntegrationTests {
 	private void assertSourceExistsWithStatus(String name, boolean isRunning, PulsarAdmin admin)
 			throws PulsarAdminException {
 		assertThat(admin.sources().getSourceStatus("public", "default", name)).isNotNull()
-				.extracting(SourceStatus::getNumRunning).isEqualTo(isRunning ? 1 : 0);
+			.extracting(SourceStatus::getNumRunning)
+			.isEqualTo(isRunning ? 1 : 0);
 	}
 
 	private void assertSourceDoesNotExist(String name, PulsarAdmin admin) {
 		assertThatThrownBy(() -> admin.sources().getSourceStatus("public", "default", name))
-				.isInstanceOf(NotFoundException.class);
+			.isInstanceOf(NotFoundException.class);
 	}
 
 	static boolean rabbitConnectorExists() {
 		try {
 			Resource[] connectors = ResourcePatternUtils.getResourcePatternResolver(new DefaultResourceLoader())
-					.getResources("classpath:/connectors/**");
-			boolean available = Arrays.stream(connectors).map(Resource::getFilename).filter(Objects::nonNull)
-					.anyMatch((name) -> name.contains("pulsar-io-rabbitmq"));
+				.getResources("classpath:/connectors/**");
+			boolean available = Arrays.stream(connectors)
+				.map(Resource::getFilename)
+				.filter(Objects::nonNull)
+				.anyMatch((name) -> name.contains("pulsar-io-rabbitmq"));
 			if (!available) {
 				logTestDisabledReason();
 				return false;
@@ -226,9 +230,14 @@ class PulsarFunctionAdministrationIntegrationTests {
 		configs.put("password", "guest");
 		configs.put("queueName", RABBIT_QUEUE + suffix);
 		configs.put("connectionName", "pft_foo_connection" + suffix);
-		SourceConfig sourceConfig = SourceConfig.builder().tenant("public").namespace("default")
-				.name("rabbit-test-source" + suffix).archive("builtin://rabbitmq").topicName(PULSAR_TOPIC + suffix)
-				.configs(configs).build();
+		SourceConfig sourceConfig = SourceConfig.builder()
+			.tenant("public")
+			.namespace("default")
+			.name("rabbit-test-source" + suffix)
+			.archive("builtin://rabbitmq")
+			.topicName(PULSAR_TOPIC + suffix)
+			.configs(configs)
+			.build();
 		return new PulsarSource(sourceConfig, stopPolicy != null ? stopPolicy : FunctionStopPolicy.DELETE, null);
 	}
 
@@ -276,7 +285,7 @@ class PulsarFunctionAdministrationIntegrationTests {
 		@Override
 		public void testFailed(ExtensionContext context, Throwable cause) {
 			this.logger.error(() -> "Test %s failed due to: %s - inspect container logs below:%n%n%s"
-					.formatted(context.getDisplayName(), cause.getMessage(), getPulsarContainerLogs()));
+				.formatted(context.getDisplayName(), cause.getMessage(), getPulsarContainerLogs()));
 		}
 
 		private String getPulsarContainerLogs() {

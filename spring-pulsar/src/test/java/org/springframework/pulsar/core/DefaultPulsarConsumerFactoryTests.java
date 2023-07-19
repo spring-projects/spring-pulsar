@@ -78,15 +78,16 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		void withoutSchema() {
 			assertThatThrownBy(
 					() -> consumerFactory.createConsumer(null, Collections.singletonList("topic0"), null, null, null))
-							.isInstanceOf(NullPointerException.class).hasMessageContaining("Schema must be specified");
+				.isInstanceOf(NullPointerException.class)
+				.hasMessageContaining("Schema must be specified");
 		}
 
 		@SuppressWarnings("resource")
 		@Test
 		void withSchemaOnly() {
 			assertThatThrownBy(() -> consumerFactory.createConsumer(SCHEMA, null, null, null, null))
-					.isInstanceOf(InvalidConfigurationException.class)
-					.hasMessageContaining("Topic name must be set on the consumer builder");
+				.isInstanceOf(InvalidConfigurationException.class)
+				.hasMessageContaining("Topic name must be set on the consumer builder");
 		}
 
 		@SuppressWarnings("resource")
@@ -94,8 +95,8 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		void withSchemaAndTopics() {
 			assertThatThrownBy(
 					() -> consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic0"), null, null, null))
-							.isInstanceOf(InvalidConfigurationException.class)
-							.hasMessageContaining("Subscription name must be set on the consumer builder");
+				.isInstanceOf(InvalidConfigurationException.class)
+				.hasMessageContaining("Subscription name must be set on the consumer builder");
 		}
 
 		@Test
@@ -180,7 +181,8 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		void withoutSchema() {
 			assertThatThrownBy(
 					() -> consumerFactory.createConsumer(null, Collections.singletonList("topic0"), null, null, null))
-							.isInstanceOf(NullPointerException.class).hasMessageContaining("Schema must be specified");
+				.isInstanceOf(NullPointerException.class)
+				.hasMessageContaining("Schema must be specified");
 		}
 
 		@Test

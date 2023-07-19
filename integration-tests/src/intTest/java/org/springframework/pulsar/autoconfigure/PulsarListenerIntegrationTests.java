@@ -64,7 +64,7 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			pulsarTemplate.send("plt-basic-topic", "John Doe");
@@ -78,7 +78,7 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<Foo> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			pulsarTemplate.send("plt-foo-topic1", new Foo("John Doe"), Schema.JSON(Foo.class));
@@ -92,7 +92,7 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<Foo> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			pulsarTemplate.send("plt-foo-topic2", new Foo("John Doe"));
@@ -106,7 +106,7 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<Foo> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			pulsarTemplate.send("plt-topicMapping-topic", new Foo("Crazy8z"), Schema.JSON(Foo.class));
@@ -120,7 +120,7 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 		app.setWebApplicationType(WebApplicationType.NONE);
 
 		try (ConfigurableApplicationContext context = app
-				.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
+			.run("--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl())) {
 			@SuppressWarnings("unchecked")
 			PulsarTemplate<String> pulsarTemplate = context.getBean(PulsarTemplate.class);
 			for (int i = 0; i < 10; i++) {

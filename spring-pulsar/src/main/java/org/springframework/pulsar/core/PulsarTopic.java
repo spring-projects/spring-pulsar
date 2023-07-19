@@ -26,9 +26,9 @@ import org.apache.pulsar.common.naming.TopicDomain;
  * <pre>{@code
  * 	PulsarTopic topic = PulsarTopic.builder("topic-name").build();
  * }</pre>
+ *
  * @param topicName the topic name
  * @param numberOfPartitions the number of partitions, or 0 for non-partitioned topics
- *
  * @author Alexander Preuß
  */
 public record PulsarTopic(String topicName, int numberOfPartitions) {
@@ -76,6 +76,7 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 
 	/**
 	 * Model class for the individual identifying components of a Pulsar topic.
+	 *
 	 * @param domain the topic domain
 	 * @param tenant the topic tenant
 	 * @param namespace the topic namespace

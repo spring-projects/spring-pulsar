@@ -78,20 +78,25 @@ public class ConsumerBuilderConfigurationUtilTests {
 		ConsumerBuilderConfigurationUtil.loadConf(builder, props);
 
 		assertThat(this.builder).extracting("conf")
-				.asInstanceOf(InstanceOfAssertFactories.type(ConsumerConfigurationData.class)).extracting(propName)
-				.isEqualTo(expectedObj);
+			.asInstanceOf(InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
+			.extracting(propName)
+			.isEqualTo(expectedObj);
 
 		assertThat(props).isEqualTo(propsBeforeUtil);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static Stream<Arguments> loadConfTestProvider() {
-		DeadLetterPolicy deadLetterPolicyOnBuilder = DeadLetterPolicy.builder().deadLetterTopic("dlt-topic")
-				.maxRedeliverCount(1).build();
-		DeadLetterPolicy deadLetterPolicyInProps = DeadLetterPolicy.builder().deadLetterTopic("dlt-topic")
-				.maxRedeliverCount(2).build();
+		DeadLetterPolicy deadLetterPolicyOnBuilder = DeadLetterPolicy.builder()
+			.deadLetterTopic("dlt-topic")
+			.maxRedeliverCount(1)
+			.build();
+		DeadLetterPolicy deadLetterPolicyInProps = DeadLetterPolicy.builder()
+			.deadLetterTopic("dlt-topic")
+			.maxRedeliverCount(2)
+			.build();
 		ConsumerBuilderCustomizer<String> deadLetterPolicyCustomizer = c -> c
-				.deadLetterPolicy(deadLetterPolicyOnBuilder);
+			.deadLetterPolicy(deadLetterPolicyOnBuilder);
 
 		MessageListener<String> messageListenerOnBuilder = mock(MessageListener.class);
 		MessageListener<String> messageListenerInProps = mock(MessageListener.class);
@@ -100,17 +105,17 @@ public class ConsumerBuilderConfigurationUtilTests {
 		ConsumerEventListener consumerEventListenerOnBuilder = mock(ConsumerEventListener.class);
 		ConsumerEventListener consumerEventListenerInProps = mock(ConsumerEventListener.class);
 		ConsumerBuilderCustomizer<String> consumerEventListenerCustomizer = c -> c
-				.consumerEventListener(consumerEventListenerOnBuilder);
+			.consumerEventListener(consumerEventListenerOnBuilder);
 
 		RedeliveryBackoff nackRedeliveryBackoffOnBuilder = mock(RedeliveryBackoff.class);
 		RedeliveryBackoff nackRedeliveryBackoffInProps = mock(RedeliveryBackoff.class);
 		ConsumerBuilderCustomizer<String> nackRedeliveryBackoffCustomizer = c -> c
-				.negativeAckRedeliveryBackoff(nackRedeliveryBackoffOnBuilder);
+			.negativeAckRedeliveryBackoff(nackRedeliveryBackoffOnBuilder);
 
 		RedeliveryBackoff ackRedeliveryBackoffOnBuilder = mock(RedeliveryBackoff.class);
 		RedeliveryBackoff ackRedeliveryBackoffInProps = mock(RedeliveryBackoff.class);
 		ConsumerBuilderCustomizer<String> ackRedeliveryBackoffCustomizer = c -> c
-				.ackTimeoutRedeliveryBackoff(ackRedeliveryBackoffOnBuilder);
+			.ackTimeoutRedeliveryBackoff(ackRedeliveryBackoffOnBuilder);
 
 		CryptoKeyReader cryptoKeyReaderOnBuilder = mock(CryptoKeyReader.class);
 		CryptoKeyReader cryptoKeyReaderInProps = mock(CryptoKeyReader.class);
@@ -123,12 +128,12 @@ public class ConsumerBuilderConfigurationUtilTests {
 		BatchReceivePolicy batchReceivePolicyOnBuilder = mock(BatchReceivePolicy.class);
 		BatchReceivePolicy batchReceivePolicyInProps = mock(BatchReceivePolicy.class);
 		ConsumerBuilderCustomizer<String> batchReceivePolicyCustomizer = c -> c
-				.batchReceivePolicy(batchReceivePolicyOnBuilder);
+			.batchReceivePolicy(batchReceivePolicyOnBuilder);
 
 		MessagePayloadProcessor payloadProcessorOnBuilder = mock(MessagePayloadProcessor.class);
 		MessagePayloadProcessor payloadProcessorInProps = mock(MessagePayloadProcessor.class);
 		ConsumerBuilderCustomizer<String> payloadProcessorCustomizer = c -> c
-				.messagePayloadProcessor(payloadProcessorOnBuilder);
+			.messagePayloadProcessor(payloadProcessorOnBuilder);
 
 		return Stream.of(arguments("loadConfNoDeadLetterPolicy", "deadLetterPolicy", null, null, null),
 				arguments("loadConfDeadLetterPolicyOnBuilder", "deadLetterPolicy", deadLetterPolicyCustomizer, null,

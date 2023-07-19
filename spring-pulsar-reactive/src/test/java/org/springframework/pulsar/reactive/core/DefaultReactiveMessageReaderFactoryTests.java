@@ -48,7 +48,8 @@ class DefaultReactiveMessageReaderFactoryTests {
 		ReactiveMessageReader<String> reader = readerFactory.createReader(schema);
 
 		assertThat(reader).extracting("readerSpec", InstanceOfAssertFactories.type(ReactiveMessageReaderSpec.class))
-				.extracting(ReactiveMessageReaderSpec::getReaderName).isEqualTo("test-reader");
+			.extracting(ReactiveMessageReaderSpec::getReaderName)
+			.isEqualTo("test-reader");
 	}
 
 	@Test
@@ -62,7 +63,8 @@ class DefaultReactiveMessageReaderFactoryTests {
 				Collections.singletonList(builder -> builder.readerName("new-test-reader")));
 
 		assertThat(reader).extracting("readerSpec", InstanceOfAssertFactories.type(ReactiveMessageReaderSpec.class))
-				.extracting(ReactiveMessageReaderSpec::getReaderName).isEqualTo("new-test-reader");
+			.extracting(ReactiveMessageReaderSpec::getReaderName)
+			.isEqualTo("new-test-reader");
 	}
 
 }

@@ -37,13 +37,13 @@ public final class JacksonUtils {
 			classLoader) && ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
 
 	private static final boolean JDK8_MODULE_PRESENT = ClassUtils
-			.isPresent("com.fasterxml.jackson.datatype.jdk8.Jdk8Module", null);
+		.isPresent("com.fasterxml.jackson.datatype.jdk8.Jdk8Module", null);
 
 	private static final boolean JAVA_TIME_MODULE_PRESENT = ClassUtils
-			.isPresent("com.fasterxml.jackson.datatype.jsr310.JavaTimeModule", null);
+		.isPresent("com.fasterxml.jackson.datatype.jsr310.JavaTimeModule", null);
 
 	private static final boolean JODA_MODULE_PRESENT = ClassUtils
-			.isPresent("com.fasterxml.jackson.datatype.joda.JodaModule", null);
+		.isPresent("com.fasterxml.jackson.datatype.joda.JodaModule", null);
 
 	/**
 	 * Determines if the Jackson JSON processor is on the classpath.
@@ -60,8 +60,10 @@ public final class JacksonUtils {
 	 * @return the {@link ObjectMapper} instance.
 	 */
 	public static ObjectMapper enhancedObjectMapper() {
-		ObjectMapper objectMapper = JsonMapper.builder().configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
-				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build();
+		ObjectMapper objectMapper = JsonMapper.builder()
+			.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
+			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			.build();
 		if (JDK8_MODULE_PRESENT) {
 			objectMapper.registerModule(Jdk8ModuleProvider.MODULE);
 		}

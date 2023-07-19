@@ -524,7 +524,7 @@ class PulsarFunctionAdministrationTests {
 				when(springPulsarAdmin.createAdminClient()).thenThrow(new PulsarClientException("NOPE"));
 				functionAdmin.enforceStopPolicyOnUserDefinedFunctions();
 				assertThat(output)
-						.contains("Unable to enforce stop policy on functions - could not create PulsarAdmin: NOPE");
+					.contains("Unable to enforce stop policy on functions - could not create PulsarAdmin: NOPE");
 			}
 
 			@Test

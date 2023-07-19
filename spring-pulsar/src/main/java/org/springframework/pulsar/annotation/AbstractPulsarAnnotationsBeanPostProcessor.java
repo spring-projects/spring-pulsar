@@ -320,7 +320,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 			DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
 			defaultFactory.setBeanFactory(AbstractPulsarAnnotationsBeanPostProcessor.this.beanFactory);
 			this.defaultFormattingConversionService
-					.addConverter(new BytesToStringConverter(AbstractPulsarAnnotationsBeanPostProcessor.this.charset));
+				.addConverter(new BytesToStringConverter(AbstractPulsarAnnotationsBeanPostProcessor.this.charset));
 			this.defaultFormattingConversionService.addConverter(new BytesToNumberConverter());
 			defaultFactory.setConversionService(this.defaultFormattingConversionService);
 			GenericMessageConverter messageConverter = new GenericMessageConverter(

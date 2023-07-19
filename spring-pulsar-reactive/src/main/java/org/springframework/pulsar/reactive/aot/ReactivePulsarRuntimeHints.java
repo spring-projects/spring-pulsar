@@ -56,22 +56,22 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 		// and introspect all public methods. The components are a mix of JDK classes,
 		// core Pulsar classes,
 		// some other shaded components available through Pulsar client.
-		Stream.of(HashSet.class, TreeMap.class, Authentication.class, AuthenticationDataProvider.class,
-				SecretsSerializer.class, NioSocketChannel.class, AbstractByteBufAllocator.class,
-				NioDatagramChannel.class, PulsarAdminBuilderImpl.class, OffloadProcessStatusImpl.class, Commands.class,
-				ReferenceCountUtil.class).forEach(
-						type -> reflectionHints.registerType(type,
-								builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-										MemberCategory.INVOKE_DECLARED_METHODS,
-										MemberCategory.INTROSPECT_PUBLIC_METHODS)));
+		Stream
+			.of(HashSet.class, TreeMap.class, Authentication.class, AuthenticationDataProvider.class,
+					SecretsSerializer.class, NioSocketChannel.class, AbstractByteBufAllocator.class,
+					NioDatagramChannel.class, PulsarAdminBuilderImpl.class, OffloadProcessStatusImpl.class,
+					Commands.class, ReferenceCountUtil.class)
+			.forEach(type -> reflectionHints.registerType(type,
+					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS)));
 
 		// In addition to the above member category levels, these components need field
 		// and declared class level access.
 		Stream.of(ClientConfigurationData.class, ConsumerConfigurationData.class, ProducerConfigurationData.class)
-				.forEach(type -> reflectionHints.registerType(type,
-						builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-								MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
-								MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
+			.forEach(type -> reflectionHints.registerType(type,
+					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
+							MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
 
 		// These are inaccessible interfaces/classes in a normal scenario, thus using the
 		// String version,
@@ -83,15 +83,16 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField")
-				.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
-						MemberCategory.DECLARED_FIELDS));
+			.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
+					MemberCategory.DECLARED_FIELDS));
 
-		Stream.of("reactor.core.publisher.Flux", "com.github.benmanes.caffeine.cache.SSMSA",
-				"com.github.benmanes.caffeine.cache.PSAMS", "com.github.benmanes.caffeine.cache.SSLMSA",
-				"com.github.benmanes.caffeine.cache.PSAMW")
-				.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
-						MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS,
-						MemberCategory.INTROSPECT_PUBLIC_METHODS));
+		Stream
+			.of("reactor.core.publisher.Flux", "com.github.benmanes.caffeine.cache.SSMSA",
+					"com.github.benmanes.caffeine.cache.PSAMS", "com.github.benmanes.caffeine.cache.SSLMSA",
+					"com.github.benmanes.caffeine.cache.PSAMW")
+			.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
+					MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS,
+					MemberCategory.INTROSPECT_PUBLIC_METHODS));
 
 		// Registering JDK dynamic proxies for these interfaces. Since the Connection
 		// interface is protected,
@@ -101,12 +102,13 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 		// registered using the
 		// string version of the API because all of them need to be registered through a
 		// single call.
-		hints.proxies().registerJdkProxy(TypeReference.of("org.apache.pulsar.shade.io.netty.util.TimerTask"),
-				TypeReference.of("org.apache.pulsar.client.impl.ConnectionHandler$Connection"),
-				TypeReference.of("org.apache.pulsar.client.api.Producer"),
-				TypeReference.of("org.springframework.aop.SpringProxy"),
-				TypeReference.of("org.springframework.aop.framework.Advised"),
-				TypeReference.of("org.springframework.core.DecoratingProxy"));
+		hints.proxies()
+			.registerJdkProxy(TypeReference.of("org.apache.pulsar.shade.io.netty.util.TimerTask"),
+					TypeReference.of("org.apache.pulsar.client.impl.ConnectionHandler$Connection"),
+					TypeReference.of("org.apache.pulsar.client.api.Producer"),
+					TypeReference.of("org.springframework.aop.SpringProxy"),
+					TypeReference.of("org.springframework.aop.framework.Advised"),
+					TypeReference.of("org.springframework.core.DecoratingProxy"));
 	}
 
 }

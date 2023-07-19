@@ -89,7 +89,7 @@ public final class Proto {
 			}
 			int mutable_bitField0_ = 0;
 			com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet
-					.newBuilder();
+				.newBuilder();
 			try {
 				boolean done = false;
 				while (!done) {
@@ -402,7 +402,7 @@ public final class Proto {
 			@Override
 			protected FieldAccessorTable internalGetFieldAccessorTable() {
 				return Proto.internal_static_proto_Person_fieldAccessorTable
-						.ensureFieldAccessorsInitialized(Person.class, Builder.class);
+					.ensureFieldAccessorsInitialized(Person.class, Builder.class);
 			}
 
 			// Construct using

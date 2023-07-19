@@ -137,11 +137,14 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 			for (int i = 0; i < 10; i++) {
 				pulsarTemplate.newMessage("alice-" + i)
-						.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice")).send();
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("alice"))
+					.send();
 				pulsarTemplate.newMessage("buzz-" + i)
-						.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz")).send();
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("buzz"))
+					.send();
 				pulsarTemplate.newMessage("john-" + i)
-						.withMessageCustomizer(messageBuilder -> messageBuilder.key("john")).send();
+					.withMessageCustomizer(messageBuilder -> messageBuilder.key("john"))
+					.send();
 			}
 			logger.info("**** Sent all messages");
 

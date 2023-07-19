@@ -65,11 +65,10 @@ public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageReco
 		return (message, exception) -> {
 			try {
 				this.pulsarTemplate.newMessage(message.getValue())
-						.withTopic(this.destinationResolver.apply(consumer, message))
-						.withMessageCustomizer(messageBuilder -> messageBuilder.property(EXCEPTION_THROWN_CAUSE,
-								exception.getCause() != null ? exception.getCause().getMessage()
-										: exception.getMessage()))
-						.sendAsync();
+					.withTopic(this.destinationResolver.apply(consumer, message))
+					.withMessageCustomizer(messageBuilder -> messageBuilder.property(EXCEPTION_THROWN_CAUSE,
+							exception.getCause() != null ? exception.getCause().getMessage() : exception.getMessage()))
+					.sendAsync();
 			}
 			catch (PulsarClientException e) {
 				this.logger.error(e, "DLT publishing failed.");

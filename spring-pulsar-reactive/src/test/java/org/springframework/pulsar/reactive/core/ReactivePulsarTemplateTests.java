@@ -71,8 +71,10 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	void tearDown() throws PulsarClientException {
 		// Make sure the producer was closed by the template (albeit indirectly as
 		// client removes closed producers)
-		await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> assertThat(client).extracting("producers")
-				.asInstanceOf(InstanceOfAssertFactories.COLLECTION).isEmpty());
+		await().atMost(Duration.ofSeconds(3))
+			.untilAsserted(() -> assertThat(client).extracting("producers")
+				.asInstanceOf(InstanceOfAssertFactories.COLLECTION)
+				.isEmpty());
 		client.close();
 	}
 
@@ -91,65 +93,71 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.send(message).subscribe(),
 						true, message),
 				arguments("simpleSendWithTopic",
-						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-								.send("simpleSendWithTopic", message).subscribe(),
+						(Consumer<ReactivePulsarTemplate<String>>) (
+								template) -> template.send("simpleSendWithTopic", message).subscribe(),
 						false, message),
 				arguments("simpleSendWithDefaultTopicAndSchema",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.send(message, Schema.STRING)
-								.subscribe(),
+							.subscribe(),
 						true, message),
 				arguments("simpleSendWithTopicAndSchema",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-								.send("simpleSendWithTopicAndSchema", message, Schema.STRING).subscribe(),
+							.send("simpleSendWithTopicAndSchema", message, Schema.STRING)
+							.subscribe(),
 						false, message),
 				arguments("simpleSendNullWithTopicAndSchema",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-								.send("simpleSendNullWithTopicAndSchema", (String) null, Schema.STRING).subscribe(),
+							.send("simpleSendNullWithTopicAndSchema", (String) null, Schema.STRING)
+							.subscribe(),
 						false, null),
 
 				arguments("simplePublisherSendWithDefaultTopic",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.send(messagePublisher)
-								.subscribe(),
+							.subscribe(),
 						true, message),
 				arguments("simplePublisherSendWithTopic",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-								.send("simplePublisherSendWithTopic", messagePublisher).subscribe(),
+							.send("simplePublisherSendWithTopic", messagePublisher)
+							.subscribe(),
 						false, message),
 				arguments("simplePublisherSendWithDefaultTopicAndSchema",
-						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-								.send(messagePublisher, Schema.STRING).subscribe(),
+						(Consumer<ReactivePulsarTemplate<String>>) (
+								template) -> template.send(messagePublisher, Schema.STRING).subscribe(),
 						true, message),
 				arguments("simplePublisherSendWithTopicAndSchema",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-								.send("simplePublisherSendWithTopicAndSchema", messagePublisher, Schema.STRING)
-								.subscribe(),
+							.send("simplePublisherSendWithTopicAndSchema", messagePublisher, Schema.STRING)
+							.subscribe(),
 						false, message),
 
 				arguments("fluentSendWithDefaultTopic",
-						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.newMessage(message).send()
-								.subscribe(),
+						(Consumer<ReactivePulsarTemplate<String>>) (
+								template) -> template.newMessage(message).send().subscribe(),
 						true, message),
-				arguments("fluentSendWithTopic",
-						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.newMessage(message)
-								.withTopic("fluentSendWithTopic").send().subscribe(),
+				arguments("fluentSendWithTopic", (Consumer<ReactivePulsarTemplate<String>>) (
+						template) -> template.newMessage(message).withTopic("fluentSendWithTopic").send().subscribe(),
 						false, message),
 				arguments("fluentSendWithDefaultTopicAndSchema",
-						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.newMessage(message)
-								.withSchema(Schema.STRING).send().subscribe(),
+						(Consumer<ReactivePulsarTemplate<String>>) (
+								template) -> template.newMessage(message).withSchema(Schema.STRING).send().subscribe(),
 						true, message),
 				arguments("fluentSendNullWithTopicAndSchema",
 						(Consumer<ReactivePulsarTemplate<String>>) (template) -> template.newMessage(null)
-								.withSchema(Schema.STRING).withTopic("fluentSendNullWithTopicAndSchema").send()
-								.subscribe(),
+							.withSchema(Schema.STRING)
+							.withTopic("fluentSendNullWithTopicAndSchema")
+							.send()
+							.subscribe(),
 						false, null),
-				arguments("fluentPublisherSend", (Consumer<ReactivePulsarTemplate<String>>) (template) -> template
-						.newMessages(messagePublisher).send().subscribe(), true, message));
+				arguments("fluentPublisherSend", (Consumer<ReactivePulsarTemplate<String>>) (
+						template) -> template.newMessages(messagePublisher).send().subscribe(), true, message));
 	}
 
 	@Test
 	void sendMessageWithMessageCustomizer() throws Exception {
 		Consumer<ReactivePulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
-				.withMessageCustomizer((mb) -> mb.key("test-key")).send().subscribe();
+			.withMessageCustomizer((mb) -> mb.key("test-key"))
+			.send()
+			.subscribe();
 		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING,
 				"test-message", true);
 		assertThat(msg.getKey()).isEqualTo("test-key");
@@ -158,7 +166,9 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	@Test
 	void sendMessageWithSenderCustomizer() throws Exception {
 		Consumer<ReactivePulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
-				.withSenderCustomizer((sb) -> sb.producerName("test-producer")).send().subscribe();
+			.withSenderCustomizer((sb) -> sb.producerName("test-producer"))
+			.send()
+			.subscribe();
 		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING,
 				"test-message", true);
 		assertThat(msg.getProducerName()).isEqualTo("test-producer");
@@ -180,8 +190,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory,
 				new DefaultSchemaResolver(), topicResolver);
 		Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-		ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (template) -> template
-				.send(foo, Schema.JSON(Foo.class)).subscribe();
+		ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (
+				template) -> template.send(foo, Schema.JSON(Foo.class)).subscribe();
 		sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
 	}
 
@@ -191,7 +201,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 				new MutableReactiveMessageSenderSpec(), null);
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message").subscribe())
-				.withMessage("Topic must be specified when no default topic is configured");
+			.withMessage("Topic must be specified when no default topic is configured");
 	}
 
 	private <T> Message<T> sendAndConsume(Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic,
@@ -211,8 +221,10 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	private <T> Message<T> sendAndConsume(ReactivePulsarTemplate<T> template,
 			Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic, Schema<T> schema, @Nullable T expectedValue)
 			throws Exception {
-		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema).topic(topic)
-				.subscriptionName(topic + "-sub").subscribe()) {
+		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema)
+			.topic(topic)
+			.subscriptionName(topic + "-sub")
+			.subscribe()) {
 			sendFunction.accept(template);
 
 			Message<T> msg = consumer.receive(3, TimeUnit.SECONDS);
@@ -229,8 +241,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		void withSpecifiedSchema() throws Exception {
 			String topic = "ptt-specificSchema-topic";
 			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-			ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (template) -> template
-					.send(foo, Schema.AVRO(Foo.class)).subscribe();
+			ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (
+					template) -> template.send(foo, Schema.AVRO(Foo.class)).subscribe();
 			sendAndConsume(sendFunction, topic, Schema.AVRO(Foo.class), foo, true);
 		}
 
@@ -255,8 +267,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			ReactivePulsarTemplate<Foo> pulsarTemplate = new ReactivePulsarTemplate<>(producerFactory, schemaResolver,
 					new DefaultTopicResolver());
 			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
-			ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (template) -> template.newMessage(foo).send()
-					.subscribe();
+			ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (
+					template) -> template.newMessage(foo).send().subscribe();
 			sendAndConsume(pulsarTemplate, sendFunction, topic, Schema.JSON(Foo.class), foo);
 		}
 
@@ -273,8 +285,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					null);
 			ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
-					.isThrownBy(() -> pulsarTemplate.send((String) null, Schema.STRING).subscribe())
-					.withMessage("Topic must be specified when the message is null");
+				.isThrownBy(() -> pulsarTemplate.send((String) null, Schema.STRING).subscribe())
+				.withMessage("Topic must be specified when the message is null");
 		}
 
 		@Test
@@ -283,9 +295,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 					new MutableReactiveMessageSenderSpec(), null);
 			ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
-					.isThrownBy(
-							() -> pulsarTemplate.send("sendNullWithoutSchemaFails", (String) null, null).subscribe())
-					.withMessage("Schema must be specified when the message is null");
+				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", (String) null, null).subscribe())
+				.withMessage("Schema must be specified when the message is null");
 		}
 
 	}

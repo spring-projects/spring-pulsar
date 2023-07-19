@@ -70,7 +70,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
 
 		AbstractPulsarMessageListenerContainer<String> concurrentContainer = containerFactory
-				.createListenerContainer(pulsarListenerEndpoint);
+			.createListenerContainer(pulsarListenerEndpoint);
 
 		PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();
 		assertThat(pulsarContainerProperties.getBatchTimeoutMillis()).isEqualTo(60_000);
@@ -82,8 +82,11 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	void deadLetterPolicyAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder().maxRedeliverCount(5).deadLetterTopic("dlq-topic")
-				.retryLetterTopic("retry-topic").build();
+		DeadLetterPolicy deadLetterPolicy = DeadLetterPolicy.builder()
+			.maxRedeliverCount(5)
+			.deadLetterTopic("dlq-topic")
+			.retryLetterTopic("retry-topic")
+			.build();
 		concurrentContainer.setDeadLetterPolicy(deadLetterPolicy);
 
 		concurrentContainer.start();
@@ -96,8 +99,10 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	void nackRedeliveryBackoffAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Shared);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
-				.maxDelayMs(5 * 1000).build();
+		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder()
+			.minDelayMs(1000)
+			.maxDelayMs(5 * 1000)
+			.build();
 		concurrentContainer.setNegativeAckRedeliveryBackoff(redeliveryBackoff);
 
 		concurrentContainer.start();
@@ -110,8 +115,10 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 	void ackTimeoutRedeliveryBackoffAppliedOnChildContainer() throws Exception {
 		PulsarListenerMockComponents env = setupListenerMockComponents(SubscriptionType.Exclusive);
 		ConcurrentPulsarMessageListenerContainer<String> concurrentContainer = env.concurrentContainer();
-		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder().minDelayMs(1000)
-				.maxDelayMs(5 * 1000).build();
+		RedeliveryBackoff redeliveryBackoff = MultiplierRedeliveryBackoff.builder()
+			.minDelayMs(1000)
+			.maxDelayMs(5 * 1000)
+			.build();
 		concurrentContainer.setAckTimeoutRedeliveryBackoff(redeliveryBackoff);
 
 		concurrentContainer.start();
@@ -163,8 +170,9 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 
 		concurrentContainer.start();
 
-		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(pulsarConsumerFactory, times(3))
-				.createConsumer(any(Schema.class), isNull(), isNull(), isNull(), anyList()));
+		await().atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> verify(pulsarConsumerFactory, times(3)).createConsumer(any(Schema.class), isNull(),
+					isNull(), isNull(), anyList()));
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(consumer, times(3)).batchReceive());
 	}
 
@@ -176,7 +184,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		concurrentContainer.setConcurrency(3);
 
 		assertThatThrownBy(concurrentContainer::start).isInstanceOf(IllegalStateException.class)
-				.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
+			.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -185,7 +193,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		PulsarConsumerFactory<String> consumerFactory = mock(PulsarConsumerFactory.class);
 		Consumer<String> consumer = mock(Consumer.class);
 		when(consumerFactory.createConsumer(any(Schema.class), isNull(), isNull(), isNull(), anyList()))
-				.thenReturn(consumer);
+			.thenReturn(consumer);
 		when(consumer.batchReceive()).thenReturn(mock(Messages.class));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();

@@ -59,8 +59,9 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 
 	@Test
 	void testRecordAck() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(new DefaultPulsarConsumerFactory<>(
 				pulsarClient, defaultConfig("cons-ack-tests-011", "cons-ack-tests-sb-011")));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -92,14 +93,15 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 
 	@Test
 	void testBatchAck() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(new DefaultPulsarConsumerFactory<>(
 				pulsarClient, defaultConfig("cons-ack-tests-012", "cons-ack-tests-sb-012")));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		CountDownLatch latch = new CountDownLatch(10);
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -113,17 +115,18 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, never()).acknowledge(any(Message.class)));
-		await().atMost(Duration.ofSeconds(10)).untilAsserted(
-				() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
+			.untilAsserted(() -> verify(containerConsumer, never()).acknowledge(any(Message.class)));
+		await().atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
 	}
 
 	@Test
 	void testBatchAckButSomeRecordsFail() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(new DefaultPulsarConsumerFactory<>(
 				pulsarClient, defaultConfig("cons-ack-tests-013", "cons-ack-tests-sb-013")));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -157,17 +160,18 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		// acknowledged.
 
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
+			.untilAsserted(() -> verify(containerConsumer, times(5)).negativeAcknowledge(any(Message.class)));
 
 		int ackCalls = ackCallCount.get();
 		if (ackCalls < 5) {
 			await().atMost(Duration.ofSeconds(10))
-					.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(MessageId.class)));
-			await().atMost(Duration.ofSeconds(10)).untilAsserted(
-					() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
+				.untilAsserted(() -> verify(containerConsumer, atMost(4)).acknowledge(any(MessageId.class)));
+			await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(
+						() -> verify(containerConsumer, atLeastOnce()).acknowledgeCumulative(any(Message.class)));
 			if (ackCalls == 0) {
-				await().atMost(Duration.ofSeconds(10)).untilAsserted(
-						() -> verify(containerConsumer, times(5)).acknowledgeCumulative(any(Message.class)));
+				await().atMost(Duration.ofSeconds(10))
+					.untilAsserted(() -> verify(containerConsumer, times(5)).acknowledgeCumulative(any(Message.class)));
 			}
 		}
 		else {
@@ -181,8 +185,9 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 	@Test
 	@SuppressWarnings("unchecked")
 	void testManualAckForRecordListener() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(new DefaultPulsarConsumerFactory<>(
 				pulsarClient, defaultConfig("cons-ack-tests-014", "cons-ack-tests-sb-014")));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -216,7 +221,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		// invocation.
 		assertThat(acksObjects.size()).isEqualTo(10);
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(10)).acknowledge(any(MessageId.class)));
+			.untilAsserted(() -> verify(containerConsumer, times(10)).acknowledge(any(MessageId.class)));
 
 		container.stop();
 		pulsarClient.close();
@@ -225,8 +230,9 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 	@Test
 	@SuppressWarnings("unchecked")
 	void testBatchAckForBatchListener() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(new DefaultPulsarConsumerFactory<>(
 				pulsarClient, defaultConfig("cons-ack-tests-015", "cons-ack-tests-sb-015")));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -252,10 +258,11 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 			pulsarTemplate.sendAsync("hello john doe");
 		}
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
-		await().atMost(Duration.ofSeconds(10)).untilAsserted(
-				() -> verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(List.class)));
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(1)).acknowledgeCumulative(any(Message.class)));
+			.untilAsserted(
+					() -> verify(pulsarBatchMessageListener, times(1)).received(any(Consumer.class), any(List.class)));
+		await().atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> verify(containerConsumer, times(1)).acknowledgeCumulative(any(Message.class)));
 		container.stop();
 		pulsarClient.close();
 	}
@@ -263,8 +270,9 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 	@Test
 	@SuppressWarnings("unchecked")
 	void testBatchNackForEntireBatchWhenUsingBatchListener() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(new DefaultPulsarConsumerFactory<>(
 				pulsarClient, defaultConfig("cons-ack-tests-016", "cons-ack-tests-sb-016")));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
@@ -292,23 +300,24 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
 		Thread.sleep(2_000);
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, times(1)).negativeAcknowledge(any(Messages.class)));
+			.untilAsserted(() -> verify(containerConsumer, times(1)).negativeAcknowledge(any(Messages.class)));
 		await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(containerConsumer, never()).acknowledge(any(Messages.class)));
+			.untilAsserted(() -> verify(containerConsumer, never()).acknowledge(any(Messages.class)));
 		container.stop();
 		pulsarClient.close();
 	}
 
 	@Test
 	void messagesAreProperlyAckdOnContainerStopBeforeExitingListenerThread() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				defaultConfig("duplicate-message-test", "duplicate-sub-1"));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		AtomicInteger counter1 = new AtomicInteger(0);
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> counter1.getAndIncrement());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> counter1.getAndIncrement());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
@@ -330,7 +339,7 @@ class ConsumerAcknowledgmentTests implements PulsarTestContainerSupport {
 
 		AtomicInteger counter2 = new AtomicInteger(0);
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> counter2.getAndIncrement());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> counter2.getAndIncrement());
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);

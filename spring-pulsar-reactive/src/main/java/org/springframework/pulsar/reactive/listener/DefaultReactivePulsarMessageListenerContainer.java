@@ -166,22 +166,23 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 		}
 
 		ReactiveMessageConsumer<T> consumer = getReactivePulsarConsumerFactory()
-				.createConsumer(containerProperties.getSchema(), customizers);
+			.createConsumer(containerProperties.getSchema(), customizers);
 		ReactiveMessagePipelineBuilder<T> pipelineBuilder = ApiImplementationFactory
-				.createReactiveMessageHandlerPipelineBuilder(consumer);
+			.createReactiveMessageHandlerPipelineBuilder(consumer);
 		Object messageHandler = containerProperties.getMessageHandler();
 		ReactiveMessagePipeline pipeline;
 		if (messageHandler instanceof ReactivePulsarStreamingHandler<?>) {
 			pipeline = pipelineBuilder
-					.streamingMessageHandler(((ReactivePulsarStreamingHandler<T>) messageHandler)::received).build();
+				.streamingMessageHandler(((ReactivePulsarStreamingHandler<T>) messageHandler)::received)
+				.build();
 		}
 		else {
 			ReactiveMessagePipelineBuilder.OneByOneMessagePipelineBuilder<T> messagePipelineBuilder = pipelineBuilder
-					.messageHandler(((ReactivePulsarOneByOneMessageHandler<T>) messageHandler)::received)
-					.handlingTimeout(containerProperties.getHandlingTimeout());
+				.messageHandler(((ReactivePulsarOneByOneMessageHandler<T>) messageHandler)::received)
+				.handlingTimeout(containerProperties.getHandlingTimeout());
 			if (containerProperties.getConcurrency() > 0) {
 				ConcurrentOneByOneMessagePipelineBuilder<T> concurrentPipelineBuilder = messagePipelineBuilder
-						.concurrency(containerProperties.getConcurrency());
+					.concurrency(containerProperties.getConcurrency());
 				if (containerProperties.isUseKeyOrderedProcessing()) {
 					concurrentPipelineBuilder.useKeyOrderedProcessing();
 				}

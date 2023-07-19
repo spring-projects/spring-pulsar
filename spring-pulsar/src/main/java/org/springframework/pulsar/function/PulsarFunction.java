@@ -27,10 +27,10 @@ import org.springframework.pulsar.PulsarException;
 
 /**
  * Represents a user-defined Pulsar Function backed by a {@link FunctionConfig}.
+ *
  * @param config the function details
  * @param stopPolicy the action to take on the function when the server is stopped
  * @param updateOptions the options to use during an update operation (optional)
- *
  * @author Chris Bono
  */
 public record PulsarFunction(FunctionConfig config, FunctionStopPolicy stopPolicy,

@@ -232,8 +232,9 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 				Type paramType = parameterizedType.getActualTypeArguments()[0];
 				this.isPulsarMessageList = paramType instanceof ParameterizedType
 						&& ((ParameterizedType) paramType).getRawType().equals(Message.class);
-				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
-						.getRawType().equals(org.springframework.messaging.Message.class);
+				boolean messageHasGeneric = paramType instanceof ParameterizedType
+						&& ((ParameterizedType) paramType).getRawType()
+							.equals(org.springframework.messaging.Message.class);
 				this.isSpringMessageList = paramType.equals(org.springframework.messaging.Message.class)
 						|| messageHasGeneric;
 				if (messageHasGeneric) {
@@ -247,8 +248,9 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 			else if (isFlux(parameterizedType.getRawType()) && parameterizedType.getActualTypeArguments().length == 1) {
 
 				Type paramType = parameterizedType.getActualTypeArguments()[0];
-				boolean messageHasGeneric = paramType instanceof ParameterizedType && ((ParameterizedType) paramType)
-						.getRawType().equals(org.springframework.messaging.Message.class);
+				boolean messageHasGeneric = paramType instanceof ParameterizedType
+						&& ((ParameterizedType) paramType).getRawType()
+							.equals(org.springframework.messaging.Message.class);
 				this.isSpringMessageFlux = paramType.equals(org.springframework.messaging.Message.class)
 						|| messageHasGeneric;
 				if (messageHasGeneric) {

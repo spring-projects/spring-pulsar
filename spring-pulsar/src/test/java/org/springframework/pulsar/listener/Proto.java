@@ -89,7 +89,7 @@ public final class Proto {
 			}
 			int mutable_bitField0_ = 0;
 			com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet
-					.newBuilder();
+				.newBuilder();
 			try {
 				boolean done = false;
 				while (!done) {
@@ -140,8 +140,8 @@ public final class Proto {
 		@java.lang.Override
 		protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
 			return org.springframework.pulsar.listener.Proto.internal_static_proto_Person_fieldAccessorTable
-					.ensureFieldAccessorsInitialized(org.springframework.pulsar.listener.Proto.Person.class,
-							org.springframework.pulsar.listener.Proto.Person.Builder.class);
+				.ensureFieldAccessorsInitialized(org.springframework.pulsar.listener.Proto.Person.class,
+						org.springframework.pulsar.listener.Proto.Person.Builder.class);
 		}
 
 		private int bitField0_;
@@ -409,8 +409,8 @@ public final class Proto {
 			@java.lang.Override
 			protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
 				return org.springframework.pulsar.listener.Proto.internal_static_proto_Person_fieldAccessorTable
-						.ensureFieldAccessorsInitialized(org.springframework.pulsar.listener.Proto.Person.class,
-								org.springframework.pulsar.listener.Proto.Person.Builder.class);
+					.ensureFieldAccessorsInitialized(org.springframework.pulsar.listener.Proto.Person.class,
+							org.springframework.pulsar.listener.Proto.Person.Builder.class);
 			}
 
 			// Construct using
@@ -640,7 +640,7 @@ public final class Proto {
 				java.lang.Object ref = name_;
 				if (ref instanceof String) {
 					com.google.protobuf.ByteString b = com.google.protobuf.ByteString
-							.copyFromUtf8((java.lang.String) ref);
+						.copyFromUtf8((java.lang.String) ref);
 					name_ = b;
 					return b;
 				}

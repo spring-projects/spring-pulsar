@@ -164,10 +164,10 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 		instanceProperties.setObservationEnabled(this.containerProperties.isObservationEnabled());
 
 		JavaUtils.INSTANCE.acceptIfNotNull(this.phase, instance::setPhase)
-				.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
-				.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher)
-				.acceptIfNotNull(endpoint.getConsumerProperties(),
-						instance.getContainerProperties()::setPulsarConsumerProperties);
+			.acceptIfNotNull(this.applicationContext, instance::setApplicationContext)
+			.acceptIfNotNull(this.applicationEventPublisher, instance::setApplicationEventPublisher)
+			.acceptIfNotNull(endpoint.getConsumerProperties(),
+					instance.getContainerProperties()::setPulsarConsumerProperties);
 		// Update container properties if there are relevant direct consumer properties
 		instanceProperties.updateContainerProperties();
 	}

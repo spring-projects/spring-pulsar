@@ -27,10 +27,10 @@ import org.springframework.pulsar.PulsarException;
 
 /**
  * Represents a Pulsar Sink backed by a {@link SinkConfig}.
+ *
  * @param config the sink details
  * @param stopPolicy the action to take on the sink when the server is stopped
  * @param updateOptions the options to use during an update operation (optional)
- *
  * @author Chris Bono
  */
 public record PulsarSink(SinkConfig config, FunctionStopPolicy stopPolicy,

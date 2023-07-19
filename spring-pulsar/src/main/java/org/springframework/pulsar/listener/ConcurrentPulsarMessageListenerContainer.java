@@ -88,9 +88,9 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 				}
 				else {
 					applicationContext.getBeanProvider(ObservationRegistry.class)
-							.ifUnique(containerProperties::setObservationRegistry);
+						.ifUnique(containerProperties::setObservationRegistry);
 					applicationContext.getBeanProvider(PulsarListenerObservationConvention.class)
-							.ifUnique(containerProperties::setObservationConvention);
+						.ifUnique(containerProperties::setObservationConvention);
 				}
 			}
 
