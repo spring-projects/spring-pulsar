@@ -164,7 +164,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				throws Exception {
 
 			PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("foo")
-					.getContainerProperties();
+				.getContainerProperties();
 			Properties pulsarConsumerProperties = pulsarContainerProperties.getPulsarConsumerProperties();
 			assertThat(pulsarConsumerProperties.size()).isEqualTo(2);
 			assertThat(pulsarConsumerProperties.get("topicNames")).isEqualTo("foo-1");
@@ -210,7 +210,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void ackModeAppliedToContainerFromListener(@Autowired PulsarListenerEndpointRegistry registry) {
 			PulsarContainerProperties pulsarContainerProperties = registry.getListenerContainer("ackMode-test-id")
-					.getContainerProperties();
+				.getContainerProperties();
 			assertThat(pulsarContainerProperties.getAckMode()).isEqualTo(AckMode.RECORD);
 		}
 
@@ -271,8 +271,11 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@Bean
 			public RedeliveryBackoff redeliveryBackoff() {
-				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(5 * 1000).multiplier(2)
-						.build();
+				return MultiplierRedeliveryBackoff.builder()
+					.minDelayMs(1000)
+					.maxDelayMs(5 * 1000)
+					.multiplier(2)
+					.build();
 			}
 
 		}
@@ -317,8 +320,11 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 
 			@Bean
 			public RedeliveryBackoff ackTimeoutRedeliveryBackoff() {
-				return MultiplierRedeliveryBackoff.builder().minDelayMs(1000).maxDelayMs(3 * 1000).multiplier(2)
-						.build();
+				return MultiplierRedeliveryBackoff.builder()
+					.minDelayMs(1000)
+					.maxDelayMs(3 * 1000)
+					.multiplier(2)
+					.build();
 			}
 
 		}
@@ -417,8 +423,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		void exclusiveSubscriptionNotAllowedToHaveMultipleConsumers() {
 			assertThatThrownBy(
 					() -> new AnnotationConfigApplicationContext(TopLevelConfig.class, ConcurrencyConfig.class))
-							.rootCause().isInstanceOf(IllegalStateException.class)
-							.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
+				.rootCause()
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage("concurrency > 1 is not allowed on Exclusive subscription type");
 		}
 
 		@EnablePulsar
@@ -811,9 +818,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void simpleListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
-					.withTopic("simpleListenerWithHeaders").send();
+				.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
+				.withTopic("simpleListenerWithHeaders")
+				.send();
 			assertThat(simpleListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData).isEqualTo("hello-simple-listener");
 			assertThat(PulsarHeadersTest.messageId).isEqualTo(messageId);
@@ -825,9 +832,10 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void pulsarMessageListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
-					.withTopic("pulsarMessageListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
+				.withTopic("pulsarMessageListenerWithHeaders")
+				.send();
 			assertThat(pulsarMessageListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData).isEqualTo("hello-pulsar-message-listener");
 			assertThat(PulsarHeadersTest.messageId).isEqualTo(messageId);
@@ -839,9 +847,10 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void springMessagingMessageListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
-					.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
-							"springMessagingMessageListenerWithHeaders"))
-					.withTopic("springMessagingMessageListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "springMessagingMessageListenerWithHeaders"))
+				.withTopic("springMessagingMessageListenerWithHeaders")
+				.send();
 			assertThat(springMessagingMessageListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData).isEqualTo("hello-spring-messaging-message-listener");
 			assertThat(PulsarHeadersTest.messageId).isEqualTo(messageId);
@@ -853,9 +862,10 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void simpleBatchListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-simple-batch-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "simpleBatchListenerWithHeaders"))
-					.withTopic("simpleBatchListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "simpleBatchListenerWithHeaders"))
+				.withTopic("simpleBatchListenerWithHeaders")
+				.send();
 			assertThat(simpleBatchListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedBatchData).containsExactly("hello-simple-batch-listener");
 			assertThat(batchMessageIds).containsExactly(messageId);
@@ -866,13 +876,14 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void pulsarMessageBatchListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-batch-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "pulsarMessageBatchListenerWithHeaders"))
-					.withTopic("pulsarMessageBatchListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "pulsarMessageBatchListenerWithHeaders"))
+				.withTopic("pulsarMessageBatchListenerWithHeaders")
+				.send();
 			assertThat(pulsarMessageBatchListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedBatchData).containsExactly("hello-pulsar-message-batch-listener");
 			assertThat(batchTopicNames)
-					.containsExactly("persistent://public/default/pulsarMessageBatchListenerWithHeaders");
+				.containsExactly("persistent://public/default/pulsarMessageBatchListenerWithHeaders");
 			assertThat(batchFooValues).containsExactly("pulsarMessageBatchListenerWithHeaders");
 			assertThat(batchMessageIds).containsExactly(messageId);
 		}
@@ -880,13 +891,14 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void springMessagingMessageBatchListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-batch-listener")
-					.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
-							"springMessagingMessageBatchListenerWithHeaders"))
-					.withTopic("springMessagingMessageBatchListenerWithHeaders").send();
+				.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
+						"springMessagingMessageBatchListenerWithHeaders"))
+				.withTopic("springMessagingMessageBatchListenerWithHeaders")
+				.send();
 			assertThat(springMessagingMessageBatchListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedBatchData).containsExactly("hello-spring-messaging-message-batch-listener");
 			assertThat(batchTopicNames)
-					.containsExactly("persistent://public/default/springMessagingMessageBatchListenerWithHeaders");
+				.containsExactly("persistent://public/default/springMessagingMessageBatchListenerWithHeaders");
 			assertThat(batchFooValues).containsExactly("springMessagingMessageBatchListenerWithHeaders");
 			assertThat(batchMessageIds).containsExactly(messageId);
 		}
@@ -894,13 +906,14 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void pulsarMessagesBatchListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-messages-batch-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "pulsarMessagesBatchListenerWithHeaders"))
-					.withTopic("pulsarMessagesBatchListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "pulsarMessagesBatchListenerWithHeaders"))
+				.withTopic("pulsarMessagesBatchListenerWithHeaders")
+				.send();
 			assertThat(pulsarMessagesBatchListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedBatchData).containsExactly("hello-pulsar-messages-batch-listener");
 			assertThat(batchTopicNames)
-					.containsExactly("persistent://public/default/pulsarMessagesBatchListenerWithHeaders");
+				.containsExactly("persistent://public/default/pulsarMessagesBatchListenerWithHeaders");
 			assertThat(batchFooValues).containsExactly("pulsarMessagesBatchListenerWithHeaders");
 			assertThat(batchMessageIds).containsExactly(messageId);
 		}
@@ -982,8 +995,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
 					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
 
-				capturedBatchData = data.stream().map(org.springframework.messaging.Message::getPayload)
-						.collect(Collectors.toList());
+				capturedBatchData = data.stream()
+					.map(org.springframework.messaging.Message::getPayload)
+					.collect(Collectors.toList());
 
 				batchMessageIds = messageIds;
 				batchTopicNames = topicNames;
@@ -1027,7 +1041,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			// wait until all 3 messages are received by the listener
 			Awaitility.await().timeout(Duration.ofSeconds(10)).until(() -> latch.getCount() == 7);
 			PulsarMessageListenerContainer container = pulsarListenerEndpointRegistry
-					.getListenerContainer("consumerPauseListener");
+				.getListenerContainer("consumerPauseListener");
 			assertThat(container).isNotNull();
 			container.pause();
 

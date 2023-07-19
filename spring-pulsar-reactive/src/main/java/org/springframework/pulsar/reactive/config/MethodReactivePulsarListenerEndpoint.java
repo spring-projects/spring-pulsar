@@ -120,15 +120,15 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
 		MethodParameter messageParameter = null;
 		Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
-				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
-						|| !methodParameter1.hasParameterAnnotation(Header.class))
-				.findFirst();
+			.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+					|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
+					|| !methodParameter1.hasParameterAnnotation(Header.class))
+			.findFirst();
 		long count = Arrays.stream(methodParameters)
-				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
-						&& !methodParameter1.hasParameterAnnotation(Header.class))
-				.count();
+			.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+					&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
+					&& !methodParameter1.hasParameterAnnotation(Header.class))
+			.count();
 		Assert.isTrue(count == 1, "More than 1 expected payload types found");
 		if (parameter.isPresent()) {
 			messageParameter = parameter.get();
@@ -140,7 +140,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		ResolvableType messageType = resolvableType(messageParameter);
 		schemaResolver.resolveSchema(schemaType, messageType)
-				.ifResolved(schema -> pulsarContainerProperties.setSchema((Schema) schema));
+			.ifResolved(schema -> pulsarContainerProperties.setSchema((Schema) schema));
 
 		// Make sure the schemaType is updated to match the current schema
 		if (pulsarContainerProperties.getSchema() != null) {
@@ -154,7 +154,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 				|| !ObjectUtils.isEmpty(pulsarContainerProperties.getTopics());
 		if (!hasTopicInfo) {
 			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
-					.ifResolved((topic) -> pulsarContainerProperties.setTopics(Collections.singleton(topic)));
+				.ifResolved((topic) -> pulsarContainerProperties.setTopics(Collections.singleton(topic)));
 		}
 
 		ReactiveMessageConsumerBuilderCustomizer<V> customizer1 = b -> b.deadLetterPolicy(this.deadLetterPolicy);
@@ -189,7 +189,7 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener) {
 		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
-				.createInvocableHandlerMethod(getBean(), getMethod());
+			.createInvocableHandlerMethod(getBean(), getMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 

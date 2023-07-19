@@ -130,9 +130,11 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 		@Test
 		void startMessageIdMissing() {
 			assertThatThrownBy(() -> new AnnotationConfigApplicationContext(TopLevelConfig.class,
-					PulsarReaderStartMessageIdMissing.class)).rootCause().isInstanceOf(IllegalArgumentException.class)
-							.hasMessage(
-									"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
+					PulsarReaderStartMessageIdMissing.class))
+				.rootCause()
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage(
+						"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
 		}
 
 		@EnablePulsar

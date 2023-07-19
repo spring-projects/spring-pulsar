@@ -44,29 +44,29 @@ public class PulsarBootstrapConfiguration implements ImportBeanDefinitionRegistr
 
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-		if (!registry.containsBeanDefinition(
-				PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+		if (!registry
+			.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			registry.registerBeanDefinition(
 					PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME,
 					new RootBeanDefinition(PulsarListenerAnnotationBeanPostProcessor.class));
 		}
 
 		if (!registry
-				.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)) {
+			.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)) {
 			registry.registerBeanDefinition(
 					PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME,
 					new RootBeanDefinition(PulsarListenerEndpointRegistry.class));
 		}
 
-		if (!registry.containsBeanDefinition(
-				PulsarAnnotationSupportBeanNames.PULSAR_READER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+		if (!registry
+			.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_READER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			registry.registerBeanDefinition(
 					PulsarAnnotationSupportBeanNames.PULSAR_READER_ANNOTATION_PROCESSOR_BEAN_NAME,
 					new RootBeanDefinition(PulsarReaderAnnotationBeanPostProcessor.class));
 		}
 
 		if (!registry
-				.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_READER_ENDPOINT_REGISTRY_BEAN_NAME)) {
+			.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_READER_ENDPOINT_REGISTRY_BEAN_NAME)) {
 			registry.registerBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_READER_ENDPOINT_REGISTRY_BEAN_NAME,
 					new RootBeanDefinition(PulsarReaderEndpointRegistry.class));
 		}

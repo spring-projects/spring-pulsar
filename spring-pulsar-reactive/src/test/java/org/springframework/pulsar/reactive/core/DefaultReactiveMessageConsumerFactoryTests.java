@@ -52,8 +52,8 @@ class DefaultReactiveMessageConsumerFactoryTests {
 			ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA);
 
 			assertThat(consumer)
-					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
-					.isNotNull();
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.isNotNull();
 		}
 
 		@Test
@@ -62,8 +62,9 @@ class DefaultReactiveMessageConsumerFactoryTests {
 					Collections.singletonList(builder -> builder.consumerName("new-test-consumer")));
 
 			assertThat(consumer)
-					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
-					.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("new-test-consumer");
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.extracting(ReactiveMessageConsumerSpec::getConsumerName)
+				.isEqualTo("new-test-consumer");
 		}
 
 	}
@@ -86,8 +87,9 @@ class DefaultReactiveMessageConsumerFactoryTests {
 			ReactiveMessageConsumer<String> consumer = consumerFactory.createConsumer(SCHEMA);
 
 			assertThat(consumer)
-					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
-					.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("test-consumer");
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.extracting(ReactiveMessageConsumerSpec::getConsumerName)
+				.isEqualTo("test-consumer");
 		}
 
 		@Test
@@ -96,8 +98,9 @@ class DefaultReactiveMessageConsumerFactoryTests {
 					Collections.singletonList(builder -> builder.consumerName("new-test-consumer")));
 
 			assertThat(consumer)
-					.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
-					.extracting(ReactiveMessageConsumerSpec::getConsumerName).isEqualTo("new-test-consumer");
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.extracting(ReactiveMessageConsumerSpec::getConsumerName)
+				.isEqualTo("new-test-consumer");
 		}
 
 	}

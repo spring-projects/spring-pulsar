@@ -73,11 +73,11 @@ class DefaultSchemaResolverTests {
 			Schema<?> previouslyMappedSchema = resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 			assertThat(previouslyMappedSchema).isNull();
 			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-					.containsEntry(Foo.class, Schema.STRING);
+				.containsEntry(Foo.class, Schema.STRING);
 			previouslyMappedSchema = resolver.addCustomSchemaMapping(Foo.class, Schema.BOOL);
 			assertThat(previouslyMappedSchema).isEqualTo(Schema.STRING);
 			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-					.containsEntry(Foo.class, Schema.BOOL);
+				.containsEntry(Foo.class, Schema.BOOL);
 		}
 
 		@Test
@@ -140,7 +140,7 @@ class DefaultSchemaResolverTests {
 			assertThat(resolver.resolveSchema(new Foo("foo1")).orElseThrow()).isSameAs(fooSchema);
 			assertThat(resolver.resolveSchema(new Bar<>("bar1")).orElseThrow()).isEqualTo(Schema.STRING);
 			assertThat(resolver.resolveSchema(new Zaa("zaa1")).orElseThrow().getSchemaInfo())
-					.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
+				.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
 		}
 
 	}
@@ -190,13 +190,13 @@ class DefaultSchemaResolverTests {
 		@Test
 		void customMessageTypes() {
 			assertThatExceptionOfType(IllegalArgumentException.class)
-					.isThrownBy(() -> resolver.resolveSchema(Foo.class, false).orElseThrow());
+				.isThrownBy(() -> resolver.resolveSchema(Foo.class, false).orElseThrow());
 			assertThat(resolver.resolveSchema(Foo.class, true).orElseThrow().getSchemaInfo())
-					.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
+				.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
 			resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 			assertThat(resolver.resolveSchema(Foo.class, false).orElseThrow()).isEqualTo(Schema.STRING);
 			assertThatExceptionOfType(IllegalArgumentException.class)
-					.isThrownBy(() -> resolver.resolveSchema(Bar.class, false).orElseThrow());
+				.isThrownBy(() -> resolver.resolveSchema(Bar.class, false).orElseThrow());
 			assertThat(resolver.resolveSchema(Bar.class, true).orElseThrow()).isEqualTo(Schema.BYTES);
 		}
 
@@ -237,37 +237,38 @@ class DefaultSchemaResolverTests {
 		@Test
 		void structSchemas() {
 			assertThat(resolver.resolveSchema(SchemaType.JSON, ResolvableType.forType(Foo.class)).orElseThrow())
-					.isInstanceOf(JSONSchema.class)
-					.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Foo.class));
+				.isInstanceOf(JSONSchema.class)
+				.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Foo.class));
 			assertThat(resolver.resolveSchema(SchemaType.AVRO, ResolvableType.forType(Foo.class)).orElseThrow())
-					.isInstanceOf(AvroSchema.class)
-					.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Foo.class));
+				.isInstanceOf(AvroSchema.class)
+				.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Foo.class));
 			assertThat(resolver.resolveSchema(SchemaType.PROTOBUF, ResolvableType.forType(Person.class)).orElseThrow())
-					.isInstanceOf(ProtobufSchema.class)
-					.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Proto.Person.class));
+				.isInstanceOf(ProtobufSchema.class)
+				.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Proto.Person.class));
 			ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, String.class, Integer.class);
 			assertThat(resolver.resolveSchema(SchemaType.KEY_VALUE, kvType).orElseThrow())
-					.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class)).satisfies((keyValueSchema -> {
-						assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.STRING);
-						assertThat(keyValueSchema.getValueSchema()).isEqualTo(Schema.INT32);
-						assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
-					}));
+				.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
+				.satisfies((keyValueSchema -> {
+					assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.STRING);
+					assertThat(keyValueSchema.getValueSchema()).isEqualTo(Schema.INT32);
+					assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
+				}));
 		}
 
 		@ParameterizedTest
 		@EnumSource(value = SchemaType.class, names = { "JSON", "AVRO", "PROTOBUF", "KEY_VALUE" })
 		void structSchemasRequireMessageType(SchemaType schemaType) {
 			assertThatExceptionOfType(NullPointerException.class)
-					.isThrownBy(() -> resolver.resolveSchema(schemaType, null).orElseThrow())
-					.withMessage("messageType must be specified for " + schemaType.name());
+				.isThrownBy(() -> resolver.resolveSchema(schemaType, null).orElseThrow())
+				.withMessage("messageType must be specified for " + schemaType.name());
 		}
 
 		@ParameterizedTest
 		@EnumSource(value = SchemaType.class, names = { "PROTOBUF_NATIVE", "AUTO", "AUTO_CONSUME", "AUTO_PUBLISH" })
 		void unsupportedSchemaTypes(SchemaType unsupportedType) {
 			assertThatExceptionOfType(IllegalArgumentException.class)
-					.isThrownBy(() -> resolver.resolveSchema(unsupportedType, null).orElseThrow())
-					.withMessage("Unsupported schema type: " + unsupportedType.name());
+				.isThrownBy(() -> resolver.resolveSchema(unsupportedType, null).orElseThrow())
+				.withMessage("Unsupported schema type: " + unsupportedType.name());
 		}
 
 		private String sanitizedClassName(Class<?> clazz) {
@@ -285,20 +286,21 @@ class DefaultSchemaResolverTests {
 			@Test
 			void primitiveMessageType() {
 				assertThat(resolver.resolveSchema(SchemaType.NONE, ResolvableType.forType(String.class)).orElseThrow())
-						.isEqualTo(Schema.STRING);
+					.isEqualTo(Schema.STRING);
 			}
 
 			@Test
 			void customMessageTypeDefaultsToJson() {
 				assertThat(resolver.resolveSchema(SchemaType.NONE, ResolvableType.forType(Foo.class)).orElseThrow())
-						.extracting(Schema::getSchemaInfo).isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
+					.extracting(Schema::getSchemaInfo)
+					.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
 			}
 
 			@Test
 			void customMessageTypeRespectsCustomMappings() {
 				resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 				assertThat(resolver.resolveSchema(SchemaType.NONE, ResolvableType.forType(Foo.class)).orElseThrow())
-						.isEqualTo(Schema.STRING);
+					.isEqualTo(Schema.STRING);
 			}
 
 			@Test
@@ -306,26 +308,26 @@ class DefaultSchemaResolverTests {
 				ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, String.class,
 						Integer.class);
 				assertThat(resolver.resolveSchema(SchemaType.NONE, kvType).orElseThrow())
-						.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
-						.satisfies((keyValueSchema -> {
-							assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.STRING);
-							assertThat(keyValueSchema.getValueSchema()).isEqualTo(Schema.INT32);
-							assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
-						}));
+					.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
+					.satisfies((keyValueSchema -> {
+						assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.STRING);
+						assertThat(keyValueSchema.getValueSchema()).isEqualTo(Schema.INT32);
+						assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
+					}));
 			}
 
 			@Test
 			void customKeyValueMessageTypeDefaultsToJSONSchema() {
 				ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Zaa.class);
 				assertThat(resolver.resolveSchema(SchemaType.NONE, kvType).orElseThrow())
-						.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
-						.satisfies((keyValueSchema -> {
-							assertThat(keyValueSchema.getKeySchema().getSchemaInfo())
-									.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
-							assertThat(keyValueSchema.getValueSchema().getSchemaInfo())
-									.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
-							assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
-						}));
+					.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
+					.satisfies((keyValueSchema -> {
+						assertThat(keyValueSchema.getKeySchema().getSchemaInfo())
+							.isEqualTo(Schema.JSON(Foo.class).getSchemaInfo());
+						assertThat(keyValueSchema.getValueSchema().getSchemaInfo())
+							.isEqualTo(Schema.JSON(Zaa.class).getSchemaInfo());
+						assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
+					}));
 			}
 
 			@Test
@@ -336,12 +338,12 @@ class DefaultSchemaResolverTests {
 				resolver.addCustomSchemaMapping(Bar.class, barSchema);
 				ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, Foo.class, Bar.class);
 				assertThat(resolver.resolveSchema(SchemaType.NONE, kvType).orElseThrow())
-						.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
-						.satisfies((keyValueSchema -> {
-							assertThat(keyValueSchema.getKeySchema()).isSameAs(fooSchema);
-							assertThat(keyValueSchema.getValueSchema()).isSameAs(barSchema);
-							assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
-						}));
+					.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
+					.satisfies((keyValueSchema -> {
+						assertThat(keyValueSchema.getKeySchema()).isSameAs(fooSchema);
+						assertThat(keyValueSchema.getValueSchema()).isSameAs(barSchema);
+						assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
+					}));
 			}
 
 		}
@@ -351,7 +353,7 @@ class DefaultSchemaResolverTests {
 	record Foo(String value) {
 	}
 
-	record Bar<T> (T value) {
+	record Bar<T>(T value) {
 	}
 
 	record Zaa(String value) {

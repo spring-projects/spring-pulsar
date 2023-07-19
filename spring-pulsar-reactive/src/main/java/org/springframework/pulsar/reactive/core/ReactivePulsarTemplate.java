@@ -146,9 +146,10 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 				String topicName = resolveTopic(topic, firstMessage.getValue());
 				ReactiveMessageSender<T> sender = createMessageSender(topicName, firstMessage.getValue(), schema,
 						customizer);
-				return messageFlux.as(sender::sendMany).doOnError(
-						ex -> this.logger.error(ex, () -> "Failed to send messages to '%s' topic".formatted(topicName)))
-						.doOnNext(msgId -> this.logger.trace(() -> "Sent messages to '%s' topic".formatted(topicName)));
+				return messageFlux.as(sender::sendMany)
+					.doOnError(ex -> this.logger.error(ex,
+							() -> "Failed to send messages to '%s' topic".formatted(topicName)))
+					.doOnNext(msgId -> this.logger.trace(() -> "Sent messages to '%s' topic".formatted(topicName)));
 			}
 			// The flux has errored or is completed
 			return messageFlux.thenMany(Flux.empty());

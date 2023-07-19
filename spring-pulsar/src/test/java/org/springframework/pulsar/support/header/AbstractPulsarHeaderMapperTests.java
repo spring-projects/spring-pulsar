@@ -57,7 +57,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 		@Test
 		void nullPulsarMessage() {
 			assertThatNullPointerException().isThrownBy(() -> mapper().toSpringHeaders(null))
-					.withMessage("pulsarMessage must not be null");
+				.withMessage("pulsarMessage must not be null");
 		}
 
 		@Test
@@ -87,7 +87,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 			// check metadata - sanity check metadata pulled in by existence of
 			// MESSAGE_SIZE
 			assertThat(springHeaders).containsKey(PulsarHeaders.MESSAGE_SIZE)
-					.doesNotContainKey(PulsarHeaders.MESSAGE_ID);
+				.doesNotContainKey(PulsarHeaders.MESSAGE_ID);
 			// check user properties
 			assertThat(springHeaders).containsKey("info").doesNotContainKey("foo");
 		}
@@ -121,7 +121,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 		@Test
 		void nullSpringHeaders() {
 			assertThatNullPointerException().isThrownBy(() -> mapper().toPulsarHeaders(null))
-					.withMessage("springHeaders must not be null");
+				.withMessage("springHeaders must not be null");
 		}
 
 		@Test
@@ -157,7 +157,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 			springHeaders.put("foo", "bar");
 			springHeaders.put("info", "5150");
 			assertThat(mapper.toPulsarHeaders(new MessageHeaders(springHeaders))).doesNotContainKey("foo")
-					.containsKeys("id", "timestamp"); // '*' allows id/ts
+				.containsKeys("id", "timestamp"); // '*' allows id/ts
 		}
 
 		@Test
@@ -184,7 +184,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 			var springHeaders = new HashMap<String, Object>();
 			springHeaders.put("foo", "bar");
 			assertThat(mapper.toPulsarHeaders(new MessageHeaders(springHeaders))).containsKeys("id", "timestamp")
-					.doesNotContainKey("foo");
+				.doesNotContainKey("foo");
 		}
 
 		@Test

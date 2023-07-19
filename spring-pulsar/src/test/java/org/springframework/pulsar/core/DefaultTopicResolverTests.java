@@ -77,7 +77,7 @@ class DefaultTopicResolverTests {
 	<T> void resolveByMessageInstance(String testName, @Nullable String userTopic, T message,
 			@Nullable String defaultTopic, @Nullable String expectedTopic) {
 		assertThat(resolver.resolveTopic(userTopic, message, () -> defaultTopic).get().orElse(null))
-				.isEqualTo(expectedTopic);
+			.isEqualTo(expectedTopic);
 	}
 
 	static Stream<Arguments> resolveByMessageInstanceProvider() {
@@ -100,7 +100,7 @@ class DefaultTopicResolverTests {
 	void resolveByMessageType(String testName, @Nullable String userTopic, Class<?> messageType,
 			@Nullable String defaultTopic, @Nullable String expectedTopic) {
 		assertThat(resolver.resolveTopic(userTopic, messageType, () -> defaultTopic).get().orElse(null))
-				.isEqualTo(expectedTopic);
+			.isEqualTo(expectedTopic);
 	}
 
 	static Stream<Arguments> resolveByMessageTypeProvider() {
@@ -141,11 +141,11 @@ class DefaultTopicResolverTests {
 			String previouslyMappedTopic = resolver.addCustomTopicMapping(Foo.class, topic1);
 			assertThat(previouslyMappedTopic).isNull();
 			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-					.containsEntry(Foo.class, topic1);
+				.containsEntry(Foo.class, topic1);
 			previouslyMappedTopic = resolver.addCustomTopicMapping(Foo.class, topic2);
 			assertThat(previouslyMappedTopic).isEqualTo(topic1);
 			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-					.containsEntry(Foo.class, topic2);
+				.containsEntry(Foo.class, topic2);
 		}
 
 		@Test

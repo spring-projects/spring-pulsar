@@ -85,7 +85,8 @@ public class PulsarAdministration
 
 	private void initialize() {
 		var topics = Objects.requireNonNull(this.applicationContext, "Application context was not set")
-				.getBeansOfType(PulsarTopic.class, false, false).values();
+			.getBeansOfType(PulsarTopic.class, false, false)
+			.values();
 		createOrModifyTopicsIfNeeded(topics);
 	}
 
@@ -112,7 +113,8 @@ public class PulsarAdministration
 
 	private List<String> getMatchingTopicPartitions(PulsarTopic topic, List<String> existingTopics) {
 		return existingTopics.stream()
-				.filter(existing -> existing.startsWith(topic.getFullyQualifiedTopicName() + "-partition-")).toList();
+			.filter(existing -> existing.startsWith(topic.getFullyQualifiedTopicName() + "-partition-"))
+			.toList();
 	}
 
 	private void createOrModifyTopicsIfNeeded(Collection<PulsarTopic> topics) {
@@ -144,7 +146,7 @@ public class PulsarAdministration
 						if (existingTopicsInNamespace.contains(topicName)) {
 							throw new IllegalStateException(
 									"Topic '%s' already exists un-partitioned - needs to be deleted first"
-											.formatted(topicName));
+										.formatted(topicName));
 						}
 						var matchingPartitions = getMatchingTopicPartitions(topic, existingTopicsInNamespace);
 						if (matchingPartitions.isEmpty()) {
@@ -155,14 +157,14 @@ public class PulsarAdministration
 							var numberOfExistingPartitions = matchingPartitions.size();
 							if (numberOfExistingPartitions < topic.numberOfPartitions()) {
 								this.logger.debug(() -> "Topic '%s' found with %d partitions - will update to %d"
-										.formatted(topicName, numberOfExistingPartitions, topic.numberOfPartitions()));
+									.formatted(topicName, numberOfExistingPartitions, topic.numberOfPartitions()));
 								topicsToModify.add(topic);
 							}
 							else if (numberOfExistingPartitions > topic.numberOfPartitions()) {
 								throw new IllegalStateException(
 										"Topic '%s' found w/ %d partitions but can't shrink to %d - needs to be deleted first"
-												.formatted(topicName, numberOfExistingPartitions,
-														topic.numberOfPartitions()));
+											.formatted(topicName, numberOfExistingPartitions,
+													topic.numberOfPartitions()));
 							}
 						}
 					}
@@ -171,7 +173,7 @@ public class PulsarAdministration
 						if (!matchingPartitions.isEmpty()) {
 							throw new IllegalStateException(
 									"Topic '%s' already exists partitioned - needs to be deleted first"
-											.formatted(topicName));
+										.formatted(topicName));
 						}
 						if (!existingTopicsInNamespace.contains(topicName)) {
 							this.logger.debug(() -> "Topic '%s' does not yet exist - will add".formatted(topicName));
@@ -191,7 +193,8 @@ public class PulsarAdministration
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
 		this.logger.debug(() -> "Creating topics: " + topicsToCreate.stream()
-				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
+			.map(PulsarTopic::getFullyQualifiedTopicName)
+			.collect(Collectors.joining(",")));
 		for (var topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
@@ -204,7 +207,8 @@ public class PulsarAdministration
 
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
 		this.logger.debug(() -> "Modifying topics: " + topicsToModify.stream()
-				.map(PulsarTopic::getFullyQualifiedTopicName).collect(Collectors.joining(",")));
+			.map(PulsarTopic::getFullyQualifiedTopicName)
+			.collect(Collectors.joining(",")));
 		for (var topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}

@@ -154,7 +154,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		}
 		catch (Exception e) {
 			logger.debug(e, () -> "Could not map %s with type %s (will instead map w/ toString()) reason: %s"
-					.formatted(name, className, e.getMessage()));
+				.formatted(name, className, e.getMessage()));
 		}
 		return rawValue.toString();
 	}
@@ -228,7 +228,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		}
 		catch (IOException e) {
 			logger.error(e, () -> "Could not decode type (%s) for header (%s) using value (%s) due to: %s"
-					.formatted(type, name, value, e.getMessage()));
+				.formatted(type, name, value, e.getMessage()));
 		}
 		return value;
 	}
@@ -250,7 +250,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		catch (Exception e) {
 			logger.error(e,
 					() -> "Could not decode non-trusted header type (%s) for header (%s) using value (%s) due to: %s"
-							.formatted(nth.untrustedType(), name, nth.headerValue(), e.getMessage()));
+						.formatted(nth.untrustedType(), name, nth.headerValue(), e.getMessage()));
 		}
 		return decodedValue;
 	}
@@ -283,6 +283,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 
 	/**
 	 * Represents a header that could not be decoded due to an untrusted type.
+	 *
 	 * @param headerValue the header value that could not be decoded
 	 * @param untrustedType the class name of the encoded header value
 	 */
@@ -295,6 +296,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 	 * is ultimately included as a separate {@link #JSON_TYPES} header on the outgoing
 	 * Pulsar message. This allows for the inbound consumer to decode the headers when/if
 	 * the message is later consumed.
+	 *
 	 * @param jsonTypes cumulative map of header name to classname for types that are
 	 * serialized as JSON
 	 */
@@ -305,6 +307,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 	 * Context used for {@link #toSpringHeaders} (inbound) that includes the cumulative
 	 * map of header name to classname for headers in the incoming message that were
 	 * serialized with JSON. This is used to decode the headers in the incoming message.
+	 *
 	 * @param jsonTypes cumulative map of header name to classname for types that were
 	 * serialized as JSON
 	 */

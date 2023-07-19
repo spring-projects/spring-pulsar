@@ -43,7 +43,7 @@ dependencies {
 	implementation 'commons-codec:commons-codec:1.15'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.4'
 	implementation 'io.github.gradle-nexus:publish-plugin:1.1.0'
-	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34")
+	implementation("io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.38")
 	implementation 'io.spring.nohttp:nohttp-gradle:0.0.10'
 	implementation "org.apache.maven:maven-embedder:3.6.3"
 	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"

@@ -48,8 +48,9 @@ public interface CacheProviderFactory<K, V> {
 	 */
 	@SuppressWarnings("unchecked")
 	static <K, V> CacheProviderFactory<K, V> load() {
-		return ServiceLoader.load(CacheProviderFactory.class).findFirst()
-				.orElseThrow(() -> new IllegalStateException("No ProducerCacheFactory available"));
+		return ServiceLoader.load(CacheProviderFactory.class)
+			.findFirst()
+			.orElseThrow(() -> new IllegalStateException("No ProducerCacheFactory available"));
 	}
 
 	/**

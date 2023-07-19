@@ -165,7 +165,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void testPulsarListener() throws Exception {
 			ReactivePulsarContainerProperties<String> pulsarContainerProperties = registry.getListenerContainer("id-1")
-					.getContainerProperties();
+				.getContainerProperties();
 			assertThat(pulsarContainerProperties.getTopics()).containsExactly("topic-1");
 			assertThat(pulsarContainerProperties.getSubscriptionName()).isEqualTo("subscription-1");
 			pulsarTemplate.send("topic-1", "hello foo");
@@ -181,9 +181,9 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void testPulsarListenerWithTopicsPattern() throws Exception {
 			ReactivePulsarContainerProperties<String> containerProperties = registry.getListenerContainer("id-3")
-					.getContainerProperties();
+				.getContainerProperties();
 			assertThat(containerProperties.getTopicsPattern().toString())
-					.isEqualTo("persistent://public/default/pattern.*");
+				.isEqualTo("persistent://public/default/pattern.*");
 
 			pulsarTemplate.send("persistent://public/default/pattern-1", "hello baz");
 			pulsarTemplate.send("persistent://public/default/pattern-2", "hello baz");
@@ -212,7 +212,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			@Bean
 			ReactiveMessageConsumerBuilderCustomizer<String> listen2Customizer() {
 				return b -> b.topics(List.of("topic-2"))
-						.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
+					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 			@ReactivePulsarListener(id = "id-3", topicPattern = "persistent://public/default/pattern.*",
@@ -225,7 +225,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			@Bean
 			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
 				return b -> b.topicsPatternAutoDiscoveryPeriod(Duration.ofSeconds(2))
-						.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
+					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 		}
@@ -325,7 +325,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			@Bean
 			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
 				return b -> b.negativeAckRedeliveryDelay(Duration.ofSeconds(1))
-						.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
+					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 		}
@@ -729,9 +729,9 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void simpleListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
-					.withTopic("simpleListenerWithHeaders").send();
+				.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
+				.withTopic("simpleListenerWithHeaders")
+				.send();
 			assertThat(simpleListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData.get()).isEqualTo("hello-simple-listener");
 			assertThat(PulsarHeadersTest.messageId.get()).isEqualTo(messageId);
@@ -743,9 +743,10 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void pulsarMessageListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
-					.withMessageCustomizer(
-							messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
-					.withTopic("pulsarMessageListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
+				.withTopic("pulsarMessageListenerWithHeaders")
+				.send();
 			assertThat(pulsarMessageListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData.get()).isEqualTo("hello-pulsar-message-listener");
 			assertThat(PulsarHeadersTest.messageId.get()).isEqualTo(messageId);
@@ -757,17 +758,18 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		@Test
 		void springMessagingMessageListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
-					.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo",
-							"springMessagingMessageListenerWithHeaders"))
-					.withTopic("springMessagingMessageListenerWithHeaders").send();
+				.withMessageCustomizer(
+						messageBuilder -> messageBuilder.property("foo", "springMessagingMessageListenerWithHeaders"))
+				.withTopic("springMessagingMessageListenerWithHeaders")
+				.send();
 			assertThat(springMessagingMessageListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData.get()).isEqualTo("hello-spring-messaging-message-listener");
 			assertThat(PulsarHeadersTest.messageId.get()).isEqualTo(messageId);
 			assertThat(topicName.get())
-					.isEqualTo("persistent://public/default/springMessagingMessageListenerWithHeaders");
+				.isEqualTo("persistent://public/default/springMessagingMessageListenerWithHeaders");
 			assertThat(fooValue.get()).isEqualTo("springMessagingMessageListenerWithHeaders");
 			assertThat(rawData.get())
-					.isEqualTo("hello-spring-messaging-message-listener".getBytes(StandardCharsets.UTF_8));
+				.isEqualTo("hello-spring-messaging-message-listener".getBytes(StandardCharsets.UTF_8));
 		}
 
 		@EnableReactivePulsar
@@ -842,10 +844,14 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Test
 		void pulsarListenerWithConcurrencyKeyOrdered() throws Exception {
-			pulsarTemplate.newMessage("first").withTopic("pulsarListenerWithConcurrencyKeyOrdered")
-					.withMessageCustomizer(m -> m.key("key")).send();
-			pulsarTemplate.newMessage("second").withTopic("pulsarListenerWithConcurrencyKeyOrdered")
-					.withMessageCustomizer(m -> m.key("key")).send();
+			pulsarTemplate.newMessage("first")
+				.withTopic("pulsarListenerWithConcurrencyKeyOrdered")
+				.withMessageCustomizer(m -> m.key("key"))
+				.send();
+			pulsarTemplate.newMessage("second")
+				.withTopic("pulsarListenerWithConcurrencyKeyOrdered")
+				.withMessageCustomizer(m -> m.key("key"))
+				.send();
 			assertThat(queue.poll(5, TimeUnit.SECONDS)).isEqualTo("first");
 			assertThat(queue.poll(5, TimeUnit.SECONDS)).isEqualTo("second");
 		}

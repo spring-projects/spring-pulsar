@@ -54,8 +54,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void happyPathErrorHandlingForRecordMessageListener() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-1");
@@ -88,11 +89,12 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		PulsarOperations.SendMessageBuilder<String> sendMessageBuilderMock = mock(
 				PulsarOperations.SendMessageBuilder.class);
 
-		when(mockPulsarTemplate.newMessage("hello john doe").withTopic(any(String.class))
-				.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		when(mockPulsarTemplate.newMessage("hello john doe")
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
 
-		await().atMost(Duration.ofSeconds(10)).untilAsserted(
-				() -> verify(messageListener, times(11)).received(any(Consumer.class), any(Message.class)));
+		await().atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> verify(messageListener, times(11)).received(any(Consumer.class), any(Message.class)));
 		await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(sendMessageBuilderMock).sendAsync());
 
 		container.stop();
@@ -102,8 +104,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void errorHandlingForRecordMessageListenerWithTransientError() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-2");
@@ -137,8 +140,8 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 
 		pulsarTemplate.sendAsync("hello john doe");
 
-		await().atMost(Duration.ofSeconds(10)).untilAsserted(
-				() -> verify(messageListener, times(4)).received(any(Consumer.class), any(Message.class)));
+		await().atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> verify(messageListener, times(4)).received(any(Consumer.class), any(Message.class)));
 		verifyNoInteractions(mockPulsarTemplate);
 
 		container.stop();
@@ -148,8 +151,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void everyOtherRecordThrowsNonTransientExceptionsRecordMessageListener() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-3");
@@ -188,14 +192,15 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock(
 				PulsarOperations.SendMessageBuilder.class);
 
-		when(mockPulsarTemplate.newMessage(any(Integer.class)).withTopic(any(String.class))
-				.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		when(mockPulsarTemplate.newMessage(any(Integer.class))
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
 
 		// 5 records fail - 5 * (1 + 5 max retry) = 30 + 5 records don't fail = 35
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(
-				() -> verify(messageListener, times(35)).received(any(Consumer.class), any(Message.class)));
 		await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(() -> verify(sendMessageBuilderMock, times(5)).sendAsync());
+			.untilAsserted(() -> verify(messageListener, times(35)).received(any(Consumer.class), any(Message.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(sendMessageBuilderMock, times(5)).sendAsync());
 
 		container.stop();
 		pulsarClient.close();
@@ -204,8 +209,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerFirstOneOnlyErrorAndRecover() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-4");
@@ -257,14 +263,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock(
 				PulsarOperations.SendMessageBuilder.class);
 
-		when(mockPulsarTemplate.newMessage(any(Integer.class)).withTopic(any(String.class))
-				.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		when(mockPulsarTemplate.newMessage(any(Integer.class))
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
 
 		// 1 + 10 + 1 = 12 calls altogether
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> verify(pulsarBatchMessageListener, times(12))
-				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
 		await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(() -> verify(sendMessageBuilderMock, times(1)).sendAsync());
+			.untilAsserted(() -> verify(pulsarBatchMessageListener, times(12)).received(any(Consumer.class),
+					any(List.class), any(Acknowledgement.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(sendMessageBuilderMock, times(1)).sendAsync());
 
 		container.stop();
 		pulsarClient.close();
@@ -273,8 +281,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsInTheMiddle() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-5");
@@ -324,14 +333,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock(
 				PulsarOperations.SendMessageBuilder.class);
 
-		when(mockPulsarTemplate.newMessage(any(Integer.class)).withTopic(any(String.class))
-				.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		when(mockPulsarTemplate.newMessage(any(Integer.class))
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
 
 		// 1 + 10 + 1 = 12 calls altogether
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> verify(pulsarBatchMessageListener, times(12))
-				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
 		await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(() -> verify(sendMessageBuilderMock, times(1)).sendAsync());
+			.untilAsserted(() -> verify(pulsarBatchMessageListener, times(12)).received(any(Consumer.class),
+					any(List.class), any(Acknowledgement.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(sendMessageBuilderMock, times(1)).sendAsync());
 
 		container.stop();
 		pulsarClient.close();
@@ -340,8 +351,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsTwiceInTheMiddle() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-6");
@@ -391,14 +403,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock(
 				PulsarOperations.SendMessageBuilder.class);
 
-		when(mockPulsarTemplate.newMessage(any(Integer.class)).withTopic(any(String.class))
-				.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		when(mockPulsarTemplate.newMessage(any(Integer.class))
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
 
 		// 1 + 10 + 1 + 10 + 1 = 23 calls altogether
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> verify(pulsarBatchMessageListener, times(23))
-				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
 		await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(() -> verify(sendMessageBuilderMock, times(2)).sendAsync());
+			.untilAsserted(() -> verify(pulsarBatchMessageListener, times(23)).received(any(Consumer.class),
+					any(List.class), any(Acknowledgement.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(sendMessageBuilderMock, times(2)).sendAsync());
 
 		container.stop();
 		pulsarClient.close();
@@ -407,8 +421,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchRecordListenerRecordFailsInTheMiddleButTransientError() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-7");
@@ -462,8 +477,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			pulsarTemplate.sendAsync(i);
 		}
 		// 1 + 3 + 1 = 5 calls altogether
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> verify(pulsarBatchMessageListener, times(4))
-				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(pulsarBatchMessageListener, times(4)).received(any(Consumer.class),
+					any(List.class), any(Acknowledgement.class)));
 		verifyNoInteractions(mockPulsarTemplate);
 
 		container.stop();
@@ -473,8 +489,9 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	@Test
 	@SuppressWarnings("unchecked")
 	void batchListenerFailsTransientErrorFollowedByNonTransient() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-8");
@@ -533,13 +550,15 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock(
 				PulsarOperations.SendMessageBuilder.class);
 
-		when(mockPulsarTemplate.newMessage(any(Integer.class)).withTopic(any(String.class))
-				.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		when(mockPulsarTemplate.newMessage(any(Integer.class))
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
 		// 1 + 2 + 1 + 10 + 1 = 15 calls altogether
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> verify(pulsarBatchMessageListener, times(15))
-				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
 		await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(() -> verify(sendMessageBuilderMock, times(1)).sendAsync());
+			.untilAsserted(() -> verify(pulsarBatchMessageListener, times(15)).received(any(Consumer.class),
+					any(List.class), any(Acknowledgement.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(sendMessageBuilderMock, times(1)).sendAsync());
 
 		container.stop();
 		pulsarClient.close();

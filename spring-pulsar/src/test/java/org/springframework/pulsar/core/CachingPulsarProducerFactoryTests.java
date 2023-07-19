@@ -200,7 +200,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		when(this.pulsarClient.newProducer(schema)).thenThrow(new RuntimeException("5150"));
 		var producerFactory = producerFactory(pulsarClient, null, null);
 		assertThatThrownBy(() -> producerFactory.createProducer(schema, "topic1")).isInstanceOf(RuntimeException.class)
-				.hasMessage("5150");
+			.hasMessage("5150");
 		getAssertedProducerCache(producerFactory, Collections.emptyList());
 	}
 
@@ -208,7 +208,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	private CacheProvider<ProducerCacheKey<String>, Producer<String>> getAssertedProducerCache(
 			PulsarProducerFactory<String> producerFactory, List<ProducerCacheKey<String>> expectedCacheKeys) {
 		CacheProvider<ProducerCacheKey<String>, Producer<String>> producerCache = (CacheProvider<ProducerCacheKey<String>, Producer<String>>) ReflectionTestUtils
-				.getField(producerFactory, "producerCache");
+			.getField(producerFactory, "producerCache");
 		assertThat(producerCache).isNotNull();
 		if (ObjectUtils.isEmpty(expectedCacheKeys)) {
 			assertThat(producerCache.asMap()).isEmpty();
@@ -241,13 +241,15 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 		@Test
 		void nullSchemaIsNotAllowed() {
 			assertThatThrownBy(() -> new ProducerCacheKey<>(null, "topic1", null, null))
-					.isInstanceOf(IllegalArgumentException.class).hasMessage("'schema' must be non-null");
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("'schema' must be non-null");
 		}
 
 		@Test
 		void nullTopicIsNotAllowed() {
 			assertThatThrownBy(() -> new ProducerCacheKey<>(schema, null, null, null))
-					.isInstanceOf(IllegalArgumentException.class).hasMessage("'topic' must be non-null");
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("'topic' must be non-null");
 		}
 
 		@ParameterizedTest(name = "equals({0}) should be {2}")
@@ -263,52 +265,47 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 			var encryptionKeys1 = Set.of("key1");
 			List<ProducerBuilderCustomizer<String>> customizers1 = List.of(p -> p.property("key", "value"));
 			var key1 = new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1);
-			return Stream
-					.of(arguments(Named.of("differentClass", key1), "someStrangeObject", false),
-							arguments(Named.of("null", key1), null, false),
-							arguments(Named.of("sameInstance", key1), key1, true),
-							arguments(Named.of("sameSchemaSameTopicSameNullEncryptionKeysSameNullCustomizers",
+			return Stream.of(arguments(Named.of("differentClass", key1), "someStrangeObject", false),
+					arguments(Named.of("null", key1), null, false),
+					arguments(Named.of("sameInstance", key1), key1, true),
+					arguments(
+							Named.of("sameSchemaSameTopicSameNullEncryptionKeysSameNullCustomizers",
 									new ProducerCacheKey<>(Schema.STRING, "topic1", null, null)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), true),
-							arguments(
-									Named.of("sameSchemaSameTopicSameNonNullEncryptionKeysSameNullCustomizers",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null), true),
-							arguments(
-									Named.of("differentSchemaInstanceSameSchemaType",
-											new ProducerCacheKey<>(new StringSchema(), "topic1", encryptionKeys1,
-													null)),
-									new ProducerCacheKey<>(new StringSchema(), "topic1", encryptionKeys1, null), true),
-							arguments(
-									Named.of("differentSchemaType",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
-									new ProducerCacheKey<>(Schema.INT64, "topic1", encryptionKeys1, null), false),
-							arguments(
-									Named.of("differentTopic",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
-													customizers1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic2", encryptionKeys1, customizers1),
-									false),
-							arguments(
-									Named.of("differentNonNullEncryptionKeys",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", Set.of("key2"), null), false),
-							arguments(
-									Named.of("differentNullEncryptionKeys",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false),
-							arguments(
-									Named.of("differentNonNullCustomizers",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
-													customizers1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
-											List.of(p -> p.property("key", "value"))),
-									false),
-							arguments(
-									Named.of("differentNullInterceptor",
-											new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
-													customizers1)),
-									new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false));
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), true),
+					arguments(
+							Named.of("sameSchemaSameTopicSameNonNullEncryptionKeysSameNullCustomizers",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null), true),
+					arguments(
+							Named.of("differentSchemaInstanceSameSchemaType",
+									new ProducerCacheKey<>(new StringSchema(), "topic1", encryptionKeys1, null)),
+							new ProducerCacheKey<>(new StringSchema(), "topic1", encryptionKeys1, null), true),
+					arguments(
+							Named.of("differentSchemaType",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
+							new ProducerCacheKey<>(Schema.INT64, "topic1", encryptionKeys1, null), false),
+					arguments(
+							Named.of("differentTopic",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic2", encryptionKeys1, customizers1), false),
+					arguments(
+							Named.of("differentNonNullEncryptionKeys",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", Set.of("key2"), null), false),
+					arguments(
+							Named.of("differentNullEncryptionKeys",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, null)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false),
+					arguments(
+							Named.of("differentNonNullCustomizers",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1,
+									List.of(p -> p.property("key", "value"))),
+							false),
+					arguments(
+							Named.of("differentNullInterceptor",
+									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1)),
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false));
 		}
 
 	}

@@ -55,7 +55,7 @@ public class DefaultReactivePulsarReaderFactory<T> implements ReactivePulsarRead
 			List<ReactiveMessageReaderBuilderCustomizer<T>> customizers) {
 
 		ReactiveMessageReaderBuilder<T> reader = this.reactivePulsarClient.messageReader(schema)
-				.applySpec(this.readerSpec);
+			.applySpec(this.readerSpec);
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(reader));
 		}

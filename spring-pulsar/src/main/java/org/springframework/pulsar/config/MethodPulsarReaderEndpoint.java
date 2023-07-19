@@ -101,15 +101,15 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
 		MethodParameter messageParameter = null;
 		Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
-				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
-						|| !methodParameter1.hasParameterAnnotation(Header.class))
-				.findFirst();
+			.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+					|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
+					|| !methodParameter1.hasParameterAnnotation(Header.class))
+			.findFirst();
 		long count = Arrays.stream(methodParameters)
-				.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-						&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
-						&& !methodParameter1.hasParameterAnnotation(Header.class))
-				.count();
+			.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
+					&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
+					&& !methodParameter1.hasParameterAnnotation(Header.class))
+			.count();
 		Assert.isTrue(count == 1, "More than 1 expected payload types found");
 		if (parameter.isPresent()) {
 			messageParameter = parameter.get();
@@ -165,7 +165,7 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener) {
 		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
-				.createInvocableHandlerMethod(getBean(), getMethod());
+			.createInvocableHandlerMethod(getBean(), getMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 

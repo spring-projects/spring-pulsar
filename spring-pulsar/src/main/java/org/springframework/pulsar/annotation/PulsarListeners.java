@@ -32,7 +32,6 @@ import java.lang.annotation.Target;
  *
  * @author Soby Chacko
  * @author Chris Bono
- *
  * @see PulsarListener
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })

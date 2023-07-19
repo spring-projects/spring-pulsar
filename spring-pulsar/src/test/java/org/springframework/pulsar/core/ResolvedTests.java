@@ -54,7 +54,8 @@ class ResolvedTests {
 	void failedWithAdditionalMessage() {
 		var resolved = Resolved.failed(new IllegalStateException("5150"));
 		assertThatRuntimeException().isThrownBy(() -> resolved.orElseThrow(() -> "extra message"))
-				.withMessage("extra message").withCause(new IllegalStateException("5150"));
+			.withMessage("extra message")
+			.withCause(new IllegalStateException("5150"));
 		assertThat(resolved.get()).isEmpty();
 	}
 

@@ -114,7 +114,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		this.registrar.setBeanFactory(this.beanFactory);
 
 		this.beanFactory.getBeanProvider(PulsarListenerConfigurer.class)
-				.forEach(c -> c.configurePulsarListeners(this.registrar));
+			.forEach(c -> c.configurePulsarListeners(this.registrar));
 
 		if (this.registrar.getEndpointRegistry() == null) {
 			if (this.endpointRegistry == null) {
@@ -325,8 +325,8 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 			String deadLetterPolicyBeanName = resolveExpressionAsString(pulsarListener.deadLetterPolicy(),
 					"deadLetterPolicy");
 			if (StringUtils.hasText(deadLetterPolicyBeanName)) {
-				endpoint.setDeadLetterPolicy(
-						this.beanFactory.getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class));
+				endpoint
+					.setDeadLetterPolicy(this.beanFactory.getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class));
 			}
 		}
 	}

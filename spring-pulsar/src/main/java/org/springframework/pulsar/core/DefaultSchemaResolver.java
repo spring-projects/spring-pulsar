@@ -206,7 +206,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	@Nullable
 	private Class<?> requireNonNullMessageType(SchemaType schemaType, @Nullable ResolvableType messageType) {
 		return Objects.requireNonNull(messageType, "messageType must be specified for " + schemaType.name())
-				.getRawClass();
+			.getRawClass();
 	}
 
 	private Schema<?> getMessageKeyValueSchema(ResolvableType messageType) {

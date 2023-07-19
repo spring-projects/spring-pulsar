@@ -44,13 +44,15 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 
 	@Test
 	void testFailOverConsumersOnPartitionedTopic() throws Exception {
-		PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
-				.build();
+		PulsarAdmin admin = PulsarAdmin.builder()
+			.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
+			.build();
 		String topicName = "persistent://public/default/my-part-topic-1";
 		admin.topics().createPartitionedTopic(topicName, 3);
 
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+		PulsarClient pulsarClient = PulsarClient.builder()
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 				(consumerBuilder) -> {
 					consumerBuilder.topic("my-part-topic-1");
@@ -63,7 +65,7 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch1.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch1.countDown());
 		pulsarContainerProperties.setSubscriptionType(SubscriptionType.Failover);
 		pulsarContainerProperties.setSchema(Schema.STRING);
 		DefaultPulsarMessageListenerContainer<String> container1 = new DefaultPulsarMessageListenerContainer<>(
@@ -71,13 +73,13 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		container1.start();
 
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch2.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch2.countDown());
 		DefaultPulsarMessageListenerContainer<String> container2 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container2.start();
 
 		pulsarContainerProperties
-				.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch3.countDown());
+			.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch3.countDown());
 		DefaultPulsarMessageListenerContainer<String> container3 = new DefaultPulsarMessageListenerContainer<>(
 				pulsarConsumerFactory, pulsarContainerProperties);
 		container3.start();
@@ -87,11 +89,14 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 		pulsarTemplate.newMessage("hello john doe")
-				.withProducerCustomizer(builder -> builder.messageRouter(new FooRouter())).sendAsync();
+			.withProducerCustomizer(builder -> builder.messageRouter(new FooRouter()))
+			.sendAsync();
 		pulsarTemplate.newMessage("hello alice doe")
-				.withProducerCustomizer(builder -> builder.messageRouter(new BarRouter())).sendAsync();
+			.withProducerCustomizer(builder -> builder.messageRouter(new BarRouter()))
+			.sendAsync();
 		pulsarTemplate.newMessage("hello buzz doe")
-				.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter())).sendAsync();
+			.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter()))
+			.sendAsync();
 
 		boolean await1 = latch1.await(10, TimeUnit.SECONDS);
 		boolean await2 = latch2.await(10, TimeUnit.SECONDS);

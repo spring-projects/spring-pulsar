@@ -171,7 +171,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		@Test
 		void customizersAreAppliedLast() throws Exception {
 			ReaderBuilderCustomizer<String> customizer = (readerBuilder) -> readerBuilder
-					.topic("basic-pulsar-reader-topic");
+				.topic("basic-pulsar-reader-topic");
 			// The following code expects the above topic will override the passed in
 			// 'foo-topic'
 			try (var reader = pulsarReaderFactory.createReader(List.of("foo-topic"), MessageId.earliest, Schema.STRING,
@@ -200,15 +200,18 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		void missingTopic() {
 			// topic name is not set in the API call or in the reader config.
 			assertThatThrownBy(() -> pulsarReaderFactory.createReader(Collections.emptyList(), MessageId.earliest,
-					Schema.STRING, Collections.emptyList())).isInstanceOf(PulsarClientException.class)
-							.hasMessageContaining("Topic name must be set on the reader builder");
+					Schema.STRING, Collections.emptyList()))
+				.isInstanceOf(PulsarClientException.class)
+				.hasMessageContaining("Topic name must be set on the reader builder");
 		}
 
 		@Test
 		void missingStartingMessageId() {
 			assertThatThrownBy(() -> pulsarReaderFactory.createReader(List.of("my-reader-topic"), null, Schema.STRING,
-					Collections.emptyList())).isInstanceOf(PulsarClientException.class).hasMessageContaining(
-							"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
+					Collections.emptyList()))
+				.isInstanceOf(PulsarClientException.class)
+				.hasMessageContaining(
+						"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
 		}
 
 	}

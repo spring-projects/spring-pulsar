@@ -32,7 +32,6 @@ import java.lang.annotation.Target;
  * on the same method (or class), implicitly generating this container annotation.
  *
  * @author Christophe Bornet
- *
  * @see ReactivePulsarListener
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })

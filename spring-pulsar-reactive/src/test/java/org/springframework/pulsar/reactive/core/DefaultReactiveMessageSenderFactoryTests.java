@@ -54,14 +54,15 @@ class DefaultReactiveMessageSenderFactoryTests {
 	}
 
 	private void assertThatSenderHasTopic(ReactiveMessageSender<String> sender, String expectedTopic) {
-		assertThatSenderSpecSatisfies(sender, (senderSpec) -> assertThat(senderSpec)
-				.extracting(ReactiveMessageSenderSpec::getTopicName).isEqualTo(expectedTopic));
+		assertThatSenderSpecSatisfies(sender,
+				(senderSpec) -> assertThat(senderSpec).extracting(ReactiveMessageSenderSpec::getTopicName)
+					.isEqualTo(expectedTopic));
 	}
 
 	private void assertThatSenderSpecSatisfies(ReactiveMessageSender<String> sender,
 			ThrowingConsumer<ReactiveMessageSenderSpec> specConsumer) {
 		assertThat(sender).extracting("senderSpec", InstanceOfAssertFactories.type(ReactiveMessageSenderSpec.class))
-				.satisfies(specConsumer);
+			.satisfies(specConsumer);
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactory() {
@@ -84,7 +85,7 @@ class DefaultReactiveMessageSenderFactoryTests {
 		@Test
 		void withoutSchema() {
 			assertThatNullPointerException().isThrownBy(() -> newSenderFactory().createSender(null, "topic0"))
-					.withMessageContaining("Schema must be specified");
+				.withMessageContaining("Schema must be specified");
 		}
 
 		@Test
@@ -108,7 +109,7 @@ class DefaultReactiveMessageSenderFactoryTests {
 		@Test
 		void noTopicSpecifiedWithoutDefaultTopic() {
 			assertThatIllegalArgumentException().isThrownBy(() -> newSenderFactory().createSender(schema, null))
-					.withMessageContaining("Topic must be specified when no default topic is configured");
+				.withMessageContaining("Topic must be specified when no default topic is configured");
 		}
 
 	}

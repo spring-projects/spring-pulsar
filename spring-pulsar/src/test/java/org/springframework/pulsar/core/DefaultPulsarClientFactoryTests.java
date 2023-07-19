@@ -48,8 +48,8 @@ class DefaultPulsarClientFactoryTests {
 	@Test
 	void constructWithNullCustomizer() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new DefaultPulsarClientFactory((PulsarClientBuilderCustomizer) null))
-				.withMessage("customizer must not be null");
+			.isThrownBy(() -> new DefaultPulsarClientFactory((PulsarClientBuilderCustomizer) null))
+			.withMessage("customizer must not be null");
 	}
 
 	@Test

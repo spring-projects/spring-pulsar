@@ -154,12 +154,12 @@ public class ObservationTests implements PulsarTestContainerSupport {
 		assertThat(span.getTags()).containsEntry(TAG2, TAG2_VALUE);
 
 		MeterRegistryAssert.assertThat(meterRegistry)
-				.hasTimerWithNameAndTags("spring.pulsar.listener",
-						KeyValues.of(LISTENER_ID_TAG, OBS1_ID, RECEIVER_EXTRA_TAG, OBS1_ID))
-				.hasTimerWithNameAndTags("spring.pulsar.listener", KeyValues.of(LISTENER_ID_TAG, OBS2_ID));
+			.hasTimerWithNameAndTags("spring.pulsar.listener",
+					KeyValues.of(LISTENER_ID_TAG, OBS1_ID, RECEIVER_EXTRA_TAG, OBS1_ID))
+			.hasTimerWithNameAndTags("spring.pulsar.listener", KeyValues.of(LISTENER_ID_TAG, OBS2_ID));
 		assertThat(meterRegistry.find("spring.pulsar.template")
-				.tags(TEMPLATE_NAME_TAG, TEMPLATE_NAME, SENDER_EXTRA_TAG, TEMPLATE_NAME).timer()).isNotNull()
-						.extracting(Timer::count).isEqualTo(2L);
+			.tags(TEMPLATE_NAME_TAG, TEMPLATE_NAME, SENDER_EXTRA_TAG, TEMPLATE_NAME)
+			.timer()).isNotNull().extracting(Timer::count).isEqualTo(2L);
 	}
 
 	@Configuration(proxyBeanMethods = false)
@@ -238,18 +238,20 @@ public class ObservationTests implements PulsarTestContainerSupport {
 		@Bean
 		ObservationRegistry observationRegistry(Tracer tracer, Propagator propagator, MeterRegistry meterRegistry) {
 			TestObservationRegistry observationRegistry = TestObservationRegistry.create();
-			observationRegistry.observationConfig().observationHandler(
-					// Composite will pick the first matching handler
-					new ObservationHandler.FirstMatchingCompositeObservationHandler(
-							// This is responsible for creating a child span on the sender
-							// side
-							new PropagatingSenderTracingObservationHandler<>(tracer, propagator),
-							// This is responsible for creating a span on the receiver
-							// side
-							new PropagatingReceiverTracingObservationHandler<>(tracer, propagator),
-							// This is responsible for creating a default span
-							new DefaultTracingObservationHandler(tracer)))
-					.observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+			observationRegistry.observationConfig()
+				.observationHandler(
+						// Composite will pick the first matching handler
+						new ObservationHandler.FirstMatchingCompositeObservationHandler(
+								// This is responsible for creating a child span on the
+								// sender
+								// side
+								new PropagatingSenderTracingObservationHandler<>(tracer, propagator),
+								// This is responsible for creating a span on the receiver
+								// side
+								new PropagatingReceiverTracingObservationHandler<>(tracer, propagator),
+								// This is responsible for creating a default span
+								new DefaultTracingObservationHandler(tracer)))
+				.observationHandler(new DefaultMeterObservationHandler(meterRegistry));
 			return observationRegistry;
 		}
 

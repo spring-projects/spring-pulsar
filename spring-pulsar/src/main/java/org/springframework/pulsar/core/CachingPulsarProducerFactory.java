@@ -81,7 +81,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		this.producerCache = cacheFactory.create(cacheExpireAfterAccess, cacheMaximumSize, cacheInitialCapacity,
 				(key, producer, cause) -> {
 					this.logger.debug(() -> "Producer %s evicted from cache due to %s"
-							.formatted(ProducerUtils.formatProducer(producer), cause));
+						.formatted(ProducerUtils.formatProducer(producer), cause));
 					closeProducer(producer);
 				});
 	}
@@ -103,7 +103,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			var producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
 			return new ProducerWithCloseCallback<>(producer,
 					(p) -> this.logger.trace(() -> "Client closed producer %s but will skip actual closing"
-							.formatted(ProducerUtils.formatProducer(producer))));
+						.formatted(ProducerUtils.formatProducer(producer))));
 		}
 		catch (PulsarClientException ex) {
 			throw new RuntimeException(ex);
@@ -122,7 +122,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		}
 		if (actualProducer == null) {
 			this.logger.warn(() -> "Unable to get actual producer for %s - will skip closing it"
-					.formatted(ProducerUtils.formatProducer(producer)));
+				.formatted(ProducerUtils.formatProducer(producer)));
 			return;
 		}
 		ProducerUtils.closeProducerAsync(actualProducer, this.logger);

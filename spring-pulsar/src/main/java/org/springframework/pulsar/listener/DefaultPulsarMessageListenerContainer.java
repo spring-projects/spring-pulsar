@@ -262,9 +262,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
 
 				BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
-						.maxNumMessages(containerProperties.getMaxNumMessages())
-						.maxNumBytes(containerProperties.getMaxNumBytes())
-						.timeout(containerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS).build();
+					.maxNumMessages(containerProperties.getMaxNumMessages())
+					.maxNumBytes(containerProperties.getMaxNumBytes())
+					.timeout(containerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS)
+					.build();
 
 				/*
 				 * topicNames and properties must not be added through the builder
@@ -294,8 +295,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private Map<String, Object> extractDirectConsumerProperties() {
 			Properties propertyOverrides = this.containerProperties.getPulsarConsumerProperties();
-			return propertyOverrides.entrySet().stream().collect(Collectors.toMap(e -> String.valueOf(e.getKey()),
-					Map.Entry::getValue, (prev, next) -> next, HashMap::new));
+			return propertyOverrides.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> String.valueOf(e.getKey()), Map.Entry::getValue, (prev, next) -> next,
+						HashMap::new));
 		}
 
 		private void populateAllNecessaryPropertiesIfNeedBe(Map<String, Object> currentProperties) {
@@ -509,7 +512,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						throw new IllegalStateException(
 
 								"Exception occurred and message %s was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks"
-										.formatted(message.getMessageId()),
+									.formatted(message.getMessageId()),
 								e);
 					}
 				}
