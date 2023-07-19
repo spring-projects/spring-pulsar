@@ -38,10 +38,6 @@ configurations {
 	}
 }
 
-ext {
-	springBootVersion = '3.2.0-SNAPSHOT'
-}
-
 dependencies {
 	implementation localGroovy()
 	implementation 'commons-codec:commons-codec:1.15'

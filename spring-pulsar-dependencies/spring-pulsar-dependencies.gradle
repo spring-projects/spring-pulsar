@@ -28,8 +28,6 @@ dependencies {
 		api "org.apache.pulsar:pulsar-client-all:$pulsarClientVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-adapter:$pulsarClientReactiveVersion"
 		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded:$pulsarClientReactiveVersion"
-		// spring-pulsar tests (OutputCaptureExtension)
-		api "org.springframework.boot:spring-boot-test:$springBootVersion"
 		api "org.springframework.retry:spring-retry:2.0.1"
 	}
 }
