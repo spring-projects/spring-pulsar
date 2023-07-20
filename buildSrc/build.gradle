@@ -38,6 +38,8 @@ configurations {
 	}
 }
 
+ext.set("springFrameworkVersion", "6.0.10")
+
 dependencies {
 	implementation localGroovy()
 	implementation 'commons-codec:commons-codec:1.15'
