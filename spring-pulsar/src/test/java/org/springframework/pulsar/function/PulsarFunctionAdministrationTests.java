@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.function;
 
+import static com.github.stefanbirkner.systemlambda.SystemLambda.tapSystemErrAndOutNormalized;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -35,15 +36,12 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.function.PulsarFunctionAdministration.PulsarFunctionException;
@@ -339,7 +337,6 @@ class PulsarFunctionAdministrationTests {
 		}
 
 		@Nested
-		@ExtendWith(OutputCaptureExtension.class)
 		class WithPropagationDisabled {
 
 			@BeforeEach
@@ -351,18 +348,18 @@ class PulsarFunctionAdministrationTests {
 			}
 
 			@Test
-			void createAdminClientFails(CapturedOutput output) throws PulsarClientException {
+			void createAdminClientFails() throws Exception {
 				beanFactory.addBean("function1", function1);
 				when(springPulsarAdmin.createAdminClient()).thenThrow(new PulsarClientException("NOPE"));
-				functionAdmin.createOrUpdateUserDefinedFunctions();
+				String output = tapSystemErrAndOutNormalized(() -> functionAdmin.createOrUpdateUserDefinedFunctions());
 				assertThat(output).contains("Unable to create/update functions - could not create PulsarAdmin: NOPE");
 			}
 
 			@Test
-			void processedFunctionFails(CapturedOutput output) throws PulsarAdminException {
+			void processedFunctionFails() throws Exception {
 				beanFactory.addBean("function1", function1);
 				when(function1.functionExists(pulsarAdmin)).thenThrow(new PulsarAdminException("BOOM"));
-				functionAdmin.createOrUpdateUserDefinedFunctions();
+				String output = tapSystemErrAndOutNormalized(() -> functionAdmin.createOrUpdateUserDefinedFunctions());
 				assertThat(output).contains("Encountered 1 error(s) creating/updating functions:",
 						"PulsarAdminException: BOOM");
 			}
@@ -507,7 +504,6 @@ class PulsarFunctionAdministrationTests {
 		}
 
 		@Nested
-		@ExtendWith(OutputCaptureExtension.class)
 		class WithPropagationDisabled {
 
 			@BeforeEach
@@ -519,19 +515,21 @@ class PulsarFunctionAdministrationTests {
 			}
 
 			@Test
-			void createAdminClientFails(CapturedOutput output) throws PulsarClientException {
+			void createAdminClientFails() throws Exception {
 				functionAdmin.getProcessedFunctions().add(function1);
 				when(springPulsarAdmin.createAdminClient()).thenThrow(new PulsarClientException("NOPE"));
-				functionAdmin.enforceStopPolicyOnUserDefinedFunctions();
+				String output = tapSystemErrAndOutNormalized(
+						() -> functionAdmin.enforceStopPolicyOnUserDefinedFunctions());
 				assertThat(output)
 					.contains("Unable to enforce stop policy on functions - could not create PulsarAdmin: NOPE");
 			}
 
 			@Test
-			void processedFunctionFails(CapturedOutput output) {
+			void processedFunctionFails() throws Exception {
 				functionAdmin.getProcessedFunctions().add(function1);
 				doThrow(new PulsarException("BOOM")).when(function1).stop(pulsarAdmin);
-				functionAdmin.enforceStopPolicyOnUserDefinedFunctions();
+				String output = tapSystemErrAndOutNormalized(
+						() -> functionAdmin.enforceStopPolicyOnUserDefinedFunctions());
 				assertThat(output).contains("Encountered 1 error(s) enforcing stop policy on functions:",
 						"PulsarException: BOOM");
 			}
