@@ -41,6 +41,6 @@ dependencies {
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
 
-	// OutputCaptureExtension used by PulsarFunctionAdministrationTests
-	testImplementation "org.springframework.boot:spring-boot-test:$springBootVersion"
+	// Output capture used by PulsarFunctionAdministrationTests
+	testImplementation group: 'com.github.stefanbirkner', name: 'system-lambda', version: '1.2.1'
 }
