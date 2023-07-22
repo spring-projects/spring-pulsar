@@ -1,3 +1,6 @@
+
+include::attributes-variables.adoc[]
+
 = Introduction
 This project provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
 
@@ -6,42 +9,24 @@ In addition, it also provides various convenience APIs for Spring developers to 
 
 include::project-state.adoc[leveloffset=+1]
 
-== Supported Versions
+== System Requirements
 
-The supported versions for the underlying libraries required by the framework are as follows:
-|===
-| Library | Minimum Version | Version Used
+Spring Pulsar `{spring-pulsar-version}` requires the following:
 
-| Apache Pulsar
-| 3.0.0
-| {pulsar-client-version}
+- https://www.java.com[Java 17] and is compatible up to and including Java 20
+- {spring-framework-docs}[Spring Framework `{spring-framework-version}`] or above
+- {apache-pulsar-cient-docs}/[Apache Pulsar Java Client `{pulsar-client-version}`] or above
 
-| Spring Framework
-| 6.0.9
-| {spring-framework-version}
-
-| Spring Boot
-| 3.2.0
-| {spring-boot-version}
-
-| Java
-| 17
-| -
-
-| Gradle
-| 7.4
-| -
-
-|===
-
-NOTE: The **Version Used** is the version of the library targeted by Spring Pulsar  {spring-pulsar-version} (the version of the framework this reference guide belongs to).
-
-Details for other versions and compatibility can be found in the <<version-compatibility.adoc#appendix.version-compatibility,appendix>>.
+====
+The version compatibility matrix (including Spring Boot) can be found in the <<version-compatibility.adoc#appendix.version-compatibility,appendix>>.
+====
 
 == Building the Project
 If you have cloned the project locally, follow these steps to build the project from the source code.
 
-Spring for Apache Pulsar uses Gradle as its build tool. Run the following command to do a full build of the project:
+NOTE: Gradle `7.x (7.4 or above)` is required to build.
+
+Run the following command to do a full build of the project:
 [indent=0]
 ----
 ./gradlew clean build
