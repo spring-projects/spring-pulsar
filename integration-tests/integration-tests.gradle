@@ -6,6 +6,12 @@ plugins {
 
 description = 'Spring Pulsar Integration Tests'
 
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+
 dependencies {
 	intTestImplementation project(':spring-pulsar-test')
 	intTestRuntimeOnly 'ch.qos.logback:logback-classic'
