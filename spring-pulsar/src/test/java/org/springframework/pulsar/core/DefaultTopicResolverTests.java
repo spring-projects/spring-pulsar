@@ -30,7 +30,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarTopic;
 
 /**
  * Unit tests for {@link DefaultTopicResolver}.
@@ -44,8 +43,6 @@ class DefaultTopicResolverTests {
 	private static final String defaultTopic = "default-topic1";
 
 	private static final String fooTopic = "foo-topic1";
-
-	private static final String bazTopic = "baz-topic1";
 
 	private static final String stringTopic = "string-topic1";
 
@@ -114,8 +111,6 @@ class DefaultTopicResolverTests {
 				arguments("complexMessageWithUserTopic", userTopic, Foo.class, defaultTopic, userTopic),
 				arguments("complexMessageNoUserTopic", null, Foo.class, defaultTopic, fooTopic),
 				arguments("nullMessageWithUserTopicAndDefault", userTopic, null, defaultTopic, userTopic),
-				arguments("annotationMessageWithUserTopic", userTopic, Baz.class, defaultTopic, userTopic),
-				arguments("annotationMessageNoUserTopic", null, Baz.class, defaultTopic, bazTopic),
 				arguments("nullMessageWithDefault", null, null, defaultTopic, null),
 				arguments("noMatchWithUserTopicAndDefault", userTopic, Bar.class, defaultTopic, userTopic),
 				arguments("noMatchWithUserTopic", userTopic, Bar.class, null, userTopic),
@@ -169,10 +164,6 @@ class DefaultTopicResolverTests {
 	}
 
 	record Bar(String value) {
-	}
-
-	@PulsarTopic(bazTopic)
-	record Baz(String value) {
 	}
 
 }

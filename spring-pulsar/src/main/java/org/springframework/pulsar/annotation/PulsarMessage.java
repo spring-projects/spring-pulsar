@@ -16,36 +16,36 @@
 
 package org.springframework.pulsar.annotation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.apache.pulsar.common.schema.SchemaType;
 
-import org.springframework.core.annotation.AliasFor;
+import java.lang.annotation.*;
 
 /**
- * Specifies default topic for class.
+ * Specifies default topic and schema for class.
  *
  * @author Aleksei Arsenev
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface PulsarTopic {
-
-	/**
-	 * Alias for `topic`.
-	 * @return topic
-	 */
-	@AliasFor("topic")
-	String value() default "";
+public @interface PulsarMessage {
 
 	/**
 	 * Default topic for class.
 	 * @return topic
 	 */
-	@AliasFor("value")
 	String topic() default "";
+
+	/**
+	 * Default schema type for class.
+	 * @return schema type
+	 */
+	SchemaType type() default SchemaType.NONE;
+
+	/**
+	 * Message key type (must be specified when schema type is {@code KEY_VALUE})
+	 * @return message key type
+	 */
+	Class<?> messageKeyType() default Void.class;
 
 }

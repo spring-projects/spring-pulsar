@@ -34,7 +34,7 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(PulsarAnnotationsConfigurationSelector.class)
+@Import({ PulsarAnnotationsConfigurationSelector.class, PulsarMessageAnnotationScanner.class })
 public @interface EnablePulsar {
 
 }
