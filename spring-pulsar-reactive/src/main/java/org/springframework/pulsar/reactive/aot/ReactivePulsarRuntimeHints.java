@@ -24,6 +24,7 @@ import org.apache.pulsar.client.admin.internal.OffloadProcessStatusImpl;
 import org.apache.pulsar.client.admin.internal.PulsarAdminBuilderImpl;
 import org.apache.pulsar.client.api.Authentication;
 import org.apache.pulsar.client.api.AuthenticationDataProvider;
+import org.apache.pulsar.client.impl.PulsarClientImplementationBindingImpl;
 import org.apache.pulsar.client.impl.conf.ClientConfigurationData;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
@@ -58,8 +59,8 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 		// some other shaded components available through Pulsar client.
 		Stream.of(HashSet.class, TreeMap.class, Authentication.class, AuthenticationDataProvider.class,
 				SecretsSerializer.class, NioSocketChannel.class, AbstractByteBufAllocator.class,
-				NioDatagramChannel.class, PulsarAdminBuilderImpl.class, OffloadProcessStatusImpl.class, Commands.class,
-				ReferenceCountUtil.class).forEach(
+				NioDatagramChannel.class, PulsarAdminBuilderImpl.class, PulsarClientImplementationBindingImpl.class,
+				OffloadProcessStatusImpl.class, Commands.class, ReferenceCountUtil.class).forEach(
 						type -> reflectionHints.registerType(type,
 								builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 										MemberCategory.INVOKE_DECLARED_METHODS,
