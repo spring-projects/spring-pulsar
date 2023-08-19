@@ -18,6 +18,7 @@ package org.springframework.pulsar.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClientException;
 
@@ -54,7 +56,10 @@ public class PulsarAdministration
 	private ApplicationContext applicationContext;
 
 	@Nullable
-	private final PulsarAdminBuilderCustomizer adminCustomizer;
+	private final List<PulsarAdminBuilderCustomizer> adminCustomizers;
+
+	@Nullable
+	private PulsarAdminBuilder adminBuilder;
 
 	/**
 	 * Construct a default instance using the specified service url.
@@ -70,7 +75,16 @@ public class PulsarAdministration
 	 * default admin builder without modifications
 	 */
 	public PulsarAdministration(@Nullable PulsarAdminBuilderCustomizer adminCustomizer) {
-		this.adminCustomizer = adminCustomizer;
+		this(adminCustomizer != null ? List.of(adminCustomizer) : Collections.emptyList());
+	}
+
+	/**
+	 * Construct an instance with the specified customizations.
+	 * @param adminCustomizers the customizers to apply to the builder or null to use the
+	 * default admin builder without modifications
+	 */
+	public PulsarAdministration(List<PulsarAdminBuilderCustomizer> adminCustomizers) {
+		this.adminCustomizers = adminCustomizers;
 	}
 
 	@Override
@@ -91,11 +105,19 @@ public class PulsarAdministration
 	}
 
 	public PulsarAdmin createAdminClient() throws PulsarClientException {
-		var adminBuilder = PulsarAdmin.builder();
-		if (this.adminCustomizer != null) {
-			this.adminCustomizer.customize(adminBuilder);
+		if (this.adminBuilder == null) {
+			this.adminBuilder = PulsarAdmin.builder();
 		}
-		return adminBuilder.build();
+		this.adminCustomizers.forEach((adminCustomizer) -> adminCustomizer.customize(this.adminBuilder));
+		return this.adminBuilder.build();
+	}
+
+	/**
+	 * Sets the admin builder to use when creating the client - only visible for testing.
+	 * @param adminBuilder the admin builder to use
+	 */
+	void setAdminBuilder(PulsarAdminBuilder adminBuilder) {
+		this.adminBuilder = adminBuilder;
 	}
 
 	@Override
