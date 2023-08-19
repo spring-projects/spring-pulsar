@@ -19,6 +19,7 @@ package org.springframework.pulsar.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -133,7 +134,7 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 			Thread.sleep(5_000);
 
 			DefaultPulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-					"key-shared-batch-disabled-topic", (pb) -> pb.enableBatching(false));
+					"key-shared-batch-disabled-topic", List.of((pb) -> pb.enableBatching(false)));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory);
 			for (int i = 0; i < 10; i++) {
 				pulsarTemplate.newMessage("alice-" + i)

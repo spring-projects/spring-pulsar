@@ -19,6 +19,7 @@ package org.springframework.pulsar.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.Serial;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -85,7 +86,7 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 		container3.start();
 
 		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				"my-part-topic-1", (pb) -> pb.messageRoutingMode(MessageRoutingMode.CustomPartition));
+				"my-part-topic-1", List.of((pb) -> pb.messageRoutingMode(MessageRoutingMode.CustomPartition)));
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 
 		pulsarTemplate.newMessage("hello john doe")

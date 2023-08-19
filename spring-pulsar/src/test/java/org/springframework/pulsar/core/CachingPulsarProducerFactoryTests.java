@@ -228,9 +228,9 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Override
 	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
-			@Nullable String defaultTopic, @Nullable ProducerBuilderCustomizer<String> defaultConfigCustomizer) {
+			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers) {
 		var producerFactory = new CachingPulsarProducerFactory<String>(pulsarClient, defaultTopic,
-				defaultConfigCustomizer, new DefaultTopicResolver(), Duration.ofMinutes(5L), 30L, 2);
+				defaultConfigCustomizers, new DefaultTopicResolver(), Duration.ofMinutes(5L), 30L, 2);
 		producerFactories.add(producerFactory);
 		return producerFactory;
 	}

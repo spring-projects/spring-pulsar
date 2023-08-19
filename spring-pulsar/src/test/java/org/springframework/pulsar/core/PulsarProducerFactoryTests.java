@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.pulsar.client.api.Producer;
@@ -100,7 +101,12 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	}
 
 	private PulsarProducerFactory<String> newProducerFactoryWithDefaultKeys(Set<String> defaultKeys) {
-		return producerFactory(pulsarClient, null, (pb) -> defaultKeys.forEach(pb::addEncryptionKey));
+		return producerFactory(pulsarClient, null, List.of((pb) -> defaultKeys.forEach(pb::addEncryptionKey)));
+	}
+
+	protected PulsarProducerFactory<String> newProducerFactoryWithDefaultConfigCustomizers(
+			List<ProducerBuilderCustomizer<String>> customizers) {
+		return producerFactory(pulsarClient, null, customizers);
 	}
 
 	/**
@@ -116,11 +122,12 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	 * Subclasses override to provide concrete {@link PulsarProducerFactory} instance.
 	 * @param pulsarClient the Pulsar client
 	 * @param defaultTopic the default topic to use for the producers
-	 * @param defaultConfigCustomizer the default configuration to apply to the producers
+	 * @param defaultConfigCustomizers the optional list of customizers to apply to the
+	 * created producers
 	 * @return a Pulsar producer factory instance to use for the tests
 	 */
 	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
-			@Nullable String defaultTopic, @Nullable ProducerBuilderCustomizer<String> defaultConfigCustomizer);
+			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers);
 
 	@Test
 	@SuppressWarnings("unchecked")

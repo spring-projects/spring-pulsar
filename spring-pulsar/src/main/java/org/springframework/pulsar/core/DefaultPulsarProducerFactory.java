@@ -52,7 +52,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	private final String defaultTopic;
 
 	@Nullable
-	private final ProducerBuilderCustomizer<T> defaultConfigCustomizer;
+	private final List<ProducerBuilderCustomizer<T>> defaultConfigCustomizers;
 
 	private final TopicResolver topicResolver;
 
@@ -61,8 +61,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	 * @param pulsarClient the client used to create the producers
 	 */
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient) {
-		this(pulsarClient, null, (pb) -> {
-		}, new DefaultTopicResolver());
+		this(pulsarClient, null, null, new DefaultTopicResolver());
 	}
 
 	/**
@@ -71,33 +70,34 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	 * @param defaultTopic the default topic to use for the producers
 	 */
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic) {
-		this(pulsarClient, defaultTopic, (pb) -> {
-		}, new DefaultTopicResolver());
+		this(pulsarClient, defaultTopic, null, new DefaultTopicResolver());
 	}
 
 	/**
 	 * Construct a producer factory that uses a default topic resolver.
 	 * @param pulsarClient the client used to create the producers
 	 * @param defaultTopic the default topic to use for the producers
-	 * @param defaultConfigCustomizer the default configuration to apply to the producers
+	 * @param defaultConfigCustomizers the optional list of customizers to apply to the
+	 * created producers
 	 */
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
-			@Nullable ProducerBuilderCustomizer<T> defaultConfigCustomizer) {
-		this(pulsarClient, defaultTopic, defaultConfigCustomizer, new DefaultTopicResolver());
+			@Nullable List<ProducerBuilderCustomizer<T>> defaultConfigCustomizers) {
+		this(pulsarClient, defaultTopic, defaultConfigCustomizers, new DefaultTopicResolver());
 	}
 
 	/**
 	 * Construct a producer factory that uses the specified parameters.
 	 * @param pulsarClient the client used to create the producers
 	 * @param defaultTopic the default topic to use for the producers
-	 * @param defaultConfigCustomizer the default configuration to apply to the producers
+	 * @param defaultConfigCustomizers the optional list of customizers to apply to the
+	 * created producers
 	 * @param topicResolver the topic resolver to use
 	 */
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
-			@Nullable ProducerBuilderCustomizer<T> defaultConfigCustomizer, TopicResolver topicResolver) {
+			@Nullable List<ProducerBuilderCustomizer<T>> defaultConfigCustomizers, TopicResolver topicResolver) {
 		this.pulsarClient = pulsarClient;
 		this.defaultTopic = defaultTopic;
-		this.defaultConfigCustomizer = defaultConfigCustomizer;
+		this.defaultConfigCustomizers = defaultConfigCustomizers;
 		this.topicResolver = topicResolver;
 	}
 
@@ -142,8 +142,8 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		var producerBuilder = this.pulsarClient.newProducer(schema);
 
 		// Apply the default config customizer (preserve the topic)
-		if (this.defaultConfigCustomizer != null) {
-			this.defaultConfigCustomizer.customize(producerBuilder);
+		if (this.defaultConfigCustomizers != null) {
+			this.defaultConfigCustomizers.forEach((customizer) -> customizer.customize(producerBuilder));
 		}
 		producerBuilder.topic(resolvedTopic);
 

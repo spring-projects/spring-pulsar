@@ -87,7 +87,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 			container.start();
 
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, "dprlct-001", (pb) -> pb.topic("dprlct-001"));
+					pulsarClient, "dprlct-001", List.of((pb) -> pb.topic("dprlct-001")));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.sendAsync("hello john doe");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -115,7 +115,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 			container = new DefaultPulsarMessageReaderContainer<>(pulsarReaderFactory, containerProps);
 			container.start();
 			DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
-					pulsarClient, "dprlct-002", (pb) -> pb.topic("dprlct-002"));
+					pulsarClient, "dprlct-002", List.of((pb) -> pb.topic("dprlct-002")));
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			pulsarTemplate.sendAsync("hello buzz doe");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -144,7 +144,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 
 			var prodConfig = Map.<String, Object>of("topicName", "dprlct-003");
 			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, "dprlct-003",
-					(pb) -> pb.topic("dprlct-003"));
+					List.of((pb) -> pb.topic("dprlct-003")));
 			var pulsarTemplate = new PulsarTemplate<>(producerFactory);
 
 			// The following sends will not be received by the reader as we are using the

@@ -177,7 +177,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		void concurrencyOnPulsarListenerWithFailoverSubscription(@Autowired PulsarListenerEndpointRegistry registry)
 				throws Exception {
 			var pulsarProducerFactory = new DefaultPulsarProducerFactory<String>(pulsarClient, null,
-					(pb) -> pb.enableBatching(false));
+					List.of((pb) -> pb.enableBatching(false)));
 			var customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			var bar = (ConcurrentPulsarMessageListenerContainer<?>) registry.getListenerContainer("bar");
 
@@ -194,7 +194,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		void nonDefaultConcurrencySettingNotAllowedOnExclusiveSubscriptions(
 				@Autowired PulsarListenerEndpointRegistry registry) throws Exception {
 			var pulsarProducerFactory = new DefaultPulsarProducerFactory<String>(pulsarClient, null,
-					(pb) -> pb.enableBatching(false));
+					List.of((pb) -> pb.enableBatching(false)));
 			var customTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			var bar = (ConcurrentPulsarMessageListenerContainer<?>) registry.getListenerContainer("bar");
 
