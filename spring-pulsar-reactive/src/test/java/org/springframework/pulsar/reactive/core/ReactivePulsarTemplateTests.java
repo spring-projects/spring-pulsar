@@ -182,7 +182,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		if (producerFactoryHasDefaultTopic) {
 			spec.setTopicName("fake-topic");
 		}
-		ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client, spec, null);
+		ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client, spec, null,
+				null);
 		// Topic mappings allows not specifying the topic when sending (nor having
 		// default on producer)
 		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
@@ -198,7 +199,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	@Test
 	void sendMessageWithoutTopicFails() {
 		ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
-				new MutableReactiveMessageSenderSpec(), null);
+				new MutableReactiveMessageSenderSpec(), null, null);
 		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message").subscribe())
 			.withMessage("Topic must be specified when no default topic is configured");
@@ -211,7 +212,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			senderSpec.setTopicName(topic);
 		}
 		ReactivePulsarSenderFactory<T> senderFactory = new DefaultReactivePulsarSenderFactory<>(client, senderSpec,
-				null);
+				null, null);
 
 		ReactivePulsarTemplate<T> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 
@@ -260,7 +261,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			MutableReactiveMessageSenderSpec spec = new MutableReactiveMessageSenderSpec();
 			spec.setTopicName(topic);
 			ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client, spec,
-					null);
+					null, null);
 			// Custom schema resolver allows not specifying the schema when sending
 			DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 			schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
@@ -282,7 +283,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			MutableReactiveMessageSenderSpec spec = new MutableReactiveMessageSenderSpec();
 			spec.setTopicName("sendNullWithDefaultTopicFails");
 			ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client, spec,
-					null);
+					null, null);
 			ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> pulsarTemplate.send((String) null, Schema.STRING).subscribe())
@@ -292,7 +293,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		@Test
 		void sendNullWithoutSchemaFails() {
 			ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
-					new MutableReactiveMessageSenderSpec(), null);
+					new MutableReactiveMessageSenderSpec(), null, null);
 			ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", (String) null, null).subscribe())

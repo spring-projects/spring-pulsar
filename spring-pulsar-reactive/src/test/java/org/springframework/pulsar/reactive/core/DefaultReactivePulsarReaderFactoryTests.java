@@ -33,8 +33,9 @@ import org.junit.jupiter.api.Test;
  * Tests for {@link DefaultReactivePulsarReaderFactory}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
-class DefaultReactiveMessageReaderFactoryTests {
+class DefaultReactivePulsarReaderFactoryTests {
 
 	private static final Schema<String> schema = Schema.STRING;
 

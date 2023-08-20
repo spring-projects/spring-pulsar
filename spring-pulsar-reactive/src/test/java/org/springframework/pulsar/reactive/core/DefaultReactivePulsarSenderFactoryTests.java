@@ -19,22 +19,27 @@ package org.springframework.pulsar.reactive.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.pulsar.client.api.CompressionType;
-import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.ThrowingConsumer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 /**
  * Unit tests for {@link DefaultReactivePulsarSenderFactory}.
@@ -42,7 +47,7 @@ import org.junit.jupiter.api.Test;
  * @author Christophe Bornet
  * @author Chris Bono
  */
-class DefaultReactiveMessageSenderFactoryTests {
+class DefaultReactivePulsarSenderFactoryTests {
 
 	protected final Schema<String> schema = Schema.STRING;
 
@@ -66,17 +71,17 @@ class DefaultReactiveMessageSenderFactoryTests {
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactory() {
-		return new DefaultReactivePulsarSenderFactory<>((PulsarClient) null, null, null);
+		return new DefaultReactivePulsarSenderFactory<>(null, null, null, null);
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactoryWithDefaultTopic(String defaultTopic) {
 		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
 		senderSpec.setTopicName(defaultTopic);
-		return new DefaultReactivePulsarSenderFactory<>((PulsarClient) null, senderSpec, null);
+		return new DefaultReactivePulsarSenderFactory<>(null, senderSpec, null, null);
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactoryWithCache(ReactiveMessageSenderCache cache) {
-		return new DefaultReactivePulsarSenderFactory<>((PulsarClient) null, null, cache);
+		return new DefaultReactivePulsarSenderFactory<>(null, null, cache, null);
 	}
 
 	@Nested
@@ -146,6 +151,46 @@ class DefaultReactiveMessageSenderFactoryTests {
 		void customizerThatSetsTopicHasNoEffect() {
 			var sender = newSenderFactory().createSender(schema, "topic1", (b) -> b.topic("topic-5150"));
 			assertThatSenderHasTopic(sender, "topic1");
+		}
+
+	}
+
+	@Nested
+	@SuppressWarnings("unchecked")
+	class DefaultConfigCustomizerApi {
+
+		private ReactiveMessageSenderBuilderCustomizer<String> configCustomizer1 = mock(
+				ReactiveMessageSenderBuilderCustomizer.class);
+
+		private ReactiveMessageSenderBuilderCustomizer<String> configCustomizer2 = mock(
+				ReactiveMessageSenderBuilderCustomizer.class);
+
+		private ReactiveMessageSenderBuilderCustomizer<String> createSenderCustomizer = mock(
+				ReactiveMessageSenderBuilderCustomizer.class);
+
+		@Test
+		void singleConfigCustomizer() {
+			newSenderFactoryWithCustomizers(List.of(configCustomizer1)).createSender(schema, "topic1",
+					List.of(createSenderCustomizer));
+			InOrder inOrder = inOrder(configCustomizer1, createSenderCustomizer);
+			inOrder.verify(configCustomizer1).customize(any(ReactiveMessageSenderBuilder.class));
+			inOrder.verify(createSenderCustomizer).customize(any(ReactiveMessageSenderBuilder.class));
+		}
+
+		@Test
+		void multipleConfigCustomizers() {
+			newSenderFactoryWithCustomizers(List.of(configCustomizer2, configCustomizer1)).createSender(schema,
+					"topic1", List.of(createSenderCustomizer));
+			InOrder inOrder = inOrder(configCustomizer1, configCustomizer2, createSenderCustomizer);
+			inOrder.verify(configCustomizer2).customize(any(ReactiveMessageSenderBuilder.class));
+			inOrder.verify(configCustomizer1).customize(any(ReactiveMessageSenderBuilder.class));
+			inOrder.verify(createSenderCustomizer).customize(any(ReactiveMessageSenderBuilder.class));
+		}
+
+		private ReactivePulsarSenderFactory<String> newSenderFactoryWithCustomizers(
+				List<ReactiveMessageSenderBuilderCustomizer<String>> customizers) {
+			MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
+			return new DefaultReactivePulsarSenderFactory<>(null, senderSpec, null, customizers);
 		}
 
 	}
