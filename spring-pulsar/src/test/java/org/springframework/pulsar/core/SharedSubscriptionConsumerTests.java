@@ -57,10 +57,10 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		try {
 			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 			DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-					pulsarClient, (consumerBuilder) -> {
+					pulsarClient, List.of((consumerBuilder) -> {
 						consumerBuilder.topic("shared-subscription-single-msg-test-topic");
 						consumerBuilder.subscriptionName("shared-subscription-single-msg-test-sub");
-					});
+					}));
 
 			CountDownLatch latch1 = new CountDownLatch(1);
 			CountDownLatch latch2 = new CountDownLatch(1);
@@ -114,10 +114,10 @@ public class SharedSubscriptionConsumerTests implements PulsarTestContainerSuppo
 		try {
 			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
 			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-					(consumerBuilder) -> {
+					List.of((consumerBuilder) -> {
 						consumerBuilder.topic("key-shared-batch-disabled-topic");
 						consumerBuilder.subscriptionName("key-shared-batch-disabled-sub");
-					});
+					}));
 
 			CountDownLatch latch = new CountDownLatch(30);
 

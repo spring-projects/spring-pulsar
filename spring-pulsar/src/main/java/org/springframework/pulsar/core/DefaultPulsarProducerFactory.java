@@ -142,7 +142,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		var producerBuilder = this.pulsarClient.newProducer(schema);
 
 		// Apply the default config customizer (preserve the topic)
-		if (this.defaultConfigCustomizers != null) {
+		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
 			this.defaultConfigCustomizers.forEach((customizer) -> customizer.customize(producerBuilder));
 		}
 		producerBuilder.topic(resolvedTopic);

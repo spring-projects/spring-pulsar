@@ -55,10 +55,10 @@ class FailoverConsumerTests implements PulsarTestContainerSupport {
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("my-part-topic-1");
 					consumerBuilder.subscriptionName("my-part-subscription-1");
-				});
+				}));
 
 		CountDownLatch latch1 = new CountDownLatch(1);
 		CountDownLatch latch2 = new CountDownLatch(1);
