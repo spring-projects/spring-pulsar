@@ -43,7 +43,7 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 	private final PulsarClient pulsarClient;
 
 	@Nullable
-	private final ReaderBuilderCustomizer<T> defaultConfigCustomizer;
+	private final List<ReaderBuilderCustomizer<T>> defaultConfigCustomizers;
 
 	/**
 	 * Construct a reader factory instance with no default configuration.
@@ -56,13 +56,13 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 	/**
 	 * Construct a reader factory instance.
 	 * @param pulsarClient the client used to consume
-	 * @param defaultConfigCustomizer the default configuration to apply to the readers or
-	 * null to use no default configuration
+	 * @param defaultConfigCustomizers the optional list of customizers to apply to the
+	 * readers or null to use no default configuration
 	 */
 	public DefaultPulsarReaderFactory(PulsarClient pulsarClient,
-			@Nullable ReaderBuilderCustomizer<T> defaultConfigCustomizer) {
+			@Nullable List<ReaderBuilderCustomizer<T>> defaultConfigCustomizers) {
 		this.pulsarClient = pulsarClient;
-		this.defaultConfigCustomizer = defaultConfigCustomizer;
+		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
 	@Override
@@ -72,8 +72,8 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 		ReaderBuilder<T> readerBuilder = this.pulsarClient.newReader(schema);
 
 		// Apply the default config customizer (preserve the topics)
-		if (this.defaultConfigCustomizer != null) {
-			this.defaultConfigCustomizer.customize(readerBuilder);
+		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
+			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(readerBuilder)));
 		}
 
 		if (!CollectionUtils.isEmpty(topics)) {

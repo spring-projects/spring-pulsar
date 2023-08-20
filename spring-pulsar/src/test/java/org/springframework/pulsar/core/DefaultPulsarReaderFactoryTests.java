@@ -18,6 +18,9 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,11 +31,13 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Reader;
+import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
@@ -40,6 +45,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
  * Testing {@link DefaultPulsarReaderFactory}.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSupport {
 
@@ -129,10 +135,10 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@Test
 		void useFactoryDefaults() throws Exception {
-			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, (readerBuilder) -> {
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, List.of((readerBuilder) -> {
 				readerBuilder.topic("basic-pulsar-reader-topic");
 				readerBuilder.startMessageId(MessageId.earliest);
-			});
+			}));
 			// The following code expects the above topic and startMessageId to be used
 			Message<String> message;
 			try (Reader<String> reader = pulsarReaderFactory.createReader(null, null, Schema.STRING,
@@ -148,10 +154,10 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@Test
 		void overrideFactoryDefaults() throws Exception {
-			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, (readerBuilder) -> {
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, List.of((readerBuilder) -> {
 				readerBuilder.topic("foo-topic");
 				readerBuilder.startMessageId(MessageId.latest);
-			});
+			}));
 			// The following code expects the above topic and startMessageId to be ignored
 			// (overridden)
 			Message<String> message;
@@ -181,6 +187,42 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 				var pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 				pulsarTemplate.send("hello john doe");
 				assertThat(reader.readNext().getValue()).isEqualTo("hello john doe");
+			}
+		}
+
+	}
+
+	@Nested
+	@SuppressWarnings("unchecked")
+	class DefaultConfigCustomizerApi {
+
+		private ReaderBuilderCustomizer<String> configCustomizer1 = mock(ReaderBuilderCustomizer.class);
+
+		private ReaderBuilderCustomizer<String> configCustomizer2 = mock(ReaderBuilderCustomizer.class);
+
+		private ReaderBuilderCustomizer<String> createReaderCustomizer = mock(ReaderBuilderCustomizer.class);
+
+		@Test
+		void singleConfigCustomizer() throws Exception {
+			try (var ignored = new DefaultPulsarReaderFactory<>(pulsarClient,
+					List.of(configCustomizer2, configCustomizer1))
+				.createReader(List.of("basic-pulsar-reader-topic"), MessageId.earliest, Schema.STRING,
+						List.of(createReaderCustomizer))) {
+				InOrder inOrder = inOrder(configCustomizer1, createReaderCustomizer);
+				inOrder.verify(configCustomizer1).customize(any(ReaderBuilder.class));
+				inOrder.verify(createReaderCustomizer).customize(any(ReaderBuilder.class));
+			}
+		}
+
+		@Test
+		void multipleConfigCustomizers() throws Exception {
+			try (var ignored = new DefaultPulsarReaderFactory<>(pulsarClient, List.of(configCustomizer1)).createReader(
+					List.of("basic-pulsar-reader-topic"), MessageId.earliest, Schema.STRING,
+					List.of(createReaderCustomizer))) {
+				InOrder inOrder = inOrder(configCustomizer1, configCustomizer2, createReaderCustomizer);
+				inOrder.verify(configCustomizer2).customize(any(ReaderBuilder.class));
+				inOrder.verify(configCustomizer1).customize(any(ReaderBuilder.class));
+				inOrder.verify(createReaderCustomizer).customize(any(ReaderBuilder.class));
 			}
 		}
 
