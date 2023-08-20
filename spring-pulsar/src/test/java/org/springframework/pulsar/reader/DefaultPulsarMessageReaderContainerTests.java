@@ -69,7 +69,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 		var latch = new CountDownLatch(1);
 
 		DefaultPulsarReaderFactory<String> pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient,
-				(readerBuilder -> {
+				List.of((readerBuilder) -> {
 					readerBuilder.topic("dprlct-001");
 					readerBuilder.subscriptionName("dprlct-sub-001");
 				}));

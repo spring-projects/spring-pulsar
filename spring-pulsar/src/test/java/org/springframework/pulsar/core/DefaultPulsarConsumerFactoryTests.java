@@ -170,11 +170,11 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 
 		@BeforeEach
 		void createConsumerFactory() {
-			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, (consumerBuilder) -> {
+			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of((consumerBuilder) -> {
 				consumerBuilder.topic(defaultTopic);
 				consumerBuilder.subscriptionName(defaultSubscription);
 				consumerBuilder.properties(defaultMetadataProperties);
-			});
+			}));
 		}
 
 		@Test
@@ -226,6 +226,40 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 					List.of((cb) -> cb.subscriptionName("topic0-sub2")))) {
 				assertThat(consumer.getSubscription()).isEqualTo("topic0-sub2");
 			}
+		}
+
+		@Nested
+		@SuppressWarnings("unchecked")
+		class DefaultConfigCustomizerApi {
+
+			private ConsumerBuilderCustomizer<String> configCustomizer1 = mock(ConsumerBuilderCustomizer.class);
+
+			private ConsumerBuilderCustomizer<String> configCustomizer2 = mock(ConsumerBuilderCustomizer.class);
+
+			private ConsumerBuilderCustomizer<String> createConsumerCustomizer = mock(ConsumerBuilderCustomizer.class);
+
+			@Test
+			void singleConfigCustomizer() throws PulsarClientException {
+				try (var ignored = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of(configCustomizer1))
+					.createConsumer(SCHEMA, List.of("topic0"), "dft-sub", createConsumerCustomizer)) {
+					InOrder inOrder = inOrder(configCustomizer1, createConsumerCustomizer);
+					inOrder.verify(configCustomizer1).customize(any(ConsumerBuilder.class));
+					inOrder.verify(createConsumerCustomizer).customize(any(ConsumerBuilder.class));
+				}
+			}
+
+			@Test
+			void multipleConfigCustomizers() throws PulsarClientException {
+				try (var ignored = new DefaultPulsarConsumerFactory<>(pulsarClient,
+						List.of(configCustomizer2, configCustomizer1))
+					.createConsumer(SCHEMA, List.of("topic0"), "dft-sub", createConsumerCustomizer)) {
+					InOrder inOrder = inOrder(configCustomizer1, configCustomizer2, createConsumerCustomizer);
+					inOrder.verify(configCustomizer2).customize(any(ConsumerBuilder.class));
+					inOrder.verify(configCustomizer1).customize(any(ConsumerBuilder.class));
+					inOrder.verify(createConsumerCustomizer).customize(any(ConsumerBuilder.class));
+				}
+			}
+
 		}
 
 	}

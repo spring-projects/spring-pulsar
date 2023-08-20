@@ -55,23 +55,49 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	@Nullable
 	private final ReactiveMessageSenderCache reactiveMessageSenderCache;
 
+	@Nullable
+	private final List<ReactiveMessageSenderBuilderCustomizer<T>> defaultSenderBuilderCustomizers;
+
 	private TopicResolver topicResolver;
 
+	/**
+	 * Construct an instance.
+	 * @param pulsarClient the pulsar client to adapt into a reactive client
+	 * @param reactiveMessageSenderSpec spec that defines the initial settings on the
+	 * created senders
+	 * @param reactiveMessageSenderCache cache used to cache created senders
+	 * @param defaultSenderBuilderCustomizers optional list of sender builder customizers
+	 * to apply to the created senders
+	 */
 	public DefaultReactivePulsarSenderFactory(PulsarClient pulsarClient,
 			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache) {
+			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache,
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultSenderBuilderCustomizers) {
 		this(AdaptedReactivePulsarClientFactory.create(pulsarClient), reactiveMessageSenderSpec,
-				reactiveMessageSenderCache, new DefaultTopicResolver());
+				reactiveMessageSenderCache, defaultSenderBuilderCustomizers, new DefaultTopicResolver());
 	}
 
+	/**
+	 * Construct an instance.
+	 * @param reactivePulsarClient the reactive client to use
+	 * @param reactiveMessageSenderSpec spec that defines the initial settings on the
+	 * created senders
+	 * @param reactiveMessageSenderCache cache used to cache created senders
+	 * @param defaultSenderBuilderCustomizers optional list of sender builder customizers
+	 * to apply to the created senders
+	 * @param topicResolver the topic resolver to use
+	 */
 	public DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient,
 			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache, TopicResolver topicResolver) {
+			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache,
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultSenderBuilderCustomizers,
+			TopicResolver topicResolver) {
 		this.reactivePulsarClient = reactivePulsarClient;
 		this.reactiveMessageSenderSpec = new ImmutableReactiveMessageSenderSpec(
 				reactiveMessageSenderSpec != null ? reactiveMessageSenderSpec : new MutableReactiveMessageSenderSpec());
 		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
 		this.topicResolver = topicResolver;
+		this.defaultSenderBuilderCustomizers = defaultSenderBuilderCustomizers;
 	}
 
 	@Override
@@ -102,6 +128,11 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
 		sender.applySpec(this.reactiveMessageSenderSpec);
+
+		// Apply the default config customizer (preserve the topic)
+		if (!CollectionUtils.isEmpty(this.defaultSenderBuilderCustomizers)) {
+			this.defaultSenderBuilderCustomizers.forEach((customizer -> customizer.customize(sender)));
+		}
 		sender.topic(resolvedTopic);
 		if (this.reactiveMessageSenderCache != null) {
 			sender.cache(this.reactiveMessageSenderCache);

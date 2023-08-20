@@ -58,10 +58,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-1");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-1");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -108,10 +108,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-2");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-2");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -155,10 +155,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-3");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-3");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		PulsarRecordMessageListener<?> messageListener = mock(PulsarRecordMessageListener.class);
@@ -213,10 +213,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-4");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-4");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -285,10 +285,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-5");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-5");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -355,10 +355,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-6");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-6");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -425,10 +425,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-7");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-7");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);
@@ -493,10 +493,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("default-error-handler-tests-8");
 					consumerBuilder.subscriptionName("default-error-handler-tests-sub-8");
-				});
+				}));
 
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMaxNumMessages(10);

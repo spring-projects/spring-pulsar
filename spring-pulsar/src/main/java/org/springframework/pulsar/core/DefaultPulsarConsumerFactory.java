@@ -48,18 +48,18 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	private final PulsarClient pulsarClient;
 
 	@Nullable
-	private final ConsumerBuilderCustomizer<T> defaultConfigCustomizer;
+	private final List<ConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
 
 	/**
 	 * Construct a consumer factory instance.
 	 * @param pulsarClient the client used to consume
-	 * @param defaultConfigCustomizer the default configuration to apply to the consumers
-	 * or null to use no default configuration
+	 * @param defaultConfigCustomizers the optional list of customizers to apply to the
+	 * created consumers or null to use no default configuration
 	 */
 	public DefaultPulsarConsumerFactory(PulsarClient pulsarClient,
-			ConsumerBuilderCustomizer<T> defaultConfigCustomizer) {
+			List<ConsumerBuilderCustomizer<T>> defaultConfigCustomizers) {
 		this.pulsarClient = pulsarClient;
-		this.defaultConfigCustomizer = defaultConfigCustomizer;
+		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
 	@Override
@@ -77,8 +77,8 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 
 		// Apply the default config customizer (preserve the topic)
-		if (this.defaultConfigCustomizer != null) {
-			this.defaultConfigCustomizer.customize(consumerBuilder);
+		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
+			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(consumerBuilder)));
 		}
 		if (topics != null) {
 			replaceTopicsOnBuilder(consumerBuilder, topics);

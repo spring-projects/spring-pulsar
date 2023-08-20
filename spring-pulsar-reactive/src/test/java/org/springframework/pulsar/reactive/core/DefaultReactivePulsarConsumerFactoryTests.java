@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
  * @author Christophe Bornet
  * @author Chris Bono
  */
-class DefaultReactiveMessageConsumerFactoryTests {
+class DefaultReactivePulsarConsumerFactoryTests {
 
 	private static final Schema<String> SCHEMA = Schema.STRING;
 

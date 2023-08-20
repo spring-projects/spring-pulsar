@@ -67,10 +67,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-012");
 					consumerBuilder.subscriptionName("dpmlct-sb-012");
-				});
+				}));
 		CountDownLatch latch = new CountDownLatch(1);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
@@ -96,10 +96,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("containerPauseResumeWaitNotify-topic");
 					consumerBuilder.subscriptionName("containerPauseResumeWaitNotify-sub");
-				});
+				}));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 		});
@@ -166,11 +166,11 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-013");
 					consumerBuilder.subscriptionName("dpmlct-sb-013");
 					consumerBuilder.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
-				});
+				}));
 		CountDownLatch latch = new CountDownLatch(5);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties
@@ -198,10 +198,10 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-014");
 					consumerBuilder.subscriptionName("dpmlct-sb-014");
-				});
+				}));
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		List<String> messages = new ArrayList<>();
 		pulsarContainerProperties.setMessageListener(
@@ -236,11 +236,11 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.maxDelayMs(5 * 1000)
 			.build();
 		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = spy(
-				new DefaultPulsarConsumerFactory<>(pulsarClient, (consumerBuilder) -> {
+				new DefaultPulsarConsumerFactory<>(pulsarClient, List.of((consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-015");
 					consumerBuilder.subscriptionName("dpmlct-sb-015");
 					consumerBuilder.negativeAckRedeliveryBackoff(redeliveryBackoff);
-				}));
+				})));
 		CountDownLatch latch = new CountDownLatch(10);
 		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
@@ -286,12 +286,12 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.deadLetterTopic("dpmlct-016-dlq-topic")
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-016");
 					consumerBuilder.subscriptionName("dpmlct-sb-016");
 					consumerBuilder.negativeAckRedeliveryDelay(1L, TimeUnit.SECONDS);
 					consumerBuilder.deadLetterPolicy(deadLetterPolicy);
-				});
+				}));
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
 		CountDownLatch latch = new CountDownLatch(6);
@@ -345,12 +345,12 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			.deadLetterTopic("dlq-topic")
 			.build();
 		DefaultPulsarConsumerFactory<Integer> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				(consumerBuilder) -> {
+				List.of((consumerBuilder) -> {
 					consumerBuilder.topic("dpmlct-017");
 					consumerBuilder.subscriptionName("dpmlct-sb-017");
 					consumerBuilder.negativeAckRedeliveryDelay(1L, TimeUnit.SECONDS);
 					consumerBuilder.deadLetterPolicy(deadLetterPolicy);
-				});
+				}));
 
 		CountDownLatch dlqLatch = new CountDownLatch(1);
 		CountDownLatch latch = new CountDownLatch(6);
