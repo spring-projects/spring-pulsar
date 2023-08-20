@@ -216,9 +216,10 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 
 		@Test
 		void multipleConfigCustomizers() throws Exception {
-			try (var ignored = new DefaultPulsarReaderFactory<>(pulsarClient, List.of(configCustomizer1)).createReader(
-					List.of("basic-pulsar-reader-topic"), MessageId.earliest, Schema.STRING,
-					List.of(createReaderCustomizer))) {
+			try (var ignored = new DefaultPulsarReaderFactory<>(pulsarClient,
+					List.of(configCustomizer2, configCustomizer1))
+				.createReader(List.of("basic-pulsar-reader-topic"), MessageId.earliest, Schema.STRING,
+						List.of(createReaderCustomizer))) {
 				InOrder inOrder = inOrder(configCustomizer1, configCustomizer2, createReaderCustomizer);
 				inOrder.verify(configCustomizer2).customize(any(ReaderBuilder.class));
 				inOrder.verify(configCustomizer1).customize(any(ReaderBuilder.class));
