@@ -23,18 +23,16 @@ import java.util.Objects;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
-import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageSenderSpec;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
-import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.TopicResolver;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -50,54 +48,45 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 
 	private final ReactivePulsarClient reactivePulsarClient;
 
-	private final ReactiveMessageSenderSpec reactiveMessageSenderSpec;
+	private final TopicResolver topicResolver;
 
 	@Nullable
 	private final ReactiveMessageSenderCache reactiveMessageSenderCache;
 
 	@Nullable
-	private final List<ReactiveMessageSenderBuilderCustomizer<T>> defaultSenderBuilderCustomizers;
+	private String defaultTopic;
 
-	private TopicResolver topicResolver;
+	@Nullable
+	private final List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
 
-	/**
-	 * Construct an instance.
-	 * @param pulsarClient the pulsar client to adapt into a reactive client
-	 * @param reactiveMessageSenderSpec spec that defines the initial settings on the
-	 * created senders
-	 * @param reactiveMessageSenderCache cache used to cache created senders
-	 * @param defaultSenderBuilderCustomizers optional list of sender builder customizers
-	 * to apply to the created senders
-	 */
-	public DefaultReactivePulsarSenderFactory(PulsarClient pulsarClient,
-			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache,
-			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultSenderBuilderCustomizers) {
-		this(AdaptedReactivePulsarClientFactory.create(pulsarClient), reactiveMessageSenderSpec,
-				reactiveMessageSenderCache, defaultSenderBuilderCustomizers, new DefaultTopicResolver());
+	private DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient, TopicResolver topicResolver,
+			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache, @Nullable String defaultTopic,
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers) {
+		this.reactivePulsarClient = reactivePulsarClient;
+		this.topicResolver = topicResolver;
+		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
+		this.defaultTopic = defaultTopic;
+		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
 	/**
-	 * Construct an instance.
-	 * @param reactivePulsarClient the reactive client to use
-	 * @param reactiveMessageSenderSpec spec that defines the initial settings on the
-	 * created senders
-	 * @param reactiveMessageSenderCache cache used to cache created senders
-	 * @param defaultSenderBuilderCustomizers optional list of sender builder customizers
-	 * to apply to the created senders
-	 * @param topicResolver the topic resolver to use
+	 * Create a builder that uses the specified Reactive pulsar client.
+	 * @param reactivePulsarClient the reactive client
+	 * @return the newly created builder instance
+	 * @param <X> the reactive sender type
 	 */
-	public DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient,
-			@Nullable ReactiveMessageSenderSpec reactiveMessageSenderSpec,
-			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache,
-			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultSenderBuilderCustomizers,
-			TopicResolver topicResolver) {
-		this.reactivePulsarClient = reactivePulsarClient;
-		this.reactiveMessageSenderSpec = new ImmutableReactiveMessageSenderSpec(
-				reactiveMessageSenderSpec != null ? reactiveMessageSenderSpec : new MutableReactiveMessageSenderSpec());
-		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
-		this.topicResolver = topicResolver;
-		this.defaultSenderBuilderCustomizers = defaultSenderBuilderCustomizers;
+	public static <X> Builder<X> builderFor(ReactivePulsarClient reactivePulsarClient) {
+		return new Builder<>(reactivePulsarClient);
+	}
+
+	/**
+	 * Create a builder that adapts the specified pulsar client.
+	 * @param pulsarClient the Pulsar client to adapt into a Reactive client.
+	 * @return the newly created builder instance
+	 * @param <T> the reactive sender type
+	 */
+	public static <T> Builder<T> builderFor(PulsarClient pulsarClient) {
+		return new Builder<>(AdaptedReactivePulsarClientFactory.create(pulsarClient));
 	}
 
 	@Override
@@ -121,34 +110,123 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolvedTopic = this.topicResolver
-			.resolveTopic(topic, () -> getReactiveMessageSenderSpec().getTopicName())
-			.orElseThrow();
+		String resolvedTopic = this.topicResolver.resolveTopic(topic, () -> getDefaultTopic()).orElseThrow();
 		this.logger.trace(() -> "Creating reactive message sender for '%s' topic".formatted(resolvedTopic));
 
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
-		sender.applySpec(this.reactiveMessageSenderSpec);
 
-		// Apply the default config customizer (preserve the topic)
-		if (!CollectionUtils.isEmpty(this.defaultSenderBuilderCustomizers)) {
-			this.defaultSenderBuilderCustomizers.forEach((customizer -> customizer.customize(sender)));
+		// Apply the default customizers (preserve the topic)
+		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
+			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(sender)));
 		}
 		sender.topic(resolvedTopic);
+
 		if (this.reactiveMessageSenderCache != null) {
 			sender.cache(this.reactiveMessageSenderCache);
 		}
+
+		// Apply the user specified customizers (preserve the topic)
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(sender));
 		}
-		// make sure the customizer do not override the topic
 		sender.topic(resolvedTopic);
 
 		return sender.build();
 	}
 
 	@Override
-	public ReactiveMessageSenderSpec getReactiveMessageSenderSpec() {
-		return this.reactiveMessageSenderSpec;
+	public String getDefaultTopic() {
+		return this.defaultTopic;
+	}
+
+	/**
+	 * Builder for {@link DefaultReactivePulsarSenderFactory}.
+	 *
+	 * @param <T> the reactive sender type
+	 */
+	public static class Builder<T> {
+
+		private final ReactivePulsarClient reactivePulsarClient;
+
+		private TopicResolver topicResolver = new DefaultTopicResolver();
+
+		@Nullable
+		private ReactiveMessageSenderCache messageSenderCache;
+
+		@Nullable
+		private String defaultTopic;
+
+		@Nullable
+		private List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
+
+		private Builder(ReactivePulsarClient reactivePulsarClient) {
+			Assert.notNull(reactivePulsarClient, "Reactive client is required");
+			this.reactivePulsarClient = reactivePulsarClient;
+		}
+
+		/**
+		 * Provide the topic resolver to use.
+		 * @param topicResolver the topic resolver to use
+		 * @return this same builder instance
+		 */
+		public Builder<T> withTopicResolver(TopicResolver topicResolver) {
+			this.topicResolver = topicResolver;
+			return this;
+		}
+
+		/**
+		 * Provide the message sender cache to use.
+		 * @param messageSenderCache the message sender cache to use
+		 * @return this same builder instance
+		 */
+		public Builder<T> withMessageSenderCache(ReactiveMessageSenderCache messageSenderCache) {
+			this.messageSenderCache = messageSenderCache;
+			return this;
+		}
+
+		/**
+		 * Provide the default topic to use when one is not specified.
+		 * @param defaultTopic the default topic to use
+		 * @return this same builder instance
+		 */
+		public Builder<T> withDefaultTopic(String defaultTopic) {
+			this.defaultTopic = defaultTopic;
+			return this;
+		}
+
+		/**
+		 * Provide a customizer to apply to the sender builder.
+		 * @param customizer the customizer to apply to the builder before creating
+		 * senders
+		 * @return this same builder instance
+		 */
+		public Builder<T> withDefaultConfigCustomizer(ReactiveMessageSenderBuilderCustomizer<T> customizer) {
+			this.defaultConfigCustomizers = List.of(customizer);
+			return this;
+		}
+
+		/**
+		 * Provide an optional list of sender builder customizers to apply to the builder
+		 * before creating the senders.
+		 * @param customizers optional list of sender builder customizers to apply to the
+		 * builder before creating the senders.
+		 * @return this same builder instance
+		 */
+		public Builder<T> withDefaultConfigCustomizers(List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
+			this.defaultConfigCustomizers = customizers;
+			return this;
+		}
+
+		/**
+		 * Construct the sender factory using the specified settings.
+		 * @return pulsar sender factory
+		 */
+		public DefaultReactivePulsarSenderFactory<T> build() {
+			Assert.notNull(this.topicResolver, "Topic resolver is required");
+			return new DefaultReactivePulsarSenderFactory<>(this.reactivePulsarClient, this.topicResolver,
+					this.messageSenderCache, this.defaultTopic, this.defaultConfigCustomizers);
+		}
+
 	}
 
 }

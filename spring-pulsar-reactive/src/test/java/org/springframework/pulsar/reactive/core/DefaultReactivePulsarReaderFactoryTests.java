@@ -19,11 +19,11 @@ package org.springframework.pulsar.reactive.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageReader;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -41,10 +41,9 @@ class DefaultReactivePulsarReaderFactoryTests {
 
 	@Test
 	void createReader() {
-		MutableReactiveMessageReaderSpec spec = new MutableReactiveMessageReaderSpec();
-		spec.setReaderName("test-reader");
 		DefaultReactivePulsarReaderFactory<String> readerFactory = new DefaultReactivePulsarReaderFactory<>(
-				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), spec);
+				AdaptedReactivePulsarClientFactory.create((PulsarClient) null),
+				List.of((builder) -> builder.readerName("test-reader")));
 
 		ReactiveMessageReader<String> reader = readerFactory.createReader(schema);
 
@@ -55,10 +54,9 @@ class DefaultReactivePulsarReaderFactoryTests {
 
 	@Test
 	void createReaderWithCustomizer() {
-		MutableReactiveMessageReaderSpec spec = new MutableReactiveMessageReaderSpec();
-		spec.setReaderName("test-reader");
 		DefaultReactivePulsarReaderFactory<String> readerFactory = new DefaultReactivePulsarReaderFactory<>(
-				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), spec);
+				AdaptedReactivePulsarClientFactory.create((PulsarClient) null),
+				List.of((builder) -> builder.readerName("test-reader")));
 
 		ReactiveMessageReader<String> reader = readerFactory.createReader(schema,
 				Collections.singletonList(builder -> builder.readerName("new-test-reader")));

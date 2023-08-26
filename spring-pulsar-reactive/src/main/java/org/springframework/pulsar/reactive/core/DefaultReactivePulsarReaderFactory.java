@@ -22,9 +22,9 @@ import java.util.List;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageReader;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderBuilder;
-import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -32,17 +32,25 @@ import org.springframework.util.CollectionUtils;
  *
  * @param <T> underlying payload type for the reactive reader.
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public class DefaultReactivePulsarReaderFactory<T> implements ReactivePulsarReaderFactory<T> {
 
-	private final ReactiveMessageReaderSpec readerSpec;
-
 	private final ReactivePulsarClient reactivePulsarClient;
 
+	@Nullable
+	private final List<ReactiveMessageReaderBuilderCustomizer<T>> defaultConfigCustomizers;
+
+	/**
+	 * Construct an instance.
+	 * @param reactivePulsarClient the reactive client
+	 * @param defaultConfigCustomizers the optional list of customizers that defines the
+	 * default configuration for each created reader.
+	 */
 	public DefaultReactivePulsarReaderFactory(ReactivePulsarClient reactivePulsarClient,
-			ReactiveMessageReaderSpec readerSpec) {
+			List<ReactiveMessageReaderBuilderCustomizer<T>> defaultConfigCustomizers) {
 		this.reactivePulsarClient = reactivePulsarClient;
-		this.readerSpec = readerSpec;
+		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
 	@Override
@@ -54,12 +62,19 @@ public class DefaultReactivePulsarReaderFactory<T> implements ReactivePulsarRead
 	public ReactiveMessageReader<T> createReader(Schema<T> schema,
 			List<ReactiveMessageReaderBuilderCustomizer<T>> customizers) {
 
-		ReactiveMessageReaderBuilder<T> reader = this.reactivePulsarClient.messageReader(schema)
-			.applySpec(this.readerSpec);
-		if (!CollectionUtils.isEmpty(customizers)) {
-			customizers.forEach((c) -> c.customize(reader));
+		ReactiveMessageReaderBuilder<T> readerBuilder = this.reactivePulsarClient.messageReader(schema);
+
+		// Apply the default customizers
+		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
+			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(readerBuilder)));
 		}
-		return reader.build();
+
+		// Apply the user specified customizers
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers.forEach((c) -> c.customize(readerBuilder));
+		}
+
+		return readerBuilder.build();
 	}
 
 }
