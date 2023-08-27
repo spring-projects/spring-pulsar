@@ -157,7 +157,7 @@ public class ReactivePulsarTemplate<T> implements ReactivePulsarOperations<T> {
 	}
 
 	private String resolveTopic(@Nullable String topic, @Nullable Object message) {
-		String defaultTopic = this.reactiveMessageSenderFactory.getReactiveMessageSenderSpec().getTopicName();
+		String defaultTopic = this.reactiveMessageSenderFactory.getDefaultTopic();
 		return this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow();
 	}
 

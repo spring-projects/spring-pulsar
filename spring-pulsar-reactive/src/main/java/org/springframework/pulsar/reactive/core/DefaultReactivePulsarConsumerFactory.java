@@ -20,13 +20,11 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.reactive.client.api.ImmutableReactiveMessageConsumerSpec;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerBuilder;
-import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -34,18 +32,25 @@ import org.springframework.util.CollectionUtils;
  *
  * @param <T> underlying payload type for the reactive consumer.
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarConsumerFactory<T> {
 
-	private final ReactiveMessageConsumerSpec consumerSpec;
-
 	private final ReactivePulsarClient reactivePulsarClient;
 
+	@Nullable
+	private final List<ReactiveMessageConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
+
+	/**
+	 * Construct an instance.
+	 * @param reactivePulsarClient the reactive client
+	 * @param defaultConfigCustomizers the optional list of customizers that defines the
+	 * default configuration for each created consumer.
+	 */
 	public DefaultReactivePulsarConsumerFactory(ReactivePulsarClient reactivePulsarClient,
-			ReactiveMessageConsumerSpec consumerSpec) {
-		this.consumerSpec = new ImmutableReactiveMessageConsumerSpec(
-				consumerSpec != null ? consumerSpec : new MutableReactiveMessageConsumerSpec());
+			List<ReactiveMessageConsumerBuilderCustomizer<T>> defaultConfigCustomizers) {
 		this.reactivePulsarClient = reactivePulsarClient;
+		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
 	@Override
@@ -57,14 +62,19 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 	public ReactiveMessageConsumer<T> createConsumer(Schema<T> schema,
 			List<ReactiveMessageConsumerBuilderCustomizer<T>> customizers) {
 
-		ReactiveMessageConsumerBuilder<T> consumer = this.reactivePulsarClient.messageConsumer(schema);
+		ReactiveMessageConsumerBuilder<T> consumerBuilder = this.reactivePulsarClient.messageConsumer(schema);
 
-		consumer.applySpec(this.consumerSpec);
-		if (!CollectionUtils.isEmpty(customizers)) {
-			customizers.forEach((c) -> c.customize(consumer));
+		// Apply the default customizers
+		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
+			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(consumerBuilder)));
 		}
 
-		return consumer.build();
+		// Apply the user specified customizers
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers.forEach((c) -> c.customize(consumerBuilder));
+		}
+
+		return consumerBuilder.build();
 	}
 
 }

@@ -19,11 +19,11 @@ package org.springframework.pulsar.reactive.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -44,7 +44,7 @@ class DefaultReactivePulsarConsumerFactoryTests {
 	@Nested
 	class FactoryCreatedWithoutSpec {
 
-		private org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory<String> consumerFactory = new org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory<>(
+		private DefaultReactivePulsarConsumerFactory<String> consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
 				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
 
 		@Test
@@ -76,10 +76,9 @@ class DefaultReactivePulsarConsumerFactoryTests {
 
 		@BeforeEach
 		void createConsumerFactory() {
-			MutableReactiveMessageConsumerSpec spec = new MutableReactiveMessageConsumerSpec();
-			spec.setConsumerName("test-consumer");
 			consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
-					AdaptedReactivePulsarClientFactory.create((PulsarClient) null), spec);
+					AdaptedReactivePulsarClientFactory.create((PulsarClient) null),
+					List.of((builder) -> builder.consumerName("test-consumer")));
 		}
 
 		@Test

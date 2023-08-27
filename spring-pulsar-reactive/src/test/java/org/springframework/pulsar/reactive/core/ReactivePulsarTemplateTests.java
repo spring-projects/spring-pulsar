@@ -33,7 +33,6 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.MessageSpec;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -178,12 +177,9 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 	@ValueSource(booleans = { true, false })
 	void sendMessageWithTopicInferredByTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
 		String topic = "ptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
-		MutableReactiveMessageSenderSpec spec = new MutableReactiveMessageSenderSpec();
-		if (producerFactoryHasDefaultTopic) {
-			spec.setTopicName("fake-topic");
-		}
-		ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client, spec, null,
-				null);
+		ReactivePulsarSenderFactory<Foo> producerFactory = DefaultReactivePulsarSenderFactory.<Foo>builderFor(client)
+			.withDefaultTopic(producerFactoryHasDefaultTopic ? "fake-topic" : null)
+			.build();
 		// Topic mappings allows not specifying the topic when sending (nor having
 		// default on producer)
 		DefaultTopicResolver topicResolver = new DefaultTopicResolver();
@@ -198,24 +194,18 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@Test
 	void sendMessageWithoutTopicFails() {
-		ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
-				new MutableReactiveMessageSenderSpec(), null, null);
-		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
+		ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(
+				DefaultReactivePulsarSenderFactory.<String>builderFor(client).build());
 		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message").subscribe())
 			.withMessage("Topic must be specified when no default topic is configured");
 	}
 
 	private <T> Message<T> sendAndConsume(Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic,
 			Schema<T> schema, @Nullable T expectedValue, Boolean withDefaultTopic) throws Exception {
-		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
-		if (withDefaultTopic) {
-			senderSpec.setTopicName(topic);
-		}
-		ReactivePulsarSenderFactory<T> senderFactory = new DefaultReactivePulsarSenderFactory<>(client, senderSpec,
-				null, null);
-
+		ReactivePulsarSenderFactory<T> senderFactory = DefaultReactivePulsarSenderFactory.<T>builderFor(client)
+			.withDefaultTopic(withDefaultTopic ? topic : null)
+			.build();
 		ReactivePulsarTemplate<T> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
-
 		return sendAndConsume(pulsarTemplate, sendFunction, topic, schema, expectedValue);
 	}
 
@@ -258,10 +248,10 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		@Test
 		void withSchemaInferredByTypeMappings() throws Exception {
 			String topic = "ptt-schemaInferred-topic";
-			MutableReactiveMessageSenderSpec spec = new MutableReactiveMessageSenderSpec();
-			spec.setTopicName(topic);
-			ReactivePulsarSenderFactory<Foo> producerFactory = new DefaultReactivePulsarSenderFactory<>(client, spec,
-					null, null);
+			ReactivePulsarSenderFactory<Foo> producerFactory = DefaultReactivePulsarSenderFactory
+				.<Foo>builderFor(client)
+				.withDefaultTopic(topic)
+				.build();
 			// Custom schema resolver allows not specifying the schema when sending
 			DefaultSchemaResolver schemaResolver = new DefaultSchemaResolver();
 			schemaResolver.addCustomSchemaMapping(Foo.class, Schema.JSON(Foo.class));
@@ -280,10 +270,10 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void sendNullWithDefaultTopicFails() {
-			MutableReactiveMessageSenderSpec spec = new MutableReactiveMessageSenderSpec();
-			spec.setTopicName("sendNullWithDefaultTopicFails");
-			ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client, spec,
-					null, null);
+			ReactivePulsarSenderFactory<String> senderFactory = DefaultReactivePulsarSenderFactory
+				.<String>builderFor(client)
+				.withDefaultConfigCustomizer((builder) -> builder.topic("sendNullWithDefaultTopicFails"))
+				.build();
 			ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> pulsarTemplate.send((String) null, Schema.STRING).subscribe())
@@ -292,8 +282,9 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void sendNullWithoutSchemaFails() {
-			ReactivePulsarSenderFactory<String> senderFactory = new DefaultReactivePulsarSenderFactory<>(client,
-					new MutableReactiveMessageSenderSpec(), null, null);
+			ReactivePulsarSenderFactory<String> senderFactory = DefaultReactivePulsarSenderFactory
+				.<String>builderFor(client)
+				.build();
 			ReactivePulsarTemplate<String> pulsarTemplate = new ReactivePulsarTemplate<>(senderFactory);
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", (String) null, null).subscribe())

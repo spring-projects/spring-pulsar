@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
-import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
 
 import org.springframework.lang.Nullable;
 
@@ -64,9 +63,10 @@ public interface ReactivePulsarSenderFactory<T> {
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers);
 
 	/**
-	 * Return the ReactiveMessageSenderSpec to use when creating reactive senders.
-	 * @return the ReactiveMessageSenderSpec
+	 * Get the default topic to use for all created senders.
+	 * @return the default topic to use for all created senders or null if no default set.
 	 */
-	ReactiveMessageSenderSpec getReactiveMessageSenderSpec();
+	@Nullable
+	String getDefaultTopic();
 
 }

@@ -28,18 +28,21 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.pulsar.client.api.CompressionType;
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageSenderSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderSpec;
+import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.ThrowingConsumer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
+
+import org.springframework.pulsar.core.TopicResolver;
 
 /**
  * Unit tests for {@link DefaultReactivePulsarSenderFactory}.
@@ -58,6 +61,15 @@ class DefaultReactivePulsarSenderFactoryTests {
 		assertThat(sender).extracting("producerCache").isSameAs(cache);
 	}
 
+	@Test
+	void createSenderWithTopicResolver() {
+		var customTopicResolver = mock(TopicResolver.class);
+		var senderFactory = DefaultReactivePulsarSenderFactory.<String>builderFor(mock(ReactivePulsarClient.class))
+			.withTopicResolver(customTopicResolver)
+			.build();
+		assertThat(senderFactory).hasFieldOrPropertyWithValue("topicResolver", customTopicResolver);
+	}
+
 	private void assertThatSenderHasTopic(ReactiveMessageSender<String> sender, String expectedTopic) {
 		assertThatSenderSpecSatisfies(sender,
 				(senderSpec) -> assertThat(senderSpec).extracting(ReactiveMessageSenderSpec::getTopicName)
@@ -71,17 +83,19 @@ class DefaultReactivePulsarSenderFactoryTests {
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactory() {
-		return new DefaultReactivePulsarSenderFactory<>(null, null, null, null);
+		return DefaultReactivePulsarSenderFactory.<String>builderFor(mock(PulsarClient.class)).build();
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactoryWithDefaultTopic(String defaultTopic) {
-		MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
-		senderSpec.setTopicName(defaultTopic);
-		return new DefaultReactivePulsarSenderFactory<>(null, senderSpec, null, null);
+		return DefaultReactivePulsarSenderFactory.<String>builderFor(mock(PulsarClient.class))
+			.withDefaultTopic(defaultTopic)
+			.build();
 	}
 
 	private ReactivePulsarSenderFactory<String> newSenderFactoryWithCache(ReactiveMessageSenderCache cache) {
-		return new DefaultReactivePulsarSenderFactory<>(null, null, cache, null);
+		return DefaultReactivePulsarSenderFactory.<String>builderFor(mock(PulsarClient.class))
+			.withMessageSenderCache(cache)
+			.build();
 	}
 
 	@Nested
@@ -189,8 +203,9 @@ class DefaultReactivePulsarSenderFactoryTests {
 
 		private ReactivePulsarSenderFactory<String> newSenderFactoryWithCustomizers(
 				List<ReactiveMessageSenderBuilderCustomizer<String>> customizers) {
-			MutableReactiveMessageSenderSpec senderSpec = new MutableReactiveMessageSenderSpec();
-			return new DefaultReactivePulsarSenderFactory<>(null, senderSpec, null, customizers);
+			return DefaultReactivePulsarSenderFactory.<String>builderFor(mock(PulsarClient.class))
+				.withDefaultConfigCustomizers(customizers)
+				.build();
 		}
 
 	}

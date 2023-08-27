@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -44,7 +45,6 @@ import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.api.MessageResult;
-import org.apache.pulsar.reactive.client.api.MutableReactiveMessageConsumerSpec;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -124,7 +124,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@Bean
 		public ReactivePulsarConsumerFactory<String> pulsarConsumerFactory(ReactivePulsarClient pulsarClient) {
-			return new DefaultReactivePulsarConsumerFactory<>(pulsarClient, new MutableReactiveMessageConsumerSpec());
+			return new DefaultReactivePulsarConsumerFactory<>(pulsarClient, Collections.emptyList());
 		}
 
 		@Bean
