@@ -46,7 +46,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory.Builder;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.util.function.ThrowingConsumer;
 

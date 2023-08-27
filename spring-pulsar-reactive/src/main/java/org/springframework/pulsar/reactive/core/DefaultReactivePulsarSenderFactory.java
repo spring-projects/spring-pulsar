@@ -38,11 +38,11 @@ import org.springframework.util.CollectionUtils;
 /**
  * Default implementation of {@link ReactivePulsarSenderFactory}.
  *
- * @param <T> reactive sender type.
+ * @param <T> underlying payload type for the reactive sender.
  * @author Christophe Bornet
  * @author Chris Bono
  */
-public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSenderFactory<T> {
+public final class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSenderFactory<T> {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -72,18 +72,18 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	/**
 	 * Create a builder that uses the specified Reactive pulsar client.
 	 * @param reactivePulsarClient the reactive client
+	 * @param <T> underlying payload type for the reactive sender
 	 * @return the newly created builder instance
-	 * @param <X> the reactive sender type
 	 */
-	public static <X> Builder<X> builderFor(ReactivePulsarClient reactivePulsarClient) {
+	public static <T> Builder<T> builderFor(ReactivePulsarClient reactivePulsarClient) {
 		return new Builder<>(reactivePulsarClient);
 	}
 
 	/**
 	 * Create a builder that adapts the specified pulsar client.
-	 * @param pulsarClient the Pulsar client to adapt into a Reactive client.
+	 * @param pulsarClient the Pulsar client to adapt into a Reactive client
+	 * @param <T> underlying payload type for the reactive sender
 	 * @return the newly created builder instance
-	 * @param <T> the reactive sender type
 	 */
 	public static <T> Builder<T> builderFor(PulsarClient pulsarClient) {
 		return new Builder<>(AdaptedReactivePulsarClientFactory.create(pulsarClient));
@@ -144,7 +144,7 @@ public class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSend
 	 *
 	 * @param <T> the reactive sender type
 	 */
-	public static class Builder<T> {
+	public static final class Builder<T> {
 
 		private final ReactivePulsarClient reactivePulsarClient;
 
