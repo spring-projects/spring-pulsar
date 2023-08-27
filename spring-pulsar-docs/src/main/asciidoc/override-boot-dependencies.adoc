@@ -13,7 +13,7 @@ In the following example, snapshot version of the Pulsar clients and Spring Puls
 [source, groovy, subs="+attributes", role="secondary"]
 .Gradle
 ----
-ext['pulsar.version'] = '3.0.1-SNAPSHOT'
+ext['pulsar.version'] = '3.1.1-SNAPSHOT'
 ext['pulsar-reactive.version'] = '0.3.1-SNAPSHOT'
 ext['spring-pulsar.version'] = '1.0.1-SNAPSHOT'
 
@@ -26,7 +26,7 @@ dependencies {
 .Maven
 ----
 <properties>
-    <pulsar.version>3.0.1-SNAPSHOT</pulsar.version>
+    <pulsar.version>3.1.1-SNAPSHOT</pulsar.version>
     <pulsar-reactive.version>0.3.1-SNAPSHOT</pulsar-reactive.version>
     <spring-pulsar.version>1.0.1-SNAPSHOT</spring-pulsar.version>
 </properties>
