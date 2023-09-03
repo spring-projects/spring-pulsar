@@ -36,7 +36,7 @@ jobs:
         name: Check for open issues
         run: |
           echo "TODO actually check for open issues"
-          echo "::set-output name=is_open_issues::false"
+          echo "is_open_issues=false" >> $GITHUB_OUTPUT
 
       - id: validate-release-state
         name: Validate release state
