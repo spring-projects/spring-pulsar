@@ -6,14 +6,14 @@ plugins {
 
 description = 'Spring Pulsar Sample Applications (Custom Routing)'
 
-repositories {
+repositories { 
 	mavenCentral()
 	maven { url 'https://repo.spring.io/milestone' }
 	maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
-	implementation "org.springframework.pulsar:spring-pulsar-spring-boot-starter:${springPulsarStarterVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'

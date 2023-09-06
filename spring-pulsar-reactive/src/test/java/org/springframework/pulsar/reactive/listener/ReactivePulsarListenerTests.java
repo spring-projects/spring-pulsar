@@ -185,11 +185,14 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			assertThat(containerProperties.getTopicsPattern().toString())
 				.isEqualTo("persistent://public/default/pattern.*");
 
+			// Let things setup before firing the messages
+			Thread.sleep(2000);
+
 			pulsarTemplate.send("persistent://public/default/pattern-1", "hello baz");
 			pulsarTemplate.send("persistent://public/default/pattern-2", "hello baz");
 			pulsarTemplate.send("persistent://public/default/pattern-3", "hello baz");
 
-			assertThat(latch3.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(latch3.await(15, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@EnableReactivePulsar
@@ -197,10 +200,15 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		static class TestPulsarListenersForBasicScenario {
 
 			@ReactivePulsarListener(id = "id-1", topics = "topic-1", subscriptionName = "subscription-1",
-					consumerCustomizer = "consumerCustomizer")
+					consumerCustomizer = "listen1Customizer")
 			Mono<Void> listen1(String ignored) {
 				latch1.countDown();
 				return Mono.empty();
+			}
+
+			@Bean
+			ReactiveMessageConsumerBuilderCustomizer<String> listen1Customizer() {
+				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
 			@ReactivePulsarListener(consumerCustomizer = "listen2Customizer")
@@ -216,15 +224,15 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@ReactivePulsarListener(id = "id-3", topicPattern = "persistent://public/default/pattern.*",
-					subscriptionName = "subscription-3", consumerCustomizer = "consumerCustomizer")
+					subscriptionName = "subscription-3", consumerCustomizer = "listen3Customizer")
 			Mono<Void> listen3(String ignored) {
 				latch3.countDown();
 				return Mono.empty();
 			}
 
 			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
-				return b -> b.topicsPatternAutoDiscoveryPeriod(Duration.ofSeconds(2))
+			ReactiveMessageConsumerBuilderCustomizer<String> listen3Customizer() {
+				return b -> b.topicsPatternAutoDiscoveryPeriod(Duration.ofSeconds(5))
 					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 

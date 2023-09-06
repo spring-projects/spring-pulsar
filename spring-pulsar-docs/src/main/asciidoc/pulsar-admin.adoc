@@ -10,15 +10,15 @@ The administration implements an interface called `PulsarAdminOperations` and pr
 When you use the Pulsar Spring Boot starter, you get the `PulsarAdministration` auto-configured.
 
 By default, the application tries to connect to a local Pulsar instance at `\http://localhost:8080`.
-This can be adjusted by setting the `spring.pulsar.administration.service-url` property to a different value in the form `(http|https)://<host>:<port>`.
+This can be adjusted by setting the `spring.pulsar.admin.service-url` property to a different value in the form `(http|https)://<host>:<port>`.
 
 There are many application properties available to configure the client.
-See the {spring-boot-pulsar-config-props}[`spring.pulsar.administration.*`] application properties.
+See the {spring-boot-pulsar-config-props}[`spring.pulsar.admin.*`] application properties.
 
 [[pulsar-admin-authentication]]
 === Authentication
 When accessing a Pulsar cluster that requires authentication, the admin client requires the same security configuration as the regular Pulsar client.
-You can use the aforementioned <<pulsar.adoc#client-authentication,security configuration>> by replacing `spring.pulsar.client` with `spring.pulsar.administration`.
+You can use the aforementioned <<pulsar.adoc#client-authentication,security configuration>> by replacing `spring.pulsar.client` with `spring.pulsar.admin`.
 
 [[pulsar-auto-topic-creation]]
 == Automatic Topic Creation

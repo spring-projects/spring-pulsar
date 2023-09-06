@@ -250,7 +250,7 @@ Spring Cloud Stream binder for Apache Pulsar comes with an out-of-the-box provis
 When running an application, if the necessary topics are absent, Pulsar will create the topics for you.
 However, this is a basic non-partitioned topic, and if you want advanced features like creating a partitioned topic, you can rely on the topic provisioner in the binder.
 Pulsar topic provisioner uses `PulsarAdministration` from the framework, which uses the `PulsarAdminBuilder.`
-For this reason, you need to set the `spring.pulsar.administration.service-url` property unless you are running Pulsar on the default server and port.
+For this reason, you need to set the `spring.pulsar.admin.service-url` property unless you are running Pulsar on the default server and port.
 
 === Specifying partition count when creating the topic
 
