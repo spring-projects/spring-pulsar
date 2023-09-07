@@ -14,9 +14,9 @@ Spring Boot applications need only the `spring-pulsar-reactive-spring-boot-start
 ----
 <dependencies>
     <dependency>
-        <groupId>org.springframework.pulsar</groupId>
-        <artifactId>spring-pulsar-reactive-spring-boot-starter</artifactId>
-        <version>{spring-pulsar-starter-version}</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-pulsar-reactive</artifactId>
+        <version>{spring-boot-version}</version>
     </dependency>
 </dependencies>
 ----
@@ -24,7 +24,7 @@ Spring Boot applications need only the `spring-pulsar-reactive-spring-boot-start
 .Gradle
 ----
 dependencies {
-    implementation 'org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter:{spring-pulsar-starter-version}'
+    implementation 'org.springframework.boot:spring-boot-starter-pulsar-reactive:{spring-boot-version}'
 }
 ----
 

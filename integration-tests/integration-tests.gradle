@@ -16,10 +16,10 @@ dependencies {
 	intTestImplementation project(':spring-pulsar-test')
 	intTestRuntimeOnly 'ch.qos.logback:logback-classic'
 	intTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	intTestImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-	intTestImplementation "org.springframework.boot:spring-boot-starter-amqp:$springBootVersion"
-	intTestImplementation "org.springframework.pulsar:spring-pulsar-spring-boot-starter:$springPulsarStarterVersion"
-	intTestImplementation "org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter:$springPulsarStarterVersion"
+	intTestImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+	intTestImplementation "org.springframework.boot:spring-boot-starter-amqp:${springBootVersion}"
+	intTestImplementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
+	intTestImplementation "org.springframework.boot:spring-boot-starter-pulsar-reactive:${springBootVersion}"
 	intTestImplementation 'org.testcontainers:junit-jupiter'
 	intTestImplementation 'org.testcontainers:pulsar'
 	intTestImplementation 'org.testcontainers:rabbitmq'
@@ -41,8 +41,8 @@ task downloadRabbitConnector {
 		try {
 			download.run {
 				println "Downloading Rabbit connector to 'src/intTest/resources/connectors/' (one time only if not already downloaded)..."
-				src 'https://archive.apache.org/dist/pulsar/pulsar-2.10.2/connectors/pulsar-io-rabbitmq-2.10.2.nar'
-				dest "$buildDir/../src/intTest/resources/connectors/pulsar-io-rabbitmq-2.10.2.nar"
+				src 'https://archive.apache.org/dist/pulsar/pulsar-3.1.0/connectors/pulsar-io-rabbitmq-3.1.0.nar'
+				dest "$buildDir/../src/intTest/resources/connectors/pulsar-io-rabbitmq-3.1.0.nar"
 				overwrite false
 			}
 		} catch (Exception ex) {

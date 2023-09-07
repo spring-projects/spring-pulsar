@@ -53,6 +53,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
+import org.springframework.boot.autoconfigure.pulsar.PulsarAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -123,7 +124,7 @@ class PulsarFunctionAdministrationIntegrationTests {
 		app.setWebApplicationType(WebApplicationType.NONE);
 		try (ConfigurableApplicationContext context = app.run(
 				"--spring.pulsar.client.service-url=" + PULSAR_CONTAINER.getPulsarBrokerUrl(),
-				"--spring.pulsar.administration.service-url=" + PULSAR_CONTAINER.getHttpServiceUrl(),
+				"--spring.pulsar.admin.service-url=" + PULSAR_CONTAINER.getHttpServiceUrl(),
 				"--spring.rabbitmq.host=" + RABBITMQ_CONTAINER.getHost(),
 				"--spring.rabbitmq.port=" + RABBITMQ_CONTAINER.getAmqpPort())) {
 
@@ -148,7 +149,7 @@ class PulsarFunctionAdministrationIntegrationTests {
 		app.setWebApplicationType(WebApplicationType.NONE);
 		try (ConfigurableApplicationContext ignored = app.run(
 				"--spring.pulsar.client.service-url=" + PULSAR_CONTAINER.getPulsarBrokerUrl(),
-				"--spring.pulsar.administration.service-url=" + PULSAR_CONTAINER.getHttpServiceUrl(),
+				"--spring.pulsar.admin.service-url=" + PULSAR_CONTAINER.getHttpServiceUrl(),
 				"--spring.rabbitmq.host=" + RABBITMQ_CONTAINER.getHost(),
 				"--spring.rabbitmq.port=" + RABBITMQ_CONTAINER.getAmqpPort())) {
 

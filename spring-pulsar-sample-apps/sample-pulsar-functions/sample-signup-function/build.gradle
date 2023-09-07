@@ -6,7 +6,7 @@ group = 'org.springframework.pulsar.sample'
 description = 'Sample Signup Pulsar Function'
 sourceCompatibility = '1.8'
 
-repositories {
+repositories { 
 	mavenCentral()
 }
 

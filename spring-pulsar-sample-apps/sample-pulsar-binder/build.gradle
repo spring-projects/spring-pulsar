@@ -6,15 +6,15 @@ plugins {
 
 description = 'Spring Cloud Stream Binder for Pulsar Sample Application'
 
-repositories {
+repositories { 
 	mavenCentral()
 	maven { url 'https://repo.spring.io/milestone' }
 	maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
+	implementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
 	implementation "org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:${springPulsarBinderVersion}"
-	implementation "org.springframework.pulsar:spring-pulsar-spring-boot-starter:${springPulsarStarterVersion}"
 }
 
 bootRun {

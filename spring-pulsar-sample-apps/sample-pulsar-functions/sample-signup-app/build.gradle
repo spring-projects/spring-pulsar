@@ -7,7 +7,7 @@ plugins {
 group = 'org.springframework.pulsar.sample'
 description = 'Sample Signup App (Pulsar Functions)'
 
-repositories {
+repositories { 
 	mavenCentral()
 	maven { url 'https://repo.spring.io/milestone' }
 	maven { url 'https://repo.spring.io/snapshot' }
@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
 	implementation "org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:${springPulsarBinderVersion}"
-	implementation "org.springframework.pulsar:spring-pulsar-spring-boot-starter:${springPulsarStarterVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-data-cassandra'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'

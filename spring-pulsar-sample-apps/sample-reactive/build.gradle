@@ -1,19 +1,19 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.0.8-SNAPSHOT'
+	id 'org.springframework.boot' version '3.2.0-SNAPSHOT'
 	id 'io.spring.dependency-management' version '1.1.0'
 }
 
 description = 'Reactive Spring Pulsar Sample Application'
 
-repositories {
+repositories { 
 	mavenCentral()
 	maven { url 'https://repo.spring.io/milestone' }
 	maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
-	implementation "org.springframework.pulsar:spring-pulsar-reactive-spring-boot-starter:${springPulsarStarterVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-pulsar-reactive:${springBootVersion}"
 }
 
 bootRun {
