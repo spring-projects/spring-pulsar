@@ -1,3 +1,7 @@
 spring:
   main:
     banner-mode: log
+  pulsar:
+    consumer:
+      subscription:
+        initial-position: earliest

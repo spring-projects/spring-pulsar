@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.autoconfigure;
+package org.springframework.pulsar.inttest.function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,10 +64,10 @@ import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.autoconfigure.PulsarFunctionAdministrationIntegrationTests.ContainerLoggingTestWatcher;
 import org.springframework.pulsar.function.PulsarFunctionAdministration;
 import org.springframework.pulsar.function.PulsarFunctionOperations.FunctionStopPolicy;
 import org.springframework.pulsar.function.PulsarSource;
+import org.springframework.pulsar.inttest.function.PulsarFunctionAdministrationIntegrationTests.ContainerLoggingTestWatcher;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**

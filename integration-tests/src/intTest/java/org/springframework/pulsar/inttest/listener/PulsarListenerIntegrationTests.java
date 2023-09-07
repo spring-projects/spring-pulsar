@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.autoconfigure;
+package org.springframework.pulsar.inttest.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
