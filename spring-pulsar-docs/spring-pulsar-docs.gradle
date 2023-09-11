@@ -89,7 +89,6 @@ tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 				"spring-framework-version": project.springFrameworkVersion ?: 'current',
 				"spring-cloud-stream-version": project.springCloudStreamVersion ?: 'current',
 				"spring-pulsar-version": project.version,
-				"spring-pulsar-binder-version": project.springPulsarBinderVersion ?: 'current',
 				"pulsar-client-version": project.pulsarClientVersion ?: 'current',
 				"pulsar-client-reactive-version": project.pulsarClientReactiveVersion ?: 'current',
 				"is-snapshot-version": project.version.endsWith("-SNAPSHOT")

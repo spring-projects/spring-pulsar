@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-	implementation "org.springframework.pulsar:spring-pulsar-spring-cloud-stream-binder:${springPulsarBinderVersion}"
+	implementation "org.springframework.cloud:spring-cloud-stream-binder-pulsar:${springCloudStreamVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-data-cassandra'
