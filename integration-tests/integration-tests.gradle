@@ -16,10 +16,12 @@ dependencies {
 	intTestImplementation project(':spring-pulsar-test')
 	intTestRuntimeOnly 'ch.qos.logback:logback-classic'
 	intTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	intTestImplementation 'org.awaitility:awaitility'
 	intTestImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
 	intTestImplementation "org.springframework.boot:spring-boot-starter-amqp:${springBootVersion}"
 	intTestImplementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
 	intTestImplementation "org.springframework.boot:spring-boot-starter-pulsar-reactive:${springBootVersion}"
+	intTestImplementation "org.springframework.boot:spring-boot-testcontainers:${springBootVersion}"
 	intTestImplementation 'org.testcontainers:junit-jupiter'
 	intTestImplementation 'org.testcontainers:pulsar'
 	intTestImplementation 'org.testcontainers:rabbitmq'
