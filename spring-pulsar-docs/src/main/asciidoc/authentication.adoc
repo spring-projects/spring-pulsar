@@ -1,32 +1,20 @@
 
 include::attributes.adoc[]
 
-To connect to a Pulsar cluster that requires authentication, you need to set the `authPluginClassName` and any parameters required by the authentication plugin. You can set the parameters as a single JSON-encoded string or as map of parameter names to parameter values. The following listings show both approaches:
+To connect to a Pulsar cluster that requires authentication, you need to specify which authentication plugin to use and any parameters required by the specified plugin.
+When **using Spring Boot** auto-configuration, you can set the plugin and the plugin parameters via configuration properties (in most cases).
 
-[source,yaml,indent=0,role="primary"]
-.[.small]#Map#
-----
-spring:
-  pulsar:
-    client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
-      authentication:
-        issuer-url: https://auth.server.cloud/
-        private-key: file:///Users/some-key.json
-        audience: urn:sn:acme:dev:my-instance
-----
+[NOTE]
+====
+You need to ensure that names defined under `+spring.pulsar.client.authentication.param.*+` exactly match those expected by your auth plugin (which is typically camel cased).
+Spring Boot will not attempt any kind of relaxed binding for these entries.
 
-.[.small]#JSON encoded string#
-[source,yaml,indent=0,role="secondary"]
-----
-spring:
-  pulsar:
-    client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
-      auth-params: "{\"privateKey\":\"file:///Users/some-key.json\",\"issuerUrl\":\"https://auth.server.cloud/", \"audience\":\"urn:sn:acme:dev:my-instance"}"
-----
+For example, if you want to configure the issuer url for the `AuthenticationOAuth2` auth plugin you must use `+spring.pulsar.client.authentication.param.issuerUrl+`.
+If you use other forms, such as `issuerurl` or `issuer-url`, the setting will not be applied to the plugin.
+====
 
-TIP: Using a map is the recommended approach as it is less error-prone and easier to read.
+When **not using Spring Boot** auto-configuration, you can use the `org.apache.pulsar.client.api.AuthenticationFactory` to create the authentication and then set it directly on the Pulsar client builder in a client customizer that you provide to the client factory.
+
 
 The following listings show how to configure each of the supported authentication mechanisms.
 
@@ -39,15 +27,31 @@ The following listings show how to configure each of the supported authenticatio
 spring:
   pulsar:
     client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationAthenz
       authentication:
-        tenant-domain: ...
-        tenant-service: ...
-        provider-domain: ...
-        private-key: ...
-        key-id: ...
-      enable-tls: true
-      tls-trust-certs-file: /path/to/cacert.pem
+        plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationAthenz
+        param:
+          tenantDomain: ...
+          tenantService: ...
+          providerDomain: ...
+          privateKey: ...
+          keyId: ...
+----
+NOTE: This also requires TLS encryption as described in <<pulsar.adoc#tls-encryption>>.
+====
+
+[[Token]]
+.[.underline]#Click ##here## for **Token**#
+[%collapsible]
+====
+[source, yaml]
+----
+spring:
+  pulsar:
+    client:
+      authentication:
+        plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationToken
+        param:
+          token: some-token-goes-here
 ----
 ====
 
@@ -60,10 +64,11 @@ spring:
 spring:
   pulsar:
     client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationBasic
       authentication:
-        user-id: ...
-        password: ...
+        plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationBasic
+        param:
+          userId: ...
+          password: ...
 ----
 ====
 
@@ -76,12 +81,13 @@ spring:
 spring:
   pulsar:
     client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationFactoryOAuth2
       authentication:
-        issuer-url: ...
-        private-key: ...
-        audience: ...
-        scope: ...
+        plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationFactoryOAuth2
+        param:
+          issuerUrl: ...
+          privateKey: ...
+          audience: ...
+          scope: ...
 ----
 ====
 
@@ -94,44 +100,40 @@ spring:
 spring:
   pulsar:
     client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationSasl
       authentication:
-        sasl-jaas-client-section-name: ...
-        server-type: ...
+        plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationSasl
+        param:
+          saslJaasClientSectionName: ...
+          serverType: ...
 ----
 ====
 
-[[Tls]]
-.[.underline]#Click ##here## for **Tls**#
+[[mTlS-pem]]
+.[.underline]#Click ##here## for **mTLS (PEM)**#
 [%collapsible]
 ====
-[source, yaml]
+NOTE: Because this option requires TLS encryption, which already requires you to <<pulsar.adoc#tls-encryption,provide a client builder customizer>>, it is recommended to simply add the authentication directly on the client builder in your provided TLS customizer.
+You can use the `org.apache.pulsar.client.api.AuthenticationFactory` to help create the authentication object as follows:
+[source,java]
 ----
-spring:
-  pulsar:
-    client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationTls
-      authentication:
-        tls-cert-file: /path/to/my-role.cert.pem
-        tls-key-file: /path/to/my-role.key-pk8.pem
-      enable-tls: true
-      tls-trust-certs-file: /path/to/cacert.pem
+Authentication auth = AuthenticationFactory.TLS("/path/to/my-role.cert.pem", "/path/to/my-role.key-pk8.pem");
 ----
+See the official Pulsar documentation on {apache-pulsar-docs}/security-tls-authentication/#configure-mtls-authentication-in-pulsar-clients[mTLS (PEM)].
 ====
 
-[[Token]]
-.[.underline]#Click ##here## for **Token**#
+[[mTLS-jks]]
+.[.underline]#Click ##here## for **mTLS (JKS)**#
 [%collapsible]
 ====
-[source, yaml]
+NOTE: Because this option requires TLS encryption, which already requires you to <<pulsar.adoc#tls-encryption,provide a client builder customizer>>, it is recommended to simply add the authentication directly on the client builder in your provided TLS customizer.
+You can use the `org.apache.pulsar.client.api.AuthenticationFactory` to help create the authentication object as follows:
+[source,java]
 ----
-spring:
-  pulsar:
-    client:
-      auth-plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationToken
-      authentication:
-        token: some-token-goes-here
+Authentication auth = AuthenticationFactory.create(
+        "org.apache.pulsar.client.impl.auth.AuthenticationKeyStoreTls",
+        Map.of("keyStoreType", "JKS", "keyStorePath", "/path/to/my/keystore.jks", "keyStorePassword", "clientpw"));
 ----
+See the official Pulsar documentation on {apache-pulsar-docs}/security-tls-authentication/#configure-clients[mTLS (JKS)].
 ====
 
-NOTE: You can find more information on each of the schemes and their required properties in the official {apache-pulsar-docs}/security-overview#authentication-providers[Pulsar security] documentation.
+You can find more information on each of the support plugins and their required properties in the official {apache-pulsar-docs}/security-overview#authentication-providers[Pulsar security] documentation.
