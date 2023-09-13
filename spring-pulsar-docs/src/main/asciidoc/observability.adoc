@@ -91,6 +91,6 @@ The `tracing.endpoint` above expects Zipkin is running locally as described http
 
 At this point, your application should record traces when you send and receive Pulsar messages. You should be able to view them in the Zipkin UI (at http://localhost:9411, when running locally).
 
-TIP: You can also see the preceding configuration on the link:{github}/blob/main/spring-pulsar-sample-apps/README.adoc[Spring Pulsar Sample Apps].
+TIP: You can also see the preceding configuration on the link:{github}/blob/main/spring-pulsar-sample-apps/README.adoc[Spring for Apache Pulsar Sample Apps].
 
 The steps are very similar to configuring any of the other supported Tracing environments.

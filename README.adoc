@@ -2,7 +2,7 @@
 :docs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/reference
 :github: https://github.com/spring-projects/spring-pulsar
 
-Spring Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
+Spring for Apache Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
 
 **#TIP#**: Most of the ideas in this project are borrowed from the Spring for Apache Kafka project, thus a familiarity with it would help.
 
@@ -12,32 +12,32 @@ include::spring-pulsar-docs/src/main/asciidoc/project-state.adoc[leveloffset=+1]
 The {docs}/html/[reference documentation] includes a {docs}/html/#quick-tourhtml[quick tour] section.
 
 == Getting Help
-Are you having trouble with Spring Pulsar? We want to help!
+Are you having trouble with Spring for Apache Pulsar? We want to help!
 
 * Check the {docs}/html/[reference documentation]
-* Learn the Spring basics -- Spring Pulsar builds on many other Spring projects; check the https://spring.io[spring.io] website for a wealth of reference documentation.
+* Learn the Spring basics -- Spring for Apache Pulsar builds on many other Spring projects; check the https://spring.io[spring.io] website for a wealth of reference documentation.
 If you are new to Spring, try one of the https://spring.io/guides[guides].
 // TODO (NYI): * If you are upgrading, read the {github}/wiki[release notes] for upgrade instructions and "new and noteworthy" features.
 * Ask a question -- we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`].
-* Report bugs with Spring Pulsar at {github}/issues[github.com/spring-projects/spring-pulsar/issues].
+* Report bugs with Spring for Apache Pulsar at {github}/issues[github.com/spring-projects/spring-pulsar/issues].
 
 
 
 == Reporting Issues
-Spring Pulsar uses GitHub's integrated issue tracking system to record bugs and feature requests.
+Spring for Apache Pulsar uses GitHub's integrated issue tracking system to record bugs and feature requests.
 If you want to raise an issue, please follow the recommendations below:
 
 * Before you log a bug, please search the {github}/issues[issue tracker] to see if someone has already reported the problem.
 * If the issue doesn't already exist, {github}/issues/new[create a new issue].
 * Please provide as much information as possible with the issue report.
-We like to know the Spring Pulsar version, operating system, and JVM version you're using.
+We like to know the Spring for Apache Pulsar version, operating system, and JVM version you're using.
 * If you need to paste code or include a stack trace, use Markdown +++```+++ escapes before and after your text.
 * If possible, try to create a test case or project that replicates the problem and attach it to the issue.
 
 
 
 == Building from Source
-You don't need to build from source to use Spring Pulsar (binaries in https://repo.spring.io[repo.spring.io]), but if you want to try out the latest and greatest, Spring Pulsar can be built and published to your local Maven cache using the https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle wrapper].
+You don't need to build from source to use Spring for Apache Pulsar (binaries in https://repo.spring.io[repo.spring.io]), but if you want to try out the latest and greatest, Spring for Apache Pulsar can be built and published to your local Maven cache using the https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle wrapper].
 You also need JDK 17.
 
 [source,shell]
@@ -74,7 +74,7 @@ If you want skip tests, use the `-x test` and/or `-x integrationTest` options:
 ----
 
 == Modules
-There are several modules in Spring Pulsar. Here is a quick overview:
+There are several modules in Spring for Apache Pulsar. Here is a quick overview:
 
 === spring-pulsar
 The main library that provides the API to access Apache Pulsar.
@@ -95,8 +95,8 @@ Provides reference docs and handles aggregating javadocs.
 Provides the API to access Apache Pulsar using a Reactive client.
 
 === spring-pulsar-sample-apps
-Provides sample applications to illustrate Spring Pulsar functionality as well as provide ability for quick manual verification during development.
+Provides sample applications to illustrate Spring for Apache Pulsar functionality as well as provide ability for quick manual verification during development.
 
 
 == License
-Spring Pulsar is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].
+Spring for Apache Pulsar is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].

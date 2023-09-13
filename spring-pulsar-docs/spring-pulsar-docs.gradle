@@ -3,7 +3,7 @@ plugins {
 	id 'org.asciidoctor.jvm.convert'
 }
 
-description = 'Spring Pulsar Docs'
+description = 'Spring for Apache Pulsar Docs'
 
 ext {
 	micrometerDocsVersion="1.0.0"
@@ -50,8 +50,8 @@ task aggregatedJavadoc(type: Javadoc) {
 		options {
 			encoding = "UTF-8"
 			author = true
-			docTitle = "Spring Pulsar ${project.version} API"
-			windowTitle = "Spring Pulsar ${project.version} API"
+			docTitle = "Spring for Apache Pulsar ${project.version} API"
+			windowTitle = "Spring for Apache Pulsar ${project.version} API"
 			overview = 'src/api/overview.html'
 			memberLevel = JavadocMemberLevel.PROTECTED
 			outputLevel = JavadocOutputLevel.QUIET

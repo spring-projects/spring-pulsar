@@ -1,8 +1,8 @@
-= Contributing to Spring Pulsar
+= Contributing to Spring for Apache Pulsar
 
 :github: https://github.com/spring-projects/spring-pulsar
 
-Spring Pulsar is released under the Apache 2.0 license. If you would like to contribute something, or want to hack on the code this document should help you get started.
+Spring for Apache Pulsar is released under the Apache 2.0 license. If you would like to contribute something, or want to hack on the code this document should help you get started.
 
 
 
@@ -23,7 +23,7 @@ Ideally, that would include a small sample project that reproduces the problem.
 
 
 == Reporting Security Vulnerabilities
-If you think you have found a security vulnerability in Spring Pulsar please *DO NOT* disclose it publicly until we've had a chance to fix it.
+If you think you have found a security vulnerability in Spring for Apache Pulsar please *DO NOT* disclose it publicly until we've had a chance to fix it.
 Please don't report security vulnerabilities using GitHub issues, instead head over to https://spring.io/security-policy and learn how to disclose them responsibly.
 
 
