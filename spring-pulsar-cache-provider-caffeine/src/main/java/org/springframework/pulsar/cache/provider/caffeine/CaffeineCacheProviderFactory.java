@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.core;
+package org.springframework.pulsar.cache.provider.caffeine;
 
 import java.time.Duration;
+
+import org.springframework.pulsar.cache.provider.CacheProvider;
+import org.springframework.pulsar.cache.provider.CacheProviderFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

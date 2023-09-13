@@ -38,6 +38,8 @@ import org.apache.pulsar.common.protocol.schema.SchemaHash;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.cache.provider.CacheProvider;
+import org.springframework.pulsar.cache.provider.CacheProviderFactory;
 import org.springframework.util.Assert;
 
 /**

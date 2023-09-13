@@ -46,6 +46,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.cache.provider.CacheProvider;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerCacheKey;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerWithCloseCallback;
 import org.springframework.test.util.ReflectionTestUtils;

@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.core;
+package org.springframework.pulsar.cache.provider.caffeine;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import org.springframework.pulsar.cache.provider.CacheProvider;
 
 import com.github.benmanes.caffeine.cache.Cache;
 
