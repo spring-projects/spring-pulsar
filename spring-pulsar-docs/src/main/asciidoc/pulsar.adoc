@@ -584,7 +584,7 @@ void simpleBatchListenerWithHeaders(List<String> data,
 
 In the preceding example, we consume the data as a `List<String>`.
 When extracting the various headers, we do so as a `List<>` as well.
-Spring Pulsar ensures that the headers list corresponds to the data list.
+Spring for Apache Pulsar ensures that the headers list corresponds to the data list.
 
 You can also extract headers in the same manner when you use the batch listener and receive payloads as `List<org.apache.pulsar.client.api.Message<?>`, `org.apache.pulsar.client.api.Messages<?>`, or `org.springframework.messaging.Messsge<?>`.
 

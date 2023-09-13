@@ -7,7 +7,7 @@ If you wish to use a different version of `pulsar-client-all` or `pulsar-client-
 
 Or, to use a different Spring for Apache Pulsar version with a supported Spring Boot version, set the `spring-pulsar.version` property.
 
-In the following example, snapshot version of the Pulsar clients and Spring Pulsar are being used.
+In the following example, snapshot version of the Pulsar clients and Spring for Apache Pulsar are being used.
 
 ====
 [source, groovy, subs="+attributes", role="secondary"]

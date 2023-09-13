@@ -11,7 +11,7 @@ include::project-state.adoc[leveloffset=+1]
 
 == System Requirements
 
-Spring Pulsar `{spring-pulsar-version}` requires the following:
+Spring for Apache Pulsar `{spring-pulsar-version}` requires the following:
 
 - https://www.java.com[Java 17] and is compatible up to and including Java 20
 - {spring-framework-docs}[Spring Framework `{spring-framework-version}`] or above

@@ -1,7 +1,7 @@
 == Specifying Schema Information
 
-As indicated earlier, for Java primitives, the Spring Pulsar framework can infer the proper Schema to use on the `{listener-class}`.
-For non-primitive types, if the Schema is not explicitly specified on the annotation, the Spring Pulsar framework will try to build a `Schema.JSON` from the type.
+As indicated earlier, for Java primitives, the Spring for Apache Pulsar framework can infer the proper Schema to use on the `{listener-class}`.
+For non-primitive types, if the Schema is not explicitly specified on the annotation, the Spring for Apache Pulsar framework will try to build a `Schema.JSON` from the type.
 
 IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
 
