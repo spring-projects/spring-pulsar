@@ -65,7 +65,7 @@ jobs:
         name: Extract current version
         run: |
           version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-          echo "::set-output name=project_version::$version"
+          echo "project_version=$version" >> $GITHUB_OUTPUT
 
   perform_release:
     name: Perform Release
