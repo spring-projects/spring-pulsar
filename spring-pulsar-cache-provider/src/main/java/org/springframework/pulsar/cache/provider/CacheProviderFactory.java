@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.core;
+package org.springframework.pulsar.cache.provider;
 
 import java.time.Duration;
 import java.util.ServiceLoader;
