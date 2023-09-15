@@ -2,7 +2,6 @@
 :spring-framework-version: current
 :spring-cloud-stream-version: current
 :spring-pulsar-version: current
-:spring-pulsar-binder-version: current
 :pulsar-client-version: current
 :pulsar-client-reactive-version: current
 :is-snapshot-version:  false
