@@ -28,6 +28,13 @@ dependencies {
 }
 ----
 
+[CAUTION]
+====
+When using `Version 0.2.x` the above coordinates change as follows:
+
+* `groupId` -> `org.springframework.pulsar`
+* `artifactId` -> `spring-pulsar-spring-boot-starter`
+====
 
 == Application Code
 

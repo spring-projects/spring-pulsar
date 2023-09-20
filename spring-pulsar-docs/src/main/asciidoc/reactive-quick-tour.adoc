@@ -28,6 +28,14 @@ dependencies {
 }
 ----
 
+[CAUTION]
+====
+When using `Version 0.2.x` the above coordinates change as follows:
+
+* `groupId` -> `org.springframework.pulsar`
+* `artifactId` -> `spring-pulsar-reactive-spring-boot-starter`
+====
+
 == Application Code
 
 Here is the application source code:
