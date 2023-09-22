@@ -19,6 +19,7 @@ package org.springframework.pulsar.reactive.core;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
@@ -31,6 +32,7 @@ import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultTopicResolver;
+import org.springframework.pulsar.core.PulsarClientProxy;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -42,9 +44,14 @@ import org.springframework.util.CollectionUtils;
  * @author Christophe Bornet
  * @author Chris Bono
  */
-public final class DefaultReactivePulsarSenderFactory<T> implements ReactivePulsarSenderFactory<T> {
+public final class DefaultReactivePulsarSenderFactory<T>
+		implements ReactivePulsarSenderFactory<T>, RestartableComponentSupport {
+
+	private static final int LIFECYCLE_PHASE = (Integer.MIN_VALUE / 2) - 100;
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
+
+	private final AtomicReference<State> currentState = RestartableComponentSupport.initialState();
 
 	private final ReactivePulsarClient reactivePulsarClient;
 
@@ -110,6 +117,9 @@ public final class DefaultReactivePulsarSenderFactory<T> implements ReactivePuls
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
+
+		this.logger.warn(() -> "**** Du CreateMessageSender for topic=" + topic);
+
 		String resolvedTopic = this.topicResolver.resolveTopic(topic, () -> getDefaultTopic()).orElseThrow();
 		this.logger.trace(() -> "Creating reactive message sender for '%s' topic".formatted(resolvedTopic));
 
@@ -137,6 +147,41 @@ public final class DefaultReactivePulsarSenderFactory<T> implements ReactivePuls
 	@Override
 	public String getDefaultTopic() {
 		return this.defaultTopic;
+	}
+
+	/**
+	 * Return the phase that this lifecycle object is supposed to run in.
+	 * <p>
+	 * This component has a phase that comes after the {@link PulsarClientProxy
+	 * restartable client} but before other lifecycle and smart lifecycle components whose
+	 * phase values are &quot;0&quot; and &quot;max&quot;, respectively.
+	 * @return a phase that is after the restartable client and before other default
+	 * components.
+	 * @see PulsarClientProxy#getPhase()
+	 */
+	@Override
+	public int getPhase() {
+		return LIFECYCLE_PHASE;
+	}
+
+	@Override
+	public AtomicReference<State> currentState() {
+		return this.currentState;
+	}
+
+	@Override
+	public LogAccessor logger() {
+		return this.logger;
+	}
+
+	@Override
+	public void doStop() {
+		try {
+			this.reactiveMessageSenderCache.close();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

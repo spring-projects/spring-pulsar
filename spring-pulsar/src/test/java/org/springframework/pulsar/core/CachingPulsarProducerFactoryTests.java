@@ -230,8 +230,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	@Override
 	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
 			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers) {
-		var producerFactory = new CachingPulsarProducerFactory<String>(pulsarClient, defaultTopic,
-				defaultConfigCustomizers, new DefaultTopicResolver(), Duration.ofMinutes(5L), 30L, 2);
+		var producerFactory = new CachingPulsarProducerFactory<>(pulsarClient, defaultTopic, defaultConfigCustomizers,
+				new DefaultTopicResolver(), Duration.ofMinutes(5L), 30L, 2);
 		producerFactories.add(producerFactory);
 		return producerFactory;
 	}
@@ -307,6 +307,27 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 							Named.of("differentNullInterceptor",
 									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1)),
 							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false));
+		}
+
+	}
+
+	@Nested
+	class RestartFactoryTests {
+
+		@Test
+		void restartLifecycle() throws PulsarClientException {
+			var producerFactory = (CachingPulsarProducerFactory<String>) producerFactory(pulsarClient, null, null);
+			producerFactory.start();
+			var producer1 = producerFactory.createProducer(schema, "topic1");
+			var producer2 = producerFactory.createProducer(schema, "topic2");
+			assertThat(actualProducer(producer1).isConnected()).isTrue();
+			assertThat(actualProducer(producer2).isConnected()).isTrue();
+			producerFactory.stop();
+			assertThat(actualProducer(producer1).isConnected()).isFalse();
+			assertThat(actualProducer(producer2).isConnected()).isFalse();
+			producerFactory.start();
+			var producer3 = producerFactory.createProducer(schema, "topic3");
+			assertThat(actualProducer(producer3).isConnected()).isTrue();
 		}
 
 	}

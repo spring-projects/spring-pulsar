@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.pulsar.client.api.MessageId;
@@ -58,11 +59,16 @@ import org.springframework.util.Assert;
  * @author Alexander Preuß
  * @author Christophe Bornet
  */
-public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T> implements DisposableBean {
+public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactory<T>
+		implements RestartableComponentSupport {
+
+	private static final int LIFECYCLE_PHASE = (Integer.MIN_VALUE / 2) - 100;
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final CacheProvider<ProducerCacheKey<T>, Producer<T>> producerCache;
+
+	private final AtomicReference<State> currentState = RestartableComponentSupport.initialState();
 
 	/**
 	 * Construct a caching producer factory with the specified values for the cache
@@ -85,7 +91,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 				(key, producer, cause) -> {
 					this.logger.debug(() -> "Producer %s evicted from cache due to %s"
 						.formatted(ProducerUtils.formatProducer(producer), cause));
-					closeProducer(producer);
+					closeProducer(producer, true);
 				});
 	}
 
@@ -113,22 +119,51 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		}
 	}
 
+	/**
+	 * Return the phase that this lifecycle object is supposed to run in.
+	 * <p>
+	 * Because this object depends on the restartable client, it uses a phase slightly
+	 * larger than the one used by the restartable client. This ensures that it starts
+	 * after and stops before the restartable client.
+	 * @return the phase to execute in (just after the restartable client)
+	 * @see PulsarClientProxy#getPhase()
+	 */
 	@Override
-	public void destroy() {
-		this.producerCache.invalidateAll((key, producer) -> closeProducer(producer));
+	public int getPhase() {
+		return LIFECYCLE_PHASE;
 	}
 
-	private void closeProducer(Producer<T> producer) {
+	@Override
+	public AtomicReference<State> currentState() {
+		return this.currentState;
+	}
+
+	@Override
+	public LogAccessor logger() {
+		return this.logger;
+	}
+
+	@Override
+	public void doStop() {
+		this.producerCache.invalidateAll((key, producer) -> closeProducer(producer, false));
+	}
+
+	private void closeProducer(Producer<T> producer, boolean async) {
 		Producer<T> actualProducer = null;
 		if (producer instanceof ProducerWithCloseCallback<T> wrappedProducer) {
 			actualProducer = wrappedProducer.getActualProducer();
 		}
 		if (actualProducer == null) {
-			this.logger.warn(() -> "Unable to get actual producer for %s - will skip closing it"
+			this.logger.trace(() -> "Unable to get actual producer for %s - will skip closing it"
 				.formatted(ProducerUtils.formatProducer(producer)));
 			return;
 		}
-		ProducerUtils.closeProducerAsync(actualProducer, this.logger);
+		if (async) {
+			ProducerUtils.closeProducerAsync(actualProducer, this.logger);
+		}
+		else {
+			ProducerUtils.closeProducer(actualProducer, this.logger, Duration.ofSeconds(15L));
+		}
 	}
 
 	/**
