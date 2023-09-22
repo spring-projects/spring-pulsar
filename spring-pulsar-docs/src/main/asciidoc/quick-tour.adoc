@@ -32,8 +32,24 @@ dependencies {
 ====
 When using `Version 0.2.x` the above coordinates change as follows:
 
-* `groupId` -> `org.springframework.pulsar`
-* `artifactId` -> `spring-pulsar-spring-boot-starter`
+[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
+.Maven
+----
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.pulsar</groupId>
+        <artifactId>spring-pulsar-spring-boot-starter</artifactId>
+        <version>0.2.0</version>
+    </dependency>
+</dependencies>
+----
+[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
+.Gradle
+----
+dependencies {
+    implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter:0.2.0'
+}
+----
 ====
 
 == Application Code

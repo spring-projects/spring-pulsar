@@ -5,25 +5,6 @@ The evolution of the project (by version) is as follows:
 
 [discrete]
 == Version 0.2.x
-
-[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
-.Maven
-----
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.pulsar</groupId>
-        <artifactId>spring-pulsar-spring-boot-starter</artifactId>
-        <version>0.2.x</version>
-    </dependency>
-</dependencies>
-----
-[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
-.Gradle
-----
-dependencies {
-    implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter:0.2.x'
-}
-----
 All components (`the core + Spring Boot autoconfiguration + Spring Cloud Stream binder`) reside in the `spring-pulsar` Github repository.
 
 This is considered an "experimental" GA, defined as:
@@ -31,32 +12,21 @@ This is considered an "experimental" GA, defined as:
 - code and functionality is production ready, but decision has not been made to support the project permanently
 - available on Maven Central using a major version of `0` to indicate its nature
 
+NOTE: Until the GA release, the recommended version of the framework is `0.2.x`.
+
 [discrete]
 == Version 1.0.x
-Due to becoming an official Spring Boot project, the coordinates used to identify the artifact in your dependency management tool have changed in addition to the version number.
-
-[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
-.Maven
-----
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-pulsar</artifactId>
-        <version>3.2.x</version>
-    </dependency>
-</dependencies>
-----
-[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
-.Gradle
-----
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-pulsar:3.2.x'
-}
-----
 This is the "full" GA and the components are split as follows (in-progress):
 
 - the core stays in the `spring-pulsar` repo (`main` branch)
 - the autoconfiguration moves to the Spring Boot project (targeting Spring Boot `3.2.0`)
 - the binder moves to the Spring Cloud Stream project (targeting SCSt `4.1.0`)
 
-NOTE: Until the GA release, the recommended version of the framework is `0.2.x`.
+[CAUTION]
+====
+Be aware that as the autoconfiguration moves to the Spring Boot project the dependency coordinates for the starter modules also change as follows:
+
+* The group id goes from `org.springframework.pulsar` to `org.springframework.boot`
+* The artifact id goes from `spring-pulsar-spring-boot-starter` to `spring-boot-starter-pulsar` (same pattern for the reactive starter)
+* The version goes from `0.2.x` to `3.2.x`
+====

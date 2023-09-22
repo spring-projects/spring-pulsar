@@ -23,52 +23,8 @@ The following is the compatibility matrix:
 
 [NOTE]
 ====
-**1.0.x or later**
+In version `1.0.0` the autoconfiguration moved into Spring Boot `3.2.x` and therefore `3.2.x` is the minimum Spring Boot version supported when using version `1.0.x` of the framework.
 
-Due to becoming an official Spring Boot project, the coordinates used to identify the artifact in your dependency management tool have changed in addition to the version number.
-
-In version `1.0.0` the auto-configuration moved into Spring Boot `3.2.x` and therefore `3.2.x` is the minimum Spring Boot version supported when using version `1.0.x` of the framework.
-
-[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
-.Maven
-----
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-pulsar</artifactId>
-        <version>3.2.x</version>
-    </dependency>
-</dependencies>
-----
-[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
-.Gradle
-----
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-pulsar:3.2.x'
-}
-----
-
-**0.2.0**
-
-Prior to version `1.0.0`, the auto-configuration support exists in the framework itself.
+However, prior to version `1.0.0`, the autoconfiguration support exists in the framework itself.
 ^**(*)**^This makes it theoretically possible to use later versions of Spring Boot besides `3.0.x` which it is tested against and guaranteed to work with. In other words, it may work with `3.1.x` but it has not been tested against it.
-
-[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
-.Maven
-----
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.pulsar</groupId>
-        <artifactId>spring-pulsar-spring-boot-starter</artifactId>
-        <version>0.2.0</version>
-    </dependency>
-</dependencies>
-----
-[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
-.Gradle
-----
-dependencies {
-    implementation 'org.springframework.pulsar:spring-pulsar-spring-boot-starter:0.2.0'
-}
-----
 ====
