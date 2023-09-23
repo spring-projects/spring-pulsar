@@ -18,6 +18,7 @@ package org.springframework.pulsar.config;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -38,6 +39,8 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	private final Class<? extends ListenerContainerFactory> type;
 
 	private final List<PulsarListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
+
+	private final ReentrantLock endpointDescriptorsLock = new ReentrantLock();
 
 	private GenericListenerEndpointRegistry endpointRegistry;
 
@@ -81,12 +84,16 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 	}
 
 	protected void registerAllEndpoints() {
-		synchronized (this.endpointDescriptors) {
+		this.endpointDescriptorsLock.lock();
+		try {
 			for (PulsarListenerEndpointDescriptor descriptor : this.endpointDescriptors) {
 				ListenerContainerFactory<?, ?> factory = resolveContainerFactory(descriptor);
 				this.endpointRegistry.registerListenerContainer(descriptor.endpoint, factory);
 			}
 			this.startImmediately = true; // trigger immediate startup
+		}
+		finally {
+			this.endpointDescriptorsLock.unlock();
 		}
 	}
 
@@ -115,7 +122,8 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		// Factory may be null, we defer the resolution right before actually creating the
 		// container
 		PulsarListenerEndpointDescriptor descriptor = new PulsarListenerEndpointDescriptor(endpoint, factory);
-		synchronized (this.endpointDescriptors) {
+		this.endpointDescriptorsLock.lock();
+		try {
 			if (this.startImmediately) { // Register and start immediately
 				this.endpointRegistry.registerListenerContainer(descriptor.endpoint,
 						resolveContainerFactory(descriptor), true);
@@ -123,6 +131,9 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 			else {
 				this.endpointDescriptors.add(descriptor);
 			}
+		}
+		finally {
+			this.endpointDescriptorsLock.unlock();
 		}
 	}
 
