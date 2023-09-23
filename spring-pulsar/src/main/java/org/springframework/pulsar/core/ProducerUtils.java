@@ -16,6 +16,10 @@
 
 package org.springframework.pulsar.core;
 
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.pulsar.client.api.Producer;
 
 import org.springframework.core.log.LogAccessor;
@@ -34,11 +38,20 @@ final class ProducerUtils {
 		return "(%s:%s)".formatted(producer.getProducerName(), producer.getTopic());
 	}
 
-	static <T> void closeProducerAsync(Producer<T> producer, LogAccessor logger) {
-		producer.closeAsync().exceptionally(e -> {
+	static <T> CompletableFuture<Void> closeProducerAsync(Producer<T> producer, LogAccessor logger) {
+		return producer.closeAsync().exceptionally(e -> {
 			logger.warn(e, () -> "Failed to close producer %s".formatted(ProducerUtils.formatProducer(producer)));
 			return null;
 		});
+	}
+
+	static <T> void closeProducer(Producer<T> producer, LogAccessor logger, Duration maxWaitTime) {
+		try {
+			producer.closeAsync().get(maxWaitTime.toMillis(), TimeUnit.MILLISECONDS);
+		}
+		catch (Exception e) {
+			logger.warn(e, () -> "Failed to close producer %s".formatted(ProducerUtils.formatProducer(producer)));
+		}
 	}
 
 }

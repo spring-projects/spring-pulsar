@@ -34,6 +34,7 @@ nohttp {
 	source.exclude "**/build/**"
 	source.exclude "**/out/**"
 	source.exclude "**/target/**"
+	source.exclude "**/*.dylib"
 }
 
 check {

@@ -20,8 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -206,6 +210,27 @@ class DefaultReactivePulsarSenderFactoryTests {
 			return DefaultReactivePulsarSenderFactory.<String>builderFor(mock(PulsarClient.class))
 				.withDefaultConfigCustomizers(customizers)
 				.build();
+		}
+
+	}
+
+	@Nested
+	class RestartFactoryTests {
+
+		@Test
+		void restartLifecycle() throws Exception {
+			var cache = spy(AdaptedReactivePulsarClientFactory.createCache());
+			var senderFactory = (DefaultReactivePulsarSenderFactory<String>) newSenderFactoryWithCache(cache);
+			senderFactory.start();
+			senderFactory.createSender(schema, "topic1");
+			senderFactory.stop();
+			senderFactory.stop();
+			verify(cache, times(1)).close();
+			clearInvocations(cache);
+			senderFactory.start();
+			senderFactory.createSender(schema, "topic2");
+			senderFactory.stop();
+			verify(cache, times(1)).close();
 		}
 
 	}
