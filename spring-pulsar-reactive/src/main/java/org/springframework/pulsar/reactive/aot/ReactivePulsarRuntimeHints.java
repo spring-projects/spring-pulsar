@@ -40,11 +40,13 @@ import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ReflectionUtils;
 
 /**
- * {@link RuntimeHintsRegistrar} for Spring for Apache Pulsar.
+ * {@link RuntimeHintsRegistrar} for Spring for Apache Pulsar (reactive).
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 
@@ -74,8 +76,7 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 							MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
 
 		// These are inaccessible interfaces/classes in a normal scenario, thus using the
-		// String version,
-		// and we need field level access in them.
+		// String version, and we need field level access in them.
 		Stream.of(
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
@@ -86,13 +87,72 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 			.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
 					MemberCategory.DECLARED_FIELDS));
 
-		Stream
-			.of("reactor.core.publisher.Flux", "com.github.benmanes.caffeine.cache.SSMSA",
-					"com.github.benmanes.caffeine.cache.PSAMS", "com.github.benmanes.caffeine.cache.SSLMSA",
-					"com.github.benmanes.caffeine.cache.PSAMW")
-			.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
-					MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS,
-					MemberCategory.INTROSPECT_PUBLIC_METHODS));
+		// @formatter:off
+		Stream.of(
+		"reactor.core.publisher.Flux",
+				"java.lang.Thread",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BBHeader$ReadAndWriteCounterRef",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BBHeader$ReadCounterRef",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BLCHeader",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BLCHeader$DrainStatusRef",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BLCHeader$PadDrainStatus",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueColdProducerFields",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueConsumerFields",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueProducerFields",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BoundedLocalCache",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.CacheLoader",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.FS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.FW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PD",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSA",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSAMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSAW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSAWMW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSMW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSR",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSRMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSWMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PSWMW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.PW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SI",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSA",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSAW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSL",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLAW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLMSA",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLMSAW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLSW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSMSA",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSMSAW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSMSR",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSMSW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSMW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSSMS",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSSMWW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSSW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSW",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.StripedBuffer",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.UnboundedLocalCache",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.WI",
+				"org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.WS")
+			.forEach(type -> reflectionHints.registerTypeIfPresent(classLoader, type,
+					builder -> builder.withMembers(
+							MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+							MemberCategory.INVOKE_PUBLIC_METHODS,
+							MemberCategory.INVOKE_DECLARED_METHODS,
+							MemberCategory.INTROSPECT_PUBLIC_METHODS,
+							MemberCategory.DECLARED_CLASSES,
+							MemberCategory.DECLARED_FIELDS)));
+		reflectionHints.registerField(ReflectionUtils.findField(Thread.class, "threadLocalRandomProbe"));
+
+		// @formatter:on
 
 		// Registering JDK dynamic proxies for these interfaces. Since the Connection
 		// interface is protected,

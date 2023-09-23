@@ -218,13 +218,17 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 				"org.apache.pulsar.shade.org.jvnet.hk2.internal.DynamicConfigurationServiceImpl",
 				"org.apache.pulsar.shade.org.jvnet.hk2.internal.ServiceLocatorRuntimeImpl",
 				"org.apache.pulsar.shade.org.jvnet.hk2.internal.ServiceLocatorRuntimeImpl",
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.PSAMS",
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.PSW",
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.PSWMS",
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.SSLA",
 				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.SSMSA",
-				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.PSAMS")
-				.forEach(type -> reflectionHints.registerTypeIfPresent(classLoader, type,
-						builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-								MemberCategory.INVOKE_PUBLIC_METHODS, MemberCategory.INVOKE_DECLARED_METHODS,
-								MemberCategory.INTROSPECT_PUBLIC_METHODS, MemberCategory.DECLARED_CLASSES,
-								MemberCategory.DECLARED_FIELDS)));
+				"org.springframework.pulsar.shade.com.github.benmanes.caffeine.cache.SSLMSAW")
+			.forEach(type -> reflectionHints.registerTypeIfPresent(classLoader, type,
+					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+							MemberCategory.INVOKE_PUBLIC_METHODS, MemberCategory.INVOKE_DECLARED_METHODS,
+							MemberCategory.INTROSPECT_PUBLIC_METHODS, MemberCategory.DECLARED_CLASSES,
+							MemberCategory.DECLARED_FIELDS)));
 		// @formatter:on
 
 		// Registering JDK dynamic proxies for these interfaces. Since the Connection
