@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -56,6 +57,7 @@ import org.springframework.util.Assert;
  * @param <C> container type
  * @param <E> endpoint type
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContainer, E extends PulsarReaderEndpoint<C>>
 		implements PulsarReaderContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
@@ -64,6 +66,8 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 	private final Class<? extends C> type;
 
 	private final Map<String, C> readerContainers = new ConcurrentHashMap<>();
+
+	private final ReentrantLock containersLock = new ReentrantLock();
 
 	private ConfigurableApplicationContext applicationContext;
 
@@ -123,11 +127,15 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 
 		Assert.hasText(subscriptionName, "Endpoint id must not be empty");
 
-		synchronized (this.readerContainers) {
+		this.containersLock.lock();
+		try {
 			Assert.state(!this.readerContainers.containsKey(id),
 					"Another endpoint is already registered with id '" + subscriptionName + "'");
 			C container = createReaderContainer(endpoint, factory);
 			this.readerContainers.put(id, container);
+		}
+		finally {
+			this.containersLock.unlock();
 		}
 	}
 
@@ -145,10 +153,7 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 		}
 
 		int containerPhase = readerContainer.getPhase();
-		if (readerContainer.isAutoStartup() && containerPhase != C.DEFAULT_PHASE) { // a
-			// custom
-			// phase
-			// value
+		if (readerContainer.isAutoStartup() && containerPhase != C.DEFAULT_PHASE) {
 			if (this.phase != C.DEFAULT_PHASE && this.phase != containerPhase) {
 				throw new IllegalStateException("Encountered phase mismatch between container "
 						+ "factory definitions: " + this.phase + " vs " + containerPhase);

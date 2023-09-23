@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -57,6 +58,7 @@ import org.springframework.util.Assert;
  * @param <E> listener endpoint type.
  * @author Soby Chacko
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public class GenericListenerEndpointRegistry<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
 		implements PulsarListenerContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
@@ -65,6 +67,8 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 	private final Class<? extends C> type;
 
 	private final Map<String, C> listenerContainers = new ConcurrentHashMap<>();
+
+	private final ReentrantLock containersLock = new ReentrantLock();
 
 	private ConfigurableApplicationContext applicationContext;
 
@@ -118,17 +122,17 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 			boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");
-
-		String subscriptionName = endpoint.getSubscriptionName();
 		String id = endpoint.getId();
-
-		Assert.hasText(subscriptionName, "Endpoint id must not be empty");
-
-		synchronized (this.listenerContainers) {
+		Assert.hasText(id, "Endpoint id must not be empty");
+		this.containersLock.lock();
+		try {
 			Assert.state(!this.listenerContainers.containsKey(id),
-					"Another endpoint is already registered with id '" + subscriptionName + "'");
+					"Another endpoint is already registered with id '" + id + "'");
 			C container = createListenerContainer(endpoint, factory);
 			this.listenerContainers.put(id, container);
+		}
+		finally {
+			this.containersLock.unlock();
 		}
 	}
 
@@ -146,10 +150,7 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 		}
 
 		int containerPhase = listenerContainer.getPhase();
-		if (listenerContainer.isAutoStartup() && containerPhase != C.DEFAULT_PHASE) { // a
-																						// custom
-																						// phase
-																						// value
+		if (listenerContainer.isAutoStartup() && containerPhase != C.DEFAULT_PHASE) {
 			if (this.phase != C.DEFAULT_PHASE && this.phase != containerPhase) {
 				throw new IllegalStateException("Encountered phase mismatch between container "
 						+ "factory definitions: " + this.phase + " vs " + containerPhase);

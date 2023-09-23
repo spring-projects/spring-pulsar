@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.reader;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.pulsar.client.api.ReaderListener;
 
 import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
@@ -36,7 +38,7 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends
 
 	private final PulsarReaderContainerProperties pulsarReaderContainerProperties;
 
-	protected final Object lifecycleMonitor = new Object();
+	protected final ReentrantLock lifecycleLock = new ReentrantLock();
 
 	protected ReaderBuilderCustomizer<T> readerBuilderCustomizer;
 
@@ -81,21 +83,29 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends
 
 	@Override
 	public final void start() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			if (!isRunning()) {
 				Assert.state(this.pulsarReaderContainerProperties.getReaderListener() instanceof ReaderListener<?>,
 						() -> "A " + ReaderListener.class.getName() + " implementation must be provided");
 				doStart();
 			}
 		}
+		finally {
+			this.lifecycleLock.unlock();
+		}
 	}
 
 	@Override
 	public void stop() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			if (isRunning()) {
 				doStop();
 			}
+		}
+		finally {
+			this.lifecycleLock.unlock();
 		}
 	}
 

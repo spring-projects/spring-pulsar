@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.listener;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 
@@ -38,7 +40,7 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 
 	private final PulsarContainerProperties pulsarContainerProperties;
 
-	protected final Object lifecycleMonitor = new Object();
+	protected final ReentrantLock lifecycleLock = new ReentrantLock();
 
 	private volatile boolean paused;
 
@@ -93,21 +95,29 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 
 	@Override
 	public final void start() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			if (!isRunning()) {
 				Assert.state(this.pulsarContainerProperties.getMessageListener() instanceof PulsarRecordMessageListener,
 						() -> "A " + PulsarRecordMessageListener.class.getName() + " implementation must be provided");
 				doStart();
 			}
 		}
+		finally {
+			this.lifecycleLock.unlock();
+		}
 	}
 
 	@Override
 	public void stop() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			if (isRunning()) {
 				doStop();
 			}
+		}
+		finally {
+			this.lifecycleLock.unlock();
 		}
 	}
 
@@ -159,15 +169,23 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 
 	@Override
 	public void pause() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			doPause();
+		}
+		finally {
+			this.lifecycleLock.unlock();
 		}
 	}
 
 	@Override
 	public void resume() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			doResume();
+		}
+		finally {
+			this.lifecycleLock.unlock();
 		}
 	}
 

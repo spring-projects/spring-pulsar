@@ -101,25 +101,18 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	@Override
 	protected void doStart() {
-
 		PulsarContainerProperties containerProperties = getContainerProperties();
-
-		Object messageListenerObject = containerProperties.getMessageListener();
 		AsyncTaskExecutor consumerExecutor = containerProperties.getConsumerTaskExecutor();
-
-		@SuppressWarnings("unchecked")
-		MessageListener<T> messageListener = (MessageListener<T>) messageListenerObject;
-
 		if (consumerExecutor == null) {
 			consumerExecutor = new SimpleAsyncTaskExecutor((getBeanName() == null ? "" : getBeanName()) + "-C-");
 			containerProperties.setConsumerTaskExecutor(consumerExecutor);
 		}
-
+		@SuppressWarnings("unchecked")
+		MessageListener<T> messageListener = (MessageListener<T>) containerProperties.getMessageListener();
 		this.listenerConsumer = new Listener(messageListener, this.getContainerProperties());
 		setRunning(true);
 		this.startLatch = new CountDownLatch(1);
 		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
-
 		try {
 			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(),
 					TimeUnit.MILLISECONDS)) {
@@ -139,14 +132,12 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		this.logger.info("Pausing this consumer.");
 		this.listenerConsumer.consumer.pause();
 		if (this.listenerConsumerThread.get() != null) {
-			// if there is a receive operation already in progress, we want to interrupt
-			// the listener thread.
+			// If a receive op in progress then interrupt listener thread
 			if (this.receiveInProgress.get()) {
-				// All the records received so far in the current batch receive will be
-				// re-delivered.
+				// All records already received in current batch will be re-delivered
 				this.listenerConsumerThread.get().interrupt();
 			}
-			// if there is something other than receive operations are in progress,
+			// If there is something other than receive operations are in progress,
 			// such as ack operations, wait for the listener thread to complete them.
 			try {
 				this.listenerConsumerThread.get().join();

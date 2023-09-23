@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipeline;
@@ -49,7 +50,7 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 
 	private boolean autoStartup = true;
 
-	private final Object lifecycleMonitor = new Object();
+	private final ReentrantLock lifecycleLock = new ReentrantLock();
 
 	private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -106,21 +107,29 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 
 	@Override
 	public final void start() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			if (!isRunning()) {
 				Objects.requireNonNull(this.pulsarContainerProperties.getMessageHandler(),
 						"A ReactivePulsarMessageHandler must be provided");
 				doStart();
 			}
 		}
+		finally {
+			this.lifecycleLock.unlock();
+		}
 	}
 
 	@Override
 	public void stop() {
-		synchronized (this.lifecycleMonitor) {
+		this.lifecycleLock.lock();
+		try {
 			if (isRunning()) {
 				doStop();
 			}
+		}
+		finally {
+			this.lifecycleLock.unlock();
 		}
 	}
 
