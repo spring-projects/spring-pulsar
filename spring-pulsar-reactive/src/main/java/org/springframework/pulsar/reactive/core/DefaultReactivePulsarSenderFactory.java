@@ -32,7 +32,6 @@ import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.core.PulsarClientProxy;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -152,12 +151,11 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	/**
 	 * Return the phase that this lifecycle object is supposed to run in.
 	 * <p>
-	 * This component has a phase that comes after the {@link PulsarClientProxy
-	 * restartable client} but before other lifecycle and smart lifecycle components whose
-	 * phase values are &quot;0&quot; and &quot;max&quot;, respectively.
+	 * This component has a phase that comes after the restartable client
+	 * ({@code PulsarClientProxy}) but before other lifecycle and smart lifecycle
+	 * components whose phase values are &quot;0&quot; and &quot;max&quot;, respectively.
 	 * @return a phase that is after the restartable client and before other default
 	 * components.
-	 * @see PulsarClientProxy#getPhase()
 	 */
 	@Override
 	public int getPhase() {
