@@ -1,0 +1,12 @@
+[[system-requirements]]
+= System Requirements
+
+include::../attributes/attributes-variables.adoc[]
+
+Spring for Apache Pulsar `{spring-pulsar-version}` requires the following:
+
+- https://www.java.com[Java 17] and is compatible up to and including Java 20
+- {spring-framework-docs}[Spring Framework `{spring-framework-version}`] or above
+- {apache-pulsar-cient-docs}/[Apache Pulsar Java Client `{pulsar-client-version}`] or above
+
+The version compatibility matrix (including Spring Boot) can be found in the xref:appendix/version-compatibility.adoc#version-compatibility[appendix].

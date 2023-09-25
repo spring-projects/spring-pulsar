@@ -1,0 +1,12 @@
+name: pulsar
+version: true
+title: Spring for Apache Pulsar
+nav:
+  - modules/ROOT/nav.adoc
+ext:
+  collector:
+    run:
+      command: gradlew :spring-pulsar-docs:generateAntoraResources
+      local: true
+    scan:
+      dir: spring-pulsar-docs/build/generated-antora-resources
