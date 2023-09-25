@@ -33,6 +33,8 @@ Before we accept a non-trivial patch or pull request we will need you to https:/
 Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do.
 Active contributors might be asked to join the core team, and given the ability to merge pull requests.
 
+== Git Workflow
+We develop on https://docs.github.com/en/get-started/quickstart/fork-a-repo[Forks] and follow the https://docs.github.com/en/get-started/quickstart/github-flow[Fork and Pull Request] workflow.
 
 
 == Code Conventions and Housekeeping
