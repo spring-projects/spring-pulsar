@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: Deploy Docs (Antora Infra)
 run-name: ${{ format('{0} ({1})', github.workflow, github.event.inputs.build-refname || 'all') }}
 on:
   workflow_dispatch:
