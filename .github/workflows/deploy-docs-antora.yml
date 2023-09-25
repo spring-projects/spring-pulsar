@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: Deploy Docs Antora
 on:
   push:
     branches-ignore: [ gh-pages ]
