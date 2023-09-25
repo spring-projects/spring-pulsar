@@ -26,8 +26,6 @@ asciidoc:
     hide-uri-scheme: '@'
     tabs-sync-option: '@'
     chomp: 'all'
-    listener-class: PulsarListener@
-    template-class: PulsarTemplate@
   extensions:
     - '@asciidoctor/tabs'
     - '@springio/asciidoctor-extensions'

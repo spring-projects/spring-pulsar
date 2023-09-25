@@ -10,3 +10,7 @@ ext:
       local: true
     scan:
       dir: spring-pulsar-docs/build/generated-antora-resources
+asciidoc:
+  attributes:
+    listener-class: PulsarListener@
+    template-class: PulsarTemplate@
