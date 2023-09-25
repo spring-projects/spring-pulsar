@@ -1,0 +1,25 @@
+[[building-project]]
+== Building the Project
+
+include::../attributes/attributes-variables.adoc[]
+
+If you have cloned the project locally, follow these steps to build the project from the source code.
+
+NOTE: Gradle `7.x (7.4 or above)` is required to build.
+
+Run the following command to do a full build of the project:
+[indent=0]
+----
+./gradlew clean build
+----
+You can build without running tests by using the following command:
+[indent=0]
+----
+./gradlew clean build -x test
+----
+
+You can build the reference documentation using this command:
+----
+./gradlew :spring-pulsar-docs:antora
+----
+You can view the generated HTML in `_docs/build/site_` directory.

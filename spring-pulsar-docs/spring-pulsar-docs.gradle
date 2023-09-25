@@ -1,7 +1,10 @@
 plugins {
-	id 'org.springframework.pulsar.spring-docs-module'
-	id 'org.asciidoctor.jvm.convert'
+	id 'org.springframework.pulsar.spring-module'
+	id 'org.antora' version '1.0.0'
+	id 'io.spring.antora.generate-antora-yml' version '0.0.1'
 }
+
+apply from: "${rootDir}/gradle/antora-docs.gradle"
 
 description = 'Spring for Apache Pulsar Docs'
 
@@ -77,95 +80,16 @@ task generateObservabilityDocs(type: JavaExec) {
 	args observationsInputDir, /.+/, observationsOutputDir
 }
 
-tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
-	asciidoctorj {
-		fatalWarnings = ['^((?!successfully validated).)*$']
-	}
-	forkOptions {
-		jvmArgs "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", "--add-opens", "java.base/java.io=ALL-UNNAMED"
-	}
-	doFirst {
-		attributes "spring-boot-version": project.springBootVersion ?: 'current',
-				"spring-framework-version": project.springFrameworkVersion ?: 'current',
-				"spring-cloud-stream-version": project.springCloudStreamVersion ?: 'current',
-				"spring-pulsar-version": project.version,
-				"pulsar-client-version": project.pulsarClientVersion ?: 'current',
-				"pulsar-client-reactive-version": project.pulsarClientReactiveVersion ?: 'current',
-				"is-snapshot-version": project.version.endsWith("-SNAPSHOT")
-	}
-}
-
-asciidoctor {
-	sources {
-		include "*.singleadoc"
-	}
-}
-
-task asciidoctorPdf(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	sources {
-		include "*.adoc"
-	}
-}
-
-task asciidoctorMultipage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	sources {
-		include "*.adoc"
-	}
-}
-
-syncDocumentationSourceForAsciidoctor {
-	dependsOn generateObservabilityDocs
-	from("${buildDir}/docs/generated") {
-		into "asciidoc"
-	}
-	from("src/main/java") {
-		into "main/java"
-	}
-}
-
-syncDocumentationSourceForAsciidoctorMultipage {
-	dependsOn generateObservabilityDocs
-	from("${buildDir}/docs/generated") {
-		into "asciidoc"
-	}
-	from("src/main/java") {
-		into "main/java"
-	}
-}
-
-syncDocumentationSourceForAsciidoctorPdf {
-	dependsOn generateObservabilityDocs
-	from("${buildDir}/docs/generated") {
-		into "asciidoc"
-	}
-	from("src/main/java") {
-		into "main/java"
-	}
-}
-
-task asciidocs {
-	dependsOn asciidoctor, asciidoctorMultipage, asciidoctorPdf
-}
-
-task docsZip(type: Zip) {
-	dependsOn asciidocs
+task docsZip(type: Zip, dependsOn: [':spring-pulsar-docs:antora']) {
 	group = 'Distribution'
 	archiveClassifier = 'docs'
 	description = "Builds docs archive containing api and reference for deployment at static.spring.io/spring-pulsar/docs."
 	duplicatesStrategy "fail"
-	from(asciidoctor.outputDir) {
-		into "reference/htmlsingle"
-	}
-	from(asciidoctorPdf.outputDir) {
-		into "reference/pdf"
-		include "index.pdf"
-		rename { "spring-pulsar-reference.pdf" }
-	}
-	from(asciidoctorMultipage.outputDir) {
-		into "reference/html"
-	}
 	from(aggregatedJavadoc) {
 		into "api"
+	}
+	from ('build/site') {
+		into 'reference/'
 	}
 }
 

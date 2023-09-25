@@ -1,0 +1,41 @@
+[[override-boot-deps]]
+= Override Spring Boot Dependencies
+
+When using Spring for Apache Pulsar in a Spring Boot application, the Apache Pulsar dependency versions are determined by Spring Boot's dependency management.
+If you wish to use a different version of `pulsar-client-all` or `pulsar-client-reactive-adapter`, you need to override their version used by Spring Boot dependency management; set the `pulsar.version` or `pulsar-reactive.version` property, respectively.
+
+Or, to use a different Spring for Apache Pulsar version with a supported Spring Boot version, set the `spring-pulsar.version` property.
+
+In the following example, snapshot version of the Pulsar clients and Spring for Apache Pulsar are being used.
+
+[source, groovy, subs="+attributes", role="secondary"]
+.Gradle
+----
+ext['pulsar.version'] = '3.1.1-SNAPSHOT'
+ext['pulsar-reactive.version'] = '0.3.1-SNAPSHOT'
+ext['spring-pulsar.version'] = '1.0.1-SNAPSHOT'
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-pulsar-reactive'
+}
+----
+
+[tabs]
+======
+Maven::
++
+[source, xml, subs="+attributes", role="primary"]
+----
+<properties>
+    <pulsar.version>3.1.1-SNAPSHOT</pulsar.version>
+    <pulsar-reactive.version>0.3.1-SNAPSHOT</pulsar-reactive.version>
+    <spring-pulsar.version>1.0.1-SNAPSHOT</spring-pulsar.version>
+</properties>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-pulsar-reactive</artifactId>
+</dependency>
+----
+======
+

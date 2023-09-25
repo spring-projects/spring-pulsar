@@ -35,6 +35,8 @@ nohttp {
 	source.exclude "**/out/**"
 	source.exclude "**/target/**"
 	source.exclude "**/*.dylib"
+	source.exclude "**/*.gif"
+	source.exclude "**/.gradle/**"
 }
 
 check {

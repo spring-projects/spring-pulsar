@@ -117,9 +117,6 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
-
-		this.logger.warn(() -> "**** Du CreateMessageSender for topic=" + topic);
-
 		String resolvedTopic = this.topicResolver.resolveTopic(topic, () -> getDefaultTopic()).orElseThrow();
 		this.logger.trace(() -> "Creating reactive message sender for '%s' topic".formatted(resolvedTopic));
 

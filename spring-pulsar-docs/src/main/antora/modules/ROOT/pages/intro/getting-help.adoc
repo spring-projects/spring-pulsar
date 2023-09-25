@@ -1,0 +1,17 @@
+[[getting-help]]
+= Getting Help
+
+include::../attributes/attributes-variables.adoc[]
+
+If you have trouble with Spring for Apache Pulsar, we would like to help.
+
+* Learn the Spring basics.
+Spring for Apache Pulsar builds on several other Spring projects.
+Check the https://spring.io[spring.io] web-site for a wealth of reference documentation.
+If you are starting out with Spring, try one of the https://spring.io/guides[guides].
+* Ask a question.
+We monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-pulsar[`spring-pulsar`].
+* Report bugs at {github}/issues.
+
+NOTE: All of Spring for Apache Pulsar is open source, including the documentation.
+If you find problems with the docs or if you want to improve them, please get involved.

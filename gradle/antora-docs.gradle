@@ -1,0 +1,41 @@
+node {
+	version = '16.16.0'
+}
+
+antora {
+	version = '3.2.0-alpha.2'
+	playbook = file('src/main/antora/antora-playbook.yml')
+	options = ['to-dir' : project.layout.buildDirectory.dir('site').get().toString(), clean: true, fetch: !project.gradle.startParameter.offline, stacktrace: true]
+	dependencies = [
+			'@antora/atlas-extension': '1.0.0-alpha.1',
+			'@antora/collector-extension': '1.0.0-alpha.3',
+			'@asciidoctor/tabs': '1.0.0-beta.3',
+			'@springio/antora-extensions': '1.4.2',
+			'@springio/asciidoctor-extensions': '1.0.0-alpha.8',
+	]
+}
+
+tasks.named("generateAntoraYml") {
+	asciidocAttributes = project.provider( { generateAttributes() } )
+	baseAntoraYmlFile = file('src/main/antora/antora.yml')
+}
+
+tasks.create(name: 'createAntoraPartials', type: Sync) {
+	from { project(":spring-pulsar-docs").tasks.generateObservabilityDocs.outputs }
+	into layout.buildDirectory.dir('generated-antora-resources/modules/ROOT/partials')
+}
+
+tasks.create('generateAntoraResources') {
+	dependsOn 'createAntoraPartials'
+	dependsOn 'generateAntoraYml'
+}
+
+def generateAttributes() {
+	return ['spring-boot-version': project.springBootVersion ?: 'current',
+			'spring-framework-version': project.springFrameworkVersion ?: 'current',
+			'spring-cloud-stream-version': project.springCloudStreamVersion ?: 'current',
+			'spring-pulsar-version': project.version,
+			'pulsar-client-version': project.pulsarClientVersion ?: 'current',
+			'pulsar-client-reactive-version': project.pulsarClientReactiveVersion ?: 'current',
+			'is-snapshot-version': project.version.endsWith("-SNAPSHOT")]
+}

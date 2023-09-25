@@ -1,0 +1,7 @@
+[source,java,subs="attributes,verbatim"]
+----
+@PulsarListener(subscriptionName = "user-sub", topics = "user-topic")
+public void listen(User user) {
+    System.out.println(user);
+}
+----
