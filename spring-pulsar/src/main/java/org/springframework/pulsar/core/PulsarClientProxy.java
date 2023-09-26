@@ -44,7 +44,7 @@ import org.springframework.util.Assert;
  *
  * @author Chris Bono
  */
-public final class PulsarClientProxy extends RestartableSingletonFactory<PulsarClient> implements PulsarClient {
+final class PulsarClientProxy extends RestartableSingletonFactory<PulsarClient> implements PulsarClient {
 
 	private static final int LIFECYCLE_PHASE = (Integer.MIN_VALUE / 2) - 200;
 
