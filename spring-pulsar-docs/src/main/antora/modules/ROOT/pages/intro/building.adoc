@@ -5,7 +5,7 @@ include::../attributes/attributes-variables.adoc[]
 
 If you have cloned the project locally, follow these steps to build the project from the source code.
 
-NOTE: Gradle `7.x (7.4 or above)` is required to build.
+NOTE: Gradle `8.x (8.3 or above)` is required to build.
 
 Run the following command to do a full build of the project:
 [indent=0]
