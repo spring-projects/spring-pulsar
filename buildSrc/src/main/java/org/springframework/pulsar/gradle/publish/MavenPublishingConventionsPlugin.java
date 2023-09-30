@@ -126,7 +126,10 @@ public class MavenPublishingConventionsPlugin implements Plugin<Project> {
 	private void suppressMavenOptionalFeatureWarnings(MavenPublication publication) {
 		publication.suppressPomMetadataWarningsFor("mavenOptionalApiElements");
 		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElements");
+		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElementsClasses");
+		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElementsResources");
 	}
+
 
 	private void customizeOrganization(MavenPomOrganization organization) {
 		organization.getName().set("Pivotal Software, Inc.");

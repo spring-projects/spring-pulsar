@@ -28,7 +28,5 @@ public class SpringDocsModulePlugin extends AbstractSpringModulePlugin {
 
 	@Override
 	protected void additionalPlugins(Project project) {
-		PluginManager pluginManager = project.getPluginManager();
-		pluginManager.apply(AsciidoctorConventionsPlugin.class);
 	}
 }
