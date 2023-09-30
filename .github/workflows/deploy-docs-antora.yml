@@ -1,8 +1,8 @@
 name: Deploy Docs (Antora)
 on:
-  push:
-    branches-ignore: [ gh-pages ]
-    tags: '**'
+#  push:
+#    branches-ignore: [ gh-pages ]
+#    tags: '**'
   workflow_dispatch:
 permissions:
   actions: write
