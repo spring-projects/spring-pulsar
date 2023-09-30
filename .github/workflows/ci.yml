@@ -26,7 +26,7 @@ jobs:
       project_version: ${{ steps.extract_version.outputs.project_version }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Java 17
         uses: actions/setup-java@v2
         with:
@@ -81,7 +81,7 @@ jobs:
       TOKEN: ${{ github.token }}
       VERSION: ${{ needs.build_and_deploy.outputs.project_version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - name: Set up gradle

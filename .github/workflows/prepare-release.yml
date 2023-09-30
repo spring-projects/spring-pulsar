@@ -22,7 +22,7 @@ jobs:
     steps:
       - id: checkout-source
         name: Checkout source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
 
