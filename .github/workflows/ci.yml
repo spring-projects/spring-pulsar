@@ -78,7 +78,9 @@ jobs:
     needs: [build_jdk_17]
     runs-on: ubuntu-latest
     steps:
-      - name: Set up JDK 17
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
           java-version: 17
