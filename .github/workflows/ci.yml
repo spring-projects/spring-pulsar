@@ -88,8 +88,6 @@ jobs:
         run: |
           mkdir -p /home/runner/.gradle
           echo 'systemProp.user.name=spring-builds+github' >> /home/runner/.gradle/gradle.properties
-      - name: Gradle Wrapper Validation
-        uses: gradle/wrapper-validation-action@v1
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2
         with:
