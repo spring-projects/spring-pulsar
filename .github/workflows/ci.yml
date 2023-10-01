@@ -93,7 +93,7 @@ jobs:
           OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_jdk_17]
+    needs: [deploy_artifacts]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
