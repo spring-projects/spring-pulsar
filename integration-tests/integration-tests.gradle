@@ -1,5 +1,5 @@
 plugins {
-	id 'org.springframework.pulsar.spring-module'
+	id 'org.springframework.pulsar.spring-unpublished-module'
 	id "de.undercouch.download" version "5.3.0"
 	id 'spring-pulsar.integration-test-conventions'
 }
@@ -55,12 +55,4 @@ task downloadRabbitConnector {
 
 project.afterEvaluate {
 	integrationTest.dependsOn downloadRabbitConnector
-}
-
-project.afterEvaluate {
-	project.tasks.publishArtifacts.enabled(false)
-	project.tasks.artifactoryPublish.enabled(false)
-	project.tasks.publishToOssrh.enabled(false)
-	project.tasks.publishMavenJavaPublicationToOssrhRepository.enabled(false)
-	project.tasks.publishAllPublicationsToOssrhRepository.enabled(false)
 }

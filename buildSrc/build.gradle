@@ -88,6 +88,10 @@ gradlePlugin {
 			id = "org.springframework.pulsar.spring-module"
 			implementationClass = "org.springframework.pulsar.gradle.SpringModulePlugin"
 		}
+		springUnpublishedModulePlugin {
+			id = "org.springframework.pulsar.spring-unpublished-module"
+			implementationClass = "org.springframework.pulsar.gradle.SpringUnpublishedModulePlugin"
+		}
 		sonarQubeConventionsPlugin {
 			id = "org.springframework.pulsar.sonarqube"
 			implementationClass = "org.springframework.pulsar.gradle.check.SonarQubeConventionsPlugin"

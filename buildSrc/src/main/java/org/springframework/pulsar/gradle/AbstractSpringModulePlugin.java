@@ -38,7 +38,6 @@ public abstract class AbstractSpringModulePlugin implements Plugin<Project> {
 		pluginManager.apply(JavaPlugin.class);
 		pluginManager.apply(JavaLibraryPlugin.class);
 		pluginManager.apply(RepositoryConventionPlugin.class);
-		pluginManager.apply(SpringMavenPlugin.class);
 		pluginManager.apply(JavaConventionsPlugin.class);
 		pluginManager.apply(OptionalDependenciesPlugin.class);
 		additionalPlugins(project);
