@@ -75,6 +75,7 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
+          cache-disabled: true
       - name: Deploy artifacts
         run: |
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
