@@ -64,49 +64,9 @@ jobs:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
-#      - name: Deploy artifacts
-#        run: |
-#          ./gradlew publishArtifacts finalizeDeployArtifacts --stacktrace -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
-#        env:
-#          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-#          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-#          OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
-#          OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
-
-  deploy_artifacts:
-    name: Deploy Artifacts
-    needs: [build_jdk_17]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: temurin
-      - name: Set up gradle user name
-        shell: bash
-        run: |
-          mkdir -p /home/runner/.gradle
-          echo 'systemProp.user.name=spring-builds+github' >> /home/runner/.gradle/gradle.properties
-      - name: Set up Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          cache-disabled: true
-        env:
-          GRADLE_USER_HOME: /home/runner/.gradle
-
-#      - uses: actions/checkout@v3
-#      - name: Set up gradle
-#        uses: spring-io/spring-gradle-build-action@v2
-#        with:
-#          java-version: 17
-#          distribution: temurin
-#          cache-disabled: true
       - name: Deploy artifacts
         run: |
-          ./gradlew clean build publishArtifacts finalizeDeployArtifacts -x integrationTest -x test --stacktrace --info -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew publishArtifacts finalizeDeployArtifacts --stacktrace -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
@@ -115,7 +75,7 @@ jobs:
 
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [deploy_artifacts]
+    needs: [build_jdk_17]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
