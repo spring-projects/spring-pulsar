@@ -39,8 +39,8 @@ jobs:
           # Extract version from gradle.properties
           version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           echo "project_version=$version" >>$GITHUB_OUTPUT
-  build_jdk_17:
-    name: Build JDK 17
+  build_deploy_jdk_17:
+    name: Build and Deploy Artifacts (JDK 17)
     needs: [prerequisites]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
@@ -72,10 +72,9 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
           OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
           OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
-
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_jdk_17]
+    needs: [build_deploy_jdk_17]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -100,18 +99,9 @@ jobs:
           context-root: spring-pulsar
           cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           cloudflare-cache-token: ${{ secrets.CLOUDFLARE_CACHE_TOKEN }}
-
-  log_complete:
-    name: Log Complete
-    needs: [prerequisites, build_jdk_17, deploy_docs_antora]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Echo completion message
-        run: |
-          echo "All complete!!"
   perform_release:
     name: Perform Release
-    needs: [prerequisites, build_jdk_17, deploy_docs_antora]
+    needs: [prerequisites, build_deploy_jdk_17, deploy_docs_antora]
     runs-on: ubuntu-latest
     permissions:
       contents: write
