@@ -116,7 +116,7 @@ jobs:
 
   log_complete:
     name: Log Complete
-    needs: [prerequisites, deploy_artifacts, deploy_docs_antora]
+    needs: [prerequisites, build_jdk_17, deploy_docs_antora]
     runs-on: ubuntu-latest
     steps:
       - name: Echo completion message
@@ -124,7 +124,7 @@ jobs:
           echo "All complete!!"
   perform_release:
     name: Perform Release
-    needs: [prerequisites, deploy_artifacts, deploy_docs_antora]
+    needs: [prerequisites, build_jdk_17, deploy_docs_antora]
     runs-on: ubuntu-latest
     permissions:
       contents: write
