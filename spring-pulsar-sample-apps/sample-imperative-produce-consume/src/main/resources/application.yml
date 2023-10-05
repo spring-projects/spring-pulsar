@@ -1,0 +1,8 @@
+spring:
+  pulsar:
+    defaults:
+      type-mappings:
+        - message-type: com.example.ImperativeProduceAndConsumeApp$Bar
+          topic-name: bar-topic
+          schema-info:
+            schema-type: JSON

@@ -1,0 +1,57 @@
+name: Check Samples
+
+on:
+  workflow_dispatch:
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
+  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+  GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+  COMMIT_OWNER: ${{ github.event.pusher.name }}
+  COMMIT_SHA: ${{ github.sha }}
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+jobs:
+  prerequisites:
+    name: Pre-requisites for building
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    outputs:
+      runjobs: ${{ steps.continue.outputs.runjobs }}
+      project_version: ${{ steps.continue.outputs.project_version }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: continue
+        name: Determine if should continue
+        run: |
+          # Run jobs if in upstream repository
+          echo "runjobs=true" >>$GITHUB_OUTPUT
+          # Extract version from gradle.properties
+          version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "project_version=$version" >>$GITHUB_OUTPUT
+  check_samples:
+    name: Check Samples project
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: needs.prerequisites.outputs.runjobs
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: 17
+          distribution: temurin
+      - name: Check samples project
+        env:
+          LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
+          SAMPLES_DIR:
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          ./gradlew publishMavenJavaPublicationToLocalRepository
+          ./gradlew \
+            --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
+            -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
+            -PspringPulsarVersion="$VERSION" \
+            :runAllSampleTests
