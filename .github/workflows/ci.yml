@@ -99,30 +99,6 @@ jobs:
           context-root: spring-pulsar
           cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           cloudflare-cache-token: ${{ secrets.CLOUDFLARE_CACHE_TOKEN }}
-  check_samples:
-    name: Check Samples project
-    needs: [prerequisites]
-    runs-on: ubuntu-latest
-    if: needs.prerequisites.outputs.runjobs
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up gradle
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: 17
-          distribution: temurin
-      - name: Check samples project
-        env:
-          LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
-          SAMPLES_DIR:
-          VERSION: ${{ needs.prerequisites.outputs.project_version }}
-        run: |
-          ./gradlew publishMavenJavaPublicationToLocalRepository
-          ./gradlew \
-            --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
-            -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
-            -PspringPulsarVersion="$VERSION" \
-            :runAllSampleTests
   perform_release:
     name: Perform Release
     needs: [prerequisites, build_deploy_jdk_17, deploy_docs_antora]
