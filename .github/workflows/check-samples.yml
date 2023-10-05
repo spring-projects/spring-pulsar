@@ -49,7 +49,7 @@ jobs:
           SAMPLES_DIR:
           VERSION: ${{ needs.prerequisites.outputs.project_version }}
         run: |
-          ./gradlew publishMavenJavaPublicationToLocalRepository
+          ./gradlew --rerun-tasks --no-build-cache publishMavenJavaPublicationToLocalRepository
           ./gradlew \
             --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
             -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
