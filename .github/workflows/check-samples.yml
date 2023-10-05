@@ -48,5 +48,5 @@ jobs:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ needs.prerequisites.outputs.project_version }}
         run: |
-          ./gradlew --debug --rerun-tasks --no-build-cache publishMavenJavaPublicationToLocalRepository
+          ./gradlew --info --stacktrace --no-build-cache publishMavenJavaPublicationToLocalRepository
 
