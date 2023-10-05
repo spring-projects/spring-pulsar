@@ -42,3 +42,14 @@ nohttp {
 check {
 	dependsOn checkstyleNohttp
 }
+
+tasks.register('runAllSampleTests') {
+	var allTasks = rootProject.getAllTasks(true)
+			.findAll {it.key.project.name.startsWith("sample-") }
+	var allTestsTasks = allTasks.values().collect { t ->
+		t.findAll { it.name == 'test' || it.name == 'integrationTest' }
+	}.flatten()
+	it.dependsOn {
+		allTestsTasks
+	}
+}

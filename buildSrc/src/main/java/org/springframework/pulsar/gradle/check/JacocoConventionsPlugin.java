@@ -20,7 +20,7 @@ public class JacocoConventionsPlugin implements Plugin<Project> {
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> {
 			project.getPluginManager().apply(JacocoPlugin.class);
 			project.getExtensions().configure(JacocoPluginExtension.class,
-					(jacocoExtension) -> jacocoExtension.setToolVersion("0.8.7"));
+					(jacocoExtension) -> jacocoExtension.setToolVersion("0.8.9"));
 			project.getTasks().withType(Test.class, (test) ->
 					project.getTasks().withType(JacocoReport.class, test::finalizedBy));
 		});
