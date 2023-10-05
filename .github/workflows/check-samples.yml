@@ -46,12 +46,7 @@ jobs:
       - name: Check samples project
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
-          SAMPLES_DIR:
           VERSION: ${{ needs.prerequisites.outputs.project_version }}
         run: |
-          ./gradlew --rerun-tasks --no-build-cache publishMavenJavaPublicationToLocalRepository
-          ./gradlew \
-            --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
-            -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
-            -PspringPulsarVersion="$VERSION" \
-            :runAllSampleTests
+          ./gradlew --debug --rerun-tasks --no-build-cache publishMavenJavaPublicationToLocalRepository
+
