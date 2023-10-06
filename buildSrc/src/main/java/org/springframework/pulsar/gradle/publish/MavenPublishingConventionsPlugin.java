@@ -126,11 +126,30 @@ public class MavenPublishingConventionsPlugin implements Plugin<Project> {
 		javaComponent.addVariantsFromConfiguration(
 				project.getConfigurations().findByName("mavenOptionalRuntimeElements"),
 				ConfigurationVariantDetails::mapToOptional);
+		skipPublishingOfMavenOptionalRuntimeElements(javaComponent, project);
+	}
+
+	/**
+	 * Workaround bug in SigningPlugin where it attempts to sign 'java-classes-dir' and 'java-resources-dir'
+	 * from the 'mavenOptionalRuntimeElements' and 'mavenOptionalRuntimeElementsResources', respectively.
+	 *
+	 * Approach is to use {@link AdhocComponentWithVariants#withVariantsFromConfiguration} and skip publishing of the
+	 * unwanted elements.
+	 *
+	 * @param javaComponent the Java component from JavaPlugin
+	 * @param project the Gradle project being applied to
+	 */
+	private void skipPublishingOfMavenOptionalRuntimeElements(AdhocComponentWithVariants javaComponent, Project project) {
+		javaComponent.withVariantsFromConfiguration(
+				project.getConfigurations().findByName("mavenOptionalRuntimeElements"),
+				ConfigurationVariantDetails::skip);
 	}
 
 	private void suppressMavenOptionalFeatureWarnings(MavenPublication publication) {
 		publication.suppressPomMetadataWarningsFor("mavenOptionalApiElements");
 		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElements");
+		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElementsClasses");
+		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElementsResources");
 	}
 
 
