@@ -125,7 +125,7 @@ jobs:
             :runAllSampleTests
   perform_release:
     name: Perform Release
-    needs: [prerequisites, build_deploy_jdk_17, deploy_docs_antora]
+    needs: [prerequisites, build_deploy_jdk_17, deploy_docs_antora, check_samples]
     runs-on: ubuntu-latest
     permissions:
       contents: write
