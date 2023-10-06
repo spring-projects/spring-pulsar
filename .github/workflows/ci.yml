@@ -39,7 +39,7 @@ jobs:
           # Extract version from gradle.properties
           version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           echo "project_version=$version" >>$GITHUB_OUTPUT
-  build_deploy_jdk_17:
+  build_jdk_17:
     name: Build and Deploy Artifacts (JDK 17)
     needs: [prerequisites]
     runs-on: ubuntu-latest
