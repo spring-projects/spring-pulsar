@@ -82,6 +82,11 @@ public class MavenPublishingConventionsPlugin implements Plugin<Project> {
 	}
 
 	private void customizeMavenPublication(MavenPublication publication, Project project) {
+		// Skip the fake 'hiddenMavenJava' publication otherwise when the actual 'mavenJava' publication
+		// comes back through here it will fail w/ an attempt to modify an immutable configuration.
+		if (publication.getName() == "hiddenMavenJava") {
+			return;
+		}
 		customizePom(publication.getPom(), project);
 		project.getPlugins().withType(JavaPlugin.class)
 				.all((javaPlugin) -> customizeJavaMavenPublication(publication, project));
@@ -126,8 +131,6 @@ public class MavenPublishingConventionsPlugin implements Plugin<Project> {
 	private void suppressMavenOptionalFeatureWarnings(MavenPublication publication) {
 		publication.suppressPomMetadataWarningsFor("mavenOptionalApiElements");
 		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElements");
-		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElementsClasses");
-		publication.suppressPomMetadataWarningsFor("mavenOptionalRuntimeElementsResources");
 	}
 
 
