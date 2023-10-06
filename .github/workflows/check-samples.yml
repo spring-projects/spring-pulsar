@@ -48,10 +48,9 @@ jobs:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ needs.prerequisites.outputs.project_version }}
         run: |
-          ./gradlew --info --stacktrace --no-build-cache --continue :spring-pulsar:publishMavenJavaPublicationToLocalRepository
-          
-          ./gradlew --info --stacktrace --no-build-cache --continue :spring-pulsar-reactive:publishMavenJavaPublicationToLocalRepository
-          
-          ./gradlew --info --stacktrace --no-build-cache --continue :spring-pulsar-cache-provider:publishMavenJavaPublicationToLocalRepository
-          
-          ./gradlew --info --stacktrace --no-build-cache --continue :spring-pulsar-cache-provider-caffeine:publishMavenJavaPublicationToLocalRepository
+          ./gradlew publishMavenJavaPublicationToLocalRepository
+          ./gradlew \
+            --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
+            -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
+            -PspringPulsarVersion="$VERSION" \
+            :runAllSampleTests
