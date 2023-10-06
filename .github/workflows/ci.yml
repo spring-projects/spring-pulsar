@@ -53,7 +53,9 @@ jobs:
           distribution: temurin
       - name: Build and run unit tests
         run: |
-          ./gradlew clean build -x integrationTest --continue --scan -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew clean build -x integrationTest \
+              --continue --scan \
+              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
       - name: Run integration tests
         run: |
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
@@ -64,17 +66,56 @@ jobs:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
-      - name: Deploy artifacts
+  check_samples:
+    name: Check Sample Apps
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: needs.prerequisites.outputs.runjobs
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: 17
+          distribution: temurin
+      - name: Run all sample app tests
+        env:
+          LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          ./gradlew publishArtifacts finalizeDeployArtifacts --stacktrace -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew publishMavenJavaPublicationToLocalRepository
+          ./gradlew \
+              --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
+              -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
+              -PspringPulsarVersion="$VERSION" \
+              :runAllSampleTests
+  deploy_artifacts:
+    name: Deploy Artifacts
+    needs: [build_jdk_17, check_samples]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up gradle
+        uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: 17
+          distribution: temurin
+      - name: Deploy artifacts
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
           OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
           OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
+        run: |
+          ./gradlew publishArtifacts finalizeDeployArtifacts \
+              --stacktrace \
+              -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" \
+              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_deploy_jdk_17]
+    needs: [build_jdk_17, check_samples]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -84,7 +125,8 @@ jobs:
           java-version: 17
           distribution: temurin
       - name: Run Antora
-        run: ./gradlew antora
+        run: |
+          ./gradlew antora
       - name: Publish Docs
         uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.11
         with:
@@ -99,33 +141,9 @@ jobs:
           context-root: spring-pulsar
           cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           cloudflare-cache-token: ${{ secrets.CLOUDFLARE_CACHE_TOKEN }}
-  check_samples:
-    name: Check Samples project
-    needs: [prerequisites]
-    runs-on: ubuntu-latest
-    if: needs.prerequisites.outputs.runjobs
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up gradle
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: 17
-          distribution: temurin
-      - name: Check samples project
-        env:
-          LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
-          SAMPLES_DIR:
-          VERSION: ${{ needs.prerequisites.outputs.project_version }}
-        run: |
-          ./gradlew publishMavenJavaPublicationToLocalRepository
-          ./gradlew \
-            --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
-            -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
-            -PspringPulsarVersion="$VERSION" \
-            :runAllSampleTests
   perform_release:
     name: Perform Release
-    needs: [prerequisites, build_deploy_jdk_17, deploy_docs_antora, check_samples]
+    needs: [prerequisites, deploy_artifacts, deploy_docs_antora]
     runs-on: ubuntu-latest
     permissions:
       contents: write
