@@ -83,9 +83,31 @@ jobs:
               -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
               -PspringPulsarVersion="$VERSION" \
               :runAllSampleTests
+  scan:
+    name: Run Trivy Scan
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: needs.prerequisites.outputs.runjobs
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+      - name: 'Scanned'
+        shell: bash
+        run: echo "::info ::Scanned"
   deploy_artifacts:
     name: Deploy Artifacts
-    needs: [build_jdk_17, check_samples]
+    needs: [build_jdk_17, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -103,7 +125,7 @@ jobs:
               -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_jdk_17, check_samples]
+    needs: [build_jdk_17, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
