@@ -7,13 +7,6 @@ on:
       - '0.2.x'
     paths-ignore:
       - '.github/**'
-env:
-  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-  GRADLE_ENTERPRISE_URL: 'https://ge.spring.io'
-  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-  GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
 
 jobs:
   build_and_verify:
@@ -22,11 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up gradle
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: 17
-          distribution: temurin
+      - uses: spring-io/spring-gradle-build-action@v2
       - name: Build and run unit tests
         run: |
           ./gradlew clean build -x integrationTest --continue --scan
