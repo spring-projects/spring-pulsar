@@ -25,6 +25,12 @@ dependencies {
 	implementation 'com.devskiller:jfairy:0.6.5'
 }
 
+test {
+	useJUnitPlatform()
+	testLogging.showStandardStreams = true
+	outputs.upToDateWhen { false }
+}
+
 bootRun {
 	jvmArgs = [
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED",

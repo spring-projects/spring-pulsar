@@ -32,6 +32,7 @@ dependencies {
 test {
 	useJUnitPlatform()
 	testLogging.showStandardStreams = true
+	outputs.upToDateWhen { false }
 }
 
 bootRun {

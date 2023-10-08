@@ -17,6 +17,12 @@ dependencies {
 	implementation "org.springframework.cloud:spring-cloud-stream-binder-pulsar:${springCloudStreamVersion}"
 }
 
+test {
+	useJUnitPlatform()
+	testLogging.showStandardStreams = true
+	outputs.upToDateWhen { false }
+}
+
 bootRun {
 	jvmArgs = [
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED",

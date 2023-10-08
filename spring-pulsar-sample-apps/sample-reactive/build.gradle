@@ -16,6 +16,12 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-pulsar-reactive:${springBootVersion}"
 }
 
+test {
+	useJUnitPlatform()
+	testLogging.showStandardStreams = true
+	outputs.upToDateWhen { false }
+}
+
 bootRun {
 	jvmArgs = [
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED",

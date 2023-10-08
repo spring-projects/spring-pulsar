@@ -20,6 +20,12 @@ dependencies {
 	implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
 }
 
+test {
+	useJUnitPlatform()
+	testLogging.showStandardStreams = true
+	outputs.upToDateWhen { false }
+}
+
 bootRun {
 	jvmArgs = [
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED",
