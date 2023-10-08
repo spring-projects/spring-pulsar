@@ -13,7 +13,7 @@ public class PublishArtifactsPlugin implements Plugin<Project> {
 			publishArtifacts.setGroup("Publishing");
 			publishArtifacts.setDescription("Publish the artifacts to either Artifactory or Maven Central based on the version");
 			if (ProjectUtils.isRelease(project)) {
-				publishArtifacts.dependsOn("publishToOssrh");
+				publishArtifacts.dependsOn("publishToOssrh", "closeOssrhStagingRepository");
 			}
 			else {
 				publishArtifacts.dependsOn("artifactoryPublish");
