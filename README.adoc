@@ -1,5 +1,5 @@
 = Spring for Apache Pulsar
-:docs: https://docs.spring.io/spring-pulsar/docs/current-SNAPSHOT/reference
+:docs: https://docs.spring.io/spring-pulsar/reference/
 :github: https://github.com/spring-projects/spring-pulsar
 
 Spring for Apache Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
