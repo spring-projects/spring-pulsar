@@ -10,7 +10,7 @@
 ** xref:reference/pulsar-admin.adoc[]
 ** xref:reference/pulsar-function.adoc[]
 ** xref:reference/observability.adoc[]
-** xref:reference/pulsar-binder.adoc[]
+** https://docs.spring.io/spring-cloud-stream/reference/pulsar/pulsar_binder.html[Spring Cloud Stream Binder for Apache Pulsar]
 * xref:other-resources.adoc[]
 * Appendices
 ** xref:appendix/version-compatibility.adoc[]
