@@ -7,6 +7,7 @@ antora:
     - '@antora/atlas-extension'
     - require: '@springio/antora-extensions/root-component-extension'
       root_component_name: 'pulsar'
+    - '@springio/antora-extensions/static-page-extension'
 
 site:
   title: Spring Pulsar
@@ -23,7 +24,8 @@ content:
 asciidoc:
   attributes:
     page-stackoverflow-url: https://stackoverflow.com/tags/spring-pulsar
-    page-pagination: ''
+    page-related-doc-categories: messaging
+    page-related-doc-projects: framework,cloud-stream
     hide-uri-scheme: '@'
     tabs-sync-option: '@'
     chomp: 'all'
@@ -39,7 +41,7 @@ urls:
 
 ui:
   bundle:
-    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.3.6/ui-bundle.zip
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.4.3/ui-bundle.zip
     snapshot: true
 
 runtime:
