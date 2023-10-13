@@ -17,25 +17,38 @@
 package org.springframework.pulsar.gradle.versions;
 
 import java.io.File;
+import java.util.Objects;
+import java.util.function.Function;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.TaskAction;
 
 public abstract class UpdateProjectVersionTask extends DefaultTask {
 
 	protected void updateVersionInGradleProperties(String newVersion) {
-		String currentVersion = getProject().getVersion().toString();
+		this.updatePropertyInGradleProperties("version", (p) -> p.getVersion().toString(), newVersion);
+	}
+
+	protected void updatePropertyInGradleProperties(String propertyName, String newPropertyValue) {
+		this.updatePropertyInGradleProperties(propertyName,
+				(p) -> Objects.toString(p.findProperty(propertyName), ""), newPropertyValue);
+	}
+
+	protected void updatePropertyInGradleProperties(
+			String propertyName,
+			Function<Project, String> currentPropertyValueFromProject,
+			String newPropertyValue) {
+		String currentPropertyValue = currentPropertyValueFromProject.apply(getProject());
 		File gradlePropertiesFile = getProject().getRootProject().file(Project.GRADLE_PROPERTIES);
 		if (!gradlePropertiesFile.exists()) {
-			throw new RuntimeException("No gradle.properties to update version in");
+			throw new RuntimeException("No gradle.properties to update property in");
 		}
-		System.out.printf("Updating the project version in %s from %s to %s%n",
-				Project.GRADLE_PROPERTIES, currentVersion, newVersion);
+		System.out.printf("Updating the %s property in %s from %s to %s%n",
+				propertyName, Project.GRADLE_PROPERTIES, currentPropertyValue, newPropertyValue);
 		FileUtils.replaceFileText(gradlePropertiesFile, (gradlePropertiesText) -> {
 			gradlePropertiesText = gradlePropertiesText.replace(
-					"version=" + currentVersion, "version=" + newVersion);
+					"%s=%s".formatted(propertyName, currentPropertyValue),
+					"%s=%s".formatted(propertyName, newPropertyValue));
 			return gradlePropertiesText;
 		});
 	}

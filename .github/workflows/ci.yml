@@ -40,7 +40,7 @@ jobs:
           version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           echo "project_version=$version" >>$GITHUB_OUTPUT
   build_jdk_17:
-    name: Build and Deploy Artifacts (JDK 17)
+    name: Build (JDK 17)
     needs: [prerequisites]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs

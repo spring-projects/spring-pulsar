@@ -36,7 +36,7 @@ tasks.create('generateAntoraResources') {
 }
 
 def generateAttributes() {
-	return ['spring-boot-version': project.springBootVersion ?: 'current',
+	return ['spring-boot-version': project.springBootVersionForDocs ?: 'current',
 			'spring-framework-version': project.springFrameworkVersion ?: 'current',
 			'spring-cloud-stream-version': project.springCloudStreamVersion ?: 'current',
 			'spring-pulsar-version': project.version,

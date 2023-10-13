@@ -24,9 +24,13 @@ public abstract class UpdateToReleaseVersionTask extends UpdateProjectVersionTas
 	@Input
 	private String releaseVersion;
 
+	@Input
+	private String springBootVersion;
+
 	@TaskAction
 	public void updateToReleaseVersion() {
 		updateVersionInGradleProperties(this.releaseVersion);
+		updatePropertyInGradleProperties("springBootVersionForDocs", this.springBootVersion);
 	}
 
 	public String getReleaseVersion() {
@@ -35,5 +39,13 @@ public abstract class UpdateToReleaseVersionTask extends UpdateProjectVersionTas
 
 	public void setReleaseVersion(String releaseVersion) {
 		this.releaseVersion = releaseVersion;
+	}
+
+	public String getSpringBootVersion() {
+		return springBootVersion;
+	}
+
+	public void setSpringBootVersion(String springBootVersion) {
+		this.springBootVersion = springBootVersion;
 	}
 }
