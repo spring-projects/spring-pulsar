@@ -19,14 +19,24 @@ package org.springframework.pulsar.gradle.versions;
 import java.io.File;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 
+import org.springframework.lang.Nullable;
+
 public abstract class UpdateProjectVersionTask extends DefaultTask {
 
+	static final String VERSION_PROPERTY = "version";
+
+	static final String SPRING_BOOT_VERSION_PROPERTY = "springBootVersionForDocs";
+
+	static final Pattern VERSION_PATTERN = Pattern.compile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-M\\d+|-RC\\d+|-SNAPSHOT)?$");
+
 	protected void updateVersionInGradleProperties(String newVersion) {
-		this.updatePropertyInGradleProperties("version", (p) -> p.getVersion().toString(), newVersion);
+		this.updatePropertyInGradleProperties(VERSION_PROPERTY, (p) -> p.getVersion().toString(), newVersion);
 	}
 
 	protected void updatePropertyInGradleProperties(String propertyName, String newPropertyValue) {
@@ -51,5 +61,23 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 					"%s=%s".formatted(propertyName, newPropertyValue));
 			return gradlePropertiesText;
 		});
+	}
+
+	protected VersionInfo parseVersion(String version) {
+		Matcher versionMatch = VERSION_PATTERN.matcher(version);
+		if (versionMatch.find()) {
+			String majorSegment = versionMatch.group(1);
+			String minorSegment = versionMatch.group(2);
+			String patchSegment = versionMatch.group(3);
+			String modifier = versionMatch.group(4);
+			return new VersionInfo(majorSegment, minorSegment, patchSegment, modifier);
+		}
+		else {
+			throw new IllegalStateException(
+					"Cannot extract version segment from %s as it does not conform to the expected format".formatted(version));
+		}
+	}
+
+	record VersionInfo(String major, String minor, String patch, @Nullable String modifier) {
 	}
 }

@@ -26,7 +26,6 @@ public class UpdateProjectVersionPlugin implements Plugin<Project> {
 			updateToReleaseVersionTask.setGroup("Release");
 			updateToReleaseVersionTask.setDescription("Updates the project version to the next release in gradle.properties");
 			updateToReleaseVersionTask.setReleaseVersion((String) project.findProperty("releaseVersion"));
-			updateToReleaseVersionTask.setSpringBootVersion((String) project.findProperty("springBootVersion"));
 		});
 		project.getTasks().register("updateToSnapshotVersion", UpdateToSnapshotVersionTask.class, updateToSnapshotVersionTask -> {
 			updateToSnapshotVersionTask.setGroup("Release");

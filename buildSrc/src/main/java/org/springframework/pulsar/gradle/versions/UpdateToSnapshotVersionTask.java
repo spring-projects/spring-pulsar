@@ -16,40 +16,41 @@
 
 package org.springframework.pulsar.gradle.versions;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
 import org.gradle.api.tasks.TaskAction;
 
-public abstract class UpdateToSnapshotVersionTask extends UpdateProjectVersionTask {
+import org.springframework.util.Assert;
 
-	private static final String RELEASE_VERSION_PATTERN = "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-M\\d+|-RC\\d+)?$";
+public abstract class UpdateToSnapshotVersionTask extends UpdateProjectVersionTask {
 
 	@TaskAction
 	public void updateToSnapshotVersion() {
 		String currentVersion = getProject().getVersion().toString();
 		updateVersionInGradleProperties(calculateNextSnapshotVersion(currentVersion));
+		String currentBootVersion = Objects.toString(getProject().findProperty(SPRING_BOOT_VERSION_PROPERTY), null);
+		Assert.notNull(currentBootVersion, () -> "% property not found".formatted(SPRING_BOOT_VERSION_PROPERTY));
+		updatePropertyInGradleProperties(SPRING_BOOT_VERSION_PROPERTY, calculateNextSnapshotVersion(currentBootVersion));
 	}
 
-	private String calculateNextSnapshotVersion(String currentVersion) {
-		Pattern releaseVersionPattern = Pattern.compile(RELEASE_VERSION_PATTERN);
-		Matcher releaseVersion = releaseVersionPattern.matcher(currentVersion);
-
-		if (releaseVersion.find()) {
-			String majorSegment = releaseVersion.group(1);
-			String minorSegment = releaseVersion.group(2);
-			String patchSegment = releaseVersion.group(3);
-			String modifier = releaseVersion.group(4);
-			if (modifier == null) {
-				patchSegment = String.valueOf(Integer.parseInt(patchSegment) + 1);
-			}
-			System.out.println("modifier = " + modifier);
-			return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
+	private String calculateNextSnapshotVersion(String version) {
+		VersionInfo versionSegments = parseVersion(version);
+		String majorSegment = versionSegments.major();
+		String minorSegment = versionSegments.minor();
+		String patchSegment = versionSegments.patch();
+		String modifier = versionSegments.modifier();
+		System.out.println("modifier = " + modifier);
+		if (modifier == null) {
+			patchSegment = String.valueOf(Integer.parseInt(patchSegment) + 1);
 		}
-		else {
-			throw new IllegalStateException(
-					"Cannot calculate next snapshot version because the current project version does not conform to the expected format");
-		}
+		return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
 	}
 
+	private String calculateCurrentSnapshotVersion(String version) {
+		VersionInfo versionSegments = parseVersion(version);
+		String majorSegment = versionSegments.major();
+		String minorSegment = versionSegments.minor();
+		String patchSegment = versionSegments.patch();
+		return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
+	}
 }

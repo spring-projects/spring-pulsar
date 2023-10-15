@@ -16,21 +16,22 @@
 
 package org.springframework.pulsar.gradle.versions;
 
+import java.util.Objects;
+
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
+
+import org.springframework.util.Assert;
 
 public abstract class UpdateToReleaseVersionTask extends UpdateProjectVersionTask {
 
 	@Input
 	private String releaseVersion;
 
-	@Input
-	private String springBootVersion;
-
 	@TaskAction
 	public void updateToReleaseVersion() {
 		updateVersionInGradleProperties(this.releaseVersion);
-		updatePropertyInGradleProperties("springBootVersionForDocs", this.springBootVersion);
+		updatePropertyInGradleProperties(SPRING_BOOT_VERSION_PROPERTY, calculateReleaseBootVersion());
 	}
 
 	public String getReleaseVersion() {
@@ -41,11 +42,16 @@ public abstract class UpdateToReleaseVersionTask extends UpdateProjectVersionTas
 		this.releaseVersion = releaseVersion;
 	}
 
-	public String getSpringBootVersion() {
-		return springBootVersion;
+	private String calculateReleaseBootVersion() {
+		String currentBootVersion = Objects.toString(getProject().findProperty(SPRING_BOOT_VERSION_PROPERTY), null);
+		Assert.notNull(currentBootVersion, () -> "% property not found".formatted(SPRING_BOOT_VERSION_PROPERTY));
+		VersionInfo bootVersionSegments = parseVersion(currentBootVersion);
+		String releaseBootVersion = "%s.%s.%s".formatted(bootVersionSegments.major(), bootVersionSegments.minor(), bootVersionSegments.patch());
+		String releaseVersionModifier = parseVersion(this.releaseVersion).modifier();
+		if (releaseVersionModifier != null) {
+			releaseBootVersion = releaseBootVersion + releaseVersionModifier;
+		}
+		return releaseBootVersion;
 	}
 
-	public void setSpringBootVersion(String springBootVersion) {
-		this.springBootVersion = springBootVersion;
-	}
 }

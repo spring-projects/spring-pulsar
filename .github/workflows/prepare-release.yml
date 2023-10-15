@@ -7,10 +7,6 @@ on:
         description: 'Version to release'
         required: true
         type: string
-      springBootVersion:
-        description: 'Spring Boot Version (Delivery Vehicle)'
-        required: true
-        type: string
 permissions:
   contents: read
 
@@ -54,10 +50,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           releaseVersion="${{ inputs.releaseVersion }}"
-          springBootVersion="${{ inputs.springBootVersion }}"
           releaseBranch="release-initiate/$releaseVersion"
           git checkout -b $releaseBranch
-          ./gradlew :updateToReleaseVersion -PreleaseVersion=$releaseVersion -PspringBootVersion=$springBootVersion        
+          ./gradlew :updateToReleaseVersion -PreleaseVersion=$releaseVersion        
           git commit -am "[Release $releaseVersion] Update version"
           git push origin $releaseBranch
           gh pr create --title "[Release $releaseVersion] Update version" --body "Merge to initiate release."
