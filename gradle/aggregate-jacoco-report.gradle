@@ -12,7 +12,13 @@ project.afterEvaluate {
 
 	tasks.create(name: 'aggregateJacocoTestReport', type: JacocoReport) {
 
-		dependsOn ':spring-pulsar-cache-provider:compileJava', ':spring-pulsar-cache-provider-caffeine:compileJava'
+		dependsOn(
+			':spring-pulsar:compileJava',
+			':spring-pulsar-reactive:compileJava',
+			':spring-pulsar-cache-provider:compileJava',
+			':spring-pulsar-cache-provider:test',
+			':spring-pulsar-cache-provider-caffeine:compileJava')
+
 
 		group = 'verification'
 		description = 'Generates aggregate code coverage report for all projects test tasks'
