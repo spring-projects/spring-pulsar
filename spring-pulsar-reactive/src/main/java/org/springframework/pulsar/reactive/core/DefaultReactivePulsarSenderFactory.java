@@ -35,6 +35,7 @@ import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Default implementation of {@link ReactivePulsarSenderFactory}.
@@ -172,11 +173,42 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	@Override
 	public void doStop() {
 		try {
+			this.reflectivelyClearCache();
 			this.reactiveMessageSenderCache.close();
+
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Workaround to reflectively clear the underlying producer cache.
+	 *
+	 * TODO: Remove once this is supported in the Reactive client.
+	 */
+	private void reflectivelyClearCache() {
+		// reactiveMessageSenderCache
+		// (org.apache.pulsar.reactive.client.internal.adapter.ProducerCache)
+		var cacheProviderField = ReflectionUtils.findField(this.reactiveMessageSenderCache.getClass(), "cacheProvider");
+		ReflectionUtils.makeAccessible(cacheProviderField);
+
+		// org.apache.pulsar.reactive.client.producercache.CaffeineShadedProducerCacheProvider
+		var cacheProvider = ReflectionUtils.getField(cacheProviderField, this.reactiveMessageSenderCache);
+
+		// org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BoundedLocalCache$BoundedLocalAsyncCache
+		var cacheField = ReflectionUtils.findField(cacheProvider.getClass(), "cache");
+		ReflectionUtils.makeAccessible(cacheField);
+		var cache = ReflectionUtils.getField(cacheField, cacheProvider);
+
+		// org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLMSAW
+		var actualCacheField = ReflectionUtils.findField(cache.getClass(), "cache");
+		ReflectionUtils.makeAccessible(actualCacheField);
+		var actualCache = ReflectionUtils.getField(actualCacheField, cache);
+
+		var clearMethod = ReflectionUtils.findMethod(actualCache.getClass(), "clear");
+		ReflectionUtils.makeAccessible(clearMethod);
+		ReflectionUtils.invokeMethod(clearMethod, actualCache);
 	}
 
 	/**
