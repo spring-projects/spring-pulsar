@@ -229,6 +229,27 @@ jobs:
           --generate-notes \
           --notes-file $RELEASE_NOTES_FILE
 
+      - name: Announce Release on Slack
+        id: spring-pulsar-announcing
+        uses: slackapi/slack-github-action@v1.19.0
+        with:
+          payload: |
+            {
+              "text": "spring-pulsar-announcing `${{ env.VERSION }}` is available now",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "spring-pulsar-announcing `${{ env.VERSION }}` is available now"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
       - name: Update next snapshot version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
