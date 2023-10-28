@@ -223,7 +223,7 @@ jobs:
             --jq '{issues:map(select((.labels | length == 0) or (any(.labels[].name; startswith("automation/rlnotes")|not))) + {repo:"spring-projects/spring-pulsar"})}' \
             > $RELEASE_NOTES_ISSUES
           mustache $RELEASE_NOTES_ISSUES .github/rlnotes.mustache > $RELEASE_NOTES_FILE
-          gh release create $VERSION \
+          gh release create v$VERSION \
           --draft \
           --title "Spring Pulsar $VERSION" \
           --generate-notes \
