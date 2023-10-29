@@ -225,6 +225,30 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 	@Nested
 	@ContextConfiguration
+	class ExactTopicsTests {
+
+		@Test
+		void unpartitionedTopicExists() throws PulsarAdminException {
+			var topic = PulsarTopic.builder("taet-foo").numberOfPartitions(0).build();
+			pulsarAdministration.createOrModifyTopics(topic);
+			assertThatTopicsExist(List.of(topic));
+			// subsequent call should short circuit and not fail
+			pulsarAdministration.createOrModifyTopics(topic);
+		}
+
+		@Test
+		void partitionedTopicExists() throws PulsarAdminException {
+			var topic = PulsarTopic.builder("taet-bar").numberOfPartitions(3).build();
+			pulsarAdministration.createOrModifyTopics(topic);
+			assertThatTopicsExist(List.of(topic));
+			// subsequent call should short circuit and not fail
+			pulsarAdministration.createOrModifyTopics(topic);
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration
 	class ConflictingTopicsTests {
 
 		@Test
