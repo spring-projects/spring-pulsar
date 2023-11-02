@@ -197,7 +197,8 @@ public final class DefaultReactivePulsarSenderFactory<T>
 		// (org.apache.pulsar.reactive.client.internal.adapter.ProducerCache)
 		var cacheProviderField = ReflectionUtils.findField(this.reactiveMessageSenderCache.getClass(), "cacheProvider");
 		if (cacheProviderField == null) {
-			this.logger.trace(() -> "Could not locate 'cacheProvider' field on sender cache: " + this.reactiveMessageSenderCache);
+			this.logger.trace(
+					() -> "Could not locate 'cacheProvider' field on sender cache: " + this.reactiveMessageSenderCache);
 			return;
 		}
 		ReflectionUtils.makeAccessible(cacheProviderField);
