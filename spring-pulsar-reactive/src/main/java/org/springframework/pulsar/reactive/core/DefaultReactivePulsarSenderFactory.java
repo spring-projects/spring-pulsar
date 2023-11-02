@@ -188,25 +188,57 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	 * TODO: Remove once this is supported in the Reactive client.
 	 */
 	private void reflectivelyClearCache() {
+		if (this.reactiveMessageSenderCache == null) {
+			this.logger.trace(() -> "Cache is null - nothing to clear");
+			return;
+		}
+
 		// reactiveMessageSenderCache
 		// (org.apache.pulsar.reactive.client.internal.adapter.ProducerCache)
 		var cacheProviderField = ReflectionUtils.findField(this.reactiveMessageSenderCache.getClass(), "cacheProvider");
+		if (cacheProviderField == null) {
+			this.logger.trace(() -> "Could not locate 'cacheProvider' field on sender cache: " + this.reactiveMessageSenderCache);
+			return;
+		}
 		ReflectionUtils.makeAccessible(cacheProviderField);
-
 		// org.apache.pulsar.reactive.client.producercache.CaffeineShadedProducerCacheProvider
 		var cacheProvider = ReflectionUtils.getField(cacheProviderField, this.reactiveMessageSenderCache);
+		if (cacheProvider == null) {
+			this.logger.trace(() -> "Cache provider was null on sender cache: " + this.reactiveMessageSenderCache);
+			return;
+		}
 
 		// org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.BoundedLocalCache$BoundedLocalAsyncCache
 		var cacheField = ReflectionUtils.findField(cacheProvider.getClass(), "cache");
+		if (cacheField == null) {
+			this.logger.trace(() -> "Could not locate 'cache' field on cache provider: " + cacheProvider);
+			return;
+		}
 		ReflectionUtils.makeAccessible(cacheField);
 		var cache = ReflectionUtils.getField(cacheField, cacheProvider);
+		if (cacheField == null) {
+			this.logger.trace(() -> "Cache impl was null on cache provider: " + cacheProvider);
+			return;
+		}
 
 		// org.apache.pulsar.reactive.shade.com.github.benmanes.caffeine.cache.SSLMSAW
 		var actualCacheField = ReflectionUtils.findField(cache.getClass(), "cache");
+		if (actualCacheField == null) {
+			this.logger.trace(() -> "Could not locate 'cache' field on cache impl: " + cache);
+			return;
+		}
 		ReflectionUtils.makeAccessible(actualCacheField);
 		var actualCache = ReflectionUtils.getField(actualCacheField, cache);
+		if (actualCache == null) {
+			this.logger.trace(() -> "Actual cache was null on cache impl: " + cache);
+			return;
+		}
 
 		var clearMethod = ReflectionUtils.findMethod(actualCache.getClass(), "clear");
+		if (clearMethod == null) {
+			this.logger.trace(() -> "Could not locate 'clear' method on actual cache: " + actualCache);
+			return;
+		}
 		ReflectionUtils.makeAccessible(clearMethod);
 		ReflectionUtils.invokeMethod(clearMethod, actualCache);
 	}
