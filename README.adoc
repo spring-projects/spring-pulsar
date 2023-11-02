@@ -1,5 +1,5 @@
 = Spring for Apache Pulsar
-:docs: https://docs.spring.io/spring-pulsar/reference/
+:docs: https://docs.spring.io/spring-pulsar/reference
 :github: https://github.com/spring-projects/spring-pulsar
 
 Spring for Apache Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
@@ -9,12 +9,12 @@ Spring for Apache Pulsar provides a basic Spring-friendly API for developing htt
 include::spring-pulsar-docs/src/main/antora/modules/ROOT/pages/intro/project-state.adoc[leveloffset=+1]
 
 == Getting Started
-The {docs}/html/[reference documentation] includes a {docs}/html/#quick-tourhtml[quick tour] section.
+The {docs}[reference documentation] includes a {docs}/reference/pulsar.html#quick-tour[quick tour] section.
 
 == Getting Help
 Are you having trouble with Spring for Apache Pulsar? We want to help!
 
-* Check the {docs}/html/[reference documentation]
+* Check the {docs}[reference documentation]
 * Learn the Spring basics -- Spring for Apache Pulsar builds on many other Spring projects; check the https://spring.io[spring.io] website for a wealth of reference documentation.
 If you are new to Spring, try one of the https://spring.io/guides[guides].
 // TODO (NYI): * If you are upgrading, read the {github}/wiki[release notes] for upgrade instructions and "new and noteworthy" features.
