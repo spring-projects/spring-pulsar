@@ -33,7 +33,9 @@ import org.springframework.pulsar.support.MessageConverter;
  *
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @deprecated for removal in favor of {@link PulsarListenerEndpoint}
  */
+@Deprecated(forRemoval = true)
 public class PulsarListenerEndpointAdapter implements PulsarListenerEndpoint {
 
 	@Override

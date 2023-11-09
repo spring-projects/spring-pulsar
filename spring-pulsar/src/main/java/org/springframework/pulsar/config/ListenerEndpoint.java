@@ -17,6 +17,7 @@
 package org.springframework.pulsar.config;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -32,6 +33,7 @@ import org.springframework.pulsar.support.MessageConverter;
  *
  * @param <C> Message listener container type.
  * @author Christophe Bornet
+ * @author Vedran Pavic
  */
 public interface ListenerEndpoint<C extends MessageListenerContainer> {
 
@@ -42,53 +44,69 @@ public interface ListenerEndpoint<C extends MessageListenerContainer> {
 	 * @see ListenerContainerFactory#createListenerContainer
 	 */
 	@Nullable
-	String getId();
+	default String getId() {
+		return null;
+	}
 
 	/**
 	 * Return the subscription name for this endpoint's container.
 	 * @return the subscription name.
 	 */
 	@Nullable
-	String getSubscriptionName();
+	default String getSubscriptionName() {
+		return null;
+	}
 
 	/**
 	 * Return the subscription type for this endpoint's container.
 	 * @return the subscription type.
 	 */
 	@Nullable
-	SubscriptionType getSubscriptionType();
+	default SubscriptionType getSubscriptionType() {
+		return SubscriptionType.Exclusive;
+	}
 
 	/**
 	 * Return the topics for this endpoint's container.
 	 * @return the topics.
 	 */
-	Collection<String> getTopics();
+	default Collection<String> getTopics() {
+		return Collections.emptyList();
+	}
 
 	/**
 	 * Return the topic pattern for this endpoint's container.
 	 * @return the topic pattern.
 	 */
-	String getTopicPattern();
+	default String getTopicPattern() {
+		return null;
+	}
 
 	/**
 	 * Return the autoStartup for this endpoint's container.
 	 * @return the autoStartup.
 	 */
 	@Nullable
-	Boolean getAutoStartup();
+	default Boolean getAutoStartup() {
+		return null;
+	}
 
 	/**
 	 * Return the schema type for this endpoint's container.
 	 * @return the schema type.
 	 */
-	SchemaType getSchemaType();
+	default SchemaType getSchemaType() {
+		return null;
+	}
 
 	/**
 	 * Return the concurrency for this endpoint's container.
 	 * @return the concurrency.
 	 */
 	@Nullable
-	Integer getConcurrency();
+	default Integer getConcurrency() {
+		return null;
+	}
 
 	/**
 	 * Setup the specified message listener container with the model defined by this
@@ -101,6 +119,7 @@ public interface ListenerEndpoint<C extends MessageListenerContainer> {
 	 * @param listenerContainer the listener container to configure
 	 * @param messageConverter the message converter - can be null
 	 */
-	void setupListenerContainer(C listenerContainer, @Nullable MessageConverter messageConverter);
+	default void setupListenerContainer(C listenerContainer, @Nullable MessageConverter messageConverter) {
+	}
 
 }

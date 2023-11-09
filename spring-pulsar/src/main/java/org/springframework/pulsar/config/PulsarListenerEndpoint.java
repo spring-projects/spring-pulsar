@@ -28,13 +28,20 @@ import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
  *
  * @author Soby Chacko
  * @author Alexander Preuß
+ * @author Vedran Pavic
  */
 public interface PulsarListenerEndpoint extends ListenerEndpoint<PulsarMessageListenerContainer> {
 
-	boolean isBatchListener();
+	default boolean isBatchListener() {
+		return false;
+	}
 
-	Properties getConsumerProperties();
+	default Properties getConsumerProperties() {
+		return null;
+	}
 
-	AckMode getAckMode();
+	default AckMode getAckMode() {
+		return null;
+	}
 
 }
