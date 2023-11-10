@@ -105,7 +105,7 @@ template.newMessage(msg)
     .send();
 ----
 
-TIP: Note that, when using a `MessageRouter`, the only valid setting for `spring.pulsar.reactive.sender.message-routing-mode` is `custom`.
+TIP: Note that, when using a `MessageRouter`, the only valid setting for `spring.pulsar.producer.message-routing-mode` is `custom`.
 
 [[schema-info-template-reactive]]
 :template-class: ReactivePulsarTemplate
@@ -115,7 +115,7 @@ include::schema-info/schema-info-template.adoc[leveloffset=+1]
 === ReactivePulsarSenderFactory
 The `ReactivePulsarTemplate` relies on a `ReactivePulsarSenderFactory` to actually create the underlying sender.
 
-Spring Boot provides this sender factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.sender.*`] application properties.
+Spring Boot provides this sender factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.producer.*`] application properties.
 
 NOTE: If topic information is not specified when using the sender factory APIs directly, the same <<topic-resolution-process-reactive,topic resolution process>> used by the `ReactivePulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
@@ -124,7 +124,7 @@ Each underlying Pulsar producer consumes resources.
 To improve performance and avoid continual creation of producers, the `ReactiveMessageSenderCache` in the underlying Apache Pulsar Reactive client caches the producers that it creates.
 They are cached in an LRU fashion and evicted when they have not been used within a configured time period.
 
-You can configure the cache settings by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.sender.cache.*`] application properties.
+You can configure the cache settings by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.producer.cache.*`] application properties.
 
 [[reactive-message-consumption]]
 == Message Consumption
@@ -240,7 +240,7 @@ Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<Foo
 ==== Configuration - Application Properties
 The listener ultimately relies on `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer.
 
-Spring Boot provides this consumer factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.consumer.*`] application-properties.
+Spring Boot provides this consumer factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application-properties.
 
 [[reactive-consumer-customizer]]
 ==== Consumer Customization
@@ -278,7 +278,7 @@ ReactiveMessageConsumerBuilderCustomizer<String> directConsumerPropsCustomizer()
 }
 ----
 
-CAUTION: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.reactive.consumer` Spring Boot configuration properties
+CAUTION: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` Spring Boot configuration properties
 
 [[schema-info-listener-reactive]]
 :listener-class: ReactivePulsarListener
@@ -379,11 +379,11 @@ Apache Pulsar provides various native strategies for message redelivery and erro
 We will take a look at them and see how to use them through Spring for Apache Pulsar.
 
 ==== Acknowledgment Timeout
-By default, Pulsar consumers do not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
-When you use Spring for Apache Pulsar, you can enable this property by setting the `spring.pulsar.reactive.consumer.ack-timeout` Boot property.
-If this property has a value above zero and if the Pulsar consumer does not acknowledge a message within that timeout period, the message is redelivered.
 
-You can also specify this property directly as a Pulsar consumer property via a <<reactive-consumer-customizer,consumer customizer>> such as:
+By default, Pulsar consumers do not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
+If the ack timeout property has a value above zero and if the Pulsar consumer does not acknowledge a message within that timeout period, the message is redelivered.
+
+You can specify this property directly as a Pulsar consumer property via a <<reactive-consumer-customizer,consumer customizer>> such as:
 
 [source, java]
 ----
@@ -394,10 +394,9 @@ ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
 ----
 
 ==== Negative Acknowledgment Redelivery Delay
-When acknowledging negatively, Pulsar consumer lets you specify how the application wants the message to be re-delivered.
-The default is to redeliver the message in one minute, but you can change it by setting `spring.pulsar.reactive.consumer.negative-ack-redelivery-delay`.
 
-You can also set it directly as a Pulsar consumer property via a <<reactive-consumer-customizer,consumer customizer>> such as:
+When acknowledging negatively, Pulsar consumer lets you specify how the application wants the message to be re-delivered.
+The default is to redeliver the message in one minute, but you can change it via a <<reactive-consumer-customizer,consumer customizer>> such as:
 
 [source, java]
 ----
@@ -466,7 +465,7 @@ The easy way to solve this is to provide a DLQ topic name always.
 === Pulsar Reader Support
 The framework provides support for using {apache-pulsar-docs}/concepts-clients/#reader-interface[Pulsar Reader] in a Reactive fashion via the `ReactivePulsarReaderFactory`.
 
-Spring Boot provides this reader factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reactive.reader.*`] application properties.
+Spring Boot provides this reader factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.reader.*`] application properties.
 
 [[topic-resolution-process-reactive]]
 == Topic Resolution
