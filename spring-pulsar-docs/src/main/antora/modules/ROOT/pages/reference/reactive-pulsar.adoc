@@ -322,8 +322,7 @@ Again, the `ReactiveMessagePipeline` does the heavy lifting, we simply set the p
 Concurrency in the reactive container is different from its imperative counterpart.
 The latter creates multiple threads (each with a Pulsar consumer) whereas the former dispatches the messages to multiple handler instances concurrently on the Reactive parallel scheduler.
 
-One advantage of reactive concurrency is that it can be used with `Exclusive` and `Failover` subscriptions to increase processing throughput if strict ordering is not required.
-In contrast to imperative concurrency that can not currently be used with `Exclusive` and does not provide more processing power with `Failover`.
+One advantage of the reactive concurrency model is that it can be used with `Exclusive` subscriptions whereas the imperative concurrency model can not.
 ****
 
 [[reactive-pulsar-headers]]
