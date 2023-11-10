@@ -159,17 +159,8 @@ Mono<Void> listen(String message) {
 }
 ----
 
-In this most basic form, you must still provide the topic name by setting the following property:
-
-[source,yaml,indent=0,subs="verbatim"]
-----
-spring.pulsar.reactive.consumer.topic-names: hello-pulsar-topic
-----
-
-When `subscription-name` is not provided an auto-generated subscription name will be used.
-
-NOTE: If the topic information is not directly provided, a <<topic-resolution-process-reactive,topic resolution process>> is used to determine the destination topic.
-
+In this most basic form, when the `subscriptionName` is not provided on the `@ReactivePulsarListener` annotation an auto-generated subscription name will be used.
+Likewise, when the `topics` are not directly provided, a <<topic-resolution-process-reactive,topic resolution process>> is used to determine the destination topic.
 
 In the `ReactivePulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
