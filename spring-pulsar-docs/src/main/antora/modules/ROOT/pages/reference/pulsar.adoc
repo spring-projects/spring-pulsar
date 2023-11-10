@@ -151,7 +151,7 @@ To use `PulsarListener`, you need to use the `@EnablePulsar` annotation.
 When you use Spring Boot support, it automatically enables this annotation and configures all the components necessary for `PulsarListener`, such as the message listener infrastructure (which is responsible for creating the Pulsar consumer).
 `PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` to create and manage the Pulsar consumer.
 
-Spring Boot auto-configuration also provides this consumer factory which you can further configure by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
+Spring Boot auto-configuration also provides this consumer factory which you can further configure by specifying most of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties (`subscription-name` is ignored and is instead generated when not specified on the annotation).
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section:
 
@@ -173,17 +173,16 @@ public void listen(String message) {
 }
 ----
 
-In this most basic form, you must provide the following two properties with their corresponding values:
+In this most basic form, you must still provide the topic name by setting the following property:
 
 [source,yaml,indent=0,subs="verbatim"]
 ----
-spring.pulsar.consumer:
-  topics: hello-pulsar
-  subscription-name: hello-pulsar-subscription
+spring.pulsar.consumer.topics: hello-pulsar-topic
 ----
 
-NOTE: If the topic information is not directly provided, a <<topic-resolution-process-imperative,topic resolution process>> is used to determine the destination topic.
+When `subscription-name` is not provided an auto-generated subscription name will be used.
 
+NOTE: If the topic information is not directly provided, a <<topic-resolution-process-imperative,topic resolution process>> is used to determine the destination topic.
 
 In the `PulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
