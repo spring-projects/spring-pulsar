@@ -151,7 +151,9 @@ To use `PulsarListener`, you need to use the `@EnablePulsar` annotation.
 When you use Spring Boot support, it automatically enables this annotation and configures all the components necessary for `PulsarListener`, such as the message listener infrastructure (which is responsible for creating the Pulsar consumer).
 `PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` to create and manage the Pulsar consumer.
 
-Spring Boot auto-configuration also provides this consumer factory which you can further configure by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
+Spring Boot auto-configuration also provides this consumer factory which you can further configure by specifying **most** of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
+
+NOTE: `spring.pulsar.consumer.subscription.name` is ignored and is instead generated when not specified on the annotation.
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section:
 
@@ -173,17 +175,8 @@ public void listen(String message) {
 }
 ----
 
-In this most basic form, you must provide the following two properties with their corresponding values:
-
-[source,yaml,indent=0,subs="verbatim"]
-----
-spring.pulsar.consumer:
-  topics: hello-pulsar
-  subscription-name: hello-pulsar-subscription
-----
-
-NOTE: If the topic information is not directly provided, a <<topic-resolution-process-imperative,topic resolution process>> is used to determine the destination topic.
-
+In this most basic form, when the `subscriptionName` is not provided on the `@PulsarListener` annotation an auto-generated subscription name will be used.
+Likewise, when the `topics` are not directly provided, a <<topic-resolution-process-imperative,topic resolution process>> is used to determine the destination topic.
 
 In the `PulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
@@ -593,10 +586,6 @@ public void listen(String message) {
 }
 ----
 
-You can also set the listener property, `spring.pulsar.listner.ack-mode`, to set the ack mode application-wide.
-When doing this, you need not set this on the `PulsarListener` annotation.
-In that case, all the `PulsarListener` methods in the application acquire that property.
-
 ==== Manual Message Ack in Single Record Mode
 
 You might not always want the framework to send acknowledgments but, rather, do that directly from the application itself.
@@ -738,11 +727,10 @@ Apache Pulsar provides various native strategies for message redelivery and erro
 
 ==== Specifying Acknowledgment Timeout for Message Redelivery
 
-By default, Pulsar consumers does not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
-When you use Spring for Apache Pulsar, you can enable this property by setting the `spring.pulsar.consumer.ack-timeout` Boot property.
-If this property has a value above zero and if the Pulsar consumer does not acknowledge a message within that timeout period, the message is redelivered.
+By default, Pulsar consumers do not redeliver messages unless the consumer crashes, but you can change this behavior by setting an ack timeout on the Pulsar consumer.
+If the ack timeout property has a value above zero and if the Pulsar consumer does not acknowledge a message within that timeout period, the message is redelivered.
 
-You can also specify this property directly as a Pulsar consumer property on the `PulsarListener` itself:
+When you use Spring for Apache Pulsar, you can set this property via a <<_consumer_customization_on_pulsarlistener,consumer customizer>> or with the native Pulsar `ackTimeout` property in the `properties` attribute of `@PulsarListener`:
 
 [source, java]
 ----
@@ -753,7 +741,7 @@ public void listen(String s) {
 }
 ----
 
-When you specify `ackTimeout` (as seen in the preceding `PulsarListener` method), if the consumer does not send an acknowledgement within 60 seconds, the message is redelivered by Pulsar to the consumer.
+When you specify the ack timeout, if the consumer does not send an acknowledgement within 60 seconds, the message is redelivered by Pulsar to the consumer.
 
 If you want to specify some advanced backoff options for ack timeout with different delays, you can do the following:
 
@@ -787,8 +775,7 @@ We provide the backoff bean to the `PulsarListener` annotation by setting the `a
 ==== Specifying Negative Acknowledgment Redelivery
 
 When acknowledging negatively, Pulsar consumer lets you specify how the application wants the message to be re-delivered.
-The default is to redeliver the message in one minute, but you can change it by setting `spring.pulsar.consumer.negative-ack-redelivery-delay`.
-You can also set it as a consumer property directly on `PulsarListener`, as follows:
+The default is to redeliver the message in one minute, but you can change it via a <<_consumer_customization_on_pulsarlistener,consumer customizer>> or with the native Pulsar `negativeAckRedeliveryDelay` property in the `properties` attribute of `@PulsarListener`:
 
 [source, java]
 ----
