@@ -154,7 +154,8 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 					});
 			if (annotatedMethods.isEmpty()) {
 				this.nonAnnotatedClasses.add(bean.getClass());
-				this.logger.trace(() -> "No @PulsarListener annotations found on bean type: " + bean.getClass());
+				this.logger
+					.trace(() -> "No @ReactivePulsarListener annotations found on bean type: " + bean.getClass());
 			}
 			else {
 				// Non-empty set of methods
@@ -233,7 +234,7 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
-		endpoint.setSubscriptionName(getEndpointSubscriptionName(reactivePulsarListener));
+		resolveSubscriptionName(endpoint, reactivePulsarListener);
 		endpoint.setId(getEndpointId(reactivePulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
@@ -294,11 +295,10 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		}
 	}
 
-	private String getEndpointSubscriptionName(ReactivePulsarListener reactivePulsarListener) {
-		if (StringUtils.hasText(reactivePulsarListener.subscriptionName())) {
-			return resolveExpressionAsString(reactivePulsarListener.subscriptionName(), "subscriptionName");
-		}
-		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
+	private void resolveSubscriptionName(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener reactivePulsarListener) {
+		endpoint.setSubscriptionName(determineEndpointSubscriptionName(reactivePulsarListener,
+				reactivePulsarListener.subscriptionName(), () -> GENERATED_ID_PREFIX + this.counter.getAndIncrement()));
 	}
 
 	private String getEndpointId(ReactivePulsarListener reactivePulsarListener) {

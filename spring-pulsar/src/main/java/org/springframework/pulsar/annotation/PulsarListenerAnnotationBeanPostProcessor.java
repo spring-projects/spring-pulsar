@@ -223,7 +223,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
-		endpoint.setSubscriptionName(getEndpointSubscriptionName(pulsarListener));
+		resolveSubscriptionName(endpoint, pulsarListener);
 		endpoint.setId(getEndpointId(pulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
@@ -361,11 +361,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		}
 	}
 
-	private String getEndpointSubscriptionName(PulsarListener pulsarListener) {
-		if (StringUtils.hasText(pulsarListener.subscriptionName())) {
-			return resolveExpressionAsString(pulsarListener.subscriptionName(), "subscriptionName");
-		}
-		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
+	private void resolveSubscriptionName(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
+		endpoint.setSubscriptionName(determineEndpointSubscriptionName(pulsarListener,
+				pulsarListener.subscriptionName(), () -> GENERATED_ID_PREFIX + this.counter.getAndIncrement()));
 	}
 
 	private String getEndpointId(PulsarListener pulsarListener) {

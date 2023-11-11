@@ -17,10 +17,17 @@
 package org.springframework.pulsar.reactive.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.DeadLetterPolicyTest.DeadLetterPolicyConfig;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersTest.PulsarListenerWithHeadersConfig;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarListenerConcurrencyTestCases.TestPulsarListenersForConcurrency;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarListenerStreamingTestCases.TestPulsarListenersForStreaming;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaTestCases.SchemaTestConfig;
+import static org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.TopicCustomMappingsTestCases.TopicCustomMappingsTestConfig;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -32,8 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -43,9 +48,7 @@ import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
-import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.api.MessageResult;
-import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -54,14 +57,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.pulsar.annotation.EnablePulsar;
-import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
@@ -69,15 +69,11 @@ import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContaine
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
 import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
-import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.User2;
 import org.springframework.pulsar.support.PulsarHeaders;
-import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -88,79 +84,18 @@ import reactor.core.publisher.Mono;
  * @author Christophe Bornet
  * @author Chris Bono
  */
-@SpringJUnitConfig
-@DirtiesContext
-public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
-
-	@Autowired
-	PulsarTemplate<String> pulsarTemplate;
-
-	@Autowired
-	private PulsarClient pulsarClient;
-
-	@Configuration(proxyBeanMethods = false)
-	@EnableReactivePulsar
-	public static class TopLevelConfig {
-
-		@Bean
-		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient);
-		}
-
-		@Bean
-		public PulsarClient pulsarClient() throws PulsarClientException {
-			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
-		}
-
-		@Bean
-		public ReactivePulsarClient pulsarReactivePulsarClient(PulsarClient pulsarClient) {
-			return AdaptedReactivePulsarClientFactory.create(pulsarClient);
-		}
-
-		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			return new PulsarTemplate<>(pulsarProducerFactory);
-		}
-
-		@Bean
-		public ReactivePulsarConsumerFactory<String> pulsarConsumerFactory(ReactivePulsarClient pulsarClient) {
-			return new DefaultReactivePulsarConsumerFactory<>(pulsarClient, Collections.emptyList());
-		}
-
-		@Bean
-		ReactivePulsarListenerContainerFactory<String> reactivePulsarListenerContainerFactory(
-				ReactivePulsarConsumerFactory<String> pulsarConsumerFactory) {
-			return new DefaultReactivePulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new ReactivePulsarContainerProperties<>());
-		}
-
-		@Bean
-		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
-		}
-
-		@Bean
-		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
-		}
-
-		@Bean
-		ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
-			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
-		}
-
-	}
+class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 	@Nested
-	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
+	@ContextConfiguration(classes = TestPulsarListenersForBasicScenario.class)
 	class PulsarListenerBasicTestCases {
+
+		@Autowired
+		protected ReactivePulsarListenerEndpointRegistry<String> registry;
 
 		static CountDownLatch latch1 = new CountDownLatch(1);
 		static CountDownLatch latch2 = new CountDownLatch(1);
 		static CountDownLatch latch3 = new CountDownLatch(3);
-
-		@Autowired
-		ReactivePulsarListenerEndpointRegistry<String> registry;
 
 		@Test
 		void testPulsarListener() throws Exception {
@@ -241,7 +176,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = PulsarListenerStreamingTestCases.TestPulsarListenersForStreaming.class)
+	@ContextConfiguration(classes = TestPulsarListenersForStreaming.class)
 	class PulsarListenerStreamingTestCases {
 
 		static CountDownLatch latch1 = new CountDownLatch(10);
@@ -292,7 +227,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = DeadLetterPolicyTest.DeadLetterPolicyConfig.class)
+	@ContextConfiguration(classes = DeadLetterPolicyConfig.class)
 	class DeadLetterPolicyTest {
 
 		private static CountDownLatch latch = new CountDownLatch(2);
@@ -341,7 +276,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = SchemaTestCases.SchemaTestConfig.class)
+	@ContextConfiguration(classes = SchemaTestConfig.class)
 	class SchemaTestCases {
 
 		static CountDownLatch jsonLatch = new CountDownLatch(3);
@@ -486,7 +421,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.class)
+	@ContextConfiguration(classes = SchemaCustomMappingsTestConfig.class)
 	class SchemaCustomMappingsTestCases {
 
 		static CountDownLatch jsonLatch = new CountDownLatch(3);
@@ -656,7 +591,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = TopicCustomMappingsTestCases.TopicCustomMappingsTestConfig.class)
+	@ContextConfiguration(classes = TopicCustomMappingsTestConfig.class)
 	class TopicCustomMappingsTestCases {
 
 		static CountDownLatch userLatch = new CountDownLatch(3);
@@ -721,7 +656,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = ReactivePulsarListenerTests.PulsarHeadersTest.PulsarListenerWithHeadersConfig.class)
+	@ContextConfiguration(classes = PulsarListenerWithHeadersConfig.class)
 	class PulsarHeadersTest {
 
 		static CountDownLatch simpleListenerLatch = new CountDownLatch(1);
@@ -835,7 +770,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = PulsarListenerConcurrencyTestCases.TestPulsarListenersForConcurrency.class)
+	@ContextConfiguration(classes = TestPulsarListenersForConcurrency.class)
 	class PulsarListenerConcurrencyTestCases {
 
 		static CountDownLatch latch = new CountDownLatch(100);

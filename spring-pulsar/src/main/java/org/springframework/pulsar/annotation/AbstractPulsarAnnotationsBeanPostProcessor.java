@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -55,8 +56,10 @@ import org.springframework.messaging.converter.GenericMessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.config.PulsarEndpointSubscriptionNameGenerator;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Base class implementation for the various annotation post processors in Spring Pulsar.
@@ -112,6 +115,23 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		return "Could not register Pulsar listener endpoint on [" + target + "] for bean " + listenerBeanName + ", no '"
 				+ expectedClass.getSimpleName() + "' with id '" + requestedBeanName
 				+ "' was found in the application context";
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> String determineEndpointSubscriptionName(T endpoint, String subscriptionNameExpression,
+			Supplier<String> defaultNameSupplier) {
+		if (StringUtils.hasText(subscriptionNameExpression)) {
+			return resolveExpressionAsString(subscriptionNameExpression, "subscriptionName");
+		}
+		PulsarEndpointSubscriptionNameGenerator<Object> nameGenerator = this.beanFactory
+			.getBeanProvider(PulsarEndpointSubscriptionNameGenerator.class)
+			.getIfUnique();
+		if (nameGenerator != null) {
+			this.logger.debug(() -> "Using subscription name generator " + nameGenerator);
+			return nameGenerator.generateName(endpoint).orElseGet(defaultNameSupplier);
+		}
+		this.logger.debug(() -> "Using default subscription name supplier");
+		return defaultNameSupplier.get();
 	}
 
 	protected Boolean resolveExpressionAsBoolean(String value, String attribute) {

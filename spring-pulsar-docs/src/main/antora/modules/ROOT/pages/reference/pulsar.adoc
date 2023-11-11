@@ -175,8 +175,21 @@ public void listen(String message) {
 }
 ----
 
-In this most basic form, when the `subscriptionName` is not provided on the `@PulsarListener` annotation an auto-generated subscription name will be used.
-Likewise, when the `topics` are not directly provided, a <<topic-resolution-process-imperative,topic resolution process>> is used to determine the destination topic.
+In this most basic form, when the `topics` are not directly provided, a <<topic-resolution-process-imperative,topic resolution process>> is used to determine the destination topic.
+Likewise, when the `subscriptionName` is not provided on the `@PulsarListener` annotation an auto-generated subscription name will be used.
+The default generated name is some prefix appended with an incrementing counter.
+To customize the name generation you can register a `PulsarEndpointSubscriptionNameGenerator` bean, for example:
+
+[source, java]
+----
+@Bean
+PulsarEndpointSubscriptionNameGenerator<PulsarListener> customSubNameGenerator() {
+    return endpointSpecifier -> {
+        var listenerId = endpointSpecifier.id();
+        return Optional.of(listenerId + "-sub-" + System.currentTimeMillis());
+    };
+}
+----
 
 In the `PulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.

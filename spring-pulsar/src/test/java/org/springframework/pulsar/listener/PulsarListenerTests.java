@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.pulsar.listener.PulsarListenerTests.PulsarListenerCustomizerTests.WithCustomizerConfig;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -34,8 +35,6 @@ import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Messages;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -61,23 +60,15 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
-import org.springframework.pulsar.core.DefaultPulsarClientFactory;
-import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
-import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.support.PulsarHeaders;
-import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.util.backoff.FixedBackOff;
 
 /**
@@ -85,58 +76,7 @@ import org.springframework.util.backoff.FixedBackOff;
  * @author Alexander Preuß
  * @author Chris Bono
  */
-@SpringJUnitConfig
-@DirtiesContext
-public class PulsarListenerTests implements PulsarTestContainerSupport {
-
-	@Autowired
-	PulsarTemplate<String> pulsarTemplate;
-
-	@Autowired
-	private PulsarClient pulsarClient;
-
-	@Configuration(proxyBeanMethods = false)
-	@EnablePulsar
-	public static class TopLevelConfig {
-
-		@Bean
-		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient, "foo-1");
-		}
-
-		@Bean
-		public PulsarClient pulsarClient() throws PulsarClientException {
-			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
-		}
-
-		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			return new PulsarTemplate<>(pulsarProducerFactory);
-		}
-
-		@Bean
-		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
-		}
-
-		@Bean
-		PulsarListenerContainerFactory pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new PulsarContainerProperties());
-		}
-
-		@Bean
-		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
-		}
-
-		@Bean
-		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
-		}
-
-	}
+class PulsarListenerTests extends PulsarListenerTestsBase {
 
 	@Nested
 	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
@@ -261,9 +201,9 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class NegativeAckRedeliveryConfig {
 
-			@PulsarListener(id = "withNegRedeliveryBackoff", subscriptionName = "withNegRedeliveryBackoffSubscription",
-					topics = "withNegRedeliveryBackoff-test-topic", negativeAckRedeliveryBackoff = "redeliveryBackoff",
-					subscriptionType = SubscriptionType.Shared)
+			@PulsarListener(id = "withNegRedeliveryBackoff", topics = "withNegRedeliveryBackoff-test-topic",
+					subscriptionName = "withNegRedeliveryBackoffSubscription",
+					subscriptionType = SubscriptionType.Shared, negativeAckRedeliveryBackoff = "redeliveryBackoff")
 			void listen(String msg) {
 				nackRedeliveryBackoffLatch.countDown();
 				throw new RuntimeException("fail " + msg);
@@ -307,10 +247,11 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			 * because we want to ack the message only when the latch count becomes zero.
 			 */
 			@PulsarListener(id = "withAckTimeoutRedeliveryBackoff",
-					subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
 					topics = "withAckTimeoutRedeliveryBackoff-test-topic",
+					subscriptionName = "withAckTimeoutRedeliveryBackoffSubscription",
+					subscriptionType = SubscriptionType.Shared,
 					ackTimeoutRedeliveryBackoff = "ackTimeoutRedeliveryBackoff", ackMode = AckMode.MANUAL,
-					subscriptionType = SubscriptionType.Shared, properties = { "ackTimeoutMillis=1000" })
+					properties = { "ackTimeoutMillis=1000" })
 			void listen(String ignored, Acknowledgement acknowledgement) {
 				ackTimeoutRedeliveryBackoffLatch.countDown();
 				if (ackTimeoutRedeliveryBackoffLatch.getCount() == 0) {
@@ -351,7 +292,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class PulsarConsumerErrorHandlerConfig {
 
-			@PulsarListener(id = "pceht-id", subscriptionName = "pceht-subscription", topics = "pceht-topic",
+			@PulsarListener(id = "pceht-id", topics = "pceht-topic", subscriptionName = "pceht-subscription",
 					pulsarConsumerErrorHandler = "pulsarConsumerErrorHandler")
 			void listen(String msg) {
 				pulsarConsumerErrorHandlerLatch.countDown();
@@ -393,8 +334,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class DeadLetterPolicyConfig {
 
-			@PulsarListener(id = "deadLetterPolicyListener", subscriptionName = "deadLetterPolicySubscription",
-					topics = "dlpt-topic-1", deadLetterPolicy = "deadLetterPolicy",
+			@PulsarListener(id = "deadLetterPolicyListener", topics = "dlpt-topic-1",
+					deadLetterPolicy = "deadLetterPolicy", subscriptionName = "deadLetterPolicySubscription",
 					subscriptionType = SubscriptionType.Shared,
 					properties = { "negativeAckRedeliveryDelayMicros=1000000" })
 			void listen(String msg) {
@@ -922,7 +863,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class PulsarListerWithHeadersConfig {
 
-			@PulsarListener(subscriptionName = "simple-listener-with-headers-sub", topics = "simpleListenerWithHeaders")
+			@PulsarListener(topics = "simpleListenerWithHeaders", subscriptionName = "simple-listener-with-headers-sub")
 			void simpleListenerWithHeaders(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
 					@Header(PulsarHeaders.TOPIC_NAME) String topicName, @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
 					@Header("foo") String foo) {
@@ -934,8 +875,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				simpleListenerLatch.countDown();
 			}
 
-			@PulsarListener(subscriptionName = "pulsar-message-listener-with-headers-sub",
-					topics = "pulsarMessageListenerWithHeaders")
+			@PulsarListener(topics = "pulsarMessageListenerWithHeaders",
+					subscriptionName = "pulsar-message-listener-with-headers-sub")
 			void pulsarMessageListenerWithHeaders(Message<String> data,
 					@Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
 					@Header(PulsarHeaders.TOPIC_NAME) String topicName, @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
@@ -948,8 +889,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				pulsarMessageListenerLatch.countDown();
 			}
 
-			@PulsarListener(subscriptionName = "pulsar-message-listener-with-headers-sub",
-					topics = "springMessagingMessageListenerWithHeaders")
+			@PulsarListener(topics = "springMessagingMessageListenerWithHeaders",
+					subscriptionName = "pulsar-message-listener-with-headers-sub")
 			void springMessagingMessageListenerWithHeaders(org.springframework.messaging.Message<String> data,
 					@Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
 					@Header(PulsarHeaders.RAW_DATA) byte[] rawData, @Header(PulsarHeaders.TOPIC_NAME) String topicName,
@@ -962,8 +903,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				springMessagingMessageListenerLatch.countDown();
 			}
 
-			@PulsarListener(subscriptionName = "simple-batch-listener-with-headers-sub",
-					topics = "simpleBatchListenerWithHeaders", batch = true)
+			@PulsarListener(topics = "simpleBatchListenerWithHeaders",
+					subscriptionName = "simple-batch-listener-with-headers-sub", batch = true)
 			void simpleBatchListenerWithHeaders(List<String> data,
 					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
 					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
@@ -974,8 +915,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				simpleBatchListenerLatch.countDown();
 			}
 
-			@PulsarListener(subscriptionName = "pulsarMessage-batch-listener-with-headers-sub",
-					topics = "pulsarMessageBatchListenerWithHeaders", batch = true)
+			@PulsarListener(topics = "pulsarMessageBatchListenerWithHeaders",
+					subscriptionName = "pulsarMessage-batch-listener-with-headers-sub", batch = true)
 			void pulsarMessageBatchListenerWithHeaders(List<Message<String>> data,
 					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
 					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
@@ -988,8 +929,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				pulsarMessageBatchListenerLatch.countDown();
 			}
 
-			@PulsarListener(subscriptionName = "spring-messaging-message-batch-listener-with-headers-sub",
-					topics = "springMessagingMessageBatchListenerWithHeaders", batch = true)
+			@PulsarListener(topics = "springMessagingMessageBatchListenerWithHeaders",
+					subscriptionName = "spring-messaging-message-batch-listener-with-headers-sub", batch = true)
 			void springMessagingMessageBatchListenerWithHeaders(
 					List<org.springframework.messaging.Message<String>> data,
 					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
@@ -1005,8 +946,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 				springMessagingMessageBatchListenerLatch.countDown();
 			}
 
-			@PulsarListener(subscriptionName = "pulsarMessages-batch-listener-with-headers-sub",
-					topics = "pulsarMessagesBatchListenerWithHeaders", batch = true)
+			@PulsarListener(topics = "pulsarMessagesBatchListenerWithHeaders",
+					subscriptionName = "pulsarMessages-batch-listener-with-headers-sub", batch = true)
 			void pulsarMessagesBatchListenerWithHeaders(Messages<String> data,
 					@Header(PulsarHeaders.MESSAGE_ID) List<MessageId> messageIds,
 					@Header(PulsarHeaders.TOPIC_NAME) List<String> topicNames, @Header("foo") List<String> fooValues) {
@@ -1061,8 +1002,8 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class ConsumerPauseConfig {
 
-			@PulsarListener(id = "consumerPauseListener", subscriptionName = "consumer-pause-subscription",
-					topics = "consumer-pause-topic", properties = { "receiverQueueSize=1" })
+			@PulsarListener(id = "consumerPauseListener", topics = "consumer-pause-topic",
+					subscriptionName = "consumer-pause-subscription", properties = { "receiverQueueSize=1" })
 			void listen(String msg) {
 				latch.countDown();
 			}
@@ -1072,13 +1013,13 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = PulsarListenerCustomizerTests.WithCustomizerConfig.class)
+	@ContextConfiguration(classes = WithCustomizerConfig.class)
 	class PulsarListenerCustomizerTests {
 
 		private static final CountDownLatch latch = new CountDownLatch(1);
 
 		@Test
-		void withCustomizerOverridingSubscriptionName() throws Exception {
+		void withCustomizerSettingConsumerName() throws Exception {
 			pulsarTemplate.send("with-customizer-listener-topic", "hello");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -1087,16 +1028,16 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class WithCustomizerConfig {
 
-			@PulsarListener(id = "with-customizer-listener", subscriptionName = "with-customizer-listener-subscription",
-					topics = "with-customizer-listener-topic", consumerCustomizer = "myCustomizer")
+			@PulsarListener(id = "with-customizer-listener", topics = "with-customizer-listener-topic",
+					subscriptionName = "with-customizer-listener-subscription", consumerCustomizer = "myCustomizer")
 			void listen(String ignored, Consumer<String> consumer) {
-				assertThat(consumer.getSubscription()).isEqualTo("test-changed-subscription-name");
+				assertThat(consumer.getConsumerName()).isEqualTo("customizerSet-name");
 				latch.countDown();
 			}
 
 			@Bean
 			public ConsumerBuilderCustomizer<String> myCustomizer() {
-				return cb -> cb.subscriptionName("test-changed-subscription-name");
+				return cb -> cb.consumerName("customizerSet-name");
 			}
 
 		}
