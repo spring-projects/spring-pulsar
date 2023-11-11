@@ -45,13 +45,6 @@ public interface PulsarReaderEndpoint<C extends PulsarMessageReaderContainer> {
 	String getId();
 
 	/**
-	 * Return the subscription name for this endpoint's container.
-	 * @return the subscription name.
-	 */
-	@Nullable
-	String getSubscriptionName();
-
-	/**
 	 * Return the topics for this endpoint's container.
 	 * @return the topics.
 	 */

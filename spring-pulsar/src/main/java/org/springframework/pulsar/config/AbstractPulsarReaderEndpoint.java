@@ -109,12 +109,6 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 		this.subscriptionName = subscriptionName;
 	}
 
-	@Nullable
-	@Override
-	public String getSubscriptionName() {
-		return this.subscriptionName;
-	}
-
 	public void setId(String id) {
 		this.id = id;
 	}

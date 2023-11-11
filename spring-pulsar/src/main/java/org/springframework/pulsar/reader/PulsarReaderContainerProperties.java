@@ -54,8 +54,6 @@ public class PulsarReaderContainerProperties {
 
 	private SchemaResolver schemaResolver;
 
-	private String subscriptionName;
-
 	public Object getReaderListener() {
 		return this.readerListener;
 	}
@@ -112,14 +110,6 @@ public class PulsarReaderContainerProperties {
 
 	public void setSchema(Schema<?> schema) {
 		this.schema = schema;
-	}
-
-	public String getSubscriptionName() {
-		return this.subscriptionName;
-	}
-
-	public void setSubscriptionName(String subscriptionName) {
-		this.subscriptionName = subscriptionName;
 	}
 
 	public SchemaType getSchemaType() {

@@ -21,7 +21,6 @@ import org.springframework.pulsar.reader.DefaultPulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * Concrete implementation for {@link PulsarReaderContainerFactory}.
@@ -40,21 +39,13 @@ public class DefaultPulsarReaderContainerFactory<T>
 	@Override
 	protected DefaultPulsarMessageReaderContainer<T> createContainerInstance(
 			PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
-
 		PulsarReaderContainerProperties properties = new PulsarReaderContainerProperties();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
-
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
 			properties.setTopics(endpoint.getTopics());
 		}
-
-		if (StringUtils.hasText(endpoint.getSubscriptionName())) {
-			properties.setSubscriptionName(endpoint.getSubscriptionName());
-		}
-
 		properties.setSchemaType(endpoint.getSchemaType());
 		properties.setStartMessageId(endpoint.getStartMessageId());
-
 		return new DefaultPulsarMessageReaderContainer<>(this.getReaderFactory(), properties);
 	}
 

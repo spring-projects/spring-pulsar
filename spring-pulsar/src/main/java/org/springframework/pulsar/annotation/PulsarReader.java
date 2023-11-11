@@ -47,12 +47,6 @@ public @interface PulsarReader {
 	String id() default "";
 
 	/**
-	 * Pulsar subscription name associated with this listener.
-	 * @return the {@code subscriptionName} for this Pulsar listener endpoint.
-	 */
-	String subscriptionName() default "";
-
-	/**
 	 * Pulsar schema type for this listener.
 	 * @return the {@code schemaType} for this listener
 	 */

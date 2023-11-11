@@ -121,16 +121,12 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 			boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");
-
-		String subscriptionName = endpoint.getSubscriptionName();
 		String id = endpoint.getId();
-
-		Assert.hasText(subscriptionName, "Endpoint id must not be empty");
-
+		Assert.hasText(id, "Endpoint id must not be empty");
 		this.containersLock.lock();
 		try {
 			Assert.state(!this.readerContainers.containsKey(id),
-					"Another endpoint is already registered with id '" + subscriptionName + "'");
+					"Another endpoint is already registered with id '" + id + "'");
 			C container = createReaderContainer(endpoint, factory);
 			this.readerContainers.put(id, container);
 		}
@@ -140,9 +136,7 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 	}
 
 	protected C createReaderContainer(E endpoint, ReaderContainerFactory<? extends C, E> factory) {
-
 		C readerContainer = factory.createReaderContainer(endpoint);
-
 		if (readerContainer instanceof InitializingBean) {
 			try {
 				((InitializingBean) readerContainer).afterPropertiesSet();
@@ -151,7 +145,6 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 				throw new BeanInitializationException("Failed to initialize message listener container", ex);
 			}
 		}
-
 		int containerPhase = readerContainer.getPhase();
 		if (readerContainer.isAutoStartup() && containerPhase != C.DEFAULT_PHASE) {
 			if (this.phase != C.DEFAULT_PHASE && this.phase != containerPhase) {
@@ -160,7 +153,6 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 			}
 			this.phase = readerContainer.getPhase();
 		}
-
 		return readerContainer;
 	}
 
