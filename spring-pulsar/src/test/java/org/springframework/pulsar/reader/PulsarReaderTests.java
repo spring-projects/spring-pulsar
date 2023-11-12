@@ -50,7 +50,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
- * {@link PulsarReader} integration tests.
+ * Tests for {@link PulsarReader}.
  *
  * @author Soby Chacko
  * @author Chris Bono
@@ -113,9 +113,8 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class PulsarReaderStartMessageIdEarliest {
 
-			@PulsarReader(id = "pulsarReaderBasicScenario-id-1",
-					subscriptionName = "pulsarReaderBasicScenario-subscription-1",
-					topics = "pulsarReaderBasicScenario-topic-1", startMessageId = "earliest")
+			@PulsarReader(id = "pulsarReaderBasicScenario-id-1", topics = "pulsarReaderBasicScenario-topic-1",
+					startMessageId = "earliest")
 			void read(String ignored) {
 				latch.countDown();
 			}
@@ -140,9 +139,7 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 		@EnablePulsar
 		static class PulsarReaderStartMessageIdMissing {
 
-			@PulsarReader(id = "pulsarReaderBasicScenario-id-2",
-					subscriptionName = "pulsarReaderBasicScenario-subscription-2",
-					topics = "pulsarReaderBasicScenario-topic-2")
+			@PulsarReader(id = "pulsarReaderBasicScenario-id-2", topics = "pulsarReaderBasicScenario-topic-2")
 			void readWithoutStartMessageId(String ignored) {
 
 			}
@@ -169,9 +166,8 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 		@Configuration
 		static class PulsarReaderStartMessageIdLatest {
 
-			@PulsarReader(id = "pulsarReaderBasicScenario-id-3",
-					subscriptionName = "pulsarReaderBasicScenario-subscription-3",
-					topics = "pulsarReaderBasicScenario-topic-3", startMessageId = "latest")
+			@PulsarReader(id = "pulsarReaderBasicScenario-id-3", topics = "pulsarReaderBasicScenario-topic-3",
+					startMessageId = "latest")
 			void read(String msg) {
 				latch.countDown();
 				assertThat(msg).isEqualTo("hello foobar");
@@ -200,8 +196,8 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 
 			MessageId[] messageIds = new MessageId[10];
 
-			@PulsarReader(id = "with-customizer-reader", subscriptionName = "with-customizer-reader-subscription",
-					topics = "with-customizer-reader-topic", readerCustomizer = "myCustomizer")
+			@PulsarReader(id = "with-customizer-reader", topics = "with-customizer-reader-topic",
+					readerCustomizer = "myCustomizer")
 			void listen(Message<String> message) {
 				assertThat(message.getMessageId()).isEqualTo(messageIds[currentIndex++]);
 				latch.countDown();

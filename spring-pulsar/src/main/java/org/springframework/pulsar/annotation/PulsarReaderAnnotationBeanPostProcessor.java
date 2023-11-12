@@ -210,7 +210,6 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 			Object bean, String[] topics) {
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
-		endpoint.setSubscriptionName(getEndpointSubscriptionName(pulsarReader));
 		endpoint.setId(getEndpointId(pulsarReader));
 		endpoint.setTopics(topics);
 		endpoint.setSchemaType(pulsarReader.schemaType());
@@ -246,13 +245,6 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 						this.beanFactory.getBean(readerCustomizerBeanName, ReaderBuilderCustomizer.class));
 			}
 		}
-	}
-
-	private String getEndpointSubscriptionName(PulsarReader pulsarReader) {
-		if (StringUtils.hasText(pulsarReader.subscriptionName())) {
-			return resolveExpressionAsString(pulsarReader.subscriptionName(), "subscriptionName");
-		}
-		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
 	private String getEndpointId(PulsarReader pulsarReader) {

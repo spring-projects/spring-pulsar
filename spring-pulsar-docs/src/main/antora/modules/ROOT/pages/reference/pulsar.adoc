@@ -1086,22 +1086,20 @@ Spring Boot provides this reader factory which you can further configure by spec
 
 ==== PulsarReader Annotation
 
-While it is possible to use `PulsarReaderFactory` directly, Spring for Apache Pulsar provides a convenient annotation called `PulsarReader` that you can use to quickly read from a topic without setting up any reader factories yourselves.
+While it is possible to use `PulsarReaderFactory` directly, Spring for Apache Pulsar provides the `PulsarReader` annotation that you can use to quickly read from a topic without setting up any reader factories yourselves.
 This is similar to the same ideas behind `PulsarListener.`
 Here is a quick example.
 
 [source, java]
 ----
-@PulsarReader(id = "pulsar-reader-demo-id", subscriptionName = "pulsar-reader-demo-subscription",
-topics = "pulsar-reader-demo-topic", startMessageId = "earliest")
+@PulsarReader(id = "reader-demo-id", topics = "reader-demo-topic", startMessageId = "earliest")
 void read(String message) {
     //...
 }
 ----
-
-As you can see from the above example, `PulsarReader` is a quick way to read from a Pulsar topic.
-The `id` and `subscriptionName` attributes are optional, but always a best practice to provide them.
-`PulsarReader` requires `topics` and the `startMessageId` as mandatory attributes.
+The `id` attribute is optional, but it is a best practice to provide a value that is meaningful to your application.
+When not specified an auto-generated id will be used.
+On the other hand, the `topics` and `startMessageId` attributes are mandatory.
 The `topics` attribute can be a single topic or a comma-separated list of topics.
 The `startMessageId` attribute instructs the reader to start from a particular message in the topic.
 The valid values for `startMessageId` are `earliest` or `latest.`
@@ -1114,8 +1112,8 @@ You can provide a `@Bean` from `ReaderBuilderCustomizer` and then make it availa
 
 [source, java]
 ----
-@PulsarReader(id = "with-customizer-reader", subscriptionName = "with-customizer-reader-subscription",
-					topics = "with-customizer-reader-topic", readerCustomizer = "myCustomizer")
+@PulsarReader(id = "reader-customizer-demo-id", topics = "reader-customizer-demo-topic",
+    readerCustomizer = "myCustomizer")
 void read(String message) {
     //...
 }
