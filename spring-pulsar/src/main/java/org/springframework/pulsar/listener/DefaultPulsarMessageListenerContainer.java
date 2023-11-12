@@ -129,8 +129,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	@Override
 	public void doStop() {
 		setRunning(false);
-		this.logger.info("Pausing this consumer.");
-		this.listenerConsumer.consumer.pause();
+		this.logger.info("Pausing consumer");
+		if (this.listenerConsumer.consumer != null) {
+			this.listenerConsumer.consumer.pause();
+		}
 		if (this.listenerConsumerThread.get() != null) {
 			// If a receive op in progress then interrupt listener thread
 			if (this.receiveInProgress.get()) {
@@ -148,8 +150,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 		try {
-			this.logger.info("Closing this consumer.");
-			this.listenerConsumer.consumer.close();
+			this.logger.info("Closing consumer");
+			if (this.listenerConsumer.consumer != null) {
+				this.listenerConsumer.consumer.close();
+			}
 		}
 		catch (PulsarClientException e) {
 			this.logger.error(e, () -> "Error closing Pulsar Client.");
@@ -181,17 +185,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	@Override
 	public void doPause() {
 		setPaused(true);
-		DefaultPulsarMessageListenerContainer<T>.Listener consumer = this.listenerConsumer;
-		if (consumer != null) {
-			consumer.pause();
+		if (this.listenerConsumer != null) {
+			this.listenerConsumer.pause();
 		}
 	}
 
 	@Override
 	public void doResume() {
-		DefaultPulsarMessageListenerContainer<T>.Listener consumer = this.listenerConsumer;
-		if (consumer != null) {
-			consumer.resume();
+		if (this.listenerConsumer != null) {
+			this.listenerConsumer.resume();
 		}
 		setPaused(false);
 		this.lockOnPause.lock();
