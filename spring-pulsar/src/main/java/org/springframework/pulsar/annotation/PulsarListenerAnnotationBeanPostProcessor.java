@@ -52,6 +52,7 @@ import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
+import org.springframework.pulsar.core.PulsarListenerConsumerBuilderCustomizer;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -268,18 +269,24 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes" })
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveConsumerCustomizer(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
 		Object consumerCustomizer = resolveExpression(pulsarListener.consumerCustomizer());
 		if (consumerCustomizer instanceof ConsumerBuilderCustomizer<?>) {
-			endpoint.setConsumerBuilderCustomizer((ConsumerBuilderCustomizer<?>) consumerCustomizer);
+			this.logger.warn(
+					() -> "PulsarListener.consumerCustomizer must be instance of PulsarListenerConsumerBuilderCustomizer");
+			return;
+		}
+		if (consumerCustomizer instanceof PulsarListenerConsumerBuilderCustomizer customizer) {
+			endpoint.setConsumerBuilderCustomizer(customizer::customize);
 		}
 		else {
-			String consumerCustomizerBeanName = resolveExpressionAsString(pulsarListener.consumerCustomizer(),
+			String customizerBeanName = resolveExpressionAsString(pulsarListener.consumerCustomizer(),
 					"consumerCustomizer");
-			if (StringUtils.hasText(consumerCustomizerBeanName)) {
-				endpoint.setConsumerBuilderCustomizer(
-						this.beanFactory.getBean(consumerCustomizerBeanName, ConsumerBuilderCustomizer.class));
+			if (StringUtils.hasText(customizerBeanName)) {
+				var customizer = this.beanFactory.getBean(customizerBeanName,
+						PulsarListenerConsumerBuilderCustomizer.class);
+				endpoint.setConsumerBuilderCustomizer(customizer::customize);
 			}
 		}
 	}

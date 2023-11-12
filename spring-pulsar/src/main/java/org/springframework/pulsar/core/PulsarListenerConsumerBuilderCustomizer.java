@@ -18,23 +18,18 @@ package org.springframework.pulsar.core;
 
 import org.apache.pulsar.client.api.ConsumerBuilder;
 
+import org.springframework.pulsar.annotation.PulsarListener;
+
 /**
- * Callback interface that can be implemented to customize the {@link ConsumerBuilder}
- * that is used by the {@link PulsarConsumerFactory} to create consumers.
- * <p>
- * When using Spring Boot autoconfiguration, any beans implementing this interface will be
- * used as default configuration by the {@link DefaultPulsarConsumerFactory} and as such
- * will apply to all created consumers.
- * <p>
- * The consumer factory also supports passing in a specific instance of this callback when
- * {@link PulsarConsumerFactory#createConsumer creating a consumer} and as such the passed
- * in customizer only applies to the single created consumer.
+ * Callback interface that can be implemented by a bean to customize the
+ * {@link ConsumerBuilder} that is used to create the underlying Pulsar consumer used by a
+ * {@link PulsarListener} to receive messages.
  *
  * @param <T> The message payload type
- * @author Christophe Bornet
+ * @author Chris Bono
  */
 @FunctionalInterface
-public interface ConsumerBuilderCustomizer<T> {
+public interface PulsarListenerConsumerBuilderCustomizer<T> {
 
 	/**
 	 * Customize the {@link ConsumerBuilder}.
