@@ -277,19 +277,25 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveConsumerCustomizer(MethodReactivePulsarListenerEndpoint<?> endpoint,
 			ReactivePulsarListener reactivePulsarListener) {
-		Object customizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
-		if (customizer instanceof ReactiveMessageConsumerBuilderCustomizer<?>) {
-			endpoint.setConsumerCustomizer((ReactiveMessageConsumerBuilderCustomizer) customizer);
+		Object consumerCustomizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
+		if (consumerCustomizer instanceof ReactiveMessageConsumerBuilderCustomizer<?>) {
+			this.logger.warn(
+					() -> "ReactivePulsarListener.consumerCustomizer must be instance of ReactivePulsarListenerMessageConsumerBuilderCustomizer");
+			return;
+		}
+		if (consumerCustomizer instanceof ReactivePulsarListenerMessageConsumerBuilderCustomizer customizer) {
+			endpoint.setConsumerCustomizer(customizer::customize);
 		}
 		else {
-			String consumerCustomizerBeanName = resolveExpressionAsString(reactivePulsarListener.consumerCustomizer(),
+			String customizerBeanName = resolveExpressionAsString(reactivePulsarListener.consumerCustomizer(),
 					"consumerCustomizer");
-			if (StringUtils.hasText(consumerCustomizerBeanName)) {
-				endpoint.setConsumerCustomizer(this.beanFactory.getBean(consumerCustomizerBeanName,
-						ReactiveMessageConsumerBuilderCustomizer.class));
+			if (StringUtils.hasText(customizerBeanName)) {
+				var customizer = this.beanFactory.getBean(customizerBeanName,
+						ReactivePulsarListenerMessageConsumerBuilderCustomizer.class);
+				endpoint.setConsumerCustomizer(customizer::customize);
 			}
 		}
 	}

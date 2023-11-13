@@ -69,8 +69,8 @@ import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContaine
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
 import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
+import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
-import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.User2;
 import org.springframework.pulsar.support.PulsarHeaders;
@@ -145,7 +145,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		ReactiveMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
+		ReactivePulsarListenerMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
 			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 		}
 
@@ -207,7 +207,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> listen1Customizer() {
+			ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> listen1Customizer() {
 				return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
 
@@ -218,7 +218,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> listen2Customizer() {
+			ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> listen2Customizer() {
 				return b -> b.topics(List.of("topic-2"))
 					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
@@ -231,7 +231,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> listen3Customizer() {
+			ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> listen3Customizer() {
 				return b -> b.topicsPatternAutoDiscoveryPeriod(Duration.ofSeconds(5))
 					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}
@@ -331,7 +331,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@Bean
-			ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
+			ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
 				return b -> b.negativeAckRedeliveryDelay(Duration.ofSeconds(1))
 					.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 			}

@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.reactive.core;
+package org.springframework.pulsar.reactive.config.annotation;
 
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerBuilder;
 
 /**
- * Callback interface that can be implemented to customize the
- * {@link ReactiveMessageConsumerBuilder builder} that is used by the
- * {@link ReactivePulsarConsumerFactory} to create consumers.
+ * Callback interface that can be implemented by a bean to customize the
+ * {@link ReactiveMessageConsumerBuilder builder} that is used to create the underlying
+ * Pulsar reactive message consumer used by a {@link ReactivePulsarListener} to receive
+ * messages.
  * <p>
- * When using Spring Boot autoconfiguration, any beans implementing this interface will be
- * used as default configuration by the {@link DefaultReactivePulsarConsumerFactory} and
- * as such will apply to all created consumers.
- * <p>
- * The consumer factory also supports passing in a specific instance of this callback when
- * {@link ReactivePulsarConsumerFactory#createConsumer creating a consumer} and as such
- * the passed in customizer only applies to the single created consumer.
+ * Unlike the {@link ReactiveMessageConsumerBuilder} which is applied to all created
+ * reactive message consumer builders, this customizer is only applied to the individual
+ * consumer builder(s) of the {@code @ReactivePulsarListener(s)} it is associated with.
  *
  * @param <T> The message payload type
- * @author Christophe Bornet
+ * @author Chris Bono
  */
 @FunctionalInterface
-public interface ReactiveMessageConsumerBuilderCustomizer<T> {
+public interface ReactivePulsarListenerMessageConsumerBuilderCustomizer<T> {
 
 	/**
 	 * Customize the {@link ReactiveMessageConsumerBuilder}.
