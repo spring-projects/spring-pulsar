@@ -52,7 +52,6 @@ import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
-import org.springframework.pulsar.core.PulsarListenerConsumerBuilderCustomizer;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;

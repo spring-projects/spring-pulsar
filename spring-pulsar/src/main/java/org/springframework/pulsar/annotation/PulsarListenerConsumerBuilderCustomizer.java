@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.core;
+package org.springframework.pulsar.annotation;
 
 import org.apache.pulsar.client.api.ConsumerBuilder;
 
-import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 
 /**
  * Callback interface that can be implemented by a bean to customize the
  * {@link ConsumerBuilder} that is used to create the underlying Pulsar consumer used by a
  * {@link PulsarListener} to receive messages.
+ *
+ * <p>
+ * Unlike the {@link ConsumerBuilderCustomizer} which is applied to all created consumer
+ * builders, this customizer is only applied to the individual consumer builder(s) of the
+ * {@code @PulsarListener(s)} it is associated with.
  *
  * @param <T> The message payload type
  * @author Chris Bono

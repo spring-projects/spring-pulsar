@@ -28,7 +28,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.core.PulsarListenerConsumerBuilderCustomizer;
 import org.springframework.pulsar.listener.AckMode;
 
 /**

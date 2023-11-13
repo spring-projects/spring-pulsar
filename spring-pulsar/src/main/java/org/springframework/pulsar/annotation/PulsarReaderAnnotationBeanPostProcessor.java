@@ -44,7 +44,6 @@ import org.springframework.pulsar.config.PulsarReaderContainerFactory;
 import org.springframework.pulsar.config.PulsarReaderEndpoint;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
-import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -232,17 +231,22 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		resolveReaderCustomizer(endpoint, pulsarReader);
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveReaderCustomizer(MethodPulsarReaderEndpoint<?> endpoint, PulsarReader pulsarReader) {
 		Object readerCustomizer = resolveExpression(pulsarReader.readerCustomizer());
-		if (readerCustomizer instanceof ConsumerBuilderCustomizer<?>) {
-			endpoint.setReaderBuilderCustomizer((ReaderBuilderCustomizer<?>) readerCustomizer);
+		if (readerCustomizer instanceof ReaderBuilderCustomizer<?>) {
+			this.logger.warn(() -> "PulsarReader.readerCustomizer must be instance of PulsarReaderBuilderCustomizer");
+			return;
+		}
+		if (readerCustomizer instanceof PulsarReaderReaderBuilderCustomizer customizer) {
+			endpoint.setReaderBuilderCustomizer(customizer::customize);
 		}
 		else {
-			String readerCustomizerBeanName = resolveExpressionAsString(pulsarReader.readerCustomizer(),
-					"readerCustomizer");
-			if (StringUtils.hasText(readerCustomizerBeanName)) {
-				endpoint.setReaderBuilderCustomizer(
-						this.beanFactory.getBean(readerCustomizerBeanName, ReaderBuilderCustomizer.class));
+			String customizerBeanName = resolveExpressionAsString(pulsarReader.readerCustomizer(), "readerCustomizer");
+			if (StringUtils.hasText(customizerBeanName)) {
+				var customizer = this.beanFactory.getBean(customizerBeanName,
+						PulsarReaderReaderBuilderCustomizer.class);
+				endpoint.setReaderBuilderCustomizer(customizer::customize);
 			}
 		}
 	}
