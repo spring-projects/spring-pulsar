@@ -53,7 +53,6 @@ import org.springframework.pulsar.reactive.config.MethodReactivePulsarListenerEn
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpoint;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
-import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -281,11 +280,6 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 	private void resolveConsumerCustomizer(MethodReactivePulsarListenerEndpoint<?> endpoint,
 			ReactivePulsarListener reactivePulsarListener) {
 		Object consumerCustomizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
-		if (consumerCustomizer instanceof ReactiveMessageConsumerBuilderCustomizer<?>) {
-			this.logger.warn(
-					() -> "ReactivePulsarListener.consumerCustomizer must be instance of ReactivePulsarListenerMessageConsumerBuilderCustomizer");
-			return;
-		}
 		if (consumerCustomizer instanceof ReactivePulsarListenerMessageConsumerBuilderCustomizer customizer) {
 			endpoint.setConsumerCustomizer(customizer::customize);
 		}

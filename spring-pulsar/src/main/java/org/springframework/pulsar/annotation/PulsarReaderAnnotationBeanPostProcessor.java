@@ -44,7 +44,6 @@ import org.springframework.pulsar.config.PulsarReaderContainerFactory;
 import org.springframework.pulsar.config.PulsarReaderEndpoint;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
-import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -234,10 +233,6 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveReaderCustomizer(MethodPulsarReaderEndpoint<?> endpoint, PulsarReader pulsarReader) {
 		Object readerCustomizer = resolveExpression(pulsarReader.readerCustomizer());
-		if (readerCustomizer instanceof ReaderBuilderCustomizer<?>) {
-			this.logger.warn(() -> "PulsarReader.readerCustomizer must be instance of PulsarReaderBuilderCustomizer");
-			return;
-		}
 		if (readerCustomizer instanceof PulsarReaderReaderBuilderCustomizer customizer) {
 			endpoint.setReaderBuilderCustomizer(customizer::customize);
 		}
