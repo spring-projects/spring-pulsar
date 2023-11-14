@@ -57,10 +57,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.annotation.PulsarListenerConsumerBuilderCustomizer;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
@@ -1095,7 +1095,7 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			}
 
 			@Bean
-			public ConsumerBuilderCustomizer<String> myCustomizer() {
+			public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
 				return cb -> cb.subscriptionName("test-changed-subscription-name");
 			}
 

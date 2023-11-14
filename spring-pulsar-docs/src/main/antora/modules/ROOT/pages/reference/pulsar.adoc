@@ -1029,12 +1029,12 @@ At that point, the message is acknowledged by the container, and the listener is
 === Consumer Customization on PulsarListener
 
 Spring for Apache Pulsar provides a convenient way to customize the consumer created by the container used by the `PulsarListener`.
-Applications can provide a bean for `ConsumerBuilderCustomizer`.
+Applications can provide a bean for `PulsarListenerConsumerBuilderCustomizer`.
 Here is an example.
 [source, java]
 ----
 @Bean
-public ConsumerBuilderCustomizer<String> myCustomizer() {
+public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
     return cb -> {
         cb.subscriptionName("modified-subscription-name");
     };
@@ -1107,8 +1107,8 @@ Suppose you want the reader to start reading messages arbitrarily from a topic o
 
 ==== Customizing the ReaderBuilder
 
-You can customize any fields available through `ReaderBuilder` using a `ReaderBuilderCustomizer` in Spring for Apache Pulsar.
-You can provide a `@Bean` from `ReaderBuilderCustomizer` and then make it available to the `PulsarReader` as below.
+You can customize any fields available through `ReaderBuilder` using a `PulsarReaderReaderBuilderCustomizer` in Spring for Apache Pulsar.
+You can provide a `@Bean` of type `PulsarReaderBuilderCustomizer` and then make it available to the `PulsarReader` as below.
 
 [source, java]
 ----
@@ -1119,7 +1119,7 @@ void read(String message) {
 }
 
 @Bean
-public ReaderBuilderCustomizer<String> myCustomizer() {
+public PulsarReaderReaderBuilderCustomizer<String> myCustomizer() {
     return readerBuilder -> {
         readerBuilder.startMessageId(messageId); // the first message read is after this message id.
         // Any other customizations on the readerBuilder

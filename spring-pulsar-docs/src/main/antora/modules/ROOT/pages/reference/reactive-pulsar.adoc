@@ -245,7 +245,7 @@ Spring Boot provides this consumer factory which can be configured with any of t
 [[reactive-consumer-customizer]]
 ==== Consumer Customization
 
-You can specify a `ReactiveMessageConsumerBuilderCustomizer` to configure the underlying Pulsar consumer builder that ultimately constructs the consumer used by the listener to receive the messages.
+You can specify a `ReactivePulsarListenerMessageConsumerBuilderCustomizer` to configure the underlying Pulsar consumer builder that ultimately constructs the consumer used by the listener to receive the messages.
 
 WARNING: Use with caution as this gives full access to the consumer builder and invoking some of its methods (such as `create`) may have unintended side effects.
 
@@ -260,7 +260,7 @@ Mono<Void> listen(String message) {
 }
 
 @Bean
-ReactiveMessageConsumerBuilderCustomizer<String> myConsumerCustomizer() {
+ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> myConsumerCustomizer() {
     return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 }
 ----
@@ -273,7 +273,7 @@ The following customizer example uses direct Pulsar consumer properties:
 [source, java]
 ----
 @Bean
-ReactiveMessageConsumerBuilderCustomizer<String> directConsumerPropsCustomizer() {
+ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> directConsumerPropsCustomizer() {
     return b -> b.property("subscriptionName", "subscription-1").property("topicNames", "foo-1");
 }
 ----

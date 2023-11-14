@@ -28,7 +28,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.listener.AckMode;
 
 /**
@@ -210,8 +209,10 @@ public @interface PulsarListener {
 
 	/**
 	 * The bean name or a 'SpEL' expression that resolves to a
-	 * {@link ConsumerBuilderCustomizer} to use to configure the consumer.
-	 * @return the bean name or empty string to not configure the consumer.
+	 * {@link PulsarListenerConsumerBuilderCustomizer} to use to configure the underlying
+	 * consumer.
+	 * @return the bean name or SpEL expression to the customizer or an empty string to
+	 * not customize the consumer
 	 */
 	String consumerCustomizer() default "";
 

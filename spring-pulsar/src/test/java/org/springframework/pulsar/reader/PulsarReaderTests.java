@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarReader;
+import org.springframework.pulsar.annotation.PulsarReaderReaderBuilderCustomizer;
 import org.springframework.pulsar.config.DefaultPulsarReaderContainerFactory;
 import org.springframework.pulsar.config.PulsarReaderContainerFactory;
 import org.springframework.pulsar.core.DefaultPulsarClientFactory;
@@ -43,7 +44,6 @@ import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -204,7 +204,7 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 			}
 
 			@Bean
-			public ReaderBuilderCustomizer<String> myCustomizer(PulsarTemplate<String> pulsarTemplate) {
+			public PulsarReaderReaderBuilderCustomizer<String> myCustomizer(PulsarTemplate<String> pulsarTemplate) {
 				return cb -> {
 					for (int i = 0; i < 10; i++) {
 						try {

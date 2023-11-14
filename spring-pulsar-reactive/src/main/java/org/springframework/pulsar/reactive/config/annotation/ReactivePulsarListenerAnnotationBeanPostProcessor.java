@@ -53,7 +53,6 @@ import org.springframework.pulsar.reactive.config.MethodReactivePulsarListenerEn
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpoint;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
-import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -277,19 +276,20 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveConsumerCustomizer(MethodReactivePulsarListenerEndpoint<?> endpoint,
 			ReactivePulsarListener reactivePulsarListener) {
-		Object customizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
-		if (customizer instanceof ReactiveMessageConsumerBuilderCustomizer<?>) {
-			endpoint.setConsumerCustomizer((ReactiveMessageConsumerBuilderCustomizer) customizer);
+		Object consumerCustomizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
+		if (consumerCustomizer instanceof ReactivePulsarListenerMessageConsumerBuilderCustomizer customizer) {
+			endpoint.setConsumerCustomizer(customizer::customize);
 		}
 		else {
-			String consumerCustomizerBeanName = resolveExpressionAsString(reactivePulsarListener.consumerCustomizer(),
+			String customizerBeanName = resolveExpressionAsString(reactivePulsarListener.consumerCustomizer(),
 					"consumerCustomizer");
-			if (StringUtils.hasText(consumerCustomizerBeanName)) {
-				endpoint.setConsumerCustomizer(this.beanFactory.getBean(consumerCustomizerBeanName,
-						ReactiveMessageConsumerBuilderCustomizer.class));
+			if (StringUtils.hasText(customizerBeanName)) {
+				var customizer = this.beanFactory.getBean(customizerBeanName,
+						ReactivePulsarListenerMessageConsumerBuilderCustomizer.class);
+				endpoint.setConsumerCustomizer(customizer::customize);
 			}
 		}
 	}
