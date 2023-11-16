@@ -38,6 +38,9 @@ class RepositoryConventionPlugin implements Plugin<Project> {
 			mavenCentral()
 			if (isSnapshot) {
 				maven {
+					url 'https://repository.apache.org/content/repositories/orgapachepulsar-1246/'
+				}
+				maven {
 					name = 'artifactory-snapshot'
 					if (project.hasProperty('artifactoryUsername')) {
 						credentials {
