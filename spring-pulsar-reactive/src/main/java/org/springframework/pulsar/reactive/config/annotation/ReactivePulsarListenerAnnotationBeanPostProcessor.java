@@ -153,7 +153,8 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 					});
 			if (annotatedMethods.isEmpty()) {
 				this.nonAnnotatedClasses.add(bean.getClass());
-				this.logger.trace(() -> "No @PulsarListener annotations found on bean type: " + bean.getClass());
+				this.logger
+					.trace(() -> "No @ReactivePulsarListener annotations found on bean type: " + bean.getClass());
 			}
 			else {
 				// Non-empty set of methods
@@ -236,7 +237,7 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		endpoint.setId(getEndpointId(reactivePulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
-		endpoint.setSubscriptionType(reactivePulsarListener.subscriptionType());
+		resolveSubscriptionType(endpoint, reactivePulsarListener);
 		endpoint.setSchemaType(reactivePulsarListener.schemaType());
 
 		String concurrency = reactivePulsarListener.concurrency();
@@ -258,6 +259,15 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 		resolveDeadLetterPolicy(endpoint, reactivePulsarListener);
 		resolveConsumerCustomizer(endpoint, reactivePulsarListener);
+	}
+
+	private void resolveSubscriptionType(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener reactivePulsarListener) {
+		Assert.state(reactivePulsarListener.subscriptionType().length <= 1,
+				() -> "ReactivePulsarListener.subscriptionType must have 0 or 1 elements");
+		if (reactivePulsarListener.subscriptionType().length == 1) {
+			endpoint.setSubscriptionType(reactivePulsarListener.subscriptionType()[0]);
+		}
 	}
 
 	private void resolveDeadLetterPolicy(MethodReactivePulsarListenerEndpoint<?> endpoint,

@@ -72,10 +72,12 @@ public @interface ReactivePulsarListener {
 	String subscriptionName() default "";
 
 	/**
-	 * Pulsar subscription type for this listener.
-	 * @return the {@code subscriptionType} for this listener
+	 * Pulsar subscription type for this listener - expected to be a single element array
+	 * with subscription type or empty array to indicate null type.
+	 * @return single element array with the subscription type or empty array to indicate
+	 * no type chosen by user
 	 */
-	SubscriptionType subscriptionType() default SubscriptionType.Exclusive;
+	SubscriptionType[] subscriptionType() default { SubscriptionType.Exclusive };
 
 	/**
 	 * Pulsar schema type for this listener.

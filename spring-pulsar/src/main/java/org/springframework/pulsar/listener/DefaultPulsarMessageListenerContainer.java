@@ -46,6 +46,8 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.impl.ConsumerImpl;
+import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
@@ -62,6 +64,7 @@ import org.springframework.pulsar.observation.PulsarListenerObservation;
 import org.springframework.pulsar.observation.PulsarMessageReceiverContext;
 import org.springframework.scheduling.SchedulingAwareRunnable;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 import io.micrometer.observation.Observation;
@@ -226,7 +229,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final AckMode ackMode;
 
-		private final SubscriptionType subscriptionType;
+		private SubscriptionType subscriptionType;
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Listener(MessageListener<?> messageListener, PulsarContainerProperties containerProperties) {
@@ -280,9 +283,31 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
 						topicNames, this.containerProperties.getSubscriptionName(), properties, customizers);
 				Assert.state(this.consumer != null, "Unable to create a consumer");
+
+				// If our subscriptionType is null - update it based on the actual
+				// subscriptionType
+				// of the underlying consumer
+				if (this.subscriptionType == null) {
+					updateSubscriptionTypeFromConsumer(this.consumer);
+				}
 			}
 			catch (PulsarClientException e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
+			}
+		}
+
+		private void updateSubscriptionTypeFromConsumer(Consumer<T> consumer) {
+			try {
+				var confField = ReflectionUtils.findField(ConsumerImpl.class, "conf");
+				ReflectionUtils.makeAccessible(confField);
+				var conf = ReflectionUtils.getField(confField, consumer);
+				if (conf instanceof ConsumerConfigurationData<?> confData) {
+					this.subscriptionType = confData.getSubscriptionType();
+				}
+			}
+			catch (Exception ex) {
+				DefaultPulsarMessageListenerContainer.this.logger.error(ex,
+						() -> "Unable to determine default subscription type from consumer due to: " + ex.getMessage());
 			}
 		}
 
@@ -410,6 +435,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 									}
 								}
 								catch (PulsarClientException pce) {
+									DefaultPulsarMessageListenerContainer.this.logger.warn(pce,
+											() -> "Batch acknowledgment failed: " + pce.getMessage());
 									this.consumer.negativeAcknowledge(messages);
 								}
 							}
@@ -440,7 +467,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					}
 					// All the records are processed at this point. Handle acks.
 					if (this.ackMode.equals(AckMode.BATCH)) {
-						handleAcks(messages);
+						handleBatchAcks(messages);
 					}
 				}
 			}
@@ -609,11 +636,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private boolean isSharedSubscriptionType() {
-			return this.subscriptionType.equals(SubscriptionType.Shared)
-					|| this.subscriptionType.equals(SubscriptionType.Key_Shared);
+			return this.subscriptionType != null && (this.subscriptionType.equals(SubscriptionType.Shared)
+					|| this.subscriptionType.equals(SubscriptionType.Key_Shared));
 		}
 
-		private void handleAcks(Messages<T> messages) {
+		private void handleBatchAcks(Messages<T> messages) {
 			if (this.nackableMessages.isEmpty()) {
 				try {
 					if (messages.size() > 0) {
@@ -628,6 +655,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					}
 				}
 				catch (PulsarClientException pce) {
+					DefaultPulsarMessageListenerContainer.this.logger.warn(pce,
+							() -> "Batch acknowledgments failed: " + pce.getMessage());
 					this.consumer.negativeAcknowledge(messages);
 				}
 			}

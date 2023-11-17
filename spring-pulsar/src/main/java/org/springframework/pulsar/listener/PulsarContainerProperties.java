@@ -58,7 +58,7 @@ public class PulsarContainerProperties {
 
 	private String subscriptionName;
 
-	private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
+	private SubscriptionType subscriptionType;
 
 	private Schema<?> schema;
 

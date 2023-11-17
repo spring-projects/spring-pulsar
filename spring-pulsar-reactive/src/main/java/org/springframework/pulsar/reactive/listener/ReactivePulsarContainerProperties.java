@@ -43,7 +43,7 @@ public class ReactivePulsarContainerProperties<T> {
 
 	private String subscriptionName;
 
-	private SubscriptionType subscriptionType = SubscriptionType.Exclusive;
+	private SubscriptionType subscriptionType;
 
 	private Schema<T> schema;
 

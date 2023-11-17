@@ -159,8 +159,8 @@ Mono<Void> listen(String message) {
 }
 ----
 
-In this most basic form, when the `subscriptionName` is not provided on the `@ReactivePulsarListener` annotation an auto-generated subscription name will be used.
-Likewise, when the `topics` are not directly provided, a <<topic-resolution-process-reactive,topic resolution process>> is used to determine the destination topic.
+In this most basic form, when the `topics` are not directly provided, a <<topic-resolution-process-reactive,topic resolution process>> is used to determine the destination topic.
+Likewise, when the `subscriptionName` is not provided on the `@ReactivePulsarListener` annotation an auto-generated subscription name will be used.
 
 In the `ReactivePulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
@@ -238,9 +238,14 @@ Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<Foo
 ----
 
 ==== Configuration - Application Properties
-The listener ultimately relies on `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer.
+The listener relies on the `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer that it uses to consume messages.
+Spring Boot provides this consumer factory which you can further configure by specifying the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
+**Most** of the configured properties on the factory will be respected in the listener with the following **exceptions**:
 
-Spring Boot provides this consumer factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application-properties.
+TIP: The `spring.pulsar.consumer.subscription.name` property is ignored and is instead generated when not specified on the annotation.
+
+TIP: The `spring.pulsar.consumer.subscription-type` property is ignored and is instead taken from the value on the annotation. However, you can set the `subscriptionType = {}` on the annotation to instead use the property value as the default.
+
 
 [[reactive-consumer-customizer]]
 ==== Consumer Customization

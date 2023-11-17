@@ -226,7 +226,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		endpoint.setId(getEndpointId(pulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
-		endpoint.setSubscriptionType(pulsarListener.subscriptionType());
+		resolveSubscriptionType(endpoint, pulsarListener);
 		endpoint.setSchemaType(pulsarListener.schemaType());
 		endpoint.setAckMode(pulsarListener.ackMode());
 
@@ -248,6 +248,14 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		resolveDeadLetterPolicy(endpoint, pulsarListener);
 		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
 		resolveConsumerCustomizer(endpoint, pulsarListener);
+	}
+
+	private void resolveSubscriptionType(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
+		Assert.state(pulsarListener.subscriptionType().length <= 1,
+				() -> "PulsarListener.subscriptionType must have 0 or 1 elements");
+		if (pulsarListener.subscriptionType().length == 1) {
+			endpoint.setSubscriptionType(pulsarListener.subscriptionType()[0]);
+		}
 	}
 
 	@SuppressWarnings({ "rawtypes" })
