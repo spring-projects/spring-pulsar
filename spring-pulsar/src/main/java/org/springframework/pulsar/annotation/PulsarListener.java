@@ -74,10 +74,12 @@ public @interface PulsarListener {
 	String subscriptionName() default "";
 
 	/**
-	 * Pulsar subscription type for this listener.
-	 * @return the {@code subscriptionType} for this listener
+	 * Pulsar subscription type for this listener - expected to be a single element array
+	 * with subscription type or empty array to indicate null type.
+	 * @return single element array with the subscription type or empty array to indicate
+	 * no type chosen by user
 	 */
-	SubscriptionType subscriptionType() default SubscriptionType.Exclusive;
+	SubscriptionType[] subscriptionType() default { SubscriptionType.Exclusive };
 
 	/**
 	 * Pulsar schema type for this listener.
@@ -114,7 +116,7 @@ public @interface PulsarListener {
 	 * a {@link String}, in which case the {@link Boolean#parseBoolean(String)} is used to
 	 * obtain the value.
 	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
 	 * @return true to auto start, false to not auto start.
 	 */
 	String autoStartup() default "";

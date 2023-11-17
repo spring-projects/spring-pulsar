@@ -40,16 +40,20 @@ import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
+import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.assertj.core.api.AbstractObjectAssert;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -61,6 +65,7 @@ import org.springframework.pulsar.annotation.PulsarListenerConsumerBuilderCustom
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
@@ -73,6 +78,8 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
+import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
+import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.annotation.DirtiesContext;
@@ -115,8 +122,10 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
+		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient,
+				ObjectProvider<ConsumerBuilderCustomizer<String>> defaultConsumerCustomizersProvider) {
+			return new DefaultPulsarConsumerFactory<>(pulsarClient,
+					defaultConsumerCustomizersProvider.orderedStream().toList());
 		}
 
 		@Bean
@@ -1097,6 +1106,109 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 			@Bean
 			public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
 				return cb -> cb.subscriptionName("test-changed-subscription-name");
+			}
+
+		}
+
+	}
+
+	@Nested
+	class SubscriptionTypeTests {
+
+		@SuppressWarnings("rawtypes")
+		private static AbstractObjectAssert<?, ?> assertSubscriptionType(Consumer<?> consumer) {
+			return assertThat(consumer)
+				.extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
+				.extracting(ConsumerConfigurationData::getSubscriptionType);
+		}
+
+		@Nested
+		@ContextConfiguration(classes = WithDefaultTypeConfig.class)
+		class WithDefaultType {
+
+			static final CountDownLatch latchTypeNotSet = new CountDownLatch(1);
+
+			@Test
+			void whenTypeNotSetAnywhereThenFallbackTypeIsUsed() throws Exception {
+				pulsarTemplate.send("typeNotSetAnywhere-topic", "hello-typeNotSetAnywhere");
+				assertThat(latchTypeNotSet.await(5, TimeUnit.SECONDS)).isTrue();
+			}
+
+			@Configuration(proxyBeanMethods = false)
+			static class WithDefaultTypeConfig {
+
+				@PulsarListener(topics = "typeNotSetAnywhere-topic", subscriptionName = "typeNotSetAnywhere-sub")
+				void listenWithoutTypeSetAnywhere(String ignored, Consumer<String> consumer) {
+					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Exclusive);
+					latchTypeNotSet.countDown();
+				}
+
+			}
+
+		}
+
+		@Nested
+		@ContextConfiguration(classes = WithSpecificTypesConfig.class)
+		class WithSpecificTypes {
+
+			static final CountDownLatch latchTypeSetConsumerFactory = new CountDownLatch(1);
+
+			static final CountDownLatch latchTypeSetAnnotation = new CountDownLatch(1);
+
+			static final CountDownLatch latchWithCustomizer = new CountDownLatch(1);
+
+			@Test
+			void whenTypeSetOnlyInConsumerFactoryThenConsumerFactoryTypeIsUsed() throws Exception {
+				pulsarTemplate.send("typeSetConsumerFactory-topic", "hello-typeSetConsumerFactory");
+				assertThat(latchTypeSetConsumerFactory.await(5, TimeUnit.SECONDS)).isTrue();
+			}
+
+			@Test
+			void whenTypeSetOnAnnotationThenAnnotationTypeIsUsed() throws Exception {
+				pulsarTemplate.send("typeSetAnnotation-topic", "hello-typeSetAnnotation");
+				assertThat(latchTypeSetAnnotation.await(5, TimeUnit.SECONDS)).isTrue();
+			}
+
+			@Test
+			void whenTypeSetWithCustomizerThenCustomizerTypeIsUsed() throws Exception {
+				pulsarTemplate.send("typeSetCustomizer-topic", "hello-typeSetCustomizer");
+				assertThat(latchWithCustomizer.await(5, TimeUnit.SECONDS)).isTrue();
+			}
+
+			@Configuration(proxyBeanMethods = false)
+			static class WithSpecificTypesConfig {
+
+				@Bean
+				ConsumerBuilderCustomizer<String> consumerFactoryDefaultSubTypeCustomizer() {
+					return (b) -> b.subscriptionType(SubscriptionType.Shared);
+				}
+
+				@PulsarListener(topics = "typeSetConsumerFactory-topic",
+						subscriptionName = "typeSetConsumerFactory-sub", subscriptionType = {})
+				void listenWithTypeSetOnlyOnConsumerFactory(String ignored, Consumer<String> consumer) {
+					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Shared);
+					latchTypeSetConsumerFactory.countDown();
+				}
+
+				@PulsarListener(topics = "typeSetAnnotation-topic", subscriptionName = "typeSetAnnotation-sub",
+						subscriptionType = SubscriptionType.Key_Shared)
+				void listenWithTypeSetOnAnnotation(String ignored, Consumer<String> consumer) {
+					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Key_Shared);
+					latchTypeSetAnnotation.countDown();
+				}
+
+				@PulsarListener(topics = "typeSetCustomizer-topic", subscriptionName = "typeSetCustomizer-sub",
+						subscriptionType = SubscriptionType.Key_Shared, consumerCustomizer = "myCustomizer")
+				void listenWithTypeSetInCustomizer(String ignored, Consumer<String> consumer) {
+					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Failover);
+					latchWithCustomizer.countDown();
+				}
+
+				@Bean
+				public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
+					return cb -> cb.subscriptionType(SubscriptionType.Failover);
+				}
+
 			}
 
 		}

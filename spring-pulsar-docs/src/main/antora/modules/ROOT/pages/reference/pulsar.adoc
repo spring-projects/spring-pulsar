@@ -149,11 +149,15 @@ NOTE: If you are not using the starter, you will need to configure and register 
 When it comes to Pulsar consumers, we recommend that end-user applications use the `PulsarListener` annotation.
 To use `PulsarListener`, you need to use the `@EnablePulsar` annotation.
 When you use Spring Boot support, it automatically enables this annotation and configures all the components necessary for `PulsarListener`, such as the message listener infrastructure (which is responsible for creating the Pulsar consumer).
-`PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` to create and manage the Pulsar consumer.
+`PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` to create and manage the Pulsar consumer the underlying Pulsar consumer that it uses to consume messages.
 
-Spring Boot auto-configuration also provides this consumer factory which you can further configure by specifying **most** of the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
+Spring Boot provides this consumer factory which you can further configure by specifying the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
+**Most** of the configured properties on the factory will be respected in the listener with the following **exceptions**:
 
-NOTE: `spring.pulsar.consumer.subscription.name` is ignored and is instead generated when not specified on the annotation.
+TIP: The `spring.pulsar.consumer.subscription.name` property is ignored and is instead generated when not specified on the annotation.
+
+TIP: The `spring.pulsar.consumer.subscription-type` property is ignored and is instead taken from the value on the annotation. However, you can set the `subscriptionType = {}` on the annotation to instead use the property value as the default.
+
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section:
 
