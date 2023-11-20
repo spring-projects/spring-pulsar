@@ -40,6 +40,11 @@ public class RootProjectPlugin implements Plugin<Project> {
 		pluginManager.apply(ArtifactoryPlugin.class);
 		pluginManager.apply(SonarQubeConventionsPlugin.class);
 		project.getRepositories().mavenCentral();
+
+		Task finalizeDeployArtifacts = project.task("finalizeDeployArtifacts");
+		if (ProjectUtils.isRelease(project) && project.hasProperty("ossrhUsername")) {
+			finalizeDeployArtifacts.dependsOn(project.getTasks().findByName("closeOssrhStagingRepository"));
+		}
 	}
 
 }
