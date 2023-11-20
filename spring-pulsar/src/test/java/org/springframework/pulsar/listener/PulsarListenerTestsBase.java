@@ -19,12 +19,14 @@ package org.springframework.pulsar.listener;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
@@ -72,8 +74,10 @@ abstract class PulsarListenerTestsBase implements PulsarTestContainerSupport {
 		}
 
 		@Bean
-		PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient, null);
+		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient,
+				ObjectProvider<ConsumerBuilderCustomizer<String>> defaultConsumerCustomizersProvider) {
+			return new DefaultPulsarConsumerFactory<>(pulsarClient,
+					defaultConsumerCustomizersProvider.orderedStream().toList());
 		}
 
 		@Bean
