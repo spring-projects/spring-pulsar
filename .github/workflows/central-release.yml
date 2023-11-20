@@ -21,6 +21,6 @@ jobs:
           OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
           OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
         run: |
-          ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository \
+          ./gradlew findOssrhStagingRepository releaseOssrhStagingRepository \
               --stacktrace \
               -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD"
