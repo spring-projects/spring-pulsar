@@ -108,13 +108,13 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	private final AtomicInteger counter = new AtomicInteger();
 
+	private final List<MethodPulsarListenerEndpoint<?>> processedEndpoints = new ArrayList<>();
+
 	@Override
 	public void afterSingletonsInstantiated() {
 		this.registrar.setBeanFactory(this.beanFactory);
-
 		this.beanFactory.getBeanProvider(PulsarListenerConfigurer.class)
 			.forEach(c -> c.configurePulsarListeners(this.registrar));
-
 		if (this.registrar.getEndpointRegistry() == null) {
 			if (this.endpointRegistry == null) {
 				Assert.state(this.beanFactory != null,
@@ -125,12 +125,11 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 			}
 			this.registrar.setEndpointRegistry(this.endpointRegistry);
 		}
-
 		if (this.defaultContainerFactoryBeanName != null) {
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
-
 		addFormatters(this.messageHandlerMethodFactory.defaultFormattingConversionService);
+		postProcessEndpointsBeforeRegistration();
 		// Actually register all listeners
 		this.registrar.afterPropertiesSet();
 	}
@@ -167,7 +166,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		Method methodToUse = checkProxy(method, bean);
 		MethodPulsarListenerEndpoint<V> endpoint = new MethodPulsarListenerEndpoint<>();
 		endpoint.setMethod(methodToUse);
-
 		String beanRef = pulsarListener.beanRef();
 		this.listenerScope.addListener(beanRef, bean);
 		String[] topics = resolveTopics(pulsarListener);
@@ -178,27 +176,21 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	protected void processListener(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener PulsarListener, Object bean,
 			String beanName, String[] topics, String topicPattern) {
-
 		processPulsarListenerAnnotation(endpoint, PulsarListener, bean, topics, topicPattern);
-
 		String containerFactory = resolve(PulsarListener.containerFactory());
 		PulsarListenerContainerFactory listenerContainerFactory = resolveContainerFactory(PulsarListener,
 				containerFactory, beanName);
-
 		this.registrar.registerEndpoint(endpoint, listenerContainerFactory);
 	}
 
 	@Nullable
 	private PulsarListenerContainerFactory resolveContainerFactory(PulsarListener PulsarListener, Object factoryTarget,
 			String beanName) {
-
 		String containerFactory = PulsarListener.containerFactory();
 		if (!StringUtils.hasText(containerFactory)) {
 			return null;
 		}
-
 		PulsarListenerContainerFactory factory = null;
-
 		Object resolved = resolveExpression(containerFactory);
 		if (resolved instanceof PulsarListenerContainerFactory) {
 			return (PulsarListenerContainerFactory) resolved;
@@ -219,7 +211,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	private void processPulsarListenerAnnotation(MethodPulsarListenerEndpoint<?> endpoint,
 			PulsarListener pulsarListener, Object bean, String[] topics, String topicPattern) {
-
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
 		endpoint.setSubscriptionName(getEndpointSubscriptionName(pulsarListener));
@@ -229,12 +220,10 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		resolveSubscriptionType(endpoint, pulsarListener);
 		endpoint.setSchemaType(pulsarListener.schemaType());
 		endpoint.setAckMode(pulsarListener.ackMode());
-
 		String concurrency = pulsarListener.concurrency();
 		if (StringUtils.hasText(concurrency)) {
 			endpoint.setConcurrency(resolveExpressionAsInteger(concurrency, "concurrency"));
 		}
-
 		String autoStartup = pulsarListener.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
@@ -242,12 +231,12 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		resolvePulsarProperties(endpoint, pulsarListener.properties());
 		endpoint.setBatchListener(pulsarListener.batch());
 		endpoint.setBeanFactory(this.beanFactory);
-
 		resolveNegativeAckRedeliveryBackoff(endpoint, pulsarListener);
 		resolveAckTimeoutRedeliveryBackoff(endpoint, pulsarListener);
 		resolveDeadLetterPolicy(endpoint, pulsarListener);
 		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
 		resolveConsumerCustomizer(endpoint, pulsarListener);
+		this.processedEndpoints.add(endpoint);
 	}
 
 	private void resolveSubscriptionType(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
@@ -275,8 +264,27 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	protected void postProcessEndpointsBeforeRegistration() {
+		if (this.processedEndpoints.size() == 1) {
+			MethodPulsarListenerEndpoint<?> endpoint = this.processedEndpoints.get(0);
+			if (endpoint.getConsumerBuilderCustomizer() != null) {
+				return;
+			}
+			this.beanFactory.getBeanProvider(PulsarListenerConsumerBuilderCustomizer.class).ifUnique((customizer) -> {
+				this.logger
+					.info(() -> String.format("Setting the only registered PulsarListenerConsumerBuilderCustomizer "
+							+ "on the only registered @PulsarListener (%s)", endpoint.getId()));
+				endpoint.setConsumerBuilderCustomizer(customizer::customize);
+			});
+		}
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveConsumerCustomizer(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
+		if (!StringUtils.hasText(pulsarListener.consumerCustomizer())) {
+			return;
+		}
 		Object consumerCustomizer = resolveExpression(pulsarListener.consumerCustomizer());
 		if (consumerCustomizer instanceof PulsarListenerConsumerBuilderCustomizer customizer) {
 			endpoint.setConsumerBuilderCustomizer(customizer::customize);

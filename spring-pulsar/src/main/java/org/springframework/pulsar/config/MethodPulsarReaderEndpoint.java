@@ -199,6 +199,10 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		this.messageHandlerMethodFactory = messageHandlerMethodFactory;
 	}
 
+	public ReaderBuilderCustomizer<?> getReaderBuilderCustomizer() {
+		return this.readerBuilderCustomizer;
+	}
+
 	public void setReaderBuilderCustomizer(ReaderBuilderCustomizer<?> readerBuilderCustomizer) {
 		this.readerBuilderCustomizer = readerBuilderCustomizer;
 	}

@@ -24,30 +24,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarReader;
 import org.springframework.pulsar.annotation.PulsarReaderReaderBuilderCustomizer;
-import org.springframework.pulsar.config.DefaultPulsarReaderContainerFactory;
-import org.springframework.pulsar.config.PulsarReaderContainerFactory;
-import org.springframework.pulsar.core.DefaultPulsarClientFactory;
-import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
-import org.springframework.pulsar.core.DefaultPulsarReaderFactory;
-import org.springframework.pulsar.core.PulsarProducerFactory;
-import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * Tests for {@link PulsarReader}.
@@ -55,47 +43,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
  * @author Soby Chacko
  * @author Chris Bono
  */
-@SpringJUnitConfig
-@DirtiesContext
-public class PulsarReaderTests implements PulsarTestContainerSupport {
-
-	@Autowired
-	PulsarTemplate<String> pulsarTemplate;
-
-	@Autowired
-	private PulsarClient pulsarClient;
-
-	@Configuration(proxyBeanMethods = false)
-	@EnablePulsar
-	public static class TopLevelConfig {
-
-		@Bean
-		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient);
-		}
-
-		@Bean
-		public PulsarClient pulsarClient() throws PulsarClientException {
-			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
-		}
-
-		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			return new PulsarTemplate<>(pulsarProducerFactory);
-		}
-
-		@Bean
-		public PulsarReaderFactory<?> pulsarReaderFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarReaderFactory<>(pulsarClient);
-		}
-
-		@Bean
-		PulsarReaderContainerFactory pulsarReaderContainerFactory(PulsarReaderFactory<Object> pulsarReaderFactory) {
-			return new DefaultPulsarReaderContainerFactory<>(pulsarReaderFactory,
-					new PulsarReaderContainerProperties());
-		}
-
-	}
+public class PulsarReaderTests extends PulsarReaderTestsBase {
 
 	@Nested
 	@ContextConfiguration(classes = StartMessageIdEarliest.PulsarReaderStartMessageIdEarliest.class)
@@ -109,8 +57,7 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 			assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
 		}
 
-		@EnablePulsar
-		@Configuration
+		@Configuration(proxyBeanMethods = false)
 		static class PulsarReaderStartMessageIdEarliest {
 
 			@PulsarReader(id = "pulsarReaderBasicScenario-id-1", topics = "pulsarReaderBasicScenario-topic-1",
@@ -162,8 +109,7 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 			assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
 		}
 
-		@EnablePulsar
-		@Configuration
+		@Configuration(proxyBeanMethods = false)
 		static class PulsarReaderStartMessageIdLatest {
 
 			@PulsarReader(id = "pulsarReaderBasicScenario-id-3", topics = "pulsarReaderBasicScenario-topic-3",
@@ -185,11 +131,10 @@ public class PulsarReaderTests implements PulsarTestContainerSupport {
 
 		@Test
 		void startMessageIdProvidedThroughReaderCustomizer() throws Exception {
-			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
 		}
 
-		@EnablePulsar
-		@Configuration
+		@Configuration(proxyBeanMethods = false)
 		static class WithCustomizerConfig {
 
 			int currentIndex = 5;

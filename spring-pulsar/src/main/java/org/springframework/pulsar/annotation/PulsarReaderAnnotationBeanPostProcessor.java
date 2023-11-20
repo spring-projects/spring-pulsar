@@ -100,13 +100,13 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 
 	private final AtomicInteger counter = new AtomicInteger();
 
+	private final List<MethodPulsarReaderEndpoint<?>> processedEndpoints = new ArrayList<>();
+
 	@Override
 	public void afterSingletonsInstantiated() {
 		this.registrar.setBeanFactory(this.beanFactory);
-
 		this.beanFactory.getBeanProvider(PulsarReaderConfigurer.class)
 			.forEach(c -> c.configurePulsarReaders(this.registrar));
-
 		if (this.registrar.getEndpointRegistry() == null) {
 			if (this.endpointRegistry == null) {
 				Assert.state(this.beanFactory != null,
@@ -117,11 +117,10 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 			}
 			this.registrar.setEndpointRegistry(this.endpointRegistry);
 		}
-
 		if (this.defaultContainerFactoryBeanName != null) {
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
-
+		postProcessEndpointsBeforeRegistration();
 		// Register all readers
 		this.registrar.afterPropertiesSet();
 	}
@@ -228,10 +227,29 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		endpoint.setBeanFactory(this.beanFactory);
 
 		resolveReaderCustomizer(endpoint, pulsarReader);
+		this.processedEndpoints.add(endpoint);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void postProcessEndpointsBeforeRegistration() {
+		if (this.processedEndpoints.size() == 1) {
+			MethodPulsarReaderEndpoint<?> endpoint = this.processedEndpoints.get(0);
+			if (endpoint.getReaderBuilderCustomizer() != null) {
+				return;
+			}
+			this.beanFactory.getBeanProvider(PulsarReaderReaderBuilderCustomizer.class).ifUnique((customizer) -> {
+				this.logger.info(() -> String.format("Setting the only registered PulsarReaderReaderBuilderCustomizer "
+						+ "on the only registered @PulsarReader (%s)", endpoint.getId()));
+				endpoint.setReaderBuilderCustomizer(customizer::customize);
+			});
+		}
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveReaderCustomizer(MethodPulsarReaderEndpoint<?> endpoint, PulsarReader pulsarReader) {
+		if (!StringUtils.hasText(pulsarReader.readerCustomizer())) {
+			return;
+		}
 		Object readerCustomizer = resolveExpression(pulsarReader.readerCustomizer());
 		if (readerCustomizer instanceof PulsarReaderReaderBuilderCustomizer customizer) {
 			endpoint.setReaderBuilderCustomizer(customizer::customize);
