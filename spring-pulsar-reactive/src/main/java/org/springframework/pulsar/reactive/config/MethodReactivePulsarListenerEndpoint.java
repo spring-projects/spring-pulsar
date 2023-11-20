@@ -226,6 +226,10 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		this.deadLetterPolicy = deadLetterPolicy;
 	}
 
+	public ReactiveMessageConsumerBuilderCustomizer<V> getConsumerCustomizer() {
+		return this.consumerCustomizer;
+	}
+
 	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer<V> consumerCustomizer) {
 		this.consumerCustomizer = consumerCustomizer;
 	}

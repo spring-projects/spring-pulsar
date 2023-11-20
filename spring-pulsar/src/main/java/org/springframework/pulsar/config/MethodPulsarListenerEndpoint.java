@@ -247,6 +247,10 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		this.ackTimeoutRedeliveryBackoff = ackTimeoutRedeliveryBackoff;
 	}
 
+	public ConsumerBuilderCustomizer<?> getConsumerBuilderCustomizer() {
+		return this.consumerBuilderCustomizer;
+	}
+
 	public void setConsumerBuilderCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer) {
 		this.consumerBuilderCustomizer = consumerBuilderCustomizer;
 	}

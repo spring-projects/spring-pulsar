@@ -34,8 +34,6 @@ import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Messages;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -53,7 +51,6 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -66,25 +63,17 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
-import org.springframework.pulsar.core.DefaultPulsarClientFactory;
-import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
-import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
-import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.util.backoff.FixedBackOff;
 
 /**
@@ -92,60 +81,7 @@ import org.springframework.util.backoff.FixedBackOff;
  * @author Alexander Preuß
  * @author Chris Bono
  */
-@SpringJUnitConfig
-@DirtiesContext
-public class PulsarListenerTests implements PulsarTestContainerSupport {
-
-	@Autowired
-	PulsarTemplate<String> pulsarTemplate;
-
-	@Autowired
-	private PulsarClient pulsarClient;
-
-	@Configuration(proxyBeanMethods = false)
-	@EnablePulsar
-	public static class TopLevelConfig {
-
-		@Bean
-		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient, "foo-1");
-		}
-
-		@Bean
-		public PulsarClient pulsarClient() throws PulsarClientException {
-			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
-		}
-
-		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			return new PulsarTemplate<>(pulsarProducerFactory);
-		}
-
-		@Bean
-		public PulsarConsumerFactory<?> pulsarConsumerFactory(PulsarClient pulsarClient,
-				ObjectProvider<ConsumerBuilderCustomizer<String>> defaultConsumerCustomizersProvider) {
-			return new DefaultPulsarConsumerFactory<>(pulsarClient,
-					defaultConsumerCustomizersProvider.orderedStream().toList());
-		}
-
-		@Bean
-		PulsarListenerContainerFactory pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new PulsarContainerProperties());
-		}
-
-		@Bean
-		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
-		}
-
-		@Bean
-		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
-		}
-
-	}
+class PulsarListenerTests extends PulsarListenerTestsBase {
 
 	@Nested
 	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
@@ -1074,38 +1010,6 @@ public class PulsarListenerTests implements PulsarTestContainerSupport {
 					topics = "consumer-pause-topic", properties = { "receiverQueueSize=1" })
 			void listen(String msg) {
 				latch.countDown();
-			}
-
-		}
-
-	}
-
-	@Nested
-	@ContextConfiguration(classes = PulsarListenerCustomizerTests.WithCustomizerConfig.class)
-	class PulsarListenerCustomizerTests {
-
-		private static final CountDownLatch latch = new CountDownLatch(1);
-
-		@Test
-		void withCustomizerOverridingSubscriptionName() throws Exception {
-			pulsarTemplate.send("with-customizer-listener-topic", "hello");
-			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-		}
-
-		@EnablePulsar
-		@Configuration
-		static class WithCustomizerConfig {
-
-			@PulsarListener(id = "with-customizer-listener", subscriptionName = "with-customizer-listener-subscription",
-					topics = "with-customizer-listener-topic", consumerCustomizer = "myCustomizer")
-			void listen(String ignored, Consumer<String> consumer) {
-				assertThat(consumer.getSubscription()).isEqualTo("test-changed-subscription-name");
-				latch.countDown();
-			}
-
-			@Bean
-			public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
-				return cb -> cb.subscriptionName("test-changed-subscription-name");
 			}
 
 		}

@@ -110,13 +110,13 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 	private final AtomicInteger counter = new AtomicInteger();
 
+	private final List<MethodReactivePulsarListenerEndpoint<?>> processedEndpoints = new ArrayList<>();
+
 	@Override
 	public void afterSingletonsInstantiated() {
 		this.registrar.setBeanFactory(this.beanFactory);
-
 		this.beanFactory.getBeanProvider(PulsarListenerConfigurer.class)
 			.forEach(c -> c.configurePulsarListeners(this.registrar));
-
 		if (this.registrar.getEndpointRegistry() == null) {
 			if (this.endpointRegistry == null) {
 				Assert.state(this.beanFactory != null,
@@ -127,12 +127,11 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 			}
 			this.registrar.setEndpointRegistry(this.endpointRegistry);
 		}
-
 		if (this.defaultContainerFactoryBeanName != null) {
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
 		addFormatters(this.messageHandlerMethodFactory.getDefaultFormattingConversionService());
-
+		postProcessEndpointsBeforeRegistration();
 		// Actually register all listeners
 		this.registrar.afterPropertiesSet();
 	}
@@ -201,14 +200,11 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 	@Nullable
 	private ReactivePulsarListenerContainerFactory<?> resolveContainerFactory(
 			ReactivePulsarListener ReactivePulsarListener, Object factoryTarget, String beanName) {
-
 		String containerFactory = ReactivePulsarListener.containerFactory();
 		if (!StringUtils.hasText(containerFactory)) {
 			return null;
 		}
-
 		ReactivePulsarListenerContainerFactory<?> factory = null;
-
 		Object resolved = resolveExpression(containerFactory);
 		if (resolved instanceof ReactivePulsarListenerContainerFactory) {
 			return (ReactivePulsarListenerContainerFactory<?>) resolved;
@@ -230,7 +226,6 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 	private void processReactivePulsarListenerAnnotation(MethodReactivePulsarListenerEndpoint<?> endpoint,
 			ReactivePulsarListener reactivePulsarListener, Object bean, String[] topics, String topicPattern) {
-
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
 		endpoint.setSubscriptionName(getEndpointSubscriptionName(reactivePulsarListener));
@@ -239,7 +234,6 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		endpoint.setTopicPattern(topicPattern);
 		resolveSubscriptionType(endpoint, reactivePulsarListener);
 		endpoint.setSchemaType(reactivePulsarListener.schemaType());
-
 		String concurrency = reactivePulsarListener.concurrency();
 		if (StringUtils.hasText(concurrency)) {
 			endpoint.setConcurrency(resolveExpressionAsInteger(concurrency, "concurrency"));
@@ -249,16 +243,15 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 			endpoint.setUseKeyOrderedProcessing(
 					resolveExpressionAsBoolean(useKeyOrderedProcessing, "useKeyOrderedProcessing"));
 		}
-
 		String autoStartup = reactivePulsarListener.autoStartup();
 		if (StringUtils.hasText(autoStartup)) {
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
 		}
 		endpoint.setFluxListener(reactivePulsarListener.stream());
 		endpoint.setBeanFactory(this.beanFactory);
-
 		resolveDeadLetterPolicy(endpoint, reactivePulsarListener);
 		resolveConsumerCustomizer(endpoint, reactivePulsarListener);
+		this.processedEndpoints.add(endpoint);
 	}
 
 	private void resolveSubscriptionType(MethodReactivePulsarListenerEndpoint<?> endpoint,
@@ -286,9 +279,29 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	protected void postProcessEndpointsBeforeRegistration() {
+		if (this.processedEndpoints.size() == 1) {
+			MethodReactivePulsarListenerEndpoint<?> endpoint = this.processedEndpoints.get(0);
+			if (endpoint.getConsumerCustomizer() != null) {
+				return;
+			}
+			this.beanFactory.getBeanProvider(ReactivePulsarListenerMessageConsumerBuilderCustomizer.class)
+				.ifUnique((customizer) -> {
+					this.logger.info(() -> String
+						.format("Setting the only registered ReactivePulsarListenerMessageConsumerBuilderCustomizer "
+								+ "on the only registered @ReactivePulsarListener (%s)", endpoint.getId()));
+					endpoint.setConsumerCustomizer(customizer::customize);
+				});
+		}
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void resolveConsumerCustomizer(MethodReactivePulsarListenerEndpoint<?> endpoint,
 			ReactivePulsarListener reactivePulsarListener) {
+		if (!StringUtils.hasText(reactivePulsarListener.consumerCustomizer())) {
+			return;
+		}
 		Object consumerCustomizer = resolveExpression(reactivePulsarListener.consumerCustomizer());
 		if (consumerCustomizer instanceof ReactivePulsarListenerMessageConsumerBuilderCustomizer customizer) {
 			endpoint.setConsumerCustomizer(customizer::customize);
