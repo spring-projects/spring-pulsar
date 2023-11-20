@@ -270,6 +270,8 @@ ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> myConsumerCustomi
 }
 ----
 
+TIP: If your application only has a single `@ReactivePulsarListener` and a single `ReactivePulsarListenerMessageConsumerBuilderCustomizer` bean registered then the customizer will be automatically applied.
+
 You can also use the customizer to provide direct Pulsar consumer properties to the consumer builder.
 This is convenient if you do not want to use the Boot configuration properties mentioned earlier or have multiple `ReactivePulsarListener` methods whose configuration varies.
 

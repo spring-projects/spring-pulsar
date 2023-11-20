@@ -299,6 +299,26 @@ void listen(String message) {
 
 TIP: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` application configuration properties
 
+==== Customizing the ConsumerBuilder
+
+You can customize any fields available through `ConsumerBuilder` using a `PulsarListenerConsumerBuilderCustomizer` by providing a `@Bean` of type `PulsarListenerConsumerBuilderCustomizer` and then making it available to the `PulsarListener` as shown below.
+
+[source, java]
+----
+@PulsarListener(topics = "hello-topic", consumerCustomizer = "myCustomizer")
+public void listen(String message) {
+    System.out.println("Message Received: " + message);
+}
+
+@Bean
+PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
+    return (builder) -> builder.consumerName("myConsumer");
+}
+----
+
+TIP: If your application only has a single `@PulsarListener` and a single `PulsarListenerConsumerBuilderCustomizer` bean registered then the customizer will be automatically applied.
+
+
 [[schema-info-listener-imperative]]
 :listener-class: PulsarListener
 include::schema-info/schema-info-listener.adoc[leveloffset=+1]
@@ -1112,7 +1132,7 @@ Suppose you want the reader to start reading messages arbitrarily from a topic o
 ==== Customizing the ReaderBuilder
 
 You can customize any fields available through `ReaderBuilder` using a `PulsarReaderReaderBuilderCustomizer` in Spring for Apache Pulsar.
-You can provide a `@Bean` of type `PulsarReaderBuilderCustomizer` and then make it available to the `PulsarReader` as below.
+You can provide a `@Bean` of type `PulsarReaderReaderBuilderCustomizer` and then make it available to the `PulsarReader` as below.
 
 [source, java]
 ----
@@ -1130,6 +1150,8 @@ public PulsarReaderReaderBuilderCustomizer<String> myCustomizer() {
     };
 }
 ----
+
+TIP: If your application only has a single `@PulsarReader` and a single `PulsarReaderReaderBuilderCustomizer` bean registered then the customizer will be automatically applied.
 
 [[topic-resolution-process-imperative]]
 == Topic Resolution
