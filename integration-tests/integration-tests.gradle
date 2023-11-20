@@ -43,8 +43,8 @@ task downloadRabbitConnector {
 		try {
 			download.run {
 				println "Downloading Rabbit connector to 'src/intTest/resources/connectors/' (one time only if not already downloaded)..."
-				src 'https://archive.apache.org/dist/pulsar/pulsar-3.1.0/connectors/pulsar-io-rabbitmq-3.1.0.nar'
-				dest "$buildDir/../src/intTest/resources/connectors/pulsar-io-rabbitmq-3.1.0.nar"
+				src 'https://archive.apache.org/dist/pulsar/pulsar-3.1.1/connectors/pulsar-io-rabbitmq-3.1.1.nar'
+				dest "$buildDir/../src/intTest/resources/connectors/pulsar-io-rabbitmq-3.1.1.nar"
 				overwrite false
 			}
 		} catch (Exception ex) {
