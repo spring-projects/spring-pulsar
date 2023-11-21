@@ -13,6 +13,8 @@ repositories {
 }
 
 dependencies {
+	intTestImplementation project(':spring-pulsar')
+	intTestImplementation project(':spring-pulsar-reactive')
 	intTestImplementation project(':spring-pulsar-test')
 	intTestRuntimeOnly 'ch.qos.logback:logback-classic'
 	intTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
