@@ -20,6 +20,7 @@ jobs:
           curl -sSL -O https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.8/github-changelog-generator.jar
       - name: Create Github release
         env:
+          VERSION: ${{ inputs.releaseVersion }}
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
           GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
