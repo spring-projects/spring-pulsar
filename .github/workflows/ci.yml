@@ -209,20 +209,19 @@ jobs:
 
       - name: Install tooling for Github release
         run: |
-          curl -sSL https://github.com/cbroglie/mustache/releases/download/v1.2.2/mustache_1.2.2_linux_amd64.tar.gz | sudo tar -C /usr/local/bin/ --no-same-owner -xzv mustache
+          curl -sSL -O https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.8/github-changelog-generator.jar
       - name: Create Github release
         env:
-          RELEASE_NOTES_ISSUES: ${{runner.temp}}/release_notes_issues.json
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
           GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
-          gh issue list \
-            --repo spring-projects/spring-pulsar \
-            --state all --json number,title,labels \
-            --search milestone:$VERSION \
-            --jq '{issues:map(select((.labels | length == 0) or (any(.labels[].name; startswith("automation/rlnotes")|not))) + {repo:"spring-projects/spring-pulsar"})}' \
-            > $RELEASE_NOTES_ISSUES
-          mustache $RELEASE_NOTES_ISSUES .github/rlnotes.mustache > $RELEASE_NOTES_FILE
+          
+          java -jar github-changelog-generator.jar \
+            --spring.config.location=.github/changelog-generator.yml \
+            $VERSION $RELEASE_NOTES_FILE
+          
+          cat $RELEASE_NOTES_FILE
+          
           gh release create v$VERSION \
           --draft \
           --title "Spring Pulsar $VERSION" \
