@@ -42,7 +42,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
-import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
+import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
@@ -221,7 +221,7 @@ class ReactivePulsarListenerIntegrationTests implements PulsarTestContainerSuppo
 	static class ConsumerCustomizerConfig {
 
 		@Bean
-		ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
+		ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
 			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
 		}
 
