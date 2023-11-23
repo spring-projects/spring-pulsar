@@ -3,7 +3,10 @@ changelog:
   sections:
     - title: ":star: New Features"
       labels:
-        - "type: enhancement"
+        - "type: feature"
+    - title: ":ladder: Improvements"
+      labels:
+        - "type: improvement"
     - title: ":lady_beetle: Bug Fixes"
       labels:
         - "type: bug"
