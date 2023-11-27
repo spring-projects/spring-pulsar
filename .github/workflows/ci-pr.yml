@@ -11,8 +11,8 @@ on:
 jobs:
   build_and_verify:
     name: Build and Verify
-    if: github.repository == 'spring-projects/spring-pulsar'
     runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
     steps:
       - uses: actions/checkout@v3
       - uses: spring-io/spring-gradle-build-action@v2
@@ -30,6 +30,20 @@ jobs:
           name: jacoco-results
           path: 'build/reports/jacoco/**/*.*'
           retention-days: 3
+      - name: Capture Test Results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: '*/build/reports/tests/**/*.*'
+          retention-days: 3
+  integration_tests:
+    needs: [ build_and_verify ]
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: spring-io/spring-gradle-build-action@v2
       - name: Run integration tests
         run: |
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
@@ -40,6 +54,26 @@ jobs:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
+  check_samples:
+    needs: [ build_and_verify ]
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: spring-io/spring-gradle-build-action@v2
+      - name: Run all sample app tests
+        env:
+          LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          ./gradlew publishMavenJavaPublicationToLocalRepository
+          ./gradlew \
+              --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
+              -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
+              -PspringPulsarVersion="$VERSION" \
+              :runAllSampleTests
   scan:
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +90,7 @@ jobs:
         run: echo "::info ::Scanned"
   done:
     runs-on: ubuntu-latest
-    needs: [ build_and_verify, scan ]
+    needs: [ build_and_verify, check_samples, scan ]
     steps:
       - name: 'Done'
         shell: bash
