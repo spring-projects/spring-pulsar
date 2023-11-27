@@ -1,0 +1,7 @@
+spring:
+  pulsar:
+    producer:
+      message-routing-mode: custompartition
+  docker:
+    compose:
+      file: spring-pulsar-sample-apps/sample-failover-custom-router/compose.yaml
