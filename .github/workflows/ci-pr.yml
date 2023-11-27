@@ -56,7 +56,7 @@ jobs:
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
   integration_tests:
-    needs: [build_and_verify]
+    needs: [prerequisites, build_and_verify]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
@@ -73,7 +73,7 @@ jobs:
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
   check_samples:
-    needs: [build_and_verify]
+    needs: [prerequisites, build_and_verify]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
