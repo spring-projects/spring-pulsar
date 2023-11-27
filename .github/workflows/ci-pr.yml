@@ -9,10 +9,28 @@ on:
       - '.github/**'
 
 jobs:
-  build_and_verify:
-    name: Build and Verify
+  prerequisites:
+    name: Pre-requisites for building
     runs-on: ubuntu-latest
     if: github.repository == 'spring-projects/spring-pulsar'
+    outputs:
+      runjobs: ${{ steps.continue.outputs.runjobs }}
+      project_version: ${{ steps.continue.outputs.project_version }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: continue
+        name: Determine if should continue
+        run: |
+          # Run jobs if in upstream repository
+          echo "runjobs=true" >>$GITHUB_OUTPUT
+          # Extract version from gradle.properties
+          version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "project_version=$version" >>$GITHUB_OUTPUT
+  build_and_verify:
+    name: Build and Verify
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v3
       - uses: spring-io/spring-gradle-build-action@v2
@@ -38,9 +56,9 @@ jobs:
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
   integration_tests:
-    needs: [ build_and_verify ]
+    needs: [build_and_verify]
     runs-on: ubuntu-latest
-    if: github.repository == 'spring-projects/spring-pulsar'
+    if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v3
       - uses: spring-io/spring-gradle-build-action@v2
@@ -55,9 +73,9 @@ jobs:
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
   check_samples:
-    needs: [ build_and_verify ]
+    needs: [build_and_verify]
     runs-on: ubuntu-latest
-    if: github.repository == 'spring-projects/spring-pulsar'
+    if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v3
       - uses: spring-io/spring-gradle-build-action@v2
@@ -70,7 +88,7 @@ jobs:
           ./gradlew \
               --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
               -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
-              -PspringPulsarVersion="$VERSION" \
+              -PspringPulsarVersion="${{ needs.prerequisites.outputs.project_version }}" \
               :runAllSampleTests
   scan:
     runs-on: ubuntu-latest
