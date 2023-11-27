@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app2;
+package com.example;
 
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageRouter;

@@ -4,4 +4,4 @@ spring:
       message-routing-mode: custompartition
   docker:
     compose:
-      file: spring-pulsar-sample-apps/sample-app2/compose.yaml
+      file: spring-pulsar-sample-apps/sample-failover-custom-router/compose.yaml
