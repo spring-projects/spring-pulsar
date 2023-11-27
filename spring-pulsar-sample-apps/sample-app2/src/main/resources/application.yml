@@ -1,12 +1,7 @@
-logging:
-  level:
-    org.apache.pulsar: error
-
-management:
-  tracing:
-    enabled: false
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: "http://localhost:9411/api/v2/spans"
+spring:
+  pulsar:
+    producer:
+      message-routing-mode: custompartition
+  docker:
+    compose:
+      file: spring-pulsar-sample-apps/sample-app2/compose.yaml

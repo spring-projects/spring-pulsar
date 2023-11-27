@@ -16,10 +16,9 @@
 
 package app2;
 
-import java.io.Serial;
-
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageRouter;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.TopicMetadata;
 import org.slf4j.Logger;
@@ -31,84 +30,76 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTopic;
 
 @SpringBootApplication
 public class FailoverConsumerApp {
 
-	private final Logger logger = LoggerFactory.getLogger(FailoverConsumerApp.class);
+	private static final Logger LOG = LoggerFactory.getLogger(FailoverConsumerApp.class);
+
+	private static final String TOPIC = "failover-demo-topic";
 
 	public static void main(String[] args) {
-		SpringApplication.run(FailoverConsumerApp.class, "--spring.pulsar.producer.messageRoutingMode=CustomPartition");
+		SpringApplication.run(FailoverConsumerApp.class, args);
 	}
 
 	@Bean
-	ApplicationRunner runner(PulsarTemplate<String> pulsarTemplate) {
-		String topic = "failover-demo-topic";
-		return args -> {
+	PulsarTopic failoverDemoTopic() {
+		return PulsarTopic.builder(TOPIC).numberOfPartitions(3).build();
+	}
+
+	@Bean
+	ApplicationRunner runner(PulsarTemplate<String> template) {
+		return (args) -> {
 			for (int i = 0; i < 10; i++) {
-				pulsarTemplate.newMessage("hello john doe 0 ").withTopic(topic)
-						.withProducerCustomizer(builder -> builder.messageRouter(new FooRouter())).sendAsync();
-				pulsarTemplate.newMessage("hello alice doe 1").withTopic(topic)
-						.withProducerCustomizer(builder -> builder.messageRouter(new BarRouter())).sendAsync();
-				pulsarTemplate.newMessage("hello buzz doe 2").withTopic(topic)
-						.withProducerCustomizer(builder -> builder.messageRouter(new BuzzRouter())).sendAsync();
-				Thread.sleep(1_000);
+				sendMessage(0, template, new PartitionZeroRouter());
+				sendMessage(1, template, new PartitionOneRouter());
+				sendMessage(2, template, new PartitionTwoRouter());
 			}
 		};
 	}
 
-	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
-			subscriptionType = SubscriptionType.Failover)
-	void listen1(String foo) {
-		this.logger.info("failover-listen1 : " + foo);
+	private void sendMessage(int partition, PulsarTemplate<String> template, MessageRouter router) throws PulsarClientException {
+		var msg = "hello_" + partition;
+		template.newMessage(msg).withTopic(TOPIC)
+				.withProducerCustomizer(builder -> builder.messageRouter(router)).sendAsync();
+		LOG.info("++++++PRODUCE_{} {}------", partition, msg);
 	}
 
-	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
-			subscriptionType = SubscriptionType.Failover)
-	void listen2(String foo) {
-		this.logger.info("failover-listen2 : " + foo);
+	@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub", subscriptionType = SubscriptionType.Failover)
+	void listen0(String msg) {
+		LOG.info("++++++CONSUME_0 {}------", msg);
 	}
 
-	@PulsarListener(subscriptionName = "failover-subscription-demo", topics = "failover-demo-topic",
-			subscriptionType = SubscriptionType.Failover)
-	void listen(String foo) {
-		this.logger.info("failover-listen3 : " + foo);
+	@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub", subscriptionType = SubscriptionType.Failover)
+	void listen1(String msg) {
+		LOG.info("++++++CONSUME_1 {}------", msg);
 	}
 
-	static class FooRouter implements MessageRouter {
+	@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub", subscriptionType = SubscriptionType.Failover)
+	void listen2(String msg) {
+		LOG.info("++++++CONSUME_2 {}------", msg);
+	}
 
-		@Serial
-		private static final long serialVersionUID = -1L;
-
+	static class PartitionZeroRouter implements MessageRouter {
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 0;
 		}
-
 	}
 
-	static class BarRouter implements MessageRouter {
-
-		@Serial
-		private static final long serialVersionUID = -1L;
-
+	static class PartitionOneRouter implements MessageRouter {
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 1;
 		}
-
 	}
 
-	static class BuzzRouter implements MessageRouter {
-
-		@Serial
-		private static final long serialVersionUID = -1L;
-
+	static class PartitionTwoRouter implements MessageRouter {
 		@Override
 		public int choosePartition(Message<?> msg, TopicMetadata metadata) {
 			return 2;
 		}
-
 	}
 
 }
