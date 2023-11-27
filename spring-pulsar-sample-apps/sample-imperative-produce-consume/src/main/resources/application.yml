@@ -6,3 +6,6 @@ spring:
           topic-name: bar-topic
           schema-info:
             schema-type: JSON
+  docker:
+    compose:
+      file: spring-pulsar-sample-apps/sample-imperative-produce-consume/compose.yaml
