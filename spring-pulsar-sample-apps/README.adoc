@@ -19,7 +19,7 @@ To build the applications simply execute the following command from the `spring-
 * The components have all been built by following the <<build-apps>> steps.
 * Apache Pulsar standalone cluster  available at `pulsar://localhost:6650`
 
-TIP: The included link:../tools/pulsar/docker/README.adoc#_start_pulsar[Pulsar tools] can be used to easily start a standalone cluster locally on the required coordinates
+TIP: Some samples (those w/ a `compose.yaml` file) include Docker Compose support and will automatically start the Pulsar cluster. For the other sample apps the included link:../tools/pulsar/docker/README.adoc#_start_pulsar[Pulsar tools] can be used to easily start a standalone cluster locally on the required coordinates.
 ****
 
 === Steps
