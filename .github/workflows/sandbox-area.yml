@@ -2,12 +2,56 @@ name: Sandbox Github Actions Testing Area
 
 on:
   workflow_dispatch:
+#    inputs:
+#      releaseVersion:
+#        description: 'Version to release'
+#        required: true
+#        type: string
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
+  GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+  GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+  COMMIT_OWNER: ${{ github.event.pusher.name }}
+  COMMIT_SHA: ${{ github.sha }}
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
 jobs:
-  test:
-    runs-on: ubuntu-18.04
+
+  prerequisites:
+    name: Pre-requisites for building
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    outputs:
+      runjobs: ${{ steps.continue.outputs.runjobs }}
+      project_version: ${{ steps.continue.outputs.project_version }}
     steps:
-      - name: Show environment v1
-        run: env | grep ^GITHUB
-      - name: Show ref v1
-        run: echo "===============> Version from $GITHUB_REF"
+      - uses: actions/checkout@v3
+      - id: continue
+        name: Determine if should continue
+        run: |
+          # Run jobs if in upstream repository
+          echo "runjobs=true" >>$GITHUB_OUTPUT
+          # Extract version from gradle.properties
+          version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "project_version=$version" >>$GITHUB_OUTPUT
+
+  container_scan:
+    name: Trivy Docker image vulnerability scan
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: needs.prerequisites.outputs.runjobs
+    steps:
+      - name: Run Trivy vulnerability scanner in container mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'apachepulsar/pulsar:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
