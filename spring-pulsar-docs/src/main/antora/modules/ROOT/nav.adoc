@@ -6,6 +6,7 @@
 ** xref:intro/getting-help.adoc[Getting Help]
 * xref:reference/reference.adoc[]
 ** xref:reference/pulsar.adoc[]
+*** xref:reference/tombstones.adoc[]
 ** xref:reference/reactive-pulsar.adoc[]
 ** xref:reference/pulsar-admin.adoc[]
 ** xref:reference/pulsar-function.adoc[]

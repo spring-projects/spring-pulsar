@@ -23,6 +23,7 @@ import org.apache.pulsar.client.api.Consumer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.pulsar.support.PulsarNull;
 import org.springframework.pulsar.support.header.PulsarHeaderMapper;
 
 /**
@@ -58,7 +59,7 @@ public class PulsarRecordMessageConverter<V> implements PulsarMessageConverter<V
 	}
 
 	protected Object extractAndConvertValue(org.apache.pulsar.client.api.Message<V> record) {
-		return record.getValue();
+		return record.getValue() != null ? record.getValue() : PulsarNull.INSTANCE;
 	}
 
 }

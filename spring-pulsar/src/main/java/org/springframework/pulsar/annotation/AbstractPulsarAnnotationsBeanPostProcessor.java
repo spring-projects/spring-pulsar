@@ -326,9 +326,9 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 			GenericMessageConverter messageConverter = new GenericMessageConverter(
 					this.defaultFormattingConversionService);
 			defaultFactory.setMessageConverter(messageConverter);
-
+			defaultFactory
+				.setCustomArgumentResolvers(List.of(new PulsarNullAwarePayloadArgumentResolver(messageConverter)));
 			defaultFactory.afterPropertiesSet();
-
 			return defaultFactory;
 		}
 

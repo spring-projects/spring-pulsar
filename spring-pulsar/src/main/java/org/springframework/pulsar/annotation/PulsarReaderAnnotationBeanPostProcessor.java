@@ -36,7 +36,11 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.format.Formatter;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.config.MethodPulsarReaderEndpoint;
 import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
@@ -120,6 +124,7 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		if (this.defaultContainerFactoryBeanName != null) {
 			this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
 		}
+		addFormatters(this.messageHandlerMethodFactory.defaultFormattingConversionService);
 		postProcessEndpointsBeforeRegistration();
 		// Register all readers
 		this.registrar.afterPropertiesSet();
@@ -290,6 +295,12 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 			readers.add(ann);
 		}
 		return readers;
+	}
+
+	private void addFormatters(FormatterRegistry registry) {
+		this.beanFactory.getBeanProvider(Converter.class).forEach(registry::addConverter);
+		this.beanFactory.getBeanProvider(GenericConverter.class).forEach(registry::addConverter);
+		this.beanFactory.getBeanProvider(Formatter.class).forEach(registry::addFormatter);
 	}
 
 }
