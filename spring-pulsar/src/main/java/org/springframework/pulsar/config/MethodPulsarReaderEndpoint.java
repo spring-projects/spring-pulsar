@@ -93,9 +93,6 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		HandlerAdapter handlerMethod = configureListenerAdapter(readerListener);
 		readerListener.setHandlerMethod(handlerMethod);
 
-		// Since we have access to the handler method here, check if we can type infer the
-		// Schema used.
-
 		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
 		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
@@ -129,15 +126,6 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		}
 
 		// TODO: If no topic info is set on endpoint attempt to resolve via message type
-		// TopicResolver topicResolver = pulsarContainerProperties.getTopicResolver();
-		// boolean hasTopicInfo =
-		// !ObjectUtils.isEmpty(pulsarContainerProperties.getTopics())
-		// || StringUtils.hasText(pulsarContainerProperties.getTopicsPattern());
-		// if (!hasTopicInfo) {
-		// topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
-		// .ifResolved((topic) -> pulsarContainerProperties.setTopics(new String[] { topic
-		// }));
-		// }
 
 		container.setReaderCustomizer(this.readerBuilderCustomizer);
 
@@ -150,8 +138,8 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
-		if (Message.class.isAssignableFrom(resolvableType.getRawClass())
-				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass())) {
+		if (resolvableType.getRawClass() != null && (Message.class.isAssignableFrom(resolvableType.getRawClass())
+				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass()))) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
 		return resolvableType;

@@ -119,9 +119,6 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
-		// Since we have access to the handler method here, check if we can type infer the
-		// Schema used.
-
 		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
 		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
