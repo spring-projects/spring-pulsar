@@ -37,7 +37,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
- * Tests for {@link PulsarReader}.
+ * Provides base support for {@link PulsarReader} tests.
  *
  * @author Soby Chacko
  * @author Chris Bono

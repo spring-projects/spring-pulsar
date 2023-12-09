@@ -33,8 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -44,28 +42,22 @@ import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
-import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.api.MessageResult;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
-import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.pulsar.annotation.EnablePulsar;
-import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
-import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
@@ -74,18 +66,16 @@ import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpoint
 import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerMessageConsumerBuilderCustomizer;
-import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.BasicListenersTestCases.BasicListenersTestCasesConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersTest.PulsarListenerWithHeadersConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.User2;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.StreamingListenerTestCases.StreamingListenerTestCasesConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
-import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -98,77 +88,11 @@ import reactor.core.publisher.Mono;
  * @author Christophe Bornet
  * @author Chris Bono
  */
-@SpringJUnitConfig
-@DirtiesContext
-public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
-
-	@Autowired
-	PulsarTemplate<String> pulsarTemplate;
-
-	@Autowired
-	private PulsarClient pulsarClient;
-
-	@Configuration(proxyBeanMethods = false)
-	@EnableReactivePulsar
-	public static class TopLevelConfig {
-
-		@Bean
-		public PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
-			return new DefaultPulsarProducerFactory<>(pulsarClient);
-		}
-
-		@Bean
-		public PulsarClient pulsarClient() throws PulsarClientException {
-			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
-		}
-
-		@Bean
-		public ReactivePulsarClient pulsarReactivePulsarClient(PulsarClient pulsarClient) {
-			return AdaptedReactivePulsarClientFactory.create(pulsarClient);
-		}
-
-		@Bean
-		public PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			return new PulsarTemplate<>(pulsarProducerFactory);
-		}
-
-		@SuppressWarnings("unchecked")
-		@Bean
-		public ConsumerTrackingReactivePulsarConsumerFactory<String> pulsarConsumerFactory(
-				ReactivePulsarClient pulsarClient,
-				ObjectProvider<ReactiveMessageConsumerBuilderCustomizer<String>> defaultConsumerCustomizersProvider) {
-			DefaultReactivePulsarConsumerFactory<String> consumerFactory = new DefaultReactivePulsarConsumerFactory<>(
-					pulsarClient, defaultConsumerCustomizersProvider.orderedStream().toList());
-			return new ConsumerTrackingReactivePulsarConsumerFactory<>(consumerFactory);
-		}
-
-		@Bean
-		ReactivePulsarListenerContainerFactory<String> reactivePulsarListenerContainerFactory(
-				ReactivePulsarConsumerFactory<String> pulsarConsumerFactory) {
-			return new DefaultReactivePulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new ReactivePulsarContainerProperties<>());
-		}
-
-		@Bean
-		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
-		}
-
-		@Bean
-		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
-		}
-
-		@Bean
-		ReactivePulsarListenerMessageConsumerBuilderCustomizer<?> subscriptionInitialPositionEarliest() {
-			return b -> b.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest);
-		}
-
-	}
+class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 	@Nested
-	@ContextConfiguration(classes = PulsarListenerBasicTestCases.TestPulsarListenersForBasicScenario.class)
-	class PulsarListenerBasicTestCases {
+	@ContextConfiguration(classes = BasicListenersTestCasesConfig.class)
+	class BasicListenersTestCases {
 
 		static CountDownLatch latch1 = new CountDownLatch(1);
 		static CountDownLatch latch2 = new CountDownLatch(1);
@@ -212,7 +136,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@EnableReactivePulsar
 		@Configuration
-		static class TestPulsarListenersForBasicScenario {
+		static class BasicListenersTestCasesConfig {
 
 			@ReactivePulsarListener(id = "id-1", topics = "topic-1", subscriptionName = "subscription-1",
 					consumerCustomizer = "listen1Customizer")
@@ -256,8 +180,8 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	@ContextConfiguration(classes = PulsarListenerStreamingTestCases.TestPulsarListenersForStreaming.class)
-	class PulsarListenerStreamingTestCases {
+	@ContextConfiguration(classes = StreamingListenerTestCasesConfig.class)
+	class StreamingListenerTestCases {
 
 		static CountDownLatch latch1 = new CountDownLatch(10);
 		static CountDownLatch latch2 = new CountDownLatch(10);
@@ -280,7 +204,7 @@ public class ReactivePulsarListenerTests implements PulsarTestContainerSupport {
 
 		@EnableReactivePulsar
 		@Configuration
-		static class TestPulsarListenersForStreaming {
+		static class StreamingListenerTestCasesConfig {
 
 			@ReactivePulsarListener(topics = "streaming-1", stream = true,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")

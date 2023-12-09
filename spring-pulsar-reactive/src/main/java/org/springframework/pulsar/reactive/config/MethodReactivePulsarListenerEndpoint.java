@@ -174,8 +174,8 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
-		if (Message.class.isAssignableFrom(resolvableType.getRawClass())
-				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass())) {
+		if (resolvableType.getRawClass() != null && (Message.class.isAssignableFrom(resolvableType.getRawClass())
+				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass()))) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
 		return resolvableType;

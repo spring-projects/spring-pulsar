@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
+import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
@@ -40,6 +41,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
+ * Provides base support for {@link PulsarListener @PulsarListener} tests.
+ *
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Chris Bono
