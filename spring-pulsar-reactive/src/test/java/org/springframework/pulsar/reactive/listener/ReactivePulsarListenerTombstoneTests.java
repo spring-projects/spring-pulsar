@@ -115,7 +115,7 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 
 			@ReactivePulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-headers",
 					schemaType = SchemaType.STRING, consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenWithHeaders(@Payload(required = false) org.apache.pulsar.client.api.Message<String> msg,
+			Mono<Void> listenWithHeaders(org.apache.pulsar.client.api.Message<String> msg,
 					@Header(PulsarHeaders.KEY) String key) {
 				receivedMessagesWithHeaders.add(new ReceivedMessage<>(msg.getValue(), key));
 				latchWithHeaders.countDown();
@@ -124,8 +124,7 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 
 			@ReactivePulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-no-headers",
 					schemaType = SchemaType.STRING, consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenWithoutHeaders(
-					@Payload(required = false) org.apache.pulsar.client.api.Message<String> msg) {
+			Mono<Void> listenWithoutHeaders(org.apache.pulsar.client.api.Message<String> msg) {
 				receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(msg.getValue(), null));
 				latchWithoutHeaders.countDown();
 				return Mono.empty();
@@ -160,8 +159,7 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 
 			@ReactivePulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-headers",
 					schemaType = SchemaType.STRING, consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenWithHeaders(@Payload(required = false) Message<?> msg,
-					@Header(PulsarHeaders.KEY) String key) {
+			Mono<Void> listenWithHeaders(Message<?> msg, @Header(PulsarHeaders.KEY) String key) {
 				var payload = (msg.getPayload() != PulsarNull.INSTANCE) ? msg.getPayload().toString() : null;
 				receivedMessagesWithHeaders.add(new ReceivedMessage<>(payload, key));
 				latchWithHeaders.countDown();
@@ -170,7 +168,7 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 
 			@ReactivePulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-no-headers",
 					schemaType = SchemaType.STRING, consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenWithoutHeaders(@Payload(required = false) Message<Object> msg) {
+			Mono<Void> listenWithoutHeaders(Message<Object> msg) {
 				var payload = (msg.getPayload() != PulsarNull.INSTANCE) ? msg.getPayload().toString() : null;
 				receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(payload, null));
 				latchWithoutHeaders.countDown();

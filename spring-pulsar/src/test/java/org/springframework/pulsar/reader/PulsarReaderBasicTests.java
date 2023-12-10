@@ -94,8 +94,7 @@ class PulsarReaderBasicTests extends PulsarReaderTestsBase {
 		static class PulsarMessagePayloadConfig {
 
 			@PulsarReader(topics = TOPIC, schemaType = SchemaType.STRING, startMessageId = "earliest")
-			public void listenWithoutHeaders(
-					@Payload(required = false) org.apache.pulsar.client.api.Message<String> msg) {
+			public void listenWithoutHeaders(org.apache.pulsar.client.api.Message<String> msg) {
 				receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(msg.getValue(), null));
 				latchWithoutHeaders.countDown();
 			}
@@ -125,7 +124,7 @@ class PulsarReaderBasicTests extends PulsarReaderTestsBase {
 		static class SpringMessagePayloadConfig {
 
 			@PulsarReader(topics = TOPIC, schemaType = SchemaType.STRING, startMessageId = "earliest")
-			public void listenWithoutHeaders(@Payload(required = false) Message<Object> msg) {
+			public void listenWithoutHeaders(Message<Object> msg) {
 				var payload = (msg.getPayload() != PulsarNull.INSTANCE) ? msg.getPayload().toString() : null;
 				assertThat(msg.getHeaders()).isNotEmpty();
 				receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(payload, null));

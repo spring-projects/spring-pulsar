@@ -1,26 +1,23 @@
-[[tombstones]]
+[[tombstones-reactive]]
 = Null Payloads and Log Compaction of 'Tombstone' Records
 
 When using log compaction, you can send and receive messages with `null` payloads to identify the deletion of a key.
 You can also receive `null` values for other reasons, such as a deserializer that might return `null` when it cannot deserialize a value.
 
-[[tombstones.produce]]
+[[tombstones-reactive.produce]]
 == Producing Null Payloads
-To send a `null` payload by using the `PulsarTemplate`, you can use the fluent API and pass null into the value argument of the `newMessage()` method, for example:
+You can send a `null` value with the `ReactivePulsarTemplate` by passing a `null` message parameter value to one of the `send` methods, for example:
 [source, java]
 ----
-pulsarTemplate
-        .newMessage(null)
-        .withTopic("my-topic")
-        .withSchema(Schema.STRING)
-        .withMessageCustomizer((mb) -> mb.key("key:1234"))
-        .send();
+reactiveTemplate
+        .send(null, Schema.STRING)
+        .subscribe();
 ----
 NOTE: When sending null values you must specify the schema type as the system can not determine the type of the message from a `null` payload.
 
-[[tombstones.consume]]
+[[tombstones-reactive.consume]]
 == Consuming Null Payloads
-For `@PulsarListener` and `@PulsarReader`, the `null` payload is passed into the listener method based on the type of its message parameter as follows:
+For `@ReactivePularListener`, the `null` payload is passed into the listener method based on the type of its message parameter as follows:
 |===
 | Parameter type | Passed-in value
 
@@ -36,11 +33,11 @@ For `@PulsarListener` and `@PulsarReader`, the `null` payload is passed into the
 | `org.springframework.messaging.Message<T>`
 | non-null Spring message whose `getPayload()` returns `PulsarNull`
 
-| `List<X>`
-| non-null list whose entries (`X`) are one of the above types and act accordingly (ie. primitive entries are `null` etc..)
+| `Flux<org.apache.pulsar.client.api.Message<T>>`
+| non-null flux whose entries are non-null Pulsar messages whose `getValue()` returns `null`
 
-| `org.apache.pulsar.client.api.Messages<T>`
-| non-null container of non-null Pulsar messages whose `getValue()` returns `null`
+| `Flux<org.apache.pulsar.client.api.Messages<T>>`
+| non-null flux whose entries are non-null Spring messages whose `getPayload()` returns `PulsarNull`
 
 |===
 
@@ -54,15 +51,15 @@ The following example shows such a configuration:
 
 [source, java]
 ----
-@PulsarListener(
+@ReactivePulsarListener(
         topics = "my-topic",
         subscriptionName = "my-topic-sub",
         schemaType = SchemaType.STRING)
-void myListener(
+Mono<Void> myListener(
         @Payload(required = false) String msg,
         @Header(PulsarHeaders.KEY) String key) {
     ...
 }
 ----
 
-NOTE: The `@PulsarReader` does not yet support `@Header` arguments, so it is less useful in the log compaction scenario.
+NOTE: When using a streaming message listener (`Flux`) the xref:reference/reactive-pulsar.adoc#reactive-pulsar-headers.streaming[header support is limited], so it less useful in the log compaction scenario.

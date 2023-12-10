@@ -109,7 +109,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-headers", schemaType = SchemaType.STRING,
 					properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenWithHeaders(@Payload(required = false) org.apache.pulsar.client.api.Message<String> msg,
+			public void listenWithHeaders(org.apache.pulsar.client.api.Message<String> msg,
 					@Header(PulsarHeaders.KEY) String key) {
 				receivedMessagesWithHeaders.add(new ReceivedMessage<>(msg.getValue(), key));
 				latchWithHeaders.countDown();
@@ -117,8 +117,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-no-headers",
 					schemaType = SchemaType.STRING, properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenWithoutHeaders(
-					@Payload(required = false) org.apache.pulsar.client.api.Message<String> msg) {
+			public void listenWithoutHeaders(org.apache.pulsar.client.api.Message<String> msg) {
 				receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(msg.getValue(), null));
 				latchWithoutHeaders.countDown();
 			}
@@ -152,8 +151,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-headers", schemaType = SchemaType.STRING,
 					properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenWithHeaders(@Payload(required = false) Message<?> msg,
-					@Header(PulsarHeaders.KEY) String key) {
+			public void listenWithHeaders(Message<?> msg, @Header(PulsarHeaders.KEY) String key) {
 				var payload = (msg.getPayload() != PulsarNull.INSTANCE) ? msg.getPayload().toString() : null;
 				receivedMessagesWithHeaders.add(new ReceivedMessage<>(payload, key));
 				latchWithHeaders.countDown();
@@ -161,7 +159,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-no-headers",
 					schemaType = SchemaType.STRING, properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenWithoutHeaders(@Payload(required = false) Message<Object> msg) {
+			public void listenWithoutHeaders(Message<Object> msg) {
 				var payload = (msg.getPayload() != PulsarNull.INSTANCE) ? msg.getPayload().toString() : null;
 				receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(payload, null));
 				latchWithoutHeaders.countDown();
@@ -238,8 +236,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-headers", schemaType = SchemaType.STRING,
 					batch = true, properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenWithHeaders(@Payload(required = false) List<String> msgs,
-					@Header(PulsarHeaders.KEY) List<String> keys) {
+			public void listenWithHeaders(List<String> msgs, @Header(PulsarHeaders.KEY) List<String> keys) {
 				for (int i = 0; i < msgs.size(); i++) {
 					receivedMessagesWithHeaders.add(new ReceivedMessage<>(msgs.get(i), keys.get(i)));
 					latchWithHeaders.countDown();
@@ -249,7 +246,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-no-headers",
 					schemaType = SchemaType.STRING, batch = true,
 					properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenMultipleNoHeaders(@Payload(required = false) List<String> msgs) {
+			public void listenMultipleNoHeaders(List<String> msgs) {
 				for (int i = 0; i < msgs.size(); i++) {
 					receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(msgs.get(i), null));
 					latchWithoutHeaders.countDown();
@@ -330,8 +327,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-headers", schemaType = SchemaType.JSON,
 					batch = true, properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenWithHeaders(@Payload(required = false) List<Foo> msgs,
-					@Header(PulsarHeaders.KEY) List<String> keys) {
+			public void listenWithHeaders(List<Foo> msgs, @Header(PulsarHeaders.KEY) List<String> keys) {
 				for (int i = 0; i < msgs.size(); i++) {
 					receivedMessagesWithHeaders.add(new ReceivedMessage<>(msgs.get(i), keys.get(i)));
 					latchWithHeaders.countDown();
@@ -340,7 +336,7 @@ class PulsarListenerTombstoneTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub-no-headers", schemaType = SchemaType.JSON,
 					batch = true, properties = { "subscriptionInitialPosition=Earliest" })
-			public void listenMultipleNoHeaders(@Payload(required = false) List<Foo> msgs) {
+			public void listenMultipleNoHeaders(List<Foo> msgs) {
 				for (int i = 0; i < msgs.size(); i++) {
 					receivedMessagesWithoutHeaders.add(new ReceivedMessage<>(msgs.get(i), null));
 					latchWithoutHeaders.countDown();
