@@ -213,15 +213,16 @@ The following example uses `ReactivePulsarListener` to consume a stream of POJOs
 [source, java]
 ----
 @ReactivePulsarListener(topics = "streaming-1", stream = true)
-Flux<MessageResult<Void>> listen(Flux<Message<String>> messages) {
+Flux<MessageResult<Void>> listen(Flux<org.apache.pulsar.client.api.Message<String>> messages) {
     return messages
         .doOnNext((msg) -> System.out.println("Received: " + msg.getValue()))
         .map(MessageResult::acknowledge);
 ----
-Here we receive the records as a `Flux` of messages.
+Here we receive the records as a `Flux` of Pulsar messages.
 In addition, to enable stream consumption at the `ReactivePulsarListener` level, you need to set the `stream` property on the annotation to `true`.
 
-NOTE: The listener method returns a `Flux<MessageResult<Void>>` where each element represents a processed message and holds the message id, value and whether it was acknowledged. The `MessageResult` has a set of static factory methods that can be used to create the appropriate `MessageResult` instance.
+NOTE: The listener method returns a `Flux<MessageResult<Void>>` where each element represents a processed message and holds the message id, value and whether it was acknowledged.
+The `MessageResult` has a set of static factory methods that can be used to create the appropriate `MessageResult` instance.
 
 Based on the actual type of the messages in the `Flux`, the framework tries to infer the schema to use.
 If it contains a complex type, you still need to provide the `schemaType` on `ReactivePulsarListener`.
@@ -233,9 +234,12 @@ The following listener uses the Spring messaging `Message` envelope with a compl
 Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<Foo>> messages) {
     return messages
         .doOnNext((msg) -> System.out.println("Received: " + msg.getPayload()))
-        .map(MessageResult::acknowledge);
+        .map(MessageUtils::acknowledge);
 }
 ----
+
+NOTE: The listener method returns a `Flux<MessageResult<Void>>` where each element represents a processed message and holds the message id, value and whether it was acknowledged.
+The Spring `MessageUtils` has a set of static factory methods that can be used to create the appropriate `MessageResult` instance from a Spring message.
 
 ==== Configuration - Application Properties
 The listener relies on the `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer that it uses to consume messages.

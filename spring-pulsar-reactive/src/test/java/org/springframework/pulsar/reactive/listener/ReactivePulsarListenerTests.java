@@ -74,6 +74,7 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.StreamingListenerTestCases.StreamingListenerTestCasesConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
+import org.springframework.pulsar.reactive.support.MessageUtils;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -215,15 +216,7 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 			@ReactivePulsarListener(topics = "streaming-2", stream = true,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
 			Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<String>> messages) {
-				return messages.doOnNext(m -> latch2.countDown()).map(m -> {
-					Object mId = m.getHeaders().get(PulsarHeaders.MESSAGE_ID);
-					if (mId instanceof MessageId) {
-						return (MessageId) mId;
-					}
-					else {
-						throw new RuntimeException("Missing message Id");
-					}
-				}).map(MessageResult::acknowledge);
+				return messages.doOnNext(m -> latch2.countDown()).map(MessageUtils::acknowledge);
 			}
 
 		}
