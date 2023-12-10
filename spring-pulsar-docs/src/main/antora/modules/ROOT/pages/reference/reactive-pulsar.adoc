@@ -337,6 +337,7 @@ One advantage of the reactive concurrency model is that it can be used with `Exc
 The Pulsar message metadata can be consumed as Spring message headers.
 The list of available headers can be found in {github}/blob/main/spring-pulsar/src/main/java/org/springframework/pulsar/support/PulsarHeaders.java[PulsarHeaders.java].
 
+[[reactive-pulsar-headers.single]]
 ==== Accessing In OneByOne Listener
 The following example shows how you can access Pulsar Headers when using a one-by-one message listener:
 
@@ -359,6 +360,7 @@ When doing so, the user can directly call the corresponding methods on the Pulsa
 However, as a convenience, you can also retrieve it by using the `Header` annotation.
 Note that you can also use the Spring messaging `Message` envelope to carry the payload and then retrieve the Pulsar headers by using `@Header`.
 
+[[reactive-pulsar-headers.streaming]]
 ==== Accessing In Streaming Listener
 When using a streaming message listener the header support is limited.
 Only when the `Flux` contains Spring `org.springframework.messaging.Message` elements will the headers be populated.

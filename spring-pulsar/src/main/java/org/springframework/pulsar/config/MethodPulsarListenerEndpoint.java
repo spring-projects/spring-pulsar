@@ -119,9 +119,6 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
 		messageListener.setHandlerMethod(handlerMethod);
 
-		// Since we have access to the handler method here, check if we can type infer the
-		// Schema used.
-
 		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
 
 		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
@@ -179,8 +176,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		if (rawClass != null && isContainerType(rawClass)) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
-		if (Message.class.isAssignableFrom(resolvableType.getRawClass())
-				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass())) {
+		if (resolvableType.getRawClass() != null && (Message.class.isAssignableFrom(resolvableType.getRawClass())
+				|| org.springframework.messaging.Message.class.isAssignableFrom(resolvableType.getRawClass()))) {
 			resolvableType = resolvableType.getGeneric(0);
 		}
 		return resolvableType;

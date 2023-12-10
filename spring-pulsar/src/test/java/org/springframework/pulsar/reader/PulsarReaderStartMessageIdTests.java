@@ -43,7 +43,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @author Soby Chacko
  * @author Chris Bono
  */
-public class PulsarReaderTests extends PulsarReaderTestsBase {
+public class PulsarReaderStartMessageIdTests extends PulsarReaderTestsBase {
 
 	@Nested
 	@ContextConfiguration(classes = StartMessageIdEarliest.PulsarReaderStartMessageIdEarliest.class)

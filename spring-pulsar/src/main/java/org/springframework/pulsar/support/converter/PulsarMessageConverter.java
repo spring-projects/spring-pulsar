@@ -34,9 +34,6 @@ public interface PulsarMessageConverter<T> extends MessageConverter {
 
 	Message<?> toMessage(org.apache.pulsar.client.api.Message<T> record, Consumer<T> consumer, Type payloadType);
 
-	default Message<?> toMessageFromReader(org.apache.pulsar.client.api.Message<T> record, Reader<T> reader,
-			Type payloadType) {
-		return null;
-	}
+	Message<?> toMessageFromReader(org.apache.pulsar.client.api.Message<T> record, Reader<T> reader, Type payloadType);
 
 }
