@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -46,6 +45,7 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTombst
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTombstoneTests.SpringMessagePayload.SpringMessagePayloadConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTombstoneTests.StreamingPulsarMessagePayload.StreamingPulsarMessagePayloadConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTombstoneTests.StreamingSpringMessagePayload.StreamingSpringMessagePayloadConfig;
+import org.springframework.pulsar.reactive.support.MessageUtils;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.support.PulsarNull;
 import org.springframework.test.context.ContextConfiguration;
@@ -336,14 +336,7 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 					var keyHeader = (String) m.getHeaders().get(PulsarHeaders.KEY);
 					receivedMessagesWithHeaders.add(new ReceivedMessage<>(payload, keyHeader));
 					latchWithHeaders.countDown();
-				}).map(m -> this.messageIdFrom(m)).map(MessageResult::acknowledge);
-			}
-
-			private <T> MessageId messageIdFrom(Message<T> springMessage) {
-				if (springMessage.getHeaders().get(PulsarHeaders.MESSAGE_ID) instanceof MessageId msgId) {
-					return msgId;
-				}
-				throw new RuntimeException("Spring Message missing '%s' header".formatted(PulsarHeaders.MESSAGE_ID));
+				}).map(MessageUtils::acknowledge);
 			}
 
 		}
