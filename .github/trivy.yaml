@@ -1,0 +1,19 @@
+scan:
+  scanners:
+    - vuln
+  file-patterns:
+    - 'pom:.*\.pom'
+
+severity:
+  - CRITICAL
+  - HIGH
+
+vulnerability:
+  ignore-unfixed: true
+
+# format: json
+# output: trivy-results.json
+
+exit-code: 1
+timeout: 10m
+debug: false
