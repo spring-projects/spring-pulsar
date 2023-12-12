@@ -8,9 +8,9 @@ javaPlatform {
 
 dependencies {
 	api platform("com.fasterxml.jackson:jackson-bom:2.15.3")
-	api platform("io.micrometer:micrometer-bom:1.12.1-SNAPSHOT")
-	api platform("io.micrometer:micrometer-tracing-bom:1.2.1-SNAPSHOT")
-	api platform("io.projectreactor:reactor-bom:2023.0.1-SNAPSHOT")
+	api platform("io.micrometer:micrometer-bom:1.12.1")
+	api platform("io.micrometer:micrometer-tracing-bom:1.2.1")
+	api platform("io.projectreactor:reactor-bom:2023.0.1")
 	api platform("io.zipkin.brave:brave-bom:5.16.0")
 	api platform("org.assertj:assertj-bom:3.24.2")
 	api platform("org.awaitility:awaitility:4.2.0")
