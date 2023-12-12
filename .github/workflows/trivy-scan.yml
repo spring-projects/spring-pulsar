@@ -2,12 +2,25 @@ name: Trivy Vulnerability Scan (Repo mode)
 
 on:
   workflow_dispatch:
+    inputs:
+      config-path:
+        description: 'Relative path to Trivy config file'
+        default: '.github/trivy-to-console.yaml'
+        required: false
+        type: string
+
+  workflow_call:
+    inputs:
+      config-path:
+        description: 'Relative path to Trivy config file'
+        default: '.github/trivy-to-console.yaml'
+        required: false
+        type: string
 
 jobs:
   run_trivy_scan:
     name: Run Trivy Scan
     runs-on: ubuntu-latest
-    if: github.repository == 'spring-projects/spring-pulsar'
     env:
       LOCAL_REPOSITORY_PATH: ./build/publications/repos
     steps:
@@ -16,22 +29,9 @@ jobs:
       - name: Publish to local repo (poms)
         run: |
           ./gradlew publishMavenJavaPublicationToLocalRepository
-      - name: Run Trivy scan in repo mode
+      - name: Run Trivy scan in repo mode (fs)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.LOCAL_REPOSITORY_PATH }}/org/springframework/pulsar'
-          trivy-config: .github/trivy.yaml
-
-      # - name: Output Trivy scan results
-      #   if: always()
-      #   run: |
-      #     cat trivy-results.json
-
-      # - name: Upload Trivy scan results
-      #   uses: actions/upload-artifact@v3
-      #   if: always()
-      #   with:
-      #     name: trivy-results
-      #     path: trivy-results.json
-      #     retention-days: 3
+          trivy-config: ${{ inputs.config-path }}

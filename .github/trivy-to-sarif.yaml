@@ -1,0 +1,19 @@
+scan:
+  scanners:
+    - vuln
+  file-patterns:
+    - 'pom:.*\.pom'
+
+severity:
+  - CRITICAL
+  - HIGH
+
+vulnerability:
+  ignore-unfixed: true
+
+exit-code: 1
+timeout: 10m
+debug: false
+
+format: sarif
+output: trivy-results.sarif

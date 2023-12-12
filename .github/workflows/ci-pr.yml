@@ -91,28 +91,10 @@ jobs:
               -PspringPulsarVersion="$VERSION" \
               :runAllSampleTests
   scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'table'
-          output: 'trivy-results.txt'
-          severity: 'CRITICAL,HIGH'
-          exit-code: 1
-      - name: Upload Trivy scan results
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: trivy-results
-          path: 'trivy-results.txt'
-          retention-days: 3
-      - name: 'Scanned'
-        shell: bash
-        run: echo "::info ::Scanned"
+    needs: [prerequisites]
+    if: needs.prerequisites.outputs.runjobs
+    uses: ./.github/workflows/trivy-scan.yml
+
   done:
     runs-on: ubuntu-latest
     needs: [ build_and_verify, check_samples, scan ]
