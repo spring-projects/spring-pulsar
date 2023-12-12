@@ -8,7 +8,11 @@ on:
         default: '.github/trivy-to-console.yaml'
         required: false
         type: string
-
+      upload-results:
+        description: 'Upload scan results to Github?'
+        default: false
+        required: false
+        type: boolean
   workflow_call:
     inputs:
       config-path:
@@ -16,6 +20,11 @@ on:
         default: '.github/trivy-to-console.yaml'
         required: false
         type: string
+      upload-results:
+        description: 'Upload scan results to Github?'
+        default: false
+        required: false
+        type: boolean
 
 jobs:
   run_trivy_scan:
@@ -35,3 +44,8 @@ jobs:
           scan-type: 'fs'
           scan-ref: '${{ env.LOCAL_REPOSITORY_PATH }}/org/springframework/pulsar'
           trivy-config: ${{ inputs.config-path }}
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: inputs.upload-results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'

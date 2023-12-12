@@ -21,6 +21,7 @@ env:
   ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
   ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
+jobs:
   prerequisites:
     name: Pre-requisites for building
     runs-on: ubuntu-latest
@@ -88,11 +89,7 @@ env:
     uses: ./.github/workflows/trivy-scan.yml
     with:
       config-path: .github/trivy-to-sarif.yaml
-  upload_scan_to_github:
-    needs: [scan]
-    uses: github/codeql-action/upload-sarif@v2
-    with:
-      sarif_file: 'trivy-results.sarif'
+      upload-results: true
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build_jdk_17, check_samples, scan]
