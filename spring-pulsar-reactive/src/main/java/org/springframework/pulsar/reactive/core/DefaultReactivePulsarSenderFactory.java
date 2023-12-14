@@ -172,8 +172,9 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	@Override
 	public void doStop() {
 		try {
-			this.reactiveMessageSenderCache.close();
-
+			if (this.reactiveMessageSenderCache != null) {
+				this.reactiveMessageSenderCache.close();
+			}
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
