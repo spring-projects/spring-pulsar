@@ -29,12 +29,17 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListene
  * @param <T> Message payload type.
  * @author Christophe Bornet
  * @author Chris Bono
+ * @author Vedran Pavic
  */
 public interface ReactivePulsarListenerEndpoint<T> extends ListenerEndpoint<ReactivePulsarMessageListenerContainer<T>> {
 
-	boolean isFluxListener();
+	default boolean isFluxListener() {
+		return false;
+	}
 
 	@Nullable
-	Boolean getUseKeyOrderedProcessing();
+	default Boolean getUseKeyOrderedProcessing() {
+		return null;
+	}
 
 }

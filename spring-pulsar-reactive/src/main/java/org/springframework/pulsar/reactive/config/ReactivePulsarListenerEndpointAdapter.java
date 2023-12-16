@@ -31,7 +31,9 @@ import org.springframework.pulsar.support.MessageConverter;
  *
  * @param <T> Message payload type.
  * @author Christophe Bornet
+ * @deprecated for removal in favor of {@link ReactivePulsarListenerEndpoint}
  */
+@Deprecated(forRemoval = true)
 public class ReactivePulsarListenerEndpointAdapter<T> implements ReactivePulsarListenerEndpoint<T> {
 
 	@Override

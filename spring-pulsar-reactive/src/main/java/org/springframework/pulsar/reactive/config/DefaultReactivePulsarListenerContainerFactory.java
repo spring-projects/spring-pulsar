@@ -156,7 +156,7 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 
 	@Override
 	public DefaultReactivePulsarMessageListenerContainer<T> createContainer(String... topics) {
-		ReactivePulsarListenerEndpoint<T> endpoint = new ReactivePulsarListenerEndpointAdapter<>() {
+		ReactivePulsarListenerEndpoint<T> endpoint = new ReactivePulsarListenerEndpoint<>() {
 
 			@Override
 			public List<String> getTopics() {

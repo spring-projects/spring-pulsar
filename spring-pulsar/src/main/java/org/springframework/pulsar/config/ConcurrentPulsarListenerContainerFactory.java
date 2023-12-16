@@ -54,7 +54,7 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 	@Override
 	public ConcurrentPulsarMessageListenerContainer<T> createContainer(String... topics) {
-		PulsarListenerEndpoint endpoint = new PulsarListenerEndpointAdapter() {
+		PulsarListenerEndpoint endpoint = new PulsarListenerEndpoint() {
 
 			@Override
 			public Collection<String> getTopics() {
