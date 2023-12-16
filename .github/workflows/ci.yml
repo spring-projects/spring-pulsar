@@ -143,14 +143,12 @@ jobs:
     env:
       REPO: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}
-      TOKEN: ${{ github.token }}
       VERSION: ${{ needs.prerequisites.outputs.project_version }}
     steps:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
-
       - name: Wait for Artifactory artifacts (milestone)
         if: ${{ contains(needs.prerequisites.outputs.project_version, '-RC') || contains(needs.prerequisites.outputs.project_version, '-M') }}
         run: |
@@ -161,7 +159,6 @@ jobs:
             echo "."
           done
           echo "Artifacts for $REPO@$VERSION have been released to Artifactory."
-
       - name: Wait for Maven Central artifacts (GA)
         if: ${{ !contains(needs.prerequisites.outputs.project_version, '-SNAPSHOT') && !contains(needs.prerequisites.outputs.project_version, '-RC') && !contains(needs.prerequisites.outputs.project_version, '-M') }}
         run: |
@@ -172,26 +169,15 @@ jobs:
             echo "."
           done
           echo "Artifacts for $REPO@$VERSION have been released to Maven Central."
-
       - name: Setup git for release tagging
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-      - name: Tag release (milestone)
-        if: ${{ startsWith(needs.prerequisites.outputs.project_version, '0.') || contains(needs.prerequisites.outputs.project_version, '-RC') || contains(needs.prerequisites.outputs.project_version, '-M') }}
+      - name: Tag release
         run: |
           echo "Tagging $REPO@$VERSION release."
           git tag v$VERSION
           git push --tags origin
-      - name: Create branch and tag release (GA)
-        if: ${{ !startsWith(needs.prerequisites.outputs.project_version, '0.') && !contains(needs.prerequisites.outputs.project_version, '-RC') && !contains(needs.prerequisites.outputs.project_version, '-M') }}
-        run: |
-          echo "Tagging $REPO@$VERSION and creating release branch."
-          git checkout -b $VERSION
-          git push --set-upstream origin $VERSION
-          git tag v$VERSION
-          git push --tags origin
-
       - name: Install tooling for Github release
         run: |
           curl -sSL -O https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.8/github-changelog-generator.jar
@@ -200,19 +186,15 @@ jobs:
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
           GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
-          
           java -jar github-changelog-generator.jar \
             --spring.config.location=.github/changelog-generator.yml \
             $VERSION $RELEASE_NOTES_FILE
-          
           cat $RELEASE_NOTES_FILE
-          
           gh release create v$VERSION \
           --draft \
           --title "Spring Pulsar $VERSION" \
           --generate-notes \
           --notes-file $RELEASE_NOTES_FILE
-
       - name: Announce Release on Slack
         id: spring-pulsar-announcing
         uses: slackapi/slack-github-action@v1.19.0
@@ -233,7 +215,6 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-
       - name: Update next snapshot version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
