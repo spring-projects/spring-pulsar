@@ -75,7 +75,7 @@ spring:
   pulsar:
     client:
       authentication:
-        plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationFactoryOAuth2
+        plugin-class-name: org.apache.pulsar.client.impl.auth.oauth2.AuthenticationOAuth2
         param:
           issuerUrl: ...
           privateKey: ...
