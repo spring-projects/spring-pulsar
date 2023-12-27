@@ -1,13 +1,13 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
-	id 'com.github.johnrengelman.shadow' version '7.1.2'
+	alias(libs.plugins.shadow)
 }
 
 description = 'Spring Pulsar Caffeine Cache Provider'
 
 dependencies {
 	api project (':spring-pulsar-cache-provider')
-	implementation 'com.github.ben-manes.caffeine:caffeine'
+	implementation libs.caffeine
 	shadow project(':spring-pulsar-cache-provider')
 }
 

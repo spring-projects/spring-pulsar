@@ -23,7 +23,6 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginManager;
 
 import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
-import org.springframework.pulsar.gradle.publish.SpringMavenPlugin;
 
 import io.spring.gradle.convention.RepositoryConventionPlugin;
 

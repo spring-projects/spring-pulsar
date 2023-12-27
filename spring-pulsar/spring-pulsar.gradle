@@ -6,7 +6,7 @@ description = 'Spring Pulsar Core'
 
 dependencies {
 	api 'io.micrometer:micrometer-observation'
-	api ('org.apache.pulsar:pulsar-client-all') {
+	api (libs.pulsar.client.all) {
 		exclude group: 'org.apache.logging.log4j'
 		exclude group: 'com.sun.activation', module: 'javax.activation'
 		exclude group: 'javax.validation', module: 'validation-api'
@@ -14,22 +14,21 @@ dependencies {
 	api 'org.springframework:spring-context'
 	api 'org.springframework:spring-messaging'
 	api 'org.springframework:spring-tx'
-	api ('org.springframework.retry:spring-retry') {
+	api (libs.spring.retry) {
 		exclude group: 'org.springframework'
 	}
 	api project(':spring-pulsar-cache-provider')
 	implementation project(path: ':spring-pulsar-cache-provider-caffeine', configuration: 'shadow')
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation 'com.google.code.findbugs:jsr305'
+	implementation libs.jsr305
+	optional libs.protobuf.java
+	optional libs.json.path
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
-	optional 'com.google.protobuf:protobuf-java'
-	optional 'com.jayway.jsonpath:json-path'
 
 	testImplementation project(':spring-pulsar-test')
-	testRuntimeOnly 'ch.qos.logback:logback-classic'
 	testImplementation 'io.micrometer:micrometer-observation-test'
 	testImplementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	testImplementation 'io.micrometer:micrometer-tracing-test'
@@ -40,7 +39,7 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
-
 	// Output capture used by PulsarFunctionAdministrationTests
-	testImplementation group: 'com.github.stefanbirkner', name: 'system-lambda', version: '1.2.1'
+	testImplementation libs.system.lambda
+	testRuntimeOnly libs.logback.classic
 }

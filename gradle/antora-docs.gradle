@@ -1,3 +1,4 @@
+//file:noinspection GroovyUnusedAssignment
 node {
 	version = '16.16.0'
 }
@@ -36,11 +37,17 @@ tasks.create('generateAntoraResources') {
 }
 
 def generateAttributes() {
-	return ['spring-boot-version': project.springBootVersionForDocs ?: 'current',
-			'spring-framework-version': project.springFrameworkVersion ?: 'current',
-			'spring-cloud-stream-version': project.springCloudStreamVersion ?: 'current',
-			'spring-pulsar-version': project.version,
-			'pulsar-client-version': project.pulsarClientVersion ?: 'current',
-			'pulsar-client-reactive-version': project.pulsarClientReactiveVersion ?: 'current',
-			'is-snapshot-version': project.version.endsWith("-SNAPSHOT")]
+	def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
+	def springBootVersionForDocs = versionCatalog.findVersion("spring-boot-for-docs").orElseThrow().displayName
+	def springFrameworkVersion = versionCatalog.findVersion("spring").orElseThrow().displayName
+	def springCloudStreamVersion = versionCatalog.findVersion("spring-cloud-stream").orElseThrow().displayName
+	def pulsarClientVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
+	def pulsarClientReactiveVersion = versionCatalog.findVersion("pulsar-reactive").orElseThrow().displayName
+	return ['is-snapshot-version': project.version.endsWith("-SNAPSHOT"),
+			'pulsar-client-version': pulsarClientVersion ?: 'current',
+			'pulsar-client-reactive-version': pulsarClientReactiveVersion ?: 'current',
+			'spring-boot-version': springBootVersionForDocs ?: 'current',
+			'spring-cloud-stream-version': springCloudStreamVersion ?: 'current',
+			'spring-framework-version': springFrameworkVersion ?: 'current',
+			'spring-pulsar-version': project.version]
 }
