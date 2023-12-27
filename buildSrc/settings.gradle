@@ -4,3 +4,11 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
+
+dependencyResolutionManagement {
+	versionCatalogs {
+		buildLibs {
+			from(files("../gradle/build-libs.versions.toml"))
+		}
+	}
+}

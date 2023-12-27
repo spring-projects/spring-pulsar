@@ -1,0 +1,90 @@
+[versions]
+# product
+brave = "5.16.0"
+caffeine = "3.1.8"
+commons-codec = "1.16.0"
+jackson = "2.15.3"
+jsr305 = "3.0.2"
+logback = "1.4.14"
+log4j = "2.17.1"
+micrometer = "1.12.1"
+micrometer-docs-gen = "1.0.0"
+micrometer-tracing = "1.2.1"
+protobuf = "3.21.5"
+pulsar = "3.1.1"
+pulsar-reactive = "0.5.1"
+reactor = "2023.0.1"
+spring = "6.1.2"
+# tests
+assertj = "3.24.2"
+awaitility = "4.2.0"
+jacoco = "0.8.9"
+json-path = "2.8.0"
+junit = "5.10.1"
+hamcrest = "2.1"
+mockito = "5.7.0"
+spring-dep-mgmt = "1.1.4"
+spring-boot = "3.2.2-SNAPSHOT"
+spring-boot-for-docs = "3.2.2-SNAPSHOT"
+spring-cloud-stream = "4.1.0"
+spring-retry = "2.0.5"
+system-lambda = "1.2.1"
+testcontainers = "1.19.3"
+# plugins
+antora = "1.0.0"
+antora-yml = "0.0.1"
+download = "5.3.0"
+grgit = "4.0.1"
+nohttp = "0.0.11"
+shadow = "7.1.2"
+versions = "0.50.0"
+version-catalog-update = "0.8.1"
+
+[libraries]
+# Product libs
+brave-bom = { module = "io.zipkin.brave:brave-bom", version.ref = "brave" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
+jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer" }
+micrometer-docs-gen = { module = "io.micrometer:micrometer-docs-generator", version.ref = "micrometer-docs-gen" }
+micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+pulsar-client-all = { module = "org.apache.pulsar:pulsar-client-all", version.ref = "pulsar" }
+pulsar-client-reactive-adapter = { module = "org.apache.pulsar:pulsar-client-reactive-adapter", version.ref = "pulsar-reactive" }
+pulsar-client-reactive-producer-cache-caffeine-shaded = { module = "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded", version.ref = "pulsar-reactive" }
+pulsar-functions-api = { module = "org.apache.pulsar:pulsar-functions-api", version.ref = "pulsar" }
+reactor-bom = { module = "io.projectreactor:reactor-bom", version.ref = "reactor" }
+spring-bom = { module = "org.springframework:spring-framework-bom", version.ref = "spring" }
+spring-retry = { module = "org.springframework.retry:spring-retry", version.ref = "spring-retry" }
+# Testing libs
+assertj-bom = { module = "org.assertj:assertj-bom", version.ref = "assertj" }
+awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
+json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "json-path" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+mockito-bom = { module = "org.mockito:mockito-bom", version.ref = "mockito" }
+spring-boot-starter-amqp = { module = "org.springframework.boot:spring-boot-starter-amqp", version.ref = "spring-boot" }
+spring-boot-starter-pulsar = { module = "org.springframework.boot:spring-boot-starter-pulsar", version.ref = "spring-boot" }
+spring-boot-starter-pulsar-reactive = { module = "org.springframework.boot:spring-boot-starter-pulsar-reactive", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }
+spring-test = { module = "org.springframework:spring-test", version.ref = "spring" }
+system-lambda = { module = "com.github.stefanbirkner:system-lambda", version.ref = "system-lambda" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+
+[plugins]
+antora = { id = "org.antora", version.ref = "antora" }
+antora-yml = { id = "io.spring.antora.generate-antora-yml", version.ref = "antora-yml" }
+download = { id = "de.undercouch.download", version.ref = "download" }
+grgit = { id = "org.ajoberstar.grgit", version.ref = "grgit" }
+nohttp = { id = "io.spring.nohttp", version.ref = "nohttp" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dep-mgmt = { id = "io.spring.dependency-management", version.ref = "spring-dep-mgmt" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }

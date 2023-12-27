@@ -2,14 +2,16 @@ plugins {
 	id 'io.spring.nohttp'
 	id 'org.springframework.pulsar.root-project'
 	id 'org.springframework.pulsar.update-version'
-	id 'org.ajoberstar.grgit' version '4.0.1' apply false
+	alias(libs.plugins.grgit) apply false
+	alias(libs.plugins.versions)
+	alias(libs.plugins.version.catalog.update)
 }
 
 description = 'Spring for Apache Pulsar'
 
 apply from: 'gradle/aggregate-jacoco-report.gradle'
 apply from: 'gradle/update-copyrights.gradle'
-
+apply from: 'gradle/version-catalog-update.gradle'
 
 allprojects {
 	group = 'org.springframework.pulsar'
@@ -51,5 +53,13 @@ tasks.register('runAllSampleTests') {
 	}.flatten()
 	it.dependsOn {
 		allTestsTasks
+	}
+}
+
+versionCatalogUpdate {
+	versionCatalogs {
+		buildLibsCatalog {
+			catalogFile = file("gradle/build-libs.versions.toml")
+		}
 	}
 }

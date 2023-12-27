@@ -1,0 +1,44 @@
+
+def isNonStable = { String version ->
+	def unstableKeyword = ['alpha', 'beta', 'rc'].any { it -> version.contains(it) }
+	if (unstableKeyword) {
+		return true
+	}
+	def containsStableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+	def containsStableSuffix = (version ==~ /^[0-9,.v-]+(-r)?$/)
+	return !containsStableKeyword && !containsStableSuffix
+}
+
+def trustedLibPrefixes = [
+		"org.springframework.",
+		"io.micrometer.",
+		"io.spring.dependency-management:",
+		"org.apache.pulsar:pulsar-client-reactive",
+		"io.projectreactor:reactor"
+]
+
+tasks.named("dependencyUpdates").configure {
+	checkConstraints = true
+	rejectVersionIf {
+		def isTrustedLib = trustedLibPrefixes.any { s -> it.candidate.toString().startsWith(s) }
+		if (isTrustedLib) {
+			def (candidateMajorMinorPatch, candidateMilestone) = it.candidate.version.tokenize('-')
+			def (candidateMajor, candidateMinor, candidatePatch) = candidateMajorMinorPatch.tokenize('.')
+			def (currentMajorMinorPatch, currentMilestone) = it.currentVersion.tokenize('-')
+			def (currentMajor, currentMinor, currentPatch) = currentMajorMinorPatch.tokenize('.')
+			return (candidateMajor.toInteger() < currentMajor.toInteger())
+					|| (candidateMinor.toInteger() < currentMinor.toInteger())
+					|| (candidatePatch.toInteger() < currentPatch.toInteger())
+		}
+		return isNonStable(it.candidate.version)
+	}
+}
+
+versionCatalogUpdate {
+	sortByKey = false
+	keep {
+		keepUnusedLibraries = true
+		keepUnusedVersions = true
+		keepUnusedPlugins = true
+	}
+}

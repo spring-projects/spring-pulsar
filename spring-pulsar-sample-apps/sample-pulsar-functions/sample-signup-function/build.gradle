@@ -10,9 +10,12 @@ repositories {
 	mavenCentral()
 }
 
+def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
+def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
+
 dependencies {
-	implementation 'org.apache.pulsar:pulsar-client-all:3.1.1'
-	implementation 'org.apache.pulsar:pulsar-functions-api:3.1.1'
+	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"
+	implementation "org.apache.pulsar:pulsar-functions-api:${pulsarVersion}"
 	compileOnly 'org.projectlombok:lombok:1.18.24'
 	annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }

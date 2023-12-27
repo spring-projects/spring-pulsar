@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.2-SNAPSHOT'
-	id 'io.spring.dependency-management' version '1.1.4'
+	alias(libs.plugins.spring.boot)
+	alias(libs.plugins.spring.dep.mgmt)
 }
 
 description = 'Spring Pulsar Sample Application (Reader)'
@@ -12,8 +12,14 @@ repositories {
 	maven { url 'https://repo.spring.io/snapshot' }
 }
 
+def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
+def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
+
+ext['spring-pulsar.version'] = "${project.version}"
+ext['pulsar.version'] = "${pulsarVersion}"
+
 dependencies {
-	implementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-pulsar"
 }
 
 test {

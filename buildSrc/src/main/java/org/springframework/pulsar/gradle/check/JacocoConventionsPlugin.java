@@ -2,6 +2,7 @@ package org.springframework.pulsar.gradle.check;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.VersionCatalogsExtension;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
@@ -19,8 +20,10 @@ public class JacocoConventionsPlugin implements Plugin<Project> {
 	public void apply(final Project project) {
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> {
 			project.getPluginManager().apply(JacocoPlugin.class);
+			VersionCatalogsExtension catalog = project.getExtensions().getByType(VersionCatalogsExtension.class);
+			String jacocoVeresion = catalog.named("libs").findVersion("jacoco").orElseThrow().getDisplayName();
 			project.getExtensions().configure(JacocoPluginExtension.class,
-					(jacocoExtension) -> jacocoExtension.setToolVersion("0.8.9"));
+					(jacocoExtension) -> jacocoExtension.setToolVersion(jacocoVeresion));
 			project.getTasks().withType(Test.class, (test) ->
 					project.getTasks().withType(JacocoReport.class, test::finalizedBy));
 		});

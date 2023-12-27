@@ -1,16 +1,12 @@
 plugins {
 	id 'org.springframework.pulsar.spring-docs-module'
-	id 'org.antora' version '1.0.0'
-	id 'io.spring.antora.generate-antora-yml' version '0.0.1'
+	alias(libs.plugins.antora)
+	alias(libs.plugins.antora.yml)
 }
 
 apply from: "${rootDir}/gradle/antora-docs.gradle"
 
 description = 'Spring for Apache Pulsar Docs'
-
-ext {
-	micrometerDocsVersion="1.0.0"
-}
 
 configurations {
 	observationDocs
@@ -18,7 +14,7 @@ configurations {
 
 dependencies {
 	api project (':spring-pulsar')
-	observationDocs "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
+	observationDocs libs.micrometer.docs.gen
 }
 
 jar {

@@ -6,27 +6,27 @@ description = 'Spring Pulsar Reactive Support'
 
 dependencies {
 	api project (':spring-pulsar')
-	api ('org.apache.pulsar:pulsar-client-reactive-adapter') {
+	api (libs.pulsar.client.reactive.adapter) {
 		// spring-pulsar includes a pulsar-client with its unwanted transitive deps excluded
 		exclude group: "org.apache.pulsar", module: "pulsar-client"
 	}
-	api("org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded") {
+	api(libs.pulsar.client.reactive.producer.cache.caffeine.shaded) {
 		// (above) we include a pulsar-client-reactive-adapter whose pulsar-client with
 		// unwanted transitive deps excluded
 		exclude group: "org.apache.pulsar", module: "pulsar-client-reactive-adapter"
 	}
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation 'com.google.code.findbugs:jsr305'
+	implementation libs.jsr305
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
-	optional 'com.google.protobuf:protobuf-java'
-	optional 'com.jayway.jsonpath:json-path'
 	optional 'io.projectreactor:reactor-core'
+	optional libs.protobuf.java
+	optional libs.json.path
 
 	testImplementation project(':spring-pulsar-test')
-	testRuntimeOnly 'ch.qos.logback:logback-classic'
+	testRuntimeOnly libs.logback.classic
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.assertj:assertj-core'
 	testImplementation 'org.awaitility:awaitility'

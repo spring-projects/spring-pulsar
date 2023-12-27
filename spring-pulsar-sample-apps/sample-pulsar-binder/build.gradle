@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.2-SNAPSHOT'
-	id 'io.spring.dependency-management' version '1.1.4'
+	alias(libs.plugins.spring.boot)
+	alias(libs.plugins.spring.dep.mgmt)
 }
 
 description = 'Spring Cloud Stream Binder for Pulsar Sample Application'
@@ -12,8 +12,15 @@ repositories {
 	maven { url 'https://repo.spring.io/snapshot' }
 }
 
+def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
+def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
+def springCloudStreamVersion = versionCatalog.findVersion("spring-cloud-stream").orElseThrow().displayName
+
+ext['spring-pulsar.version'] = "${project.version}"
+ext['pulsar.version'] = "${pulsarVersion}"
+
 dependencies {
-	implementation "org.springframework.boot:spring-boot-starter-pulsar:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-pulsar"
 	implementation "org.springframework.cloud:spring-cloud-stream-binder-pulsar:${springCloudStreamVersion}"
 }
 

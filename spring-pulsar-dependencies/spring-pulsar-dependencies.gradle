@@ -1,5 +1,6 @@
 plugins {
 	id 'java-platform'
+	id 'io.spring.convention.repository'
 }
 
 javaPlatform {
@@ -7,27 +8,29 @@ javaPlatform {
 }
 
 dependencies {
-	api platform("com.fasterxml.jackson:jackson-bom:2.15.3")
-	api platform("io.micrometer:micrometer-bom:1.12.1")
-	api platform("io.micrometer:micrometer-tracing-bom:1.2.1")
-	api platform("io.projectreactor:reactor-bom:2023.0.1")
-	api platform("io.zipkin.brave:brave-bom:5.16.0")
-	api platform("org.assertj:assertj-bom:3.24.2")
-	api platform("org.awaitility:awaitility:4.2.0")
-	api platform("org.junit:junit-bom:5.10.1")
-	api platform("org.mockito:mockito-bom:5.7.0")
-	api platform("org.springframework:spring-framework-bom:$springFrameworkVersion")
-	api platform("org.testcontainers:testcontainers-bom:1.19.3")
+	api platform(libs.jackson.bom)
+	api platform(libs.micrometer.bom)
+	api platform(libs.micrometer.tracing.bom)
+	api platform(libs.reactor.bom)
+	api platform(libs.brave.bom)
+	api platform(libs.assertj.bom)
+	api platform(libs.awaitility)
+	api platform(libs.junit.bom)
+	api platform(libs.mockito.bom)
+	api platform(libs.spring.bom)
+	api platform(libs.testcontainers.bom)
 
 	constraints {
-		api "ch.qos.logback:logback-classic:1.4.14"
-		api "com.github.ben-manes.caffeine:caffeine:3.1.8"
-		api "com.google.code.findbugs:jsr305:3.0.2"
-		api "com.google.protobuf:protobuf-java:3.21.5"
-		api "com.jayway.jsonpath:json-path:2.8.0"
-		api "org.apache.pulsar:pulsar-client-all:$pulsarClientVersion"
-		api "org.apache.pulsar:pulsar-client-reactive-adapter:$pulsarClientReactiveVersion"
-		api "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded:$pulsarClientReactiveVersion"
-		api "org.springframework.retry:spring-retry:2.0.5"
+		api libs.logback.classic
+		api libs.caffeine
+		api libs.jsr305
+		api libs.protobuf.java
+		api libs.json.path
+		api libs.micrometer.docs.gen
+		api libs.pulsar.client.all
+		api libs.pulsar.client.reactive.adapter
+		api libs.pulsar.client.reactive.producer.cache.caffeine.shaded
+		api libs.spring.retry
+		api libs.system.lambda
 	}
 }
