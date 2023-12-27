@@ -17,13 +17,13 @@
 package org.springframework.pulsar.gradle.versions;
 
 import java.io.File;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.VersionCatalogsExtension;
 
 import org.springframework.lang.Nullable;
 
@@ -31,36 +31,43 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 
 	static final String VERSION_PROPERTY = "version";
 
-	static final String SPRING_BOOT_VERSION_PROPERTY = "springBootVersionForDocs";
+	static final String SPRING_BOOT_VERSION_PROPERTY = "spring-boot-for-docs";
 
 	static final Pattern VERSION_PATTERN = Pattern.compile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-M\\d+|-RC\\d+|-SNAPSHOT)?$");
 
 	protected void updateVersionInGradleProperties(String newVersion) {
-		this.updatePropertyInGradleProperties(VERSION_PROPERTY, (p) -> p.getVersion().toString(), newVersion);
+		this.updatePropertyInFile(Project.GRADLE_PROPERTIES, VERSION_PROPERTY,
+				(p) -> p.getVersion().toString(),
+				(__) -> newVersion,
+				(currentValue) -> "%s=%s".formatted(VERSION_PROPERTY, currentValue),
+				(__) -> "%s=%s".formatted(VERSION_PROPERTY, newVersion));
 	}
 
-	protected void updatePropertyInGradleProperties(String propertyName, String newPropertyValue) {
-		this.updatePropertyInGradleProperties(propertyName,
-				(p) -> Objects.toString(p.findProperty(propertyName), ""), newPropertyValue);
+	protected void updateVersionInTomlVersions(String versionPropertyName,
+			Function<String, String> newPropertyValueGivenCurrentValue) {
+		this.updatePropertyInFile("gradle/libs.versions.toml", versionPropertyName,
+				(p) -> currentVersionForProperty(p, versionPropertyName),
+				newPropertyValueGivenCurrentValue,
+				(currentValue) -> "%s = \"%s\"".formatted(versionPropertyName, currentValue),
+				(newValue) -> "%s = \"%s\"".formatted(versionPropertyName, newValue));
 	}
 
-	protected void updatePropertyInGradleProperties(
-			String propertyName,
-			Function<Project, String> currentPropertyValueFromProject,
-			String newPropertyValue) {
-		String currentPropertyValue = currentPropertyValueFromProject.apply(getProject());
-		File gradlePropertiesFile = getProject().getRootProject().file(Project.GRADLE_PROPERTIES);
-		if (!gradlePropertiesFile.exists()) {
-			throw new RuntimeException("No gradle.properties to update property in");
+	protected void updatePropertyInFile(String propertyFile, String propertyName,
+			Function<Project, String> currentPropertyValueGivenProject,
+			Function<String, String> newPropertyValueGivenCurrentValue,
+			Function<String, String> expectedCurrentPropertyEntryInFile,
+			Function<String, String> newPropertyEntryInFile) {
+		File file = getProject().getRootProject().file(propertyFile);
+		if (!file.exists()) {
+			throw new RuntimeException("File not found at " + propertyFile);
 		}
-		System.out.printf("Updating the %s property in %s from %s to %s%n",
-				propertyName, Project.GRADLE_PROPERTIES, currentPropertyValue, newPropertyValue);
-		FileUtils.replaceFileText(gradlePropertiesFile, (gradlePropertiesText) -> {
-			gradlePropertiesText = gradlePropertiesText.replace(
-					"%s=%s".formatted(propertyName, currentPropertyValue),
-					"%s=%s".formatted(propertyName, newPropertyValue));
-			return gradlePropertiesText;
-		});
+		String currentValue = currentPropertyValueGivenProject.apply(getProject());
+		String newValue = newPropertyValueGivenCurrentValue.apply(currentValue);
+		System.out.printf("Updating the %s property in %s from %s to %s%n", propertyName,
+				propertyFile, currentValue, newValue);
+		FileUtils.replaceFileText(file, (propertiesText) -> propertiesText.replace(
+				expectedCurrentPropertyEntryInFile.apply(currentValue),
+				newPropertyEntryInFile.apply(newValue)));
 	}
 
 	protected VersionInfo parseVersion(String version) {
@@ -76,6 +83,13 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 			throw new IllegalStateException(
 					"Cannot extract version segment from %s as it does not conform to the expected format".formatted(version));
 		}
+	}
+
+	protected String currentVersionForProperty(Project project, String versionProperty) {
+		VersionCatalogsExtension catalog = project.getExtensions().getByType(VersionCatalogsExtension.class);
+		return catalog.named("libs").findVersion(versionProperty)
+				.orElseThrow(() -> new IllegalStateException("% property not found".formatted(versionProperty)))
+				.getDisplayName();
 	}
 
 	record VersionInfo(String major, String minor, String patch, @Nullable String modifier) {
