@@ -38,16 +38,20 @@ jobs:
         run: |
           ./gradlew clean build -x integrationTest --continue --scan
       - name: Create Aggregated Jacoco Report
-        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        #if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
         run: |
           ./gradlew aggregateJacocoTestReport --info
       - name: Upload Aggregated Jacoco Report
-        if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        #if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
         uses: actions/upload-artifact@v3
         with:
           name: jacoco-results
           path: 'build/reports/jacoco/**/*.*'
           retention-days: 3
+      - name: Verify Code Coverage
+        #if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        run: |
+          ./gradlew jacocoTestCoverageVerification --info
       - name: Capture Test Results
         if: failure()
         uses: actions/upload-artifact@v3
