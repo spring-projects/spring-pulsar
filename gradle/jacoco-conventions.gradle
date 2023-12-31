@@ -1,0 +1,43 @@
+def javaProjects = [ 'spring-pulsar',
+					 'spring-pulsar-cache-provider',
+					 'spring-pulsar-cache-provider-caffeine',
+					 'spring-pulsar-reactive',
+					 'spring-pulsar-test' ]
+
+
+allprojects {
+	if (!javaProjects.contains(project.name)) {
+		return
+	}
+
+	apply plugin: 'jacoco'
+
+	jacoco {
+		toolVersion libs.versions.jacoco.get()
+	}
+
+	project.tasks.withType(Test, (test) ->
+		project.tasks.withType(JacocoReport, test::finalizedBy))
+
+	tasks.withType(JacocoCoverageVerification) {
+		violationRules {
+			rule {
+				limit {
+					minimum = 0.5
+				}
+			}
+			rule {
+				enabled = false
+				element = 'CLASS'
+				includes = ['org.gradle.*']
+
+				limit {
+					counter = 'LINE'
+					value = 'TOTALCOUNT'
+					maximum = 0.3
+				}
+			}
+		}
+
+	}
+}

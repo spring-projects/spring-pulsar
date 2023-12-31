@@ -19,7 +19,6 @@ package org.springframework.pulsar.gradle;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.PluginManager;
 
-import org.springframework.pulsar.gradle.check.JacocoConventionsPlugin;
 import org.springframework.pulsar.gradle.publish.PublishAllJavaComponentsPlugin;
 import org.springframework.pulsar.gradle.publish.SpringMavenPlugin;
 
@@ -33,6 +32,5 @@ public class SpringModulePlugin extends AbstractSpringModulePlugin {
 		PluginManager pluginManager = project.getPluginManager();
 		pluginManager.apply(SpringMavenPlugin.class);
 		pluginManager.apply(PublishAllJavaComponentsPlugin.class);
-		pluginManager.apply(JacocoConventionsPlugin.class);
 	}
 }

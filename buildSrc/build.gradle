@@ -59,10 +59,6 @@ gradlePlugin {
 			id = "io.spring.convention.artfiactory"
 			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
 		}
-		jacocoConventionsPlugin {
-			id = "org.springframework.pulsar.jacoco"
-			implementationClass = "org.springframework.pulsar.gradle.check.JacocoConventionsPlugin"
-		}
 		optionalDependenciesPlugin {
 			id = "org.springframework.pulsar.optional-dependencies"
 			implementationClass = "org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin"
