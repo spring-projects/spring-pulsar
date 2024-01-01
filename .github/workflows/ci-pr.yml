@@ -37,27 +37,25 @@ jobs:
       - name: Build and run unit tests
         run: |
           ./gradlew clean build -x integrationTest --continue --scan
-      - name: Create Aggregated Jacoco Report
-        #if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        run: |
-          ./gradlew aggregateJacocoTestReport --info
-      - name: Upload Aggregated Jacoco Report
-        #if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        uses: actions/upload-artifact@v3
-        with:
-          name: jacoco-results
-          path: 'build/reports/jacoco/**/*.*'
-          retention-days: 3
-      - name: Verify Code Coverage
-        #if: contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        run: |
-          ./gradlew jacocoTestCoverageVerification --info
-      - name: Capture Test Results
+      - name: Upload Test Results
         if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
+          retention-days: 3
+      - name: Create Aggregated Jacoco Report
+        run: |
+          ./gradlew aggregateJacocoTestReport --info
+      - name: Verify Code Coverage
+        run: |
+          ./gradlew jacocoTestCoverageVerification --info
+      - name: Upload Aggregated Jacoco Report
+        if: failure() || contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-results
+          path: 'build/reports/jacoco/**/*.*'
           retention-days: 3
   integration_tests:
     needs: [prerequisites, build_and_verify]
