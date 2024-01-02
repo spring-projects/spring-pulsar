@@ -1,0 +1,20 @@
+import org.springframework.pulsar.gradle.SpringModulePlugin
+
+plugins {
+	id 'org.springframework.pulsar.spring-module'
+}
+
+description = 'Spring Pulsar (Bill of Materials)'
+
+dependencies {
+	constraints {
+		project.rootProject.subprojects
+				.sort { "$it.name" }
+				.findAll { it.name != "spring-pulsar-bom" }
+				.each { p ->
+					p.plugins.withType(SpringModulePlugin) {
+						api p
+					}
+				}
+	}
+}

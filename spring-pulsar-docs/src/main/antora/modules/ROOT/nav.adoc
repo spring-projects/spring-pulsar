@@ -17,5 +17,6 @@
 * Appendices
 ** xref:appendix/version-compatibility.adoc[]
 ** xref:appendix/override-boot-dependencies.adoc[]
+** xref:appendix/getting-dependencies-without-boot.adoc[]
 ** xref:appendix/non-ga-versions.adoc[]
 ** xref:appendix/native-image.adoc[]

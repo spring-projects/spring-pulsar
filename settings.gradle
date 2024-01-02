@@ -13,6 +13,7 @@ plugins {
 }
 
 include 'spring-pulsar'
+include 'spring-pulsar-bom'
 include 'spring-pulsar-cache-provider'
 include 'spring-pulsar-cache-provider-caffeine'
 include 'spring-pulsar-reactive'

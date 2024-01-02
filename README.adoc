@@ -79,6 +79,9 @@ There are several modules in Spring for Apache Pulsar. Here is a quick overview:
 === spring-pulsar
 The main library that provides the API to access Apache Pulsar.
 
+=== spring-pulsar-bom
+Provides a Maven BOM (https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#bill-of-materials-bom-poms[Bill of Materials]) that recommends a consistent version for all Spring for Apache Pulsar published modules.
+
 === spring-pulsar-cache-provider
 Provides the interfaces for the cache provider used by the main library to cache producers.
 
