@@ -1,7 +1,8 @@
 import org.springframework.pulsar.gradle.SpringModulePlugin
 
 plugins {
-	id 'org.springframework.pulsar.spring-module'
+	id 'io.spring.convention.repository'
+	id 'org.springframework.pulsar.bom'
 }
 
 description = 'Spring Pulsar (Bill of Materials)'
