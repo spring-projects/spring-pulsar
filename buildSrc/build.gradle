@@ -59,6 +59,10 @@ gradlePlugin {
 			id = "io.spring.convention.artfiactory"
 			implementationClass = "io.spring.gradle.convention.ArtifactoryPlugin"
 		}
+		mavenBomPlugin {
+			id = "org.springframework.pulsar.bom"
+			implementationClass = "org.springframework.pulsar.gradle.MavenBomPlugin"
+		}
 		optionalDependenciesPlugin {
 			id = "org.springframework.pulsar.optional-dependencies"
 			implementationClass = "org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin"
