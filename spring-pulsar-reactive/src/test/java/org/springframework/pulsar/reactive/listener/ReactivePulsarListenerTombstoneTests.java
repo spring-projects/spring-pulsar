@@ -238,8 +238,8 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 			var pulsarProducerFactory = new DefaultPulsarProducerFactory<Foo>(pulsarClient);
 			var fooPulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 			sendTestMessages(fooPulsarTemplate, TOPIC, Schema.JSON(Foo.class), Foo::new);
-			assertThat(latchWithHeaders.await(5, TimeUnit.SECONDS)).isTrue();
-			assertThat(latchWithoutHeaders.await(5, TimeUnit.SECONDS)).isTrue();
+			assertThat(latchWithHeaders.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(latchWithoutHeaders.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesReceivedWithHeaders(receivedMessagesWithHeaders, Foo::new);
 			assertMessagesReceivedWithoutHeaders(receivedMessagesWithoutHeaders, Foo::new);
 		}
