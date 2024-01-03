@@ -1,0 +1,119 @@
+[[deps-without-boot]]
+= Getting Dependencies without Spring Boot
+
+We recommend a Spring Boot first approach when using Spring for Apache Pulsar.
+However, if you do not use Spring Boot, the preferred way to get the dependencies is to use the provided BOM to ensure a consistent version of modules is used throughout your entire project.
+The following example shows how to do so for both Maven and Gradle:
+
+[tabs]
+======
+Maven::
++
+.pom.xml
+[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
+----
+<dependencyManagement>
+	<dependencies>
+		<!-- ... other dependency elements ... -->
+		<dependency>
+			<groupId>org.springframework.pulsar</groupId>
+			<artifactId>spring-pulsar-bom</artifactId>
+			<version>{spring-pulsar-version}</version>
+			<type>pom</type>
+			<scope>import</scope>
+		</dependency>
+	</dependencies>
+</dependencyManagement>
+----
+
+Gradle::
++
+.build.gradle
+[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
+----
+plugins {
+	id "io.spring.dependency-management" version "1.1.4"
+}
+
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework.pulsar:spring-pulsar-bom:{spring-pulsar-version}'
+	}
+}
+----
+======
+
+A minimal Spring for Apache Pulsar set of dependencies typically looks like the following:
+
+[tabs]
+======
+Maven::
++
+.pom.xml
+[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
+----
+<dependencies>
+	<!-- ... other dependency elements ... -->
+	<dependency>
+		<groupId>org.springframework.pulsar</groupId>
+		<artifactId>spring-pulsar</artifactId>
+	</dependency>
+</dependencies>
+----
+
+Gradle::
++
+.build.gradle
+[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
+----
+dependencies {
+	implementation "org.springframework.pulsar:spring-pulsar"
+}
+----
+======
+
+If you use additional features (such as Reactive), you need to also include the appropriate dependencies.
+
+Spring for Apache Pulsar builds against Spring Framework {spring-framework-version} but should generally work with any newer version of Spring Framework 6.x.
+Many users are likely to run afoul of the fact that Spring for Apache Pulsar's transitive dependencies resolve Spring Framework {spring-framework-version}, which can cause strange classpath problems.
+The easiest way to resolve this is to use the `spring-framework-bom` within your `dependencyManagement` section as follows:
+
+[tabs]
+======
+Maven::
++
+.pom.xml
+[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
+----
+<dependencyManagement>
+	<dependencies>
+		<!-- ... other dependency elements ... -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-framework-bom</artifactId>
+			<version>{spring-framework-version}</version>
+			<type>pom</type>
+			<scope>import</scope>
+		</dependency>
+	</dependencies>
+</dependencyManagement>
+----
+
+Gradle::
++
+.build.gradle
+[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
+----
+plugins {
+	id "io.spring.dependency-management" version "1.1.4"
+}
+
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework:spring-framework-bom:{spring-framework-version}'
+	}
+}
+----
+======
+
+The preceding example ensures that all the transitive dependencies of Spring for Apache Pulsar use the Spring {spring-framework-version} modules.
