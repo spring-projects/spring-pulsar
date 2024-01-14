@@ -3,7 +3,7 @@
  */
 @NonNullApi
 @NonNullFields
-package reader.app;
+package com.example;
 
 import org.springframework.lang.NonNullApi;
 import org.springframework.lang.NonNullFields;
