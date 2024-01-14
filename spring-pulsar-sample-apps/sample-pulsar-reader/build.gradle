@@ -18,8 +18,19 @@ def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayNa
 ext['spring-pulsar.version'] = "${project.version}"
 ext['pulsar.version'] = "${pulsarVersion}"
 
+
 dependencies {
-	implementation "org.springframework.boot:spring-boot-starter-pulsar"
+	implementation 'org.springframework.boot:spring-boot-starter-pulsar'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	testImplementation project(':spring-pulsar-test')
+	testRuntimeOnly 'ch.qos.logback:logback-classic'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'org.awaitility:awaitility'
+	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation "org.springframework.boot:spring-boot-testcontainers"
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:pulsar'
 }
 
 test {
@@ -34,4 +45,6 @@ bootRun {
 			"--add-opens", "java.base/java.util=ALL-UNNAMED",
 			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
 	]
+	// when run from command line, path must be set relative to module dir
+	systemProperty 'spring.docker.compose.file', 'compose.yaml'
 }
