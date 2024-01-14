@@ -39,7 +39,7 @@ jobs:
     needs: [prerequisites]
     strategy:
       matrix:
-        springBootVersion: [ needs.prerequisites.outputs.boot_version, '3.3.0-SNAPSHOT' ]
+        springBootVersion: [ ${{ needs.prerequisites.outputs.boot_version }}, '3.3.0-SNAPSHOT' ]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
