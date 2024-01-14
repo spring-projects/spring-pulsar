@@ -47,4 +47,6 @@ bootRun {
 			"--add-opens", "java.base/java.util=ALL-UNNAMED",
 			"--add-opens", "java.base/sun.net=ALL-UNNAMED"
 	]
+	// when run from command line, path must be set relative to module dir
+	systemProperty 'spring.docker.compose.file', 'compose.yaml'
 }
