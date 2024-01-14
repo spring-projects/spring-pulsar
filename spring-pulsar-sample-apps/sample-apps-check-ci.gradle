@@ -1,3 +1,16 @@
+settingsEvaluated { settings ->
+
+	settings.pluginManagement {
+		resolutionStrategy {
+			eachPlugin {
+				if (requested.id.id == "org.springframework.boot") {
+					useVersion("$rootProject.springBootVersion")
+				}
+			}
+		}
+	}
+}
+
 allprojects {
 	configurations.all {
 		resolutionStrategy {
