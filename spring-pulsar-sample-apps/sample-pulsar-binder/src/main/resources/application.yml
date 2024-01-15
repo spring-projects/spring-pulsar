@@ -1,52 +1,44 @@
 spring:
   cloud:
     function:
-      definition: timeSupplier;timeProcessor;timeLogger
+      definition: fooProcessor;barLogger
     stream:
+      output-bindings: fooSupplier-out-0
       bindings:
-        timeSupplier-out-0:
+        fooSupplier-out-0:
           producer:
             use-native-encoding: true
-        timeProcessor-in-0:
-          destination: timeSupplier-out-0
+        fooProcessor-in-0:
+          destination: fooSupplier-out-0
           consumer:
             use-native-decoding: true
-        timeProcessor-out-0:
-          destination: timeProcessor-out-0
+        fooProcessor-out-0:
+          destination: fooProcessor-out-0
           producer:
             use-native-encoding: true
-        timeLogger-in-0:
-          destination: timeProcessor-out-0
-          consumer:
-            use-native-decoding: true
-        timeLoggerToDlt-in-0:
-          destination: timeProcessor-out-0
+        barLogger-in-0:
+          destination: fooProcessor-out-0
           consumer:
             use-native-decoding: true
       pulsar:
         bindings:
-          timeSupplier-out-0:
+          fooSupplier-out-0:
             producer:
               schema-type: JSON
-              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
-          timeProcessor-in-0:
+              message-type: com.example.SpringPulsarBinderSampleApp.Foo
+          fooProcessor-in-0:
             consumer:
               schema-type: JSON
-              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.Time
-          timeProcessor-out-0:
+              message-type: com.example.SpringPulsarBinderSampleApp.Foo
+          fooProcessor-out-0:
             producer:
               schema-type: JSON
-              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
-          timeLogger-in-0:
+              message-type: com.example.SpringPulsarBinderSampleApp.Bar
+          barLogger-in-0:
             consumer:
               schema-type: JSON
-              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
-          timeLoggerToDlt-in-0:
-            consumer:
-              subscription-type: Shared
-              negative-ack-redelivery-delay: 1s
-              dead-letter-policy:
-                dead-letter-topic: notification-dlq
-                max-redeliver-count: 5
-              schema-type: JSON
-              message-type: org.springframework.pulsar.sample.binder.SpringPulsarBinderSampleApp.EnhancedTime
+              message-type: com.example.SpringPulsarBinderSampleApp.Bar
+  docker:
+    compose:
+      # when run from Intellij via "Run" button, path must be set from project root
+      file: spring-pulsar-sample-apps/sample-pulsar-binder/compose.yaml
