@@ -3,7 +3,7 @@
  */
 @NonNullApi
 @NonNullFields
-package org.springframework.pulsar.example;
+package com.example;
 
 import org.springframework.lang.NonNullApi;
 import org.springframework.lang.NonNullFields;
