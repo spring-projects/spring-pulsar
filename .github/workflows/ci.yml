@@ -29,6 +29,7 @@ jobs:
     outputs:
       runjobs: ${{ steps.continue.outputs.runjobs }}
       project_version: ${{ steps.continue.outputs.project_version }}
+      boot_version: ${{ steps.continue.outputs.boot_version }}
     steps:
       - uses: actions/checkout@v3
       - id: continue
@@ -39,6 +40,8 @@ jobs:
           # Extract version from gradle.properties
           version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
           echo "project_version=$version" >>$GITHUB_OUTPUT
+          bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
+          echo "boot_version=$bootVersion" >>$GITHUB_OUTPUT
   build_jdk_17:
     name: Build (JDK 17)
     needs: [prerequisites]
@@ -65,6 +68,9 @@ jobs:
   check_samples:
     name: Check Sample Apps
     needs: [prerequisites]
+    strategy:
+      matrix:
+        springBootVersion: [ "${{ needs.prerequisites.outputs.boot_version }}", '3.3.0-SNAPSHOT' ]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
@@ -74,6 +80,7 @@ jobs:
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ needs.prerequisites.outputs.project_version }}
+          BOOT_VERSION: ${{ matrix.springBootVersion }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
         run: |
@@ -82,6 +89,7 @@ jobs:
               --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
               -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
               -PspringPulsarVersion="$VERSION" \
+              -PspringBootVersion="$BOOT_VERSION" \
               :runAllSampleTests
   scan:
     needs: [prerequisites]
