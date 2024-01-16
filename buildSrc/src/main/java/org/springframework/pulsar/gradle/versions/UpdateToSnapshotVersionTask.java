@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ public abstract class UpdateToSnapshotVersionTask extends UpdateProjectVersionTa
 	@TaskAction
 	public void updateToSnapshotVersion() {
 		String currentVersion = getProject().getVersion().toString();
-		updateVersionInGradleProperties(calculateNextSnapshotVersion(currentVersion));
-		updateVersionInTomlVersions(SPRING_BOOT_VERSION_PROPERTY, this::calculateNextSnapshotVersion);
+		String nextSnapshotVersion = calculateNextSnapshotVersion(currentVersion);
+		updateVersionInGradleProperties(VERSION_PROPERTY, nextSnapshotVersion);
+		updateVersionInGradleProperties(VERSION_FOR_SAMPLES_PROPERTY, nextSnapshotVersion);
+		updateVersionInTomlVersions(SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY, this::calculateNextSnapshotVersion);
 	}
 
 	private String calculateNextSnapshotVersion(String version) {

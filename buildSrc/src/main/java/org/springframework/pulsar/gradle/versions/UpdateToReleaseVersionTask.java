@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ public abstract class UpdateToReleaseVersionTask extends UpdateProjectVersionTas
 
 	@TaskAction
 	public void updateToReleaseVersion() {
-		updateVersionInGradleProperties(this.releaseVersion);
-		updateVersionInTomlVersions(SPRING_BOOT_VERSION_PROPERTY, this::calculateReleaseBootVersion);
+		updateVersionInGradleProperties(VERSION_PROPERTY, this.releaseVersion);
+		updateVersionInTomlVersions(SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY, this::calculateReleaseBootVersion);
 	}
 
 	public String getReleaseVersion() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,22 +31,24 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 
 	static final String VERSION_PROPERTY = "version";
 
-	static final String SPRING_BOOT_VERSION_PROPERTY = "spring-boot-for-docs";
+	static final String VERSION_FOR_SAMPLES_PROPERTY = "version.samples";
+
+	static final String SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY = "spring-boot-for-docs";
 
 	static final Pattern VERSION_PATTERN = Pattern.compile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-M\\d+|-RC\\d+|-SNAPSHOT)?$");
 
-	protected void updateVersionInGradleProperties(String newVersion) {
-		this.updatePropertyInFile(Project.GRADLE_PROPERTIES, VERSION_PROPERTY,
-				(p) -> p.getVersion().toString(),
-				(__) -> newVersion,
-				(currentValue) -> "%s=%s".formatted(VERSION_PROPERTY, currentValue),
-				(__) -> "%s=%s".formatted(VERSION_PROPERTY, newVersion));
+	protected void updateVersionInGradleProperties(String versionPropertyName, String newVersion) {
+		this.updatePropertyInFile(Project.GRADLE_PROPERTIES, versionPropertyName,
+				(p) -> p.property(versionPropertyName).toString(),
+				(currentValue) -> newVersion,
+				(currentValue) -> "%s=%s".formatted(versionPropertyName, currentValue),
+				(newValue) -> "%s=%s".formatted(versionPropertyName, newValue));
 	}
 
 	protected void updateVersionInTomlVersions(String versionPropertyName,
 			Function<String, String> newPropertyValueGivenCurrentValue) {
 		this.updatePropertyInFile("gradle/libs.versions.toml", versionPropertyName,
-				(p) -> currentVersionForProperty(p, versionPropertyName),
+				(p) -> currentVersionInCatalog(p, versionPropertyName),
 				newPropertyValueGivenCurrentValue,
 				(currentValue) -> "%s = \"%s\"".formatted(versionPropertyName, currentValue),
 				(newValue) -> "%s = \"%s\"".formatted(versionPropertyName, newValue));
@@ -85,7 +87,7 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 		}
 	}
 
-	protected String currentVersionForProperty(Project project, String versionProperty) {
+	protected String currentVersionInCatalog(Project project, String versionProperty) {
 		VersionCatalogsExtension catalog = project.getExtensions().getByType(VersionCatalogsExtension.class);
 		return catalog.named("libs").findVersion(versionProperty)
 				.orElseThrow(() -> new IllegalStateException("% property not found".formatted(versionProperty)))
