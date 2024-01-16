@@ -16,7 +16,7 @@ def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs"
 def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
 def pulsarReactiveVersion = versionCatalog.findVersion("pulsar-reactive").orElseThrow().displayName
 
-ext['spring-pulsar.version'] = "${project.version}"
+ext['spring-pulsar.version'] = "${project.property('version.samples')}"
 ext['pulsar.version'] = "${pulsarVersion}"
 ext['pulsar-reactive.version'] = "${pulsarReactiveVersion}"
 

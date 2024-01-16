@@ -16,7 +16,7 @@ def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs"
 def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
 def springCloudStreamVersion = versionCatalog.findVersion("spring-cloud-stream").orElseThrow().displayName
 
-ext['spring-pulsar.version'] = "${project.version}"
+ext['spring-pulsar.version'] = "${project.property('version.samples')}"
 ext['pulsar.version'] = "${pulsarVersion}"
 
 dependencies {
