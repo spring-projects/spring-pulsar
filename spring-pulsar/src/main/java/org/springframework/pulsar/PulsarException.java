@@ -22,6 +22,7 @@ import org.springframework.core.NestedRuntimeException;
  * Spring Pulsar specific {@link NestedRuntimeException} implementation.
  *
  * @author Soby Chacko
+ * @author Jonas Geiregat
  */
 public class PulsarException extends NestedRuntimeException {
 
@@ -31,6 +32,10 @@ public class PulsarException extends NestedRuntimeException {
 
 	public PulsarException(String msg, Throwable cause) {
 		super(msg, cause);
+	}
+
+	public PulsarException(Throwable cause) {
+		this(cause.getMessage(), cause);
 	}
 
 }

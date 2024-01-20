@@ -20,9 +20,9 @@ import java.util.function.BiFunction;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.PulsarClientException;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.PulsarOperations;
 
 /**
@@ -70,7 +70,7 @@ public class PulsarDeadLetterPublishingRecoverer<T> implements PulsarMessageReco
 							exception.getCause() != null ? exception.getCause().getMessage() : exception.getMessage()))
 					.sendAsync();
 			}
-			catch (PulsarClientException e) {
+			catch (PulsarException e) {
 				this.logger.error(e, "DLT publishing failed.");
 			}
 		};

@@ -62,6 +62,7 @@ import org.springframework.util.function.ThrowingConsumer;
  * @author Chris Bono
  * @author Alexander Preuß
  * @author Christophe Bornet
+ * @author Jonas Geiregat
  */
 class PulsarTemplateTests implements PulsarTestContainerSupport {
 

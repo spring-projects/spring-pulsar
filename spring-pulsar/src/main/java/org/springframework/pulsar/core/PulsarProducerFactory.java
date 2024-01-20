@@ -21,10 +21,10 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 
 /**
  * The strategy to create a {@link Producer} instance(s).
@@ -34,6 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Chris Bono
  * @author Alexander Preuß
  * @author Christophe Bornet
+ * @author Jonas Geiregat
  */
 public interface PulsarProducerFactory<T> {
 
@@ -43,9 +44,9 @@ public interface PulsarProducerFactory<T> {
 	 * @param topic the topic the producer will send messages to or {@code null} to use
 	 * the default topic
 	 * @return the producer
-	 * @throws PulsarClientException if any error occurs
+	 * @throws PulsarException if any error occurs
 	 */
-	Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException;
+	Producer<T> createProducer(Schema<T> schema, @Nullable String topic);
 
 	/**
 	 * Create a producer.
@@ -54,10 +55,10 @@ public interface PulsarProducerFactory<T> {
 	 * the default topic
 	 * @param customizer the optional customizer to apply to the producer builder
 	 * @return the producer
-	 * @throws PulsarClientException if any error occurs
+	 * @throws PulsarException if any error occurs
 	 */
 	Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable ProducerBuilderCustomizer<T> customizer) throws PulsarClientException;
+			@Nullable ProducerBuilderCustomizer<T> customizer);
 
 	/**
 	 * Create a producer.
@@ -71,10 +72,10 @@ public interface PulsarProducerFactory<T> {
 	 * @param customizers the optional list of customizers to apply to the producer
 	 * builder
 	 * @return the producer
-	 * @throws PulsarClientException if any error occurs
+	 * @throws PulsarException if any error occurs
 	 */
 	Producer<T> createProducer(Schema<T> schema, @Nullable String topic, @Nullable Collection<String> encryptionKeys,
-			@Nullable List<ProducerBuilderCustomizer<T>> customizers) throws PulsarClientException;
+			@Nullable List<ProducerBuilderCustomizer<T>> customizers);
 
 	/**
 	 * Get the default topic to use for all created producers.

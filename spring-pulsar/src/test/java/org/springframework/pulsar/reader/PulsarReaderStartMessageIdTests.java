@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +41,7 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @author Soby Chacko
  * @author Chris Bono
+ * @author Jonas Geiregat
  */
 public class PulsarReaderStartMessageIdTests extends PulsarReaderTestsBase {
 
@@ -152,12 +152,7 @@ public class PulsarReaderStartMessageIdTests extends PulsarReaderTestsBase {
 			public PulsarReaderReaderBuilderCustomizer<String> myCustomizer(PulsarTemplate<String> pulsarTemplate) {
 				return cb -> {
 					for (int i = 0; i < 10; i++) {
-						try {
-							messageIds[i] = pulsarTemplate.send("with-customizer-reader-topic", "hello john doe-");
-						}
-						catch (PulsarClientException e) {
-							// Ignore
-						}
+						messageIds[i] = pulsarTemplate.send("with-customizer-reader-topic", "hello john doe-");
 					}
 					cb.startMessageId(messageIds[4]); // the first message read is the one
 														// after this message id.

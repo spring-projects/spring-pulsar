@@ -17,7 +17,8 @@
 package org.springframework.pulsar.core;
 
 import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
+
+import org.springframework.pulsar.PulsarException;
 
 /**
  * Pulsar client factory interface.
@@ -30,8 +31,8 @@ public interface PulsarClientFactory {
 	/**
 	 * Create a client.
 	 * @return the created client instance
-	 * @throws PulsarClientException if an error occurs creating the client
+	 * @throws PulsarException if an error occurs creating the client
 	 */
-	PulsarClient createClient() throws PulsarClientException;
+	PulsarClient createClient();
 
 }

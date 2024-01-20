@@ -31,6 +31,7 @@ import org.apache.pulsar.client.impl.ProducerBuilderImpl;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -102,21 +103,37 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	@Override
-	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException {
+	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) {
 		return doCreateProducer(schema, topic, null, null);
 	}
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable ProducerBuilderCustomizer<T> customizer) throws PulsarClientException {
-		return doCreateProducer(schema, topic, null, customizer != null ? Collections.singletonList(customizer) : null);
+			@Nullable ProducerBuilderCustomizer<T> customizer) {
+		try {
+			return doCreateProducer(schema, topic, null,
+					customizer != null ? Collections.singletonList(customizer) : null);
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
-			throws PulsarClientException {
-		return doCreateProducer(schema, topic, encryptionKeys, customizers);
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
+		try {
+			return doCreateProducer(schema, topic, encryptionKeys, customizers);
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	/**
@@ -134,8 +151,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	 * @throws PulsarClientException if any error occurs
 	 */
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
-			throws PulsarClientException {
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		var resolvedTopic = resolveTopicName(topic);
 		this.logger.trace(() -> "Creating producer for '%s' topic".formatted(resolvedTopic));
@@ -156,7 +172,12 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		}
 		producerBuilder.topic(resolvedTopic);
 
-		return producerBuilder.create();
+		try {
+			return producerBuilder.create();
+		}
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
+		}
 	}
 
 	protected String resolveTopicName(String userSpecifiedTopic) {

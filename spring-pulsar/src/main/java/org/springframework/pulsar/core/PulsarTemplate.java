@@ -36,6 +36,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
@@ -53,6 +55,7 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Chris Bono
  * @author Alexander Preuß
  * @author Christophe Bornet
+ * @author Jonas Geiregat
  */
 public class PulsarTemplate<T>
 		implements PulsarOperations<T>, ApplicationContextAware, BeanNameAware, SmartInitializingSingleton {
@@ -151,46 +154,43 @@ public class PulsarTemplate<T>
 	}
 
 	@Override
-	public MessageId send(@Nullable T message) throws PulsarClientException {
+	public MessageId send(@Nullable T message) {
 		return doSend(null, message, null, null, null, null);
 	}
 
 	@Override
-	public MessageId send(@Nullable T message, @Nullable Schema<T> schema) throws PulsarClientException {
+	public MessageId send(@Nullable T message, @Nullable Schema<T> schema) {
 		return doSend(null, message, schema, null, null, null);
 	}
 
 	@Override
-	public MessageId send(@Nullable String topic, @Nullable T message) throws PulsarClientException {
+	public MessageId send(@Nullable String topic, @Nullable T message) {
 		return doSend(topic, message, null, null, null, null);
 	}
 
 	@Override
-	public MessageId send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema)
-			throws PulsarClientException {
+	public MessageId send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema) {
 		return doSend(topic, message, schema, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(@Nullable T message) throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable T message) {
 		return doSendAsync(null, message, null, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(@Nullable T message, @Nullable Schema<T> schema)
-			throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable T message, @Nullable Schema<T> schema) {
 		return doSendAsync(null, message, schema, null, null, null);
 	}
 
 	@Override
-	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message)
-			throws PulsarClientException {
+	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message) {
 		return doSendAsync(topic, message, null, null, null, null);
 	}
 
 	@Override
 	public CompletableFuture<MessageId> sendAsync(@Nullable String topic, @Nullable T message,
-			@Nullable Schema<T> schema) throws PulsarClientException {
+			@Nullable Schema<T> schema) {
 		return doSendAsync(topic, message, schema, null, null, null);
 	}
 
@@ -207,21 +207,24 @@ public class PulsarTemplate<T>
 	private MessageId doSend(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema,
 			@Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
+			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 		try {
 			return doSendAsync(topic, message, schema, encryptionKeys, typedMessageBuilderCustomizer,
 					producerCustomizer)
 				.get();
 		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
 		catch (Exception ex) {
-			throw PulsarClientException.unwrap(ex);
+			throw new PulsarException(PulsarClientException.unwrap(ex));
 		}
 	}
 
 	private CompletableFuture<MessageId> doSendAsync(@Nullable String topic, @Nullable T message,
 			@Nullable Schema<T> schema, @Nullable Collection<String> encryptionKeys,
 			@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) throws PulsarClientException {
+			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 		String defaultTopic = Objects.toString(this.producerFactory.getDefaultTopic(), null);
 		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow();
 		this.logger.trace(() -> "Sending msg to '%s' topic".formatted(topicName));
@@ -241,9 +244,9 @@ public class PulsarTemplate<T>
 				// propagate props to message
 				senderContext.properties().forEach(messageBuilder::property);
 			}
-			catch (Exception e) {
+			catch (RuntimeException ex) {
 				ProducerUtils.closeProducerAsync(producer, this.logger);
-				throw e;
+				throw ex;
 			}
 			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
 				if (ex == null) {
@@ -274,8 +277,7 @@ public class PulsarTemplate<T>
 	}
 
 	private Producer<T> prepareProducerForSend(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema,
-			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer)
-			throws PulsarClientException {
+			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.resolveSchema(message).orElseThrow() : schema;
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(this.interceptors)) {
@@ -345,13 +347,13 @@ public class PulsarTemplate<T>
 		}
 
 		@Override
-		public MessageId send() throws PulsarClientException {
+		public MessageId send() {
 			return this.template.doSend(this.topic, this.message, this.schema, this.encryptionKeys,
 					this.messageCustomizer, this.producerCustomizer);
 		}
 
 		@Override
-		public CompletableFuture<MessageId> sendAsync() throws PulsarClientException {
+		public CompletableFuture<MessageId> sendAsync() {
 			return this.template.doSendAsync(this.topic, this.message, this.schema, this.encryptionKeys,
 					this.messageCustomizer, this.producerCustomizer);
 		}
