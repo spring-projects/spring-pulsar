@@ -17,7 +17,7 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,6 +52,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.util.function.ThrowingConsumer;
 
@@ -62,6 +63,7 @@ import org.springframework.util.function.ThrowingConsumer;
  * @author Chris Bono
  * @author Alexander Preuß
  * @author Christophe Bornet
+ * @author Jonas Geiregat
  */
 class PulsarTemplateTests implements PulsarTestContainerSupport {
 
@@ -236,7 +238,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 	void sendMessageWithoutTopicFails() {
 		PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-		assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send("test-message"))
+		assertThatExceptionOfType(PulsarException.class).isThrownBy(() -> pulsarTemplate.send("test-message"))
 			.withMessage("Topic must be specified when no default topic is configured");
 	}
 
@@ -306,7 +308,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			PulsarProducerFactory<String> senderFactory = new DefaultPulsarProducerFactory<>(client,
 					"sendNullWithDefaultTopicFails");
 			PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-			assertThatIllegalArgumentException().isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING))
+			assertThatExceptionOfType(PulsarException.class).isThrownBy(() -> pulsarTemplate.send(null, Schema.STRING))
 				.withMessage("Topic must be specified when the message is null");
 		}
 
@@ -314,7 +316,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		void sendNullWithoutSchemaFails() {
 			PulsarProducerFactory<Object> senderFactory = new DefaultPulsarProducerFactory<>(client);
 			PulsarTemplate<Object> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-			assertThatIllegalArgumentException()
+			assertThatExceptionOfType(PulsarException.class)
 				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
 				.withMessage("Schema must be specified when the message is null");
 		}
