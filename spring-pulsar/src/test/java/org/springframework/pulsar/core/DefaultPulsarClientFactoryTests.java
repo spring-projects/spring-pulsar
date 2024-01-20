@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.mock.env.MockEnvironment;
@@ -29,18 +28,19 @@ import org.springframework.mock.env.MockEnvironment;
  * Tests for {@link DefaultPulsarClientFactory}.
  *
  * @author Chris Bono
+ * @author Jonas Geiregat
  */
 class DefaultPulsarClientFactoryTests {
 
 	@Test
-	void constructWithServiceUrl() throws PulsarClientException {
+	void constructWithServiceUrl() {
 		var clientFactory = new DefaultPulsarClientFactory("pulsar://localhost:5150");
 		assertThat(clientFactory.createClient()).hasFieldOrPropertyWithValue("conf.serviceUrl",
 				"pulsar://localhost:5150");
 	}
 
 	@Test
-	void constructWithCustomizer() throws PulsarClientException {
+	void constructWithCustomizer() {
 		var clientFactory = new DefaultPulsarClientFactory(
 				(clientBuilder) -> clientBuilder.serviceUrl("pulsar://localhost:5150"));
 		assertThat(clientFactory.createClient()).hasFieldOrPropertyWithValue("conf.serviceUrl",
@@ -63,14 +63,14 @@ class DefaultPulsarClientFactoryTests {
 	}
 
 	@Test
-	void createsRestartableClientByDefault() throws PulsarClientException {
+	void createsRestartableClientByDefault() {
 		var clientFactory = new DefaultPulsarClientFactory("pulsar://localhost:5150");
 		clientFactory.setEnvironment(new MockEnvironment());
 		assertThat(clientFactory.createClient()).isInstanceOf(PulsarClientProxy.class);
 	}
 
 	@Test
-	void createsRestartableClientWhenPropertySetTrue() throws PulsarClientException {
+	void createsRestartableClientWhenPropertySetTrue() {
 		var clientFactory = new DefaultPulsarClientFactory("pulsar://localhost:5150");
 		var env = new MockEnvironment().withProperty("spring.pulsar.client.restartable", "true");
 		clientFactory.setEnvironment(env);
@@ -78,7 +78,7 @@ class DefaultPulsarClientFactoryTests {
 	}
 
 	@Test
-	void createsDefaultClientWhenPropertySetFalse() throws PulsarClientException {
+	void createsDefaultClientWhenPropertySetFalse() {
 		var clientFactory = new DefaultPulsarClientFactory("pulsar://localhost:5150");
 		var env = new MockEnvironment().withProperty("spring.pulsar.client.restartable", "false");
 		clientFactory.setEnvironment(env);
