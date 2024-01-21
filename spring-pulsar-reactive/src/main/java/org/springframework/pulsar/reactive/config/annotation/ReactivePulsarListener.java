@@ -26,9 +26,9 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointRegistry;
-import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 
 /**
  * Annotation that marks a method to be the target of a Pulsar message listener on the
@@ -86,8 +86,8 @@ public @interface ReactivePulsarListener {
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
-	 * The bean name of the {@link ReactivePulsarListenerContainerFactory} to use to
-	 * create the message listener container responsible to serve this endpoint.
+	 * The bean name of the {@link PulsarListenerContainerFactory} to use to create the
+	 * message listener container responsible to serve this endpoint.
 	 * <p>
 	 * If not specified, the default container factory is used, if any. If a SpEL
 	 * expression is provided ({@code #{...}}), the expression can either evaluate to a
@@ -109,13 +109,13 @@ public @interface ReactivePulsarListener {
 	String topicPattern() default "";
 
 	/**
-	 * Set to true or false, to override the default setting in the container factory. May
-	 * be a property placeholder or SpEL expression that evaluates to a {@link Boolean} or
-	 * a {@link String}, in which case the {@link Boolean#parseBoolean(String)} is used to
-	 * obtain the value.
+	 * Whether to automatically start the container for this listener.
 	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
-	 * @return true to auto start, false to not auto start.
+	 * The value can be a literal string representation of boolean (e.g. {@code 'true'})
+	 * or a property placeholder {@code ${...}} that resolves to a literal. SpEL
+	 * {@code #{...}} expressions that evaluate to a {@link Boolean} or a literal are
+	 * supported.
+	 * @return whether to automatically start the container for this listener
 	 */
 	String autoStartup() default "";
 
@@ -136,12 +136,13 @@ public @interface ReactivePulsarListener {
 	String beanRef() default "__listener";
 
 	/**
-	 * Override the container factory's {@code concurrency} setting for this listener. May
-	 * be a property placeholder or SpEL expression that evaluates to a {@link Number}, in
-	 * which case {@link Number#intValue()} is used to obtain the value.
+	 * Override the container factory's {@code concurrency} setting for this listener.
 	 * <p>
-	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
-	 * @return the concurrency.
+	 * The value can be a literal string representation of {@link Number} (e.g.
+	 * {@code '3'}) or a property placeholder {@code ${...}} that resolves to a literal.
+	 * SpEL {@code #{...}} expressions that evaluate to a {@link Number} or a literal are
+	 * supported.
+	 * @return the concurrency for this listener
 	 */
 	String concurrency() default "";
 
@@ -158,7 +159,7 @@ public @interface ReactivePulsarListener {
 	String useKeyOrderedProcessing() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
+	 * The bean name or a SpEL expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
 	 * configure a dead letter policy for message redelivery.
 	 * @return the bean name or empty string to not set any dead letter policy.
@@ -166,9 +167,11 @@ public @interface ReactivePulsarListener {
 	String deadLetterPolicy() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
-	 * {@link ReactiveMessageConsumerBuilderCustomizer} to use to configure the consumer.
-	 * @return the bean name or empty string to not configure the consumer.
+	 * The bean name or a SpEL expression that resolves to a
+	 * {@link ReactivePulsarListenerMessageConsumerBuilderCustomizer} to use to configure
+	 * the underlying consumer.
+	 * @return the bean name or SpEL expression to the customizer or an empty string to
+	 * not customize the consumer
 	 */
 	String consumerCustomizer() default "";
 
