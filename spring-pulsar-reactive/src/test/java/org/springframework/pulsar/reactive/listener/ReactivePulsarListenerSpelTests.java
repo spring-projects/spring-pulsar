@@ -62,6 +62,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 
+	private static final String TOPIC = "pulsar-reactive-listener-spel-tests-topic";
+
 	@Nested
 	@ContextConfiguration(classes = IdAttributeConfig.class)
 	@TestPropertySource(properties = "foo.id = foo")
@@ -78,11 +80,11 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class IdAttributeConfig {
 
-			@ReactivePulsarListener(id = "${foo.id}")
+			@ReactivePulsarListener(topics = TOPIC, id = "${foo.id}")
 			void listen1(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "#{T(java.lang.String).valueOf('bar')}")
+			@ReactivePulsarListener(topics = TOPIC, id = "#{T(java.lang.String).valueOf('bar')}")
 			void listen2(String ignored) {
 			}
 
@@ -115,16 +117,16 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 						new ReactivePulsarContainerProperties<>()));
 			}
 
-			@ReactivePulsarListener(id = "foo", containerFactory = "#{@customContainerFactory}")
+			@ReactivePulsarListener(topics = TOPIC, id = "foo", containerFactory = "#{@customContainerFactory}")
 			void listen1(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "bar",
+			@ReactivePulsarListener(topics = TOPIC, id = "bar",
 					containerFactory = "#{T(java.lang.String).valueOf('customContainerFactory')}")
 			void listen2(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "zaa", containerFactory = "customContainerFactory")
+			@ReactivePulsarListener(topics = TOPIC, id = "zaa", containerFactory = "customContainerFactory")
 			void listen3(String ignored) {
 			}
 
@@ -149,15 +151,16 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class AutoStartupAttributeConfig {
 
-			@ReactivePulsarListener(id = "foo", autoStartup = "${foo.auto-start}")
+			@ReactivePulsarListener(topics = TOPIC, id = "foo", autoStartup = "${foo.auto-start}")
 			void listen1(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "bar", autoStartup = "#{T(java.lang.Boolean).valueOf('false')}")
+			@ReactivePulsarListener(topics = TOPIC, id = "bar",
+					autoStartup = "#{T(java.lang.Boolean).valueOf('false')}")
 			void listen2(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "zaa", autoStartup = "true")
+			@ReactivePulsarListener(topics = TOPIC, id = "zaa", autoStartup = "true")
 			void listen3(String ignored) {
 			}
 
@@ -182,17 +185,18 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class ConcurrencyAttributeConfig {
 
-			@ReactivePulsarListener(id = "foo", concurrency = "${foo.concurrency}",
+			@ReactivePulsarListener(topics = TOPIC, id = "foo", concurrency = "${foo.concurrency}",
 					subscriptionType = SubscriptionType.Shared)
 			void listen1(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "bar", concurrency = "#{T(java.lang.Integer).valueOf('3')}",
+			@ReactivePulsarListener(topics = TOPIC, id = "bar", concurrency = "#{T(java.lang.Integer).valueOf('3')}",
 					subscriptionType = SubscriptionType.Shared)
 			void listen2(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "zaa", concurrency = "4", subscriptionType = SubscriptionType.Shared)
+			@ReactivePulsarListener(topics = TOPIC, id = "zaa", concurrency = "4",
+					subscriptionType = SubscriptionType.Shared)
 			void listen3(String ignored) {
 			}
 
@@ -220,15 +224,16 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class UseKeyOrderedProcessingAttributeConfig {
 
-			@ReactivePulsarListener(id = "foo", useKeyOrderedProcessing = "${foo.key-ordered}")
+			@ReactivePulsarListener(topics = TOPIC, id = "foo", useKeyOrderedProcessing = "${foo.key-ordered}")
 			void listen1(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "bar", useKeyOrderedProcessing = "#{T(java.lang.Boolean).valueOf('false')}")
+			@ReactivePulsarListener(topics = TOPIC, id = "bar",
+					useKeyOrderedProcessing = "#{T(java.lang.Boolean).valueOf('false')}")
 			void listen2(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "zaa", useKeyOrderedProcessing = "true")
+			@ReactivePulsarListener(topics = TOPIC, id = "zaa", useKeyOrderedProcessing = "true")
 			void listen3(String ignored) {
 			}
 
@@ -315,17 +320,17 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 				};
 			}
 
-			@ReactivePulsarListener(id = "foo", subscriptionName = "fooSub",
+			@ReactivePulsarListener(topics = TOPIC, id = "foo", subscriptionName = "fooSub",
 					consumerCustomizer = "#{@customConsumerCustomizer}")
 			void listen1(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "bar", subscriptionName = "barSub",
+			@ReactivePulsarListener(topics = TOPIC, id = "bar", subscriptionName = "barSub",
 					consumerCustomizer = "#{T(java.lang.String).valueOf('customConsumerCustomizer')}")
 			void listen2(String ignored) {
 			}
 
-			@ReactivePulsarListener(id = "zaa", subscriptionName = "zaaSub",
+			@ReactivePulsarListener(topics = TOPIC, id = "zaa", subscriptionName = "zaaSub",
 					consumerCustomizer = "customConsumerCustomizer")
 			void listen3(String ignored) {
 			}

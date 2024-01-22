@@ -65,6 +65,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 
+	private static final String TOPIC = "pulsar-listener-spel-tests-topic";
+
 	@Nested
 	@ContextConfiguration(classes = IdAttributeConfig.class)
 	@TestPropertySource(properties = "foo.id = foo")
@@ -80,11 +82,11 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class IdAttributeConfig {
 
-			@PulsarListener(id = "${foo.id}")
+			@PulsarListener(topics = TOPIC, id = "${foo.id}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "#{T(java.lang.String).valueOf('bar')}")
+			@PulsarListener(topics = TOPIC, id = "#{T(java.lang.String).valueOf('bar')}")
 			void listen2(String ignored) {
 			}
 
@@ -119,15 +121,16 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				return mockContainerFactory;
 			}
 
-			@PulsarListener(id = "foo", containerFactory = "#{@customContainerFactory}")
+			@PulsarListener(topics = TOPIC, id = "foo", containerFactory = "#{@customContainerFactory}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar", containerFactory = "#{T(java.lang.String).valueOf('customContainerFactory')}")
+			@PulsarListener(topics = TOPIC, id = "bar",
+					containerFactory = "#{T(java.lang.String).valueOf('customContainerFactory')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", containerFactory = "customContainerFactory")
+			@PulsarListener(topics = TOPIC, id = "zaa", containerFactory = "customContainerFactory")
 			void listen3(String ignored) {
 			}
 
@@ -152,15 +155,15 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class AutoStartupAttributeConfig {
 
-			@PulsarListener(id = "foo", autoStartup = "${foo.auto-start}")
+			@PulsarListener(topics = TOPIC, id = "foo", autoStartup = "${foo.auto-start}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar", autoStartup = "#{T(java.lang.Boolean).valueOf('false')}")
+			@PulsarListener(topics = TOPIC, id = "bar", autoStartup = "#{T(java.lang.Boolean).valueOf('false')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", autoStartup = "true")
+			@PulsarListener(topics = TOPIC, id = "zaa", autoStartup = "true")
 			void listen3(String ignored) {
 			}
 
@@ -200,19 +203,20 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				return List.of("subscriptionName=laaSub", "consumerName=laaConsumer");
 			}
 
-			@PulsarListener(id = "foo", properties = { "${foo.mykey}=${foo.myvalue}" })
+			@PulsarListener(topics = TOPIC, id = "foo", properties = { "${foo.mykey}=${foo.myvalue}" })
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar", properties = "#{T(java.lang.String).valueOf('subscriptionName=barSub')}")
+			@PulsarListener(topics = TOPIC, id = "bar",
+					properties = "#{T(java.lang.String).valueOf('subscriptionName=barSub')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", properties = "#{@stringArray}")
+			@PulsarListener(topics = TOPIC, id = "zaa", properties = "#{@stringArray}")
 			void listen3(String ignored) {
 			}
 
-			@PulsarListener(id = "laa", properties = "#{@stringList}")
+			@PulsarListener(topics = TOPIC, id = "laa", properties = "#{@stringList}")
 			void listen4(String ignored) {
 			}
 
@@ -237,16 +241,17 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class ConcurrencyAttributeConfig {
 
-			@PulsarListener(id = "foo", concurrency = "${foo.concurrency}", subscriptionType = SubscriptionType.Shared)
+			@PulsarListener(topics = TOPIC, id = "foo", concurrency = "${foo.concurrency}",
+					subscriptionType = SubscriptionType.Shared)
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar", concurrency = "#{T(java.lang.Integer).valueOf('3')}",
+			@PulsarListener(topics = TOPIC, id = "bar", concurrency = "#{T(java.lang.Integer).valueOf('3')}",
 					subscriptionType = SubscriptionType.Shared)
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", concurrency = "4", subscriptionType = SubscriptionType.Shared)
+			@PulsarListener(topics = TOPIC, id = "zaa", concurrency = "4", subscriptionType = SubscriptionType.Shared)
 			void listen3(String ignored) {
 			}
 
@@ -280,16 +285,17 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				return CUSTOM_BACKOFF;
 			}
 
-			@PulsarListener(id = "foo", negativeAckRedeliveryBackoff = "#{@customNackRedeliveryBackoff}")
+			@PulsarListener(topics = TOPIC, id = "foo",
+					negativeAckRedeliveryBackoff = "#{@customNackRedeliveryBackoff}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar",
+			@PulsarListener(topics = TOPIC, id = "bar",
 					negativeAckRedeliveryBackoff = "#{T(java.lang.String).valueOf('customNackRedeliveryBackoff')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", negativeAckRedeliveryBackoff = "customNackRedeliveryBackoff")
+			@PulsarListener(topics = TOPIC, id = "zaa", negativeAckRedeliveryBackoff = "customNackRedeliveryBackoff")
 			void listen3(String ignored) {
 			}
 
@@ -323,16 +329,16 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				return CUSTOM_BACKOFF;
 			}
 
-			@PulsarListener(id = "foo", ackTimeoutRedeliveryBackoff = "#{@customAckRedeliveryBackoff}")
+			@PulsarListener(topics = TOPIC, id = "foo", ackTimeoutRedeliveryBackoff = "#{@customAckRedeliveryBackoff}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar",
+			@PulsarListener(topics = TOPIC, id = "bar",
 					ackTimeoutRedeliveryBackoff = "#{T(java.lang.String).valueOf('customAckRedeliveryBackoff')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", ackTimeoutRedeliveryBackoff = "customAckRedeliveryBackoff")
+			@PulsarListener(topics = TOPIC, id = "zaa", ackTimeoutRedeliveryBackoff = "customAckRedeliveryBackoff")
 			void listen3(String ignored) {
 			}
 
@@ -366,15 +372,16 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				return CUSTOM_DLP;
 			}
 
-			@PulsarListener(id = "foo", deadLetterPolicy = "#{@customDeadLetterPolicy}")
+			@PulsarListener(topics = TOPIC, id = "foo", deadLetterPolicy = "#{@customDeadLetterPolicy}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar", deadLetterPolicy = "#{T(java.lang.String).valueOf('customDeadLetterPolicy')}")
+			@PulsarListener(topics = TOPIC, id = "bar",
+					deadLetterPolicy = "#{T(java.lang.String).valueOf('customDeadLetterPolicy')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", deadLetterPolicy = "customDeadLetterPolicy")
+			@PulsarListener(topics = TOPIC, id = "zaa", deadLetterPolicy = "customDeadLetterPolicy")
 			void listen3(String ignored) {
 			}
 
@@ -408,16 +415,16 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				return CUSTOM_ERROR_HANDLER;
 			}
 
-			@PulsarListener(id = "foo", pulsarConsumerErrorHandler = "#{@customConsumerErrorHandler}")
+			@PulsarListener(topics = TOPIC, id = "foo", pulsarConsumerErrorHandler = "#{@customConsumerErrorHandler}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar",
+			@PulsarListener(topics = TOPIC, id = "bar",
 					pulsarConsumerErrorHandler = "#{T(java.lang.String).valueOf('customConsumerErrorHandler')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", pulsarConsumerErrorHandler = "customConsumerErrorHandler")
+			@PulsarListener(topics = TOPIC, id = "zaa", pulsarConsumerErrorHandler = "customConsumerErrorHandler")
 			void listen3(String ignored) {
 			}
 
@@ -451,17 +458,18 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				};
 			}
 
-			@PulsarListener(id = "foo", subscriptionName = "fooSub",
+			@PulsarListener(topics = TOPIC, id = "foo", subscriptionName = "fooSub",
 					consumerCustomizer = "#{@customConsumerCustomizer}")
 			void listen1(String ignored) {
 			}
 
-			@PulsarListener(id = "bar", subscriptionName = "barSub",
+			@PulsarListener(topics = TOPIC, id = "bar", subscriptionName = "barSub",
 					consumerCustomizer = "#{T(java.lang.String).valueOf('customConsumerCustomizer')}")
 			void listen2(String ignored) {
 			}
 
-			@PulsarListener(id = "zaa", subscriptionName = "zaaSub", consumerCustomizer = "customConsumerCustomizer")
+			@PulsarListener(topics = TOPIC, id = "zaa", subscriptionName = "zaaSub",
+					consumerCustomizer = "customConsumerCustomizer")
 			void listen3(String ignored) {
 			}
 
