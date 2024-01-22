@@ -73,7 +73,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class IdAttribute {
 
 		@Test
-		void containerIdDerivedFromPulsarListenerIdExpression(@Autowired PulsarListenerEndpointRegistry registry) {
+		void containerIdDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo")).isNotNull();
 			assertThat(registry.getListenerContainer("bar")).isNotNull();
 		}
@@ -99,8 +99,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class ContainerFactoryAttribute {
 
 		@Test
-		void containerFactoryDerivedFromPulsarListenerContainerFactoryExpression(
-				@Autowired PulsarListenerContainerFactory containerFactory) {
+		void containerFactoryDerivedFromAttribute(@Autowired PulsarListenerContainerFactory containerFactory) {
 			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("foo")));
 			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("bar")));
 			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("zaa")));
@@ -144,8 +143,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class AutoStartupAttribute {
 
 		@Test
-		void containerAutoStartupDerivedFromPulsarListenerAutoStartupExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void containerAutoStartupDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo").isAutoStartup()).isTrue();
 			assertThat(registry.getListenerContainer("bar").isAutoStartup()).isFalse();
 			assertThat(registry.getListenerContainer("zaa").isAutoStartup()).isTrue();
@@ -177,8 +175,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class PropertiesAttribute {
 
 		@Test
-		void containerPropsDerivedFromPulsarListenerPropsExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void containerPropsDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo").getContainerProperties().getPulsarConsumerProperties())
 				.containsEntry("subscriptionName", "fooSub");
 			assertThat(registry.getListenerContainer("bar").getContainerProperties().getPulsarConsumerProperties())
@@ -230,8 +227,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class ConcurrencyAttribute {
 
 		@Test
-		void containerAutoStartupDerivedFromPulsarListenerAutoStartupExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void containerAutoStartupDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo")).hasFieldOrPropertyWithValue("concurrency", 2);
 			assertThat(registry.getListenerContainer("bar")).hasFieldOrPropertyWithValue("concurrency", 3);
 			assertThat(registry.getListenerContainer("zaa")).hasFieldOrPropertyWithValue("concurrency", 4);
@@ -264,8 +260,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class NackRedeliveryBackoffAttribute {
 
 		@Test
-		void nackRedeliveryBackoffDerivedFromPulsarListenerNackRedeliveryBackoffExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void nackRedeliveryBackoffDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo")).extracting("negativeAckRedeliveryBackoff")
 				.isSameAs(NackRedeliveryBackoffAttributeConfig.CUSTOM_BACKOFF);
 			assertThat(registry.getListenerContainer("bar")).extracting("negativeAckRedeliveryBackoff")
@@ -308,8 +303,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class AckRedeliveryBackoffAttribute {
 
 		@Test
-		void ackRedeliveryBackoffDerivedFromPulsarListenerAckRedeliveryBackoffExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void ackRedeliveryBackoffDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo")).extracting("ackTimeoutRedeliveryBackoff")
 				.isSameAs(AckRedeliveryBackoffAttributeConfig.CUSTOM_BACKOFF);
 			assertThat(registry.getListenerContainer("bar")).extracting("ackTimeoutRedeliveryBackoff")
@@ -351,8 +345,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class DeadLetterPolicyAttribute {
 
 		@Test
-		void deadLetterPolicyDerivedFromPulsarListenerDeadLetterPolicyExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void deadLetterPolicyDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo")).extracting("deadLetterPolicy")
 				.isSameAs(DeadLetterPolicyAttributeConfig.CUSTOM_DLP);
 			assertThat(registry.getListenerContainer("bar")).extracting("deadLetterPolicy")
@@ -394,8 +387,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class ConsumerErrorHandlerAttribute {
 
 		@Test
-		void consumerErrorHandlerDerivedFromPulsarListenerConsumerErrorHandlerExpression(
-				@Autowired PulsarListenerEndpointRegistry registry) {
+		void consumerErrorHandlerDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
 			assertThat(registry.getListenerContainer("foo")).extracting("pulsarConsumerErrorHandler")
 				.isSameAs(ConsumerErrorHandlerAttributeConfig.CUSTOM_ERROR_HANDLER);
 			assertThat(registry.getListenerContainer("bar")).extracting("pulsarConsumerErrorHandler")
@@ -437,7 +429,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 	class ConsumerCustomizerAttribute {
 
 		@Test
-		void consumerCustomizerDerivedFromPulsarListenerConsumerCustomizerExpression() {
+		void consumerCustomizerDerivedFromAttribute() {
 			assertThat(ConsumerCustomizerAttributeConfig.CUSTOMIZED_CONTAINERS_SUBSCRIPTION_NAMES)
 				.containsExactlyInAnyOrder("fooSub", "barSub", "zaaSub");
 		}

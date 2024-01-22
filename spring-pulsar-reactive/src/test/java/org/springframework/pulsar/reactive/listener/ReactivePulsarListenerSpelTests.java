@@ -70,8 +70,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class IdAttribute {
 
 		@Test
-		void containerIdDerivedFromReactivePulsarListenerIdExpression(
-				@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
+		void containerIdDerivedFromAttribute(@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
 			assertThat(registry.getListenerContainer("foo")).isNotNull();
 			assertThat(registry.getListenerContainer("bar")).isNotNull();
 		}
@@ -97,7 +96,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class ContainerFactoryAttribute {
 
 		@Test
-		void containerFactoryDerivedFromReactivePulsarListenerContainerFactoryExpression(
+		void containerFactoryDerivedFromAttribute(
 				@Autowired ReactivePulsarListenerContainerFactory<String> containerFactory) {
 			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("foo")));
 			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("bar")));
@@ -140,7 +139,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class AutoStartupAttribute {
 
 		@Test
-		void containerAutoStartupDerivedFromReactivePulsarListenerAutoStartupExpression(
+		void containerAutoStartupDerivedFromAttribute(
 				@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
 			assertThat(registry.getListenerContainer("foo").isAutoStartup()).isTrue();
 			assertThat(registry.getListenerContainer("bar").isAutoStartup()).isFalse();
@@ -174,7 +173,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class ConcurrencyAttribute {
 
 		@Test
-		void containerAutoStartupDerivedFromReactivePulsarListenerAutoStartupExpression(
+		void containerAutoStartupDerivedFromAttribute(
 				@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
 			assertThat(registry.getListenerContainer("foo").getContainerProperties().getConcurrency()).isEqualTo(2);
 			assertThat(registry.getListenerContainer("bar").getContainerProperties().getConcurrency()).isEqualTo(3);
@@ -210,7 +209,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class UseKeyOrderedProcessingAttribute {
 
 		@Test
-		void containerUseKeyOrderedProcessingDerivedFromReactivePulsarListenerUseKeyOrderedProcessingExpression(
+		void containerUseKeyOrderedProcessingDerivedFromAttribute(
 				@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
 			assertThat(registry.getListenerContainer("foo").getContainerProperties().isUseKeyOrderedProcessing())
 				.isTrue();
@@ -246,8 +245,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class DeadLetterPolicyAttribute {
 
 		@Test
-		void deadLetterPolicyDerivedFromReactivePulsarListenerDeadLetterPolicyExpression(
-				@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
+		void deadLetterPolicyDerivedFromAttribute(@Autowired ReactivePulsarListenerEndpointRegistry<String> registry) {
 			assertDeadLetterPolicy(registry, "foo");
 			assertDeadLetterPolicy(registry, "bar");
 			assertDeadLetterPolicy(registry, "zaa");
@@ -299,7 +297,7 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 	class ConsumerCustomizerAttribute {
 
 		@Test
-		void consumerCustomizerDerivedFromReactivePulsarListenerConsumerCustomizerExpression() {
+		void consumerCustomizerDerivedFromAttribute() {
 			assertThat(ConsumerCustomizerAttributeConfig.CUSTOMIZED_CONTAINERS_SUBSCRIPTION_NAMES)
 				.containsExactlyInAnyOrder("fooSub", "barSub", "zaaSub");
 		}

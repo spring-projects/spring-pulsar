@@ -53,7 +53,7 @@ class PulsarReaderSpelTests extends PulsarReaderTestsBase {
 	class IdAttribute {
 
 		@Test
-		void containerIdDerivedFromPulsarReaderAttribute(@Autowired PulsarReaderEndpointRegistry registry) {
+		void containerIdDerivedFromAttribute(@Autowired PulsarReaderEndpointRegistry registry) {
 			assertThat(registry.getReaderContainer("foo")).isNotNull();
 			assertThat(registry.getReaderContainer("bar")).isNotNull();
 		}
@@ -79,7 +79,7 @@ class PulsarReaderSpelTests extends PulsarReaderTestsBase {
 	class ReaderCustomizerAttribute {
 
 		@Test
-		void readerCustomizerDerivedFromPulsarReaderAttribute() {
+		void readerCustomizerDerivedFromAttribute() {
 			assertThat(ReaderCustomizerAttributeConfig.CUSTOMIZED_CONTAINERS_TOPIC_NAMES)
 				.containsExactlyInAnyOrder("foo-topic", "bar-topic", "zaa-topic");
 		}
