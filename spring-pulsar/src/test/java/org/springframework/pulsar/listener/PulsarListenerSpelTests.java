@@ -54,6 +54,8 @@ import org.springframework.pulsar.listener.PulsarListenerSpelTests.DeadLetterPol
 import org.springframework.pulsar.listener.PulsarListenerSpelTests.IdAttribute.IdAttributeConfig;
 import org.springframework.pulsar.listener.PulsarListenerSpelTests.NackRedeliveryBackoffAttribute.NackRedeliveryBackoffAttributeConfig;
 import org.springframework.pulsar.listener.PulsarListenerSpelTests.PropertiesAttribute.PropertiesAttributeConfig;
+import org.springframework.pulsar.listener.PulsarListenerSpelTests.SubscriptionNameAttribute.SubscriptionNameAttributeConfig;
+import org.springframework.pulsar.listener.PulsarListenerSpelTests.TopicsAttribute.TopicsAttributeConfig;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -88,6 +90,76 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(topics = TOPIC, id = "#{T(java.lang.String).valueOf('bar')}")
 			void listen2(String ignored) {
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = SubscriptionNameAttributeConfig.class)
+	@TestPropertySource(properties = "foo.subscriptionName = fooSub")
+	class SubscriptionNameAttribute {
+
+		@Test
+		void subscriptionNameDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
+			assertThat(registry.getListenerContainer("foo").getContainerProperties().getSubscriptionName())
+				.isEqualTo("fooSub");
+			assertThat(registry.getListenerContainer("bar").getContainerProperties().getSubscriptionName())
+				.isEqualTo("barSub");
+		}
+
+		@EnablePulsar
+		@Configuration(proxyBeanMethods = false)
+		static class SubscriptionNameAttributeConfig {
+
+			@PulsarListener(topics = TOPIC, id = "foo", subscriptionName = "${foo.subscriptionName}")
+			void listen1(String ignored) {
+			}
+
+			@PulsarListener(topics = TOPIC, id = "bar", subscriptionName = "#{T(java.lang.String).valueOf('barSub')}")
+			void listen2(String ignored) {
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = TopicsAttributeConfig.class)
+	@TestPropertySource(properties = { "foo.topics = foo", "foo.topicPattern = foo*" })
+	class TopicsAttribute {
+
+		@Test
+		void topicsDerivedFromAttribute(@Autowired PulsarListenerEndpointRegistry registry) {
+			assertThat(registry.getListenerContainer("foo").getContainerProperties().getTopics())
+				.containsExactly("foo");
+			assertThat(registry.getListenerContainer("bar").getContainerProperties().getTopics())
+				.containsExactly("bar");
+			assertThat(registry.getListenerContainer("zaa").getContainerProperties().getTopicsPattern())
+				.isEqualTo("foo*");
+			assertThat(registry.getListenerContainer("laa").getContainerProperties().getTopicsPattern())
+				.isEqualTo("bar*");
+		}
+
+		@EnablePulsar
+		@Configuration(proxyBeanMethods = false)
+		static class TopicsAttributeConfig {
+
+			@PulsarListener(topics = "${foo.topics}", id = "foo")
+			void listen1(String ignored) {
+			}
+
+			@PulsarListener(topics = "#{T(java.lang.String).valueOf('bar')}", id = "bar")
+			void listen2(String ignored) {
+			}
+
+			@PulsarListener(topicPattern = "${foo.topicPattern}", id = "zaa")
+			void listen3(String ignored) {
+			}
+
+			@PulsarListener(topicPattern = "#{T(java.lang.String).valueOf('bar*')}", id = "laa")
+			void listen4(String ignored) {
 			}
 
 		}

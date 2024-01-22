@@ -69,7 +69,9 @@ public @interface PulsarListener {
 
 	/**
 	 * Pulsar subscription name associated with this listener.
-	 * @return the {@code subscriptionName} for this Pulsar listener endpoint.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return the subscription name for this listener
 	 */
 	String subscriptionName() default "";
 
@@ -100,13 +102,17 @@ public @interface PulsarListener {
 
 	/**
 	 * Topics to listen to.
-	 * @return a comma separated list of topics to listen from.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return an array of topics to listen to
 	 */
 	String[] topics() default {};
 
 	/**
 	 * Topic patten to listen to.
-	 * @return topic pattern to listen to.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return topic pattern to listen to
 	 */
 	String topicPattern() default "";
 
