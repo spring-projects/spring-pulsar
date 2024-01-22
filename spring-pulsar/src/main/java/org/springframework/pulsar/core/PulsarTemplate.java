@@ -37,6 +37,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
@@ -259,10 +260,15 @@ public class PulsarTemplate<T>
 				ProducerUtils.closeProducerAsync(producer, this.logger);
 			});
 		}
-		catch (RuntimeException ex) {
+		catch (PulsarException ex) {
 			observation.error(ex);
 			observation.stop();
 			throw ex;
+		} catch (Exception ex) {
+			var pulsarException = new PulsarException(PulsarClientException.unwrap(ex));
+			observation.error(pulsarException);
+			observation.stop();
+			throw pulsarException;
 		}
 	}
 
