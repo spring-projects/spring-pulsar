@@ -212,8 +212,10 @@ public class PulsarTemplate<T>
 					producerCustomizer)
 				.get();
 		}
-		catch (Exception ex) {
-			throw new PulsarException(ex);
+		catch (PulsarException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
 		}
 	}
 
@@ -240,9 +242,9 @@ public class PulsarTemplate<T>
 				// propagate props to message
 				senderContext.properties().forEach(messageBuilder::property);
 			}
-			catch (Exception e) {
+			catch (RuntimeException ex) {
 				ProducerUtils.closeProducerAsync(producer, this.logger);
-				throw e;
+				throw ex;
 			}
 			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
 				if (ex == null) {
@@ -285,8 +287,10 @@ public class PulsarTemplate<T>
 		try {
 			return this.producerFactory.createProducer(resolvedSchema, topic, encryptionKeys, customizers);
 		}
-		catch (PulsarClientException ex) {
-			throw new PulsarException(ex);
+		catch (PulsarException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
 		}
 	}
 
