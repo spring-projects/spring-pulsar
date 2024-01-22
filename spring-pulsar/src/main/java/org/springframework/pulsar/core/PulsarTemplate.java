@@ -215,7 +215,8 @@ public class PulsarTemplate<T>
 		}
 		catch (PulsarException ex) {
 			throw ex;
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new PulsarException(PulsarClientException.unwrap(ex));
 		}
 	}
@@ -264,7 +265,8 @@ public class PulsarTemplate<T>
 			observation.error(ex);
 			observation.stop();
 			throw ex;
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			var pulsarException = new PulsarException(PulsarClientException.unwrap(ex));
 			observation.error(pulsarException);
 			observation.stop();
@@ -295,7 +297,8 @@ public class PulsarTemplate<T>
 		}
 		catch (PulsarException ex) {
 			throw ex;
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new PulsarException(PulsarClientException.unwrap(ex));
 		}
 	}

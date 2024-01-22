@@ -31,6 +31,7 @@ import org.apache.pulsar.client.impl.ProducerBuilderImpl;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -102,21 +103,45 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	@Override
-	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) throws PulsarClientException {
-		return doCreateProducer(schema, topic, null, null);
+	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) {
+		try {
+			return doCreateProducer(schema, topic, null, null);
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable ProducerBuilderCustomizer<T> customizer) throws PulsarClientException {
-		return doCreateProducer(schema, topic, null, customizer != null ? Collections.singletonList(customizer) : null);
+			@Nullable ProducerBuilderCustomizer<T> customizer) {
+		try {
+			return doCreateProducer(schema, topic, null,
+					customizer != null ? Collections.singletonList(customizer) : null);
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
-			throws PulsarClientException {
-		return doCreateProducer(schema, topic, encryptionKeys, customizers);
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
+		try {
+			return doCreateProducer(schema, topic, encryptionKeys, customizers);
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	/**

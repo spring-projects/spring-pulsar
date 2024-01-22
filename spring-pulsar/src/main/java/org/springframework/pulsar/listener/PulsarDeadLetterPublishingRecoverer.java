@@ -20,7 +20,6 @@ import java.util.function.BiFunction;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.PulsarClientException;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.PulsarException;

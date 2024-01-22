@@ -53,6 +53,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.ConsumerBuilderConfigurationUtil;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -291,8 +292,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					updateSubscriptionTypeFromConsumer(this.consumer);
 				}
 			}
-			catch (PulsarClientException e) {
-				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar client exceptions.");
+			catch (PulsarException e) {
+				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar exception.");
 			}
 		}
 

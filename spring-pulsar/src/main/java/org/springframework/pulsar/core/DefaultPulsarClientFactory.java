@@ -22,6 +22,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.util.Assert;
 
 /**
@@ -57,14 +58,22 @@ public class DefaultPulsarClientFactory implements PulsarClientFactory, Environm
 	}
 
 	@Override
-	public PulsarClient createClient() throws PulsarClientException {
+	public PulsarClient createClient() {
 		if (this.useRestartableClient) {
 			this.logger.info(() -> "Using restartable client");
 			return new PulsarClientProxy(this.customizer);
 		}
 		var clientBuilder = PulsarClient.builder();
 		this.customizer.customize(clientBuilder);
-		return clientBuilder.build();
+		try {
+			return clientBuilder.build();
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	@Override

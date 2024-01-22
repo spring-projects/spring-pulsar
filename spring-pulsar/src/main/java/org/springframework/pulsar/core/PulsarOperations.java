@@ -32,6 +32,7 @@ import org.springframework.pulsar.PulsarException;
  * @param <T> the message payload type
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Jonas Geiregat
  */
 public interface PulsarOperations<T> {
 
@@ -73,8 +74,7 @@ public interface PulsarOperations<T> {
 	 * @return the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	MessageId send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema)
-			throws PulsarException;
+	MessageId send(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema) throws PulsarException;
 
 	/**
 	 * Sends a message to the default topic in a non-blocking manner.
@@ -92,8 +92,7 @@ public interface PulsarOperations<T> {
 	 * @return a future that holds the id assigned by the broker to the published message
 	 * @throws PulsarClientException if an error occurs
 	 */
-	CompletableFuture<MessageId> sendAsync(@Nullable T message, @Nullable Schema<T> schema)
-			throws PulsarException;
+	CompletableFuture<MessageId> sendAsync(@Nullable T message, @Nullable Schema<T> schema) throws PulsarException;
 
 	/**
 	 * Sends a message to the specified topic in a non-blocking manner.

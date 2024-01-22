@@ -32,6 +32,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.ConsumerBuilderImpl;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -42,6 +43,7 @@ import org.springframework.util.CollectionUtils;
  * @author Alexander Preuß
  * @author Christophe Bornet
  * @author Chris Bono
+ * @author Jonas Geiregat
  */
 public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T> {
 
@@ -64,15 +66,23 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 
 	@Override
 	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
-			@Nullable String subscriptionName, ConsumerBuilderCustomizer<T> customizer) throws PulsarClientException {
-		return createConsumer(schema, topics, subscriptionName, null,
-				customizer != null ? Collections.singletonList(customizer) : null);
+			@Nullable String subscriptionName, ConsumerBuilderCustomizer<T> customizer) {
+		try {
+			return createConsumer(schema, topics, subscriptionName, null,
+					customizer != null ? Collections.singletonList(customizer) : null);
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	@Override
 	public Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics,
 			@Nullable String subscriptionName, @Nullable Map<String, String> metadataProperties,
-			@Nullable List<ConsumerBuilderCustomizer<T>> customizers) throws PulsarClientException {
+			@Nullable List<ConsumerBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 
@@ -92,7 +102,15 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
-		return consumerBuilder.subscribe();
+		try {
+			return consumerBuilder.subscribe();
+		}
+		catch (PulsarException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new PulsarException(PulsarClientException.unwrap(ex));
+		}
 	}
 
 	private void replaceTopicsOnBuilder(ConsumerBuilder<T> builder, Collection<String> topics) {

@@ -52,7 +52,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.util.function.ThrowingConsumer;
 
