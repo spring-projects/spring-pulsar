@@ -1,4 +1,4 @@
-= Spring for Apache Pulsar
+= Spring for Apache Pulsar image:https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A["Revved up by Develocity", link="https://ge.spring.io/scans?search.rootProjectNames=spring-pulsar-dist"]
 :docs: https://docs.spring.io/spring-pulsar/reference
 :github: https://github.com/spring-projects/spring-pulsar
 
