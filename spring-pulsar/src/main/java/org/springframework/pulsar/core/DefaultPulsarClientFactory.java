@@ -68,11 +68,8 @@ public class DefaultPulsarClientFactory implements PulsarClientFactory, Environm
 		try {
 			return clientBuilder.build();
 		}
-		catch (PulsarException ex) {
-			throw ex;
-		}
-		catch (Exception ex) {
-			throw new PulsarException(PulsarClientException.unwrap(ex));
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
 		}
 	}
 

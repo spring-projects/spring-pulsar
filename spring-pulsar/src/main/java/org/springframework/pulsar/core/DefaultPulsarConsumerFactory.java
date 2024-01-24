@@ -105,11 +105,8 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		try {
 			return consumerBuilder.subscribe();
 		}
-		catch (PulsarException ex) {
-			throw ex;
-		}
-		catch (Exception ex) {
-			throw new PulsarException(PulsarClientException.unwrap(ex));
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
 		}
 	}
 

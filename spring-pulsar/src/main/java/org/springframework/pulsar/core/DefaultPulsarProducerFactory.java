@@ -104,15 +104,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic) {
-		try {
-			return doCreateProducer(schema, topic, null, null);
-		}
-		catch (PulsarException ex) {
-			throw ex;
-		}
-		catch (Exception ex) {
-			throw new PulsarException(PulsarClientException.unwrap(ex));
-		}
+		return doCreateProducer(schema, topic, null, null);
 	}
 
 	@Override
@@ -159,8 +151,7 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	 * @throws PulsarClientException if any error occurs
 	 */
 	protected Producer<T> doCreateProducer(Schema<T> schema, @Nullable String topic,
-			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers)
-			throws PulsarClientException {
+			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		var resolvedTopic = resolveTopicName(topic);
 		this.logger.trace(() -> "Creating producer for '%s' topic".formatted(resolvedTopic));
@@ -181,7 +172,12 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		}
 		producerBuilder.topic(resolvedTopic);
 
-		return producerBuilder.create();
+		try {
+			return producerBuilder.create();
+		}
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
+		}
 	}
 
 	protected String resolveTopicName(String userSpecifiedTopic) {

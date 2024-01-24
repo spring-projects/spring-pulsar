@@ -261,16 +261,10 @@ public class PulsarTemplate<T>
 				ProducerUtils.closeProducerAsync(producer, this.logger);
 			});
 		}
-		catch (PulsarException ex) {
+		catch (RuntimeException ex) {
 			observation.error(ex);
 			observation.stop();
 			throw ex;
-		}
-		catch (Exception ex) {
-			var pulsarException = new PulsarException(PulsarClientException.unwrap(ex));
-			observation.error(pulsarException);
-			observation.stop();
-			throw pulsarException;
 		}
 	}
 
@@ -292,15 +286,7 @@ public class PulsarTemplate<T>
 		if (producerCustomizer != null) {
 			customizers.add(producerCustomizer);
 		}
-		try {
-			return this.producerFactory.createProducer(resolvedSchema, topic, encryptionKeys, customizers);
-		}
-		catch (PulsarException ex) {
-			throw ex;
-		}
-		catch (Exception ex) {
-			throw new PulsarException(PulsarClientException.unwrap(ex));
-		}
+		return this.producerFactory.createProducer(resolvedSchema, topic, encryptionKeys, customizers);
 	}
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {

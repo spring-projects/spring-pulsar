@@ -34,8 +34,8 @@ public class PulsarException extends NestedRuntimeException {
 		super(msg, cause);
 	}
 
-	public PulsarException(Exception exception) {
-		super(exception.getMessage(), exception.getCause());
+	public PulsarException(Throwable cause) {
+		this(cause.getMessage(), cause);
 	}
 
 }

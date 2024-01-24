@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
@@ -54,7 +55,8 @@ public interface PulsarConsumerFactory<T> {
 	 * that the customizer is applied last and has the potential for overriding any
 	 * specified parameters or default properties.
 	 * @return the consumer
-	 * @throws PulsarException if any error occurs
+	 * @throws PulsarException if any {@link PulsarClientException} occurs communicating
+	 * with Pulsar
 	 */
 	Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics, @Nullable String subscriptionName,
 			ConsumerBuilderCustomizer<T> customizer);
@@ -80,7 +82,8 @@ public interface PulsarConsumerFactory<T> {
 	 * builder. Note that the customizers are applied last and have the potential for
 	 * overriding any specified parameters or default properties.
 	 * @return the consumer
-	 * @throws PulsarException if any error occurs
+	 * @throws PulsarException if any {@link PulsarClientException} occurs communicating
+	 * with Pulsar
 	 */
 	Consumer<T> createConsumer(Schema<T> schema, @Nullable Collection<String> topics, @Nullable String subscriptionName,
 			@Nullable Map<String, String> metadataProperties, @Nullable List<ConsumerBuilderCustomizer<T>> customizers);

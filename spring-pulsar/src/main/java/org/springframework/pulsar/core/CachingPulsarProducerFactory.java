@@ -108,15 +108,10 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	private Producer<T> createCacheableProducer(Schema<T> schema, String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
-		try {
 			var producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
 			return new ProducerWithCloseCallback<>(producer,
 					(p) -> this.logger.trace(() -> "Client closed producer %s but will skip actual closing"
 						.formatted(ProducerUtils.formatProducer(producer))));
-		}
-		catch (PulsarClientException ex) {
-			throw new RuntimeException(ex);
-		}
 	}
 
 	/**
