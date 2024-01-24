@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public @interface PulsarListener {
 	 * <p>
 	 * If none is specified an auto-generated id is used.
 	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported.
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
 	 * @return the {@code id} for the container managing for this endpoint.
 	 * @see PulsarListenerEndpointRegistry#getListenerContainer(String)
 	 */
@@ -69,7 +69,9 @@ public @interface PulsarListener {
 
 	/**
 	 * Pulsar subscription name associated with this listener.
-	 * @return the {@code subscriptionName} for this Pulsar listener endpoint.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return the subscription name for this listener
 	 */
 	String subscriptionName() default "";
 
@@ -100,24 +102,28 @@ public @interface PulsarListener {
 
 	/**
 	 * Topics to listen to.
-	 * @return a comma separated list of topics to listen from.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return an array of topics to listen to
 	 */
 	String[] topics() default {};
 
 	/**
 	 * Topic patten to listen to.
-	 * @return topic pattern to listen to.
+	 * <p>
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
+	 * @return topic pattern to listen to
 	 */
 	String topicPattern() default "";
 
 	/**
-	 * Set to true or false, to override the default setting in the container factory. May
-	 * be a property placeholder or SpEL expression that evaluates to a {@link Boolean} or
-	 * a {@link String}, in which case the {@link Boolean#parseBoolean(String)} is used to
-	 * obtain the value.
+	 * Whether to automatically start the container for this listener.
 	 * <p>
-	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
-	 * @return true to auto start, false to not auto start.
+	 * The value can be a literal string representation of boolean (e.g. {@code 'true'})
+	 * or a property placeholder {@code ${...}} that resolves to a literal. SpEL
+	 * {@code #{...}} expressions that evaluate to a {@link Boolean} or a literal are
+	 * supported.
+	 * @return whether to automatically start the container for this listener
 	 */
 	String autoStartup() default "";
 
@@ -153,7 +159,7 @@ public @interface PulsarListener {
 	 * </ul>
 	 * {@code group.id} and {@code client.id} are ignored.
 	 * <p>
-	 * SpEL {@code #{...}} and property place holders {@code ${...}} are supported. SpEL
+	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported. SpEL
 	 * expressions must resolve to a {@link String}, a @{link String[]} or a
 	 * {@code Collection<String>} where each member of the array or collection is a
 	 * property name + value with the above formats.
@@ -162,17 +168,18 @@ public @interface PulsarListener {
 	String[] properties() default {};
 
 	/**
-	 * Override the container factory's {@code concurrency} setting for this listener. May
-	 * be a property placeholder or SpEL expression that evaluates to a {@link Number}, in
-	 * which case {@link Number#intValue()} is used to obtain the value.
+	 * Override the container factory's {@code concurrency} setting for this listener.
 	 * <p>
-	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
-	 * @return the concurrency.
+	 * The value can be a literal string representation of {@link Number} (e.g.
+	 * {@code '3'}) or a property placeholder {@code ${...}} that resolves to a literal.
+	 * SpEL {@code #{...}} expressions that evaluate to a {@link Number} or a literal are
+	 * supported.
+	 * @return the concurrency for this listener
 	 */
 	String concurrency() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
+	 * The bean name or a SpEL expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
 	 * control the redelivery backoff of messages after a negative ack.
 	 * @return the bean name or empty string to not set the backoff.
@@ -180,7 +187,7 @@ public @interface PulsarListener {
 	String negativeAckRedeliveryBackoff() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
+	 * The bean name or a SpEL expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.RedeliveryBackoff} to use on the consumer to
 	 * control the redelivery backoff of messages after an acknowledgment timeout.
 	 * @return the bean name or empty string to not set the backoff.
@@ -188,7 +195,7 @@ public @interface PulsarListener {
 	String ackTimeoutRedeliveryBackoff() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
+	 * The bean name or a SpEL expression that resolves to a
 	 * {@link org.apache.pulsar.client.api.DeadLetterPolicy} to use on the consumer to
 	 * configure a dead letter policy for message redelivery.
 	 * @return the bean name or empty string to not set any dead letter policy.
@@ -202,7 +209,7 @@ public @interface PulsarListener {
 	AckMode ackMode() default AckMode.BATCH;
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
+	 * The bean name or a SpEL expression that resolves to a
 	 * {@link org.springframework.pulsar.listener.PulsarConsumerErrorHandler} which is
 	 * used as a Spring provided mechanism to handle errors from processing the message.
 	 * @return the bean name for the consumer error handler or an empty string.
@@ -210,7 +217,7 @@ public @interface PulsarListener {
 	String pulsarConsumerErrorHandler() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
+	 * The bean name or a SpEL expression that resolves to a
 	 * {@link PulsarListenerConsumerBuilderCustomizer} to use to configure the underlying
 	 * consumer.
 	 * @return the bean name or SpEL expression to the customizer or an empty string to

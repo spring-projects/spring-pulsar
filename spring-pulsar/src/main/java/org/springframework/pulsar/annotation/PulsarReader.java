@@ -27,7 +27,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
-import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
@@ -36,12 +35,12 @@ import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 public @interface PulsarReader {
 
 	/**
-	 * The unique identifier of the container for this listener.
+	 * The unique identifier of the container for this reader.
 	 * <p>
 	 * If none is specified an auto-generated id is used.
 	 * <p>
 	 * SpEL {@code #{...}} and property placeholders {@code ${...}} are supported.
-	 * @return the {@code id} for the container managing for this endpoint.
+	 * @return the id of the container for this reader
 	 * @see PulsarReaderEndpointRegistry#getReaderContainer(String)
 	 */
 	String id() default "";
@@ -71,8 +70,8 @@ public @interface PulsarReader {
 	String autoStartup() default "";
 
 	/**
-	 * The bean name or a 'SpEL' expression that resolves to a
-	 * {@link ReaderBuilderCustomizer} to use to configure the reader.
+	 * The bean name or a SpEL expression that resolves to a
+	 * {@link PulsarReaderReaderBuilderCustomizer} to use to configure the reader.
 	 * @return the bean name or empty string to not configure the reader.
 	 */
 	String readerCustomizer() default "";
