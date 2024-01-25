@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,8 +154,9 @@ public class PulsarReaderStartMessageIdTests extends PulsarReaderTestsBase {
 					for (int i = 0; i < 10; i++) {
 						messageIds[i] = pulsarTemplate.send("with-customizer-reader-topic", "hello john doe-");
 					}
-					cb.startMessageId(messageIds[4]); // the first message read is the one
-														// after this message id.
+					// the first message read is the one after this message id
+					cb.startMessageId(messageIds[4]);
+
 				};
 			}
 
