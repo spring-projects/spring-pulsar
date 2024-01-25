@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,10 +108,10 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 	private Producer<T> createCacheableProducer(Schema<T> schema, String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
-			var producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
-			return new ProducerWithCloseCallback<>(producer,
-					(p) -> this.logger.trace(() -> "Client closed producer %s but will skip actual closing"
-						.formatted(ProducerUtils.formatProducer(producer))));
+		var producer = super.doCreateProducer(schema, topic, encryptionKeys, customizers);
+		return new ProducerWithCloseCallback<>(producer,
+				(p) -> this.logger.trace(() -> "Client closed producer %s but will skip actual closing"
+					.formatted(ProducerUtils.formatProducer(producer))));
 	}
 
 	/**

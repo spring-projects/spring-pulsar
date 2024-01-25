@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,30 +110,13 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable ProducerBuilderCustomizer<T> customizer) {
-		try {
-			return doCreateProducer(schema, topic, null,
-					customizer != null ? Collections.singletonList(customizer) : null);
-		}
-		catch (PulsarException ex) {
-			throw ex;
-		}
-		catch (Exception ex) {
-			throw new PulsarException(PulsarClientException.unwrap(ex));
-		}
+		return doCreateProducer(schema, topic, null, customizer != null ? Collections.singletonList(customizer) : null);
 	}
 
 	@Override
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
-		try {
-			return doCreateProducer(schema, topic, encryptionKeys, customizers);
-		}
-		catch (PulsarException ex) {
-			throw ex;
-		}
-		catch (Exception ex) {
-			throw new PulsarException(PulsarClientException.unwrap(ex));
-		}
+		return doCreateProducer(schema, topic, encryptionKeys, customizers);
 	}
 
 	/**

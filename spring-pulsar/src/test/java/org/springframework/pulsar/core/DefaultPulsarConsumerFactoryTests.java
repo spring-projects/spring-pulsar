@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
@@ -86,7 +87,8 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		@Test
 		void withSchemaOnly() {
 			assertThatThrownBy(() -> consumerFactory.createConsumer(SCHEMA, null, null, null, null))
-				.isInstanceOf(InvalidConfigurationException.class)
+				.isInstanceOf(PulsarException.class)
+				.hasCauseInstanceOf(InvalidConfigurationException.class)
 				.hasMessageContaining("Topic name must be set on the consumer builder");
 		}
 
@@ -95,7 +97,8 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		void withSchemaAndTopics() {
 			assertThatThrownBy(
 					() -> consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic0"), null, null, null))
-				.isInstanceOf(InvalidConfigurationException.class)
+				.isInstanceOf(PulsarException.class)
+				.hasCauseInstanceOf(InvalidConfigurationException.class)
 				.hasMessageContaining("Subscription name must be set on the consumer builder");
 		}
 
