@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'main'
-      - '0.2.x'
     paths-ignore:
       - '.github/**'
   schedule:
