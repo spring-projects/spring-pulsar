@@ -3,8 +3,7 @@ name: CI PRs
 on:
   pull_request:
     branches:
-      - 'main'
-      - '0.2.x'
+      - '1.0.x'
     paths-ignore:
       - '.github/**'
 
@@ -30,7 +29,7 @@ jobs:
           bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
           echo "boot_version=$bootVersion" >>$GITHUB_OUTPUT
   build_and_verify:
-    name: Build and Verify
+    name: Build and Verify (1.0.x)
     needs: [prerequisites]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs

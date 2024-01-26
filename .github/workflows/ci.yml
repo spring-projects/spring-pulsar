@@ -3,12 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
-      - '0.2.x'
+      - '1.0.x'
     paths-ignore:
       - '.github/**'
-  schedule:
-    - cron: '0 10 * * *' # Once per day at 10am UTC
   workflow_dispatch:
 
 env:
@@ -43,7 +40,7 @@ jobs:
           bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
           echo "boot_version=$bootVersion" >>$GITHUB_OUTPUT
   build_jdk_17:
-    name: Build (JDK 17)
+    name: Build (1.0.x w/ JDK 17)
     needs: [prerequisites]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
@@ -99,7 +96,7 @@ jobs:
       config-path: .github/trivy-to-sarif.yaml
       upload-results: true
   deploy_artifacts:
-    name: Deploy Artifacts
+    name: Deploy Artifacts (1.0.x)
     needs: [build_jdk_17, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
