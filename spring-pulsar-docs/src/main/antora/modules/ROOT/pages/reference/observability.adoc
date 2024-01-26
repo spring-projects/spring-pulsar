@@ -2,6 +2,7 @@
 = Observability
 
 :github: https://github.com/spring-projects/spring-pulsar
+:micrometer-docs: https://docs.micrometer.io/
 
 Spring for Apache Pulsar includes a way to manage observability through https://micrometer.io/[Micrometer].
 
@@ -23,10 +24,10 @@ include::partial$_metrics.adoc[]
 
 include::partial$_spans.adoc[]
 
-See https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
+See {micrometer-docs}/tracing/reference[Micrometer Tracing] for more information.
 
 === Manual Configuration without Spring Boot
-If you do not use Spring Boot, you need to configure and provide an `ObservationRegistry` as well as Micrometer Tracing. See https://micrometer.io/docs/tracing[Micrometer Tracing] for more information.
+If you do not use Spring Boot, you need to configure and provide an `ObservationRegistry` as well as Micrometer Tracing. See {micrometer-docs}/tracing/reference[Micrometer Tracing] for more information.
 
 === Auto-Configuration with Spring Boot
 If you use Spring Boot, the Spring Boot Actuator auto-configures an instance of `ObservationRegistry` for you.
