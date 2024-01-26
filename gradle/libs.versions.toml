@@ -2,53 +2,49 @@
 # product
 brave = "5.16.0"
 caffeine = "3.1.8"
-commons-codec = "1.16.0"
-jackson = "2.15.3"
+jackson = "2.16.1"
 jsr305 = "3.0.2"
 logback = "1.4.14"
-log4j = "2.17.1"
-micrometer = "1.12.2"
+micrometer = "1.13.0-SNAPSHOT"
 micrometer-docs-gen = "1.0.2"
-micrometer-tracing = "1.2.2"
-protobuf = "3.21.5"
+micrometer-tracing = "1.3.0-SNAPSHOT"
+protobuf = "3.25.2"
 pulsar = "3.1.2"
 pulsar-reactive = "0.5.2"
 reactor = "2023.0.2"
 spring = "6.1.3"
 # tests
-assertj = "3.25.1"
+assertj = "3.25.2"
 awaitility = "4.2.0"
 jacoco = "0.8.9"
-json-path = "2.8.0"
+json-path = "2.9.0"
 junit = "5.10.1"
 hamcrest = "2.2"
-mockito = "5.9.0"
+mockito = "5.10.0"
 spring-dep-mgmt = "1.1.4"
 spring-boot = "3.3.0-SNAPSHOT"
 spring-boot-for-docs = "3.3.0-SNAPSHOT"
 spring-cloud-stream = "4.1.0"
 spring-retry = "2.0.5"
 system-lambda = "1.2.1"
-testcontainers = "1.19.3"
+testcontainers = "1.19.4"
 # plugins
 antora = "1.0.0"
 antora-yml = "0.0.1"
 download = "5.5.0"
 grgit = "5.2.1"
 nohttp = "0.0.11"
-shadow = "7.1.2"
-versions = "0.50.0"
+shadow = "8.1.1"
+versions = "0.51.0"
 version-catalog-update = "0.8.3"
 
 [libraries]
 # Product libs
 brave-bom = { module = "io.zipkin.brave:brave-bom", version.ref = "brave" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
-commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer" }
 micrometer-docs-gen = { module = "io.micrometer:micrometer-docs-generator", version.ref = "micrometer-docs-gen" }
 micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
