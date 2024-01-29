@@ -58,7 +58,7 @@ class DefaultTopicResolverTests {
 	@MethodSource("resolveNoMessageInfoProvider")
 	void resolveNoMessageInfo(String testName, @Nullable String userTopic, @Nullable String defaultTopic,
 			@Nullable String expectedTopic) {
-		assertThat(resolver.resolveTopic(userTopic, () -> defaultTopic).get().orElse(null)).isEqualTo(expectedTopic);
+		assertThat(resolver.resolveTopic(userTopic, () -> defaultTopic).value().orElse(null)).isEqualTo(expectedTopic);
 	}
 
 	static Stream<Arguments> resolveNoMessageInfoProvider() {
@@ -76,7 +76,7 @@ class DefaultTopicResolverTests {
 	@MethodSource("resolveByMessageInstanceProvider")
 	<T> void resolveByMessageInstance(String testName, @Nullable String userTopic, T message,
 			@Nullable String defaultTopic, @Nullable String expectedTopic) {
-		assertThat(resolver.resolveTopic(userTopic, message, () -> defaultTopic).get().orElse(null))
+		assertThat(resolver.resolveTopic(userTopic, message, () -> defaultTopic).value().orElse(null))
 			.isEqualTo(expectedTopic);
 	}
 
@@ -99,7 +99,7 @@ class DefaultTopicResolverTests {
 	@MethodSource("resolveByMessageTypeProvider")
 	void resolveByMessageType(String testName, @Nullable String userTopic, Class<?> messageType,
 			@Nullable String defaultTopic, @Nullable String expectedTopic) {
-		assertThat(resolver.resolveTopic(userTopic, messageType, () -> defaultTopic).get().orElse(null))
+		assertThat(resolver.resolveTopic(userTopic, messageType, () -> defaultTopic).value().orElse(null))
 			.isEqualTo(expectedTopic);
 	}
 
