@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2023 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.KeyValueSchema;
+import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 import org.apache.pulsar.client.impl.schema.ProtobufSchema;
@@ -255,6 +256,17 @@ class DefaultSchemaResolverTests {
 				}));
 		}
 
+		@Test
+		void autoConsumeSchema() {
+			assertThat(resolver.resolveSchema(SchemaType.AUTO_CONSUME, ResolvableType.forType(Foo.class)).orElseThrow())
+				.isInstanceOf(AutoConsumeSchema.class);
+			assertThat(
+					resolver.resolveSchema(SchemaType.AUTO_CONSUME, ResolvableType.forType(String.class)).orElseThrow())
+				.isInstanceOf(AutoConsumeSchema.class);
+			assertThat(resolver.resolveSchema(SchemaType.AUTO_CONSUME, null).orElseThrow())
+				.isInstanceOf(AutoConsumeSchema.class);
+		}
+
 		@ParameterizedTest
 		@EnumSource(value = SchemaType.class, names = { "JSON", "AVRO", "PROTOBUF", "KEY_VALUE" })
 		void structSchemasRequireMessageType(SchemaType schemaType) {
@@ -264,7 +276,7 @@ class DefaultSchemaResolverTests {
 		}
 
 		@ParameterizedTest
-		@EnumSource(value = SchemaType.class, names = { "PROTOBUF_NATIVE", "AUTO", "AUTO_CONSUME", "AUTO_PUBLISH" })
+		@EnumSource(value = SchemaType.class, names = { "PROTOBUF_NATIVE", "AUTO", "AUTO_PUBLISH" })
 		void unsupportedSchemaTypes(SchemaType unsupportedType) {
 			assertThatExceptionOfType(IllegalArgumentException.class)
 				.isThrownBy(() -> resolver.resolveSchema(unsupportedType, null).orElseThrow())
