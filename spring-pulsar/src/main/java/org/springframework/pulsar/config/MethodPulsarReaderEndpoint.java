@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
@@ -55,6 +56,8 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  */
 public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<V> {
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private Object bean;
 
@@ -114,21 +117,30 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 		DefaultPulsarMessageReaderContainer<?> containerInstance = (DefaultPulsarMessageReaderContainer<?>) container;
 		PulsarReaderContainerProperties pulsarContainerProperties = containerInstance.getContainerProperties();
+
+		// Resolve the schema using the reader schema type
 		SchemaResolver schemaResolver = pulsarContainerProperties.getSchemaResolver();
 		SchemaType schemaType = pulsarContainerProperties.getSchemaType();
 		ResolvableType messageType = resolvableType(messageParameter);
-		schemaResolver.resolveSchema(schemaType, messageType).ifResolved(pulsarContainerProperties::setSchema);
+		schemaResolver.resolveSchema(schemaType, messageType)
+			.ifResolvedOrElse(pulsarContainerProperties::setSchema,
+					(ex) -> this.logger
+						.warn(() -> "Failed to resolve schema for type %s - will default to BYTES (due to: %s)"
+							.formatted(schemaType, ex.getMessage())));
 
-		// Make sure the schemaType is updated to match the current schema
+		// Attempt to make sure the schemaType is updated to match the resolved schema.
+		// This can occur when the resolver returns a schema that is not necessarily of
+		// the same type as the input scheme type (e.g. SchemaType.NONE uses the message
+		// type to determine the schema.
 		if (pulsarContainerProperties.getSchema() != null) {
-			SchemaType type = pulsarContainerProperties.getSchema().getSchemaInfo().getType();
-			pulsarContainerProperties.setSchemaType(type);
+			var schemaInfo = pulsarContainerProperties.getSchema().getSchemaInfo();
+			if (schemaInfo != null) {
+				pulsarContainerProperties.setSchemaType(schemaInfo.getType());
+			}
 		}
 
 		// TODO: If no topic info is set on endpoint attempt to resolve via message type
-
 		container.setReaderCustomizer(this.readerBuilderCustomizer);
-
 		return readerListener;
 	}
 
