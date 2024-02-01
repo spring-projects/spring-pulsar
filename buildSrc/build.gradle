@@ -39,6 +39,7 @@ dependencies {
 	implementation localGroovy()
 	implementation buildLibs.asciidoc.gradle.jvm
 	implementation buildLibs.commons.codec
+	implementation buildLibs.commons.compress
 	implementation buildLibs.groovy.all
 	implementation buildLibs.jfrog.build.extractor.gradle
 	implementation buildLibs.jackson.databind

@@ -1,6 +1,7 @@
 [versions]
 asciidoc-gradle = "3.3.2"
 commons-codec = "1.16.0"
+commons-compress = "1.25.0"
 groovy = "2.5.17"
 jackson = "2.15.3"
 javaformat = "0.0.41"
@@ -17,6 +18,7 @@ version-catalog-update = "0.8.1"
 [libraries]
 asciidoc-gradle-jvm = { module = "org.asciidoctor:asciidoctor-gradle-jvm", version.ref = "asciidoc-gradle" }
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
 groovy-all = { module = "org.codehaus.groovy:groovy-all", version.ref = "groovy" }
 jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
