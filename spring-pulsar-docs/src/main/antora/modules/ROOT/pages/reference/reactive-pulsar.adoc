@@ -164,10 +164,11 @@ Likewise, when the `subscriptionName` is not provided on the `@ReactivePulsarLis
 
 In the `ReactivePulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
 Internally, the framework relies on Pulsar's schema mechanism to convert the data to the required type.
-The framework detects that you expect the `String` type and then infers the schema type based on that information.
-Then it provides that schema to the consumer.
-For all the primitive types in Java, the framework does this inference.
-For any complex types (such as JSON, AVRO, and others), the framework cannot do this inference and the user needs to provide the schema type on the annotation using the `schemaType` property.
+
+The framework detects that you expect the `String` type and then infers the schema type based on that information and provides that schema to the consumer.
+The framework does this inference for all primitive types.
+For all non-primitive types the default schema is assumed to be JSON.
+If a complex type is using anything besides JSON (such as AVRO or KEY_VALUE) you must provide the schema type on the annotation using the `schemaType` property.
 
 This example shows how we can consume complex types from a topic:
 [source, java]
@@ -178,9 +179,6 @@ Mono<Void> listen(Foo message) {
     return Mono.empty();
 }
 ----
-
-Note the addition of a `schemaType` property on `ReactivePulsarListener`.
-That is because the library is not capable of inferring the schema type from the provided type: `Foo`. We must tell the framework what schema to use.
 
 Let us look at a few more ways we can consume.
 
@@ -249,6 +247,25 @@ Spring Boot provides this consumer factory which you can further configure by sp
 TIP: The `spring.pulsar.consumer.subscription.name` property is ignored and is instead generated when not specified on the annotation.
 
 TIP: The `spring.pulsar.consumer.subscription-type` property is ignored and is instead taken from the value on the annotation. However, you can set the `subscriptionType = {}` on the annotation to instead use the property value as the default.
+
+==== Generic records with AUTO_CONSUME
+If there is no chance to know the type of schema of a Pulsar topic in advance, you can use the `AUTO_CONSUME` schema type to consume generic records.
+In this case, the topic deserializes messages into `GenericRecord` objects using the schema info associated with the topic.
+
+To consume generic records set the `schemaType = SchemaType.AUTO_CONSUME` on your `@ReactivePulsarListener` and use a Pulsar message of type `GenericRecord` as the message parameter as shown below.
+
+[source, java]
+----
+@ReactivePulsarListener(topics = "my-generic-topic", schemaType = SchemaType.AUTO_CONSUME)
+Mono<Void> listen(org.apache.pulsar.client.api.Message<GenericRecord> message) {
+    GenericRecord record = message.getValue();
+    record.getFields().forEach((f) ->
+            System.out.printf("%s = %s%n", f.getName(), record.getField(f)));
+	return Mono.empty();
+}
+----
+
+TIP: The `GenericRecord` API allows access to the fields and their associated values
 
 
 [[reactive-consumer-customizer]]
