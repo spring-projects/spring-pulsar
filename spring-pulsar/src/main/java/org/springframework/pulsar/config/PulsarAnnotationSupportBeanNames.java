@@ -54,9 +54,4 @@ public abstract class PulsarAnnotationSupportBeanNames {
 	 */
 	public static final String PULSAR_READER_ENDPOINT_REGISTRY_BEAN_NAME = "org.springframework.pulsar.config.internalPulsarReaderEndpointRegistry";
 
-	/**
-	 * The bean name of the internally managed PulsarMessage info registrar.
-	 */
-	public static final String PULSAR_MESSAGE_REGISTRAR_BEAN_NAME = "org.springframework.pulsar.config.PulsarMessageAnnotationRegistrar";
-
 }

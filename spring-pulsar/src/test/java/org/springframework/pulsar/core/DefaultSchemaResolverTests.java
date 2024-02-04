@@ -49,6 +49,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.core.ResolvableType;
+import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.pulsar.listener.Proto;
 import org.springframework.pulsar.listener.Proto.Person;
 
@@ -201,6 +202,11 @@ class DefaultSchemaResolverTests {
 			assertThat(resolver.resolveSchema(Bar.class, true).orElseThrow()).isEqualTo(Schema.BYTES);
 		}
 
+
+		@Test
+		void annotatedMessageType() {
+			assertThat(resolver.resolveSchema(Zaz.class, false).orElseThrow()).isEqualTo(Schema.STRING);
+		}
 	}
 
 	@Nested
@@ -369,6 +375,10 @@ class DefaultSchemaResolverTests {
 	}
 
 	record Zaa(String value) {
+	}
+
+	@PulsarMessage(type = SchemaType.STRING)
+	record Zaz(String value) {
 	}
 
 }
