@@ -49,7 +49,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.pulsar.annotation.PulsarMessage;
+import org.springframework.pulsar.annotation.PulsarTypeMapping;
 import org.springframework.pulsar.listener.Proto;
 import org.springframework.pulsar.listener.Proto.Person;
 
@@ -377,7 +377,7 @@ class DefaultSchemaResolverTests {
 	record Zaa(String value) {
 	}
 
-	@PulsarMessage(type = SchemaType.STRING)
+	@PulsarTypeMapping(type = SchemaType.STRING)
 	record Zaz(String value) {
 	}
 

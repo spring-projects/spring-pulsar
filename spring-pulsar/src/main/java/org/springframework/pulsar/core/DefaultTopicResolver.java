@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarMessage;
+import org.springframework.pulsar.annotation.PulsarTypeMapping;
 import org.springframework.util.StringUtils;
 
 /**
@@ -105,7 +105,7 @@ public class DefaultTopicResolver implements TopicResolver {
 
 		String topic = this.getCustomTopicMappings().get(messageType);
 		if (topic == null) {
-			PulsarMessage annotation = AnnotationUtils.findAnnotation(messageType, PulsarMessage.class);
+			PulsarTypeMapping annotation = AnnotationUtils.findAnnotation(messageType, PulsarTypeMapping.class);
 			if (annotation != null) {
 				this.addCustomTopicMapping(messageType, annotation.topic());
 				topic = annotation.topic();

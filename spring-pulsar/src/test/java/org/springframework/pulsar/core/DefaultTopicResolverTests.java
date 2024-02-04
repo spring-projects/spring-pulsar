@@ -30,7 +30,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarMessage;
+import org.springframework.pulsar.annotation.PulsarTypeMapping;
 
 /**
  * Unit tests for {@link DefaultTopicResolver}.
@@ -171,7 +171,7 @@ class DefaultTopicResolverTests {
 	record Bar(String value) {
 	}
 
-	@PulsarMessage(topic = bazTopic)
+	@PulsarTypeMapping(topic = bazTopic)
 	record Baz(String value) {
 	}
 

@@ -42,7 +42,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarMessage;
+import org.springframework.pulsar.annotation.PulsarTypeMapping;
 
 /**
  * Default schema resolver capable of handling basic message types.
@@ -141,7 +141,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	protected Schema<?> getCustomSchemaOrMaybeDefault(@Nullable Class<?> messageClass, boolean returnDefault) {
 		Schema<?> schema = this.customSchemaMappings.get(messageClass);
 		if (schema == null && messageClass != null) {
-			PulsarMessage annotation = AnnotationUtils.findAnnotation(messageClass, PulsarMessage.class);
+			PulsarTypeMapping annotation = AnnotationUtils.findAnnotation(messageClass, PulsarTypeMapping.class);
 			if (annotation != null && annotation.type() != SchemaType.NONE) {
 				var resolvedSchema = resolveSchema(annotation.type(), messageClass, annotation.messageKeyType());
 				resolvedSchema.ifResolved(objectSchema -> addCustomSchemaMapping(messageClass, objectSchema));
