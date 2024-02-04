@@ -18,7 +18,11 @@ package org.springframework.pulsar.annotation;
 
 import org.apache.pulsar.common.schema.SchemaType;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Specifies default topic and schema for class.
