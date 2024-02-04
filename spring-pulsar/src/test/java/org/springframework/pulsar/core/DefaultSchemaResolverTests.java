@@ -377,7 +377,7 @@ class DefaultSchemaResolverTests {
 	record Zaa(String value) {
 	}
 
-	@PulsarTypeMapping(type = SchemaType.STRING)
+	@PulsarTypeMapping(schemaType = SchemaType.STRING)
 	record Zaz(String value) {
 	}
 

@@ -40,7 +40,7 @@ public @interface PulsarTypeMapping {
 	 * Default schema type for class.
 	 * @return schema type
 	 */
-	SchemaType type() default SchemaType.NONE;
+	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
 	 * Message key type (must be specified when schema type is {@code KEY_VALUE})

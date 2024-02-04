@@ -142,8 +142,8 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		Schema<?> schema = this.customSchemaMappings.get(messageClass);
 		if (schema == null && messageClass != null) {
 			PulsarTypeMapping annotation = AnnotationUtils.findAnnotation(messageClass, PulsarTypeMapping.class);
-			if (annotation != null && annotation.type() != SchemaType.NONE) {
-				var resolvedSchema = resolveSchema(annotation.type(), messageClass, annotation.messageKeyType());
+			if (annotation != null && annotation.schemaType() != SchemaType.NONE) {
+				var resolvedSchema = resolveSchema(annotation.schemaType(), messageClass, annotation.messageKeyType());
 				resolvedSchema.ifResolved(objectSchema -> addCustomSchemaMapping(messageClass, objectSchema));
 				schema = resolvedSchema.get().orElse(null);
 			}
