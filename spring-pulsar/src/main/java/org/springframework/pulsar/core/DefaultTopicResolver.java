@@ -106,7 +106,7 @@ public class DefaultTopicResolver implements TopicResolver {
 		String topic = this.getCustomTopicMappings().get(messageType);
 		if (topic == null) {
 			PulsarTypeMapping annotation = AnnotationUtils.findAnnotation(messageType, PulsarTypeMapping.class);
-			if (annotation != null) {
+			if (annotation != null && !annotation.topic().isBlank()) {
 				this.addCustomTopicMapping(messageType, annotation.topic());
 				topic = annotation.topic();
 			}
