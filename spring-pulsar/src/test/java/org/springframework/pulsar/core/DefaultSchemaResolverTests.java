@@ -16,10 +16,15 @@
 
 package org.springframework.pulsar.core;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.nio.ByteBuffer;
 import java.sql.Time;
@@ -57,6 +62,7 @@ import org.springframework.pulsar.listener.Proto.Person;
  * Unit tests for {@link DefaultSchemaResolver}.
  *
  * @author Chris Bono
+ * @author Aleksei Arsenev
  */
 class DefaultSchemaResolverTests {
 
@@ -202,11 +208,11 @@ class DefaultSchemaResolverTests {
 			assertThat(resolver.resolveSchema(Bar.class, true).orElseThrow()).isEqualTo(Schema.BYTES);
 		}
 
-
 		@Test
 		void annotatedMessageType() {
 			assertThat(resolver.resolveSchema(Zaz.class, false).orElseThrow()).isEqualTo(Schema.STRING);
 		}
+
 	}
 
 	@Nested
@@ -364,6 +370,98 @@ class DefaultSchemaResolverTests {
 					}));
 			}
 
+		}
+
+	}
+
+	@Nested
+	class SchemaByAnnotatedMessageType {
+
+		@Test
+		void annotatedMessageType() {
+			resolver = spy(resolver);
+			var resolvedSchema = resolver.resolveSchema(JsonMsgType.class, false).orElseThrow();
+			assertThat(resolvedSchema).isInstanceOf(JSONSchema.class)
+				.extracting("schema.fullName")
+				.asString()
+				.endsWith(JsonMsgType.class.getSimpleName());
+
+			// verify added to custom mappings
+			assertThat(resolver.getCustomSchemaMappings().get(JsonMsgType.class)).isSameAs(resolvedSchema);
+
+			// verify subsequent calls skip resolution again
+			assertThat(resolver.resolveSchema(JsonMsgType.class, false).orElseThrow()).isSameAs(resolvedSchema);
+			verify(resolver, times(1)).getAnnotatedSchemaType(JsonMsgType.class);
+		}
+
+		@Test
+		void annotatedMessageTypeKeyValue() {
+			assertThat(resolver.resolveSchema(KeyValueMsgType.class, false).orElseThrow())
+				.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
+				.satisfies((keyValueSchema -> {
+					assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.STRING);
+					assertThat(keyValueSchema.getValueSchema()).isInstanceOf(JSONSchema.class)
+						.extracting("schema.fullName")
+						.asString()
+						.endsWith(KeyValueMsgType.class.getSimpleName());
+					assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
+				}));
+		}
+
+		@Test
+		void annotatedMessageTypeKeyValueMissingKeyInfo() {
+			assertThatIllegalStateException()
+				.isThrownBy(() -> resolver.resolveSchema(KeyValueMsgTypeNoKeyInfo.class, false).orElseThrow())
+				.withMessage("messageKeyClass can not be Void.class when using KEY_VALUE schema type");
+		}
+
+		@Test
+		void annotatedMessageTypeKeyValueMissingValueInfo() {
+			assertThatIllegalStateException()
+				.isThrownBy(() -> resolver.resolveSchema(KeyValueMsgTypeNoValueInfo.class, false).orElseThrow())
+				.withMessage("messageValueSchemaType can not be NONE or KEY_VALUE when using KEY_VALUE schema type");
+		}
+
+		@Test
+		void annotatedMessageTypeNoSchemaInfo() {
+			assertThatIllegalArgumentException()
+				.isThrownBy(() -> resolver.resolveSchema(NoSchemaInfoMsgType.class, false).orElseThrow())
+				.withMessage("Schema not specified and no schema found for " + NoSchemaInfoMsgType.class);
+		}
+
+		@Test
+		void annotationMappingIgnoredWhenFeatureDisabled() {
+			resolver.usePulsarTypeMappingAnnotations(false);
+			assertThatIllegalArgumentException()
+				.isThrownBy(() -> resolver.resolveSchema(JsonMsgType.class, false).orElseThrow())
+				.withMessage("Schema not specified and no schema found for " + JsonMsgType.class);
+		}
+
+		@Test
+		void customMappingTakesPrecedenceOverAnnotationMapping() {
+			resolver.addCustomSchemaMapping(JsonMsgType.class, Schema.STRING);
+			assertThat(resolver.resolveSchema(JsonMsgType.class, false).orElseThrow()).isEqualTo(Schema.STRING);
+		}
+
+		@PulsarTypeMapping(schemaType = SchemaType.JSON)
+		record JsonMsgType(String value) {
+		}
+
+		@PulsarTypeMapping(schemaType = SchemaType.KEY_VALUE, messageKeyType = String.class,
+				messageValueSchemaType = SchemaType.JSON)
+		record KeyValueMsgType(String key) {
+		}
+
+		@PulsarTypeMapping(schemaType = SchemaType.KEY_VALUE, messageValueSchemaType = SchemaType.JSON)
+		record KeyValueMsgTypeNoKeyInfo(String key) {
+		}
+
+		@PulsarTypeMapping(schemaType = SchemaType.KEY_VALUE, messageKeyType = String.class)
+		record KeyValueMsgTypeNoValueInfo(String key) {
+		}
+
+		@PulsarTypeMapping(topic = "ignore-topic")
+		record NoSchemaInfoMsgType(String value) {
 		}
 
 	}

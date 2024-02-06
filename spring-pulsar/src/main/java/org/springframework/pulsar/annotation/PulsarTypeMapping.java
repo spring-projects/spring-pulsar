@@ -16,18 +16,23 @@
 
 package org.springframework.pulsar.annotation;
 
-import org.apache.pulsar.common.schema.SchemaType;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.apache.pulsar.common.schema.SchemaType;
+
 /**
- * Specifies default topic and schema for class.
+ * Specifies default topic and schema info for a message class.
+ * <p>
+ * When a message class is marked with this annotation, the topic/schema resolution
+ * process will use the specified information to determine a topic/schema to use for the
+ * message in process.
  *
  * @author Aleksei Arsenev
+ * @author Chris Bono
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,21 +40,41 @@ import java.lang.annotation.Target;
 public @interface PulsarTypeMapping {
 
 	/**
-	 * Default topic for class.
-	 * @return topic
+	 * Default topic for the annotated message class.
+	 * @return default topic for the annotated message class or empty string to indicate
+	 * no default topic is specified
 	 */
 	String topic() default "";
 
 	/**
-	 * Default schema type for class.
-	 * @return schema type
+	 * Default schema type to use for the annotated message class.
+	 * <p>
+	 * Note that when this is set to {@code KEY_VALUE} you must specify the actual key and
+	 * value information via the {@link #messageKeyType()} and
+	 * {@link #messageValueSchemaType()} attributes, respectively.
+	 * @return schema type to use for the annotated message class or {@code NONE} to
+	 * indicate no default schema is specified
 	 */
 	SchemaType schemaType() default SchemaType.NONE;
 
 	/**
-	 * Message key type (must be specified when schema type is {@code KEY_VALUE})
-	 * @return message key type
+	 * The message key type when schema type is set to {@code KEY_VALUE}.
+	 * <p>
+	 * When the {@link #schemaType()} is not set to {@code KEY_VALUE} this attribute is
+	 * ignored.
+	 * @return message key type when using {@code KEY_VALUE} schema type
 	 */
 	Class<?> messageKeyType() default Void.class;
+
+	/**
+	 * The default schema type to use for the value schema when {@link #schemaType()} is
+	 * set to {@code KEY_VALUE}.
+	 * <p>
+	 * When the {@link #schemaType()} is not set to {@code KEY_VALUE} this attribute is
+	 * ignored and the default schema type must be specified via the {@code schemaType}
+	 * attribute.
+	 * @return message value schema type when using {@code KEY_VALUE} schema type
+	 */
+	SchemaType messageValueSchemaType() default SchemaType.NONE;
 
 }

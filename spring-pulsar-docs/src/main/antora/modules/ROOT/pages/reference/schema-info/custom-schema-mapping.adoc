@@ -1,3 +1,4 @@
+==== Configuration properties
 Schema mappings can be configured with the `spring.pulsar.defaults.type-mappings` property.
 The following example uses `application.yml` to add mappings for the `User` and `Address` complex objects using `AVRO` and `JSON` schemas, respectively:
 
@@ -17,6 +18,7 @@ spring:
 
 NOTE: The `message-type` is the fully-qualified name of the message class.
 
+==== Schema resolver customizer
 The preferred method of adding mappings is via the property mentioned above.
 However, if more control is needed you can provide a schema resolver customizer to add the mapping(s).
 
@@ -32,3 +34,18 @@ public SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer(
 	}
 }
 ----
+
+==== Type mapping annotation
+Another option for specifying default schema information to use for a particular message type is to mark the message class with the `@PulsarTypeMapping` annotation.
+The schema info can be specified via the `schemaType` attribute on the annotation.
+
+The following example configures the system to use JSON as the default schema when producing or consuming messages of type `Foo`:
+
+[source,java,indent=0,subs="verbatim"]
+----
+@PulsarTypeMapping(schemaType = SchemaType.JSON)
+record Foo(String value) {
+}
+----
+
+NOTE: The annotations are looked up on-demand and their result is cached. However, there is still a small performance hit on the first lookup. If you want to disable this feature you can invoke the `usePulsarTypeMappingAnnotations(false)` method on the `DefaultSchemaResolver`.
