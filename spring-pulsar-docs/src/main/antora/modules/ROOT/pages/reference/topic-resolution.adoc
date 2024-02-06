@@ -35,14 +35,20 @@ NOTE: The `message-type` is the fully-qualified name of the message class.
 WARNING: If the message (or the first message of a `Publisher` input) is `null`, the framework won't be able to determine the topic from it. Another method shall be used to specify the topic if your application is likely to send `null` messages.
 
 === Specified via annotation
-When no topic passed into API and no mappings configured, the system looks for `PulsarTopic` annotation. The following example configures topic for `Baz` class using annotation:
+
+When no topic is passed into the API and there are no custom topic mappings configured, the system looks for a `@PulsarTypeMapping` annotation on the class of the message being produced or consumed.
+The default topic can be specified via the `topic` attribute on the annotation.
+
+The following example configures the default topic to use when producing or consuming messages of type `Foo`:
 
 [source,java,indent=0,subs="verbatim"]
 ----
-@PulsarTopic("baz-topic")
-record Baz(String value) {
+@PulsarTypeMapping(topic = "foo-topic")
+record Foo(String value) {
 }
 ----
+
+NOTE: The annotations are looked up on-demand and their result is cached. However, there is still a small performance hit on the first lookup. If you want to disable this feature you can invoke the `usePulsarTypeMappingAnnotations(false)` method on the `DefaultTopicResolver`.
 
 === Custom topic resolver
 The preferred method of adding mappings is via the property mentioned above.

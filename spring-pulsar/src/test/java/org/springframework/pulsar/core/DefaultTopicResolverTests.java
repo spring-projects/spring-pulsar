@@ -18,9 +18,13 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.stream.Stream;
 
+import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -36,6 +40,7 @@ import org.springframework.pulsar.annotation.PulsarTypeMapping;
  * Unit tests for {@link DefaultTopicResolver}.
  *
  * @author Chris Bono
+ * @author Aleksei Arsenev
  */
 class DefaultTopicResolverTests {
 
@@ -116,6 +121,7 @@ class DefaultTopicResolverTests {
 				arguments("nullMessageWithUserTopicAndDefault", userTopic, null, defaultTopic, userTopic),
 				arguments("annotationMessageWithUserTopic", userTopic, Baz.class, defaultTopic, userTopic),
 				arguments("annotationMessageNoUserTopic", null, Baz.class, defaultTopic, bazTopic),
+				arguments("annotationMessageNoTopicInfo", null, BazNoTopicInfo.class, defaultTopic, defaultTopic),
 				arguments("nullMessageWithDefault", null, null, defaultTopic, null),
 				arguments("noMatchWithUserTopicAndDefault", userTopic, Bar.class, defaultTopic, userTopic),
 				arguments("noMatchWithUserTopic", userTopic, Bar.class, null, userTopic),
@@ -123,6 +129,40 @@ class DefaultTopicResolverTests {
 				arguments("noMatchNoUserTopicNorDefault", null, Bar.class, null, null)
 		);
 		// @formatter:on
+	}
+
+	@Nested
+	class TopicByAnnotatedMessageType {
+
+		@Test
+		void customMappingTakesPrecedenceOverAnnotationMapping() {
+			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
+				.isEqualTo(bazTopic);
+			resolver.addCustomTopicMapping(Baz.class, "baz-custom-topic");
+			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
+				.isEqualTo("baz-custom-topic");
+		}
+
+		@Test
+		void annotationMappingIgnoredWhenFeatureDisabled() {
+			resolver.usePulsarTypeMappingAnnotations(false);
+			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
+				.isEqualTo(defaultTopic);
+		}
+
+		@Test
+		void annotatedMessageTypeWithTopicInfo() {
+			resolver = spy(resolver);
+			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
+				.isEqualTo(bazTopic);
+			// verify added to custom mappings
+			assertThat(resolver.getCustomTopicMappings().get(Baz.class)).isEqualTo(bazTopic);
+			// verify subsequent calls skip resolution again
+			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
+				.isEqualTo(bazTopic);
+			verify(resolver, times(1)).getAnnotatedTopicInfo(Baz.class);
+		}
+
 	}
 
 	@Nested
@@ -173,6 +213,10 @@ class DefaultTopicResolverTests {
 
 	@PulsarTypeMapping(topic = bazTopic)
 	record Baz(String value) {
+	}
+
+	@PulsarTypeMapping(schemaType = SchemaType.STRING)
+	record BazNoTopicInfo(String value) {
 	}
 
 }

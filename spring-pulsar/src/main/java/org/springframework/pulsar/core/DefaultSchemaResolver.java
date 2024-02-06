@@ -39,10 +39,10 @@ import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarTypeMapping;
+import org.springframework.util.Assert;
 
 /**
  * Default schema resolver capable of handling basic message types.
@@ -54,6 +54,7 @@ import org.springframework.pulsar.annotation.PulsarTypeMapping;
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Chris Bono
+ * @author Aleksei Arsenev
  */
 public class DefaultSchemaResolver implements SchemaResolver {
 
@@ -90,6 +91,20 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	}
 
 	private final Map<Class<?>, Schema<?>> customSchemaMappings = new LinkedHashMap<>();
+
+	private final PulsarTypeMappingRegistry pulsarTypeMappingRegistry = new PulsarTypeMappingRegistry();
+
+	private boolean usePulsarTypeMappingAnnotations = true;
+
+	/**
+	 * Sets whether to inspect message classes for the
+	 * {@link PulsarTypeMapping @PulsarTypeMapping} annotation during schema resolution.
+	 * @param usePulsarTypeMappingAnnotations whether to inspect messages for the
+	 * annotation
+	 */
+	public void usePulsarTypeMappingAnnotations(boolean usePulsarTypeMappingAnnotations) {
+		this.usePulsarTypeMappingAnnotations = usePulsarTypeMappingAnnotations;
+	}
 
 	/**
 	 * Adds a custom mapping from message type to schema.
@@ -139,15 +154,18 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	@Nullable
 	protected Schema<?> getCustomSchemaOrMaybeDefault(@Nullable Class<?> messageClass, boolean returnDefault) {
+		// Check for custom schema mapping
 		Schema<?> schema = this.customSchemaMappings.get(messageClass);
-		if (schema == null && messageClass != null) {
-			PulsarTypeMapping annotation = AnnotationUtils.findAnnotation(messageClass, PulsarTypeMapping.class);
-			if (annotation != null && annotation.schemaType() != SchemaType.NONE) {
-				var resolvedSchema = resolveSchema(annotation.schemaType(), messageClass, annotation.messageKeyType());
-				resolvedSchema.ifResolved(objectSchema -> addCustomSchemaMapping(messageClass, objectSchema));
-				schema = resolvedSchema.get().orElse(null);
+
+		// If no custom schema mapping found, look for @PulsarTypeMapping (if enabled)
+		if (this.usePulsarTypeMappingAnnotations && schema == null && messageClass != null) {
+			schema = getAnnotatedSchemaType(messageClass);
+			if (schema != null) {
+				this.addCustomSchemaMapping(messageClass, schema);
 			}
 		}
+
+		// If still no schema, possibly return a default
 		if (schema == null && returnDefault) {
 			if (messageClass != null) {
 				try {
@@ -160,6 +178,30 @@ public class DefaultSchemaResolver implements SchemaResolver {
 			return Schema.BYTES;
 		}
 		return schema;
+	}
+
+	// VisibleForTesting
+	Schema<?> getAnnotatedSchemaType(Class<?> messageClass) {
+		PulsarTypeMapping annotation = this.pulsarTypeMappingRegistry.getTypeMappingFor(messageClass).orElse(null);
+		if (annotation == null || annotation.schemaType() == SchemaType.NONE) {
+			return null;
+		}
+		var schemaType = annotation.schemaType();
+		if (schemaType != SchemaType.KEY_VALUE) {
+			return resolveSchema(annotation.schemaType(), messageClass, null).value().orElse(null);
+		}
+		// handle complicated key value
+		var messageKeyClass = annotation.messageKeyType();
+		Assert.state(messageKeyClass != Void.class,
+				"messageKeyClass can not be Void.class when using KEY_VALUE schema type");
+
+		var messageValueSchemaType = annotation.messageValueSchemaType();
+		Assert.state(messageValueSchemaType != SchemaType.NONE && messageValueSchemaType != SchemaType.KEY_VALUE,
+				() -> "messageValueSchemaType can not be NONE or KEY_VALUE when using KEY_VALUE schema type");
+
+		Schema<?> keySchema = this.resolveSchema(messageKeyClass).orElseThrow();
+		Schema<?> valueSchema = this.resolveSchema(messageValueSchemaType, messageClass, null).orElseThrow();
+		return Schema.KeyValue(keySchema, valueSchema, KeyValueEncodingType.INLINE);
 	}
 
 	@Override
