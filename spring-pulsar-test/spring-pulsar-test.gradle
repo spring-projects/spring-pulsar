@@ -1,5 +1,6 @@
 plugins {
-    id 'org.springframework.pulsar.spring-unpublished-module'
+	id 'org.springframework.pulsar.spring-unpublished-module'
+	id 'spring-pulsar.integration-test-conventions'
 }
 
 description = 'Spring Pulsar Test Module'
@@ -8,4 +9,6 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter-api'
     implementation 'org.testcontainers:pulsar'
     implementation 'org.testcontainers:junit-jupiter'
+	implementation project(':spring-pulsar')
+	testImplementation 'org.assertj:assertj-core'
 }

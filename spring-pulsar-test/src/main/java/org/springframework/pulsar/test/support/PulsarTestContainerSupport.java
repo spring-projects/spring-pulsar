@@ -18,6 +18,7 @@ package org.springframework.pulsar.test.support;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PulsarContainer;
+import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
