@@ -34,7 +34,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarTypeMapping;
+import org.springframework.pulsar.annotation.PulsarMessage;
 
 /**
  * Unit tests for {@link DefaultTopicResolver}.
@@ -145,7 +145,7 @@ class DefaultTopicResolverTests {
 
 		@Test
 		void annotationMappingIgnoredWhenFeatureDisabled() {
-			resolver.usePulsarTypeMappingAnnotations(false);
+			resolver.usePulsarMessageAnnotations(false);
 			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
 				.isEqualTo(defaultTopic);
 		}
@@ -211,11 +211,11 @@ class DefaultTopicResolverTests {
 	record Bar(String value) {
 	}
 
-	@PulsarTypeMapping(topic = bazTopic)
+	@PulsarMessage(topic = bazTopic)
 	record Baz(String value) {
 	}
 
-	@PulsarTypeMapping(schemaType = SchemaType.STRING)
+	@PulsarMessage(schemaType = SchemaType.STRING)
 	record BazNoTopicInfo(String value) {
 	}
 

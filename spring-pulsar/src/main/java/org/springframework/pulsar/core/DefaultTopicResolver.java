@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarTypeMapping;
+import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.StringUtils;
 
 /**
@@ -39,18 +39,17 @@ public class DefaultTopicResolver implements TopicResolver {
 
 	private final Map<Class<?>, String> customTopicMappings = new LinkedHashMap<>();
 
-	private final PulsarTypeMappingRegistry pulsarTypeMappingRegistry = new PulsarTypeMappingRegistry();
+	private final PulsarMessageAnnotationRegistry pulsarMessageAnnotationRegistry = new PulsarMessageAnnotationRegistry();
 
-	private boolean usePulsarTypeMappingAnnotations = true;
+	private boolean usePulsarMessageAnnotations = true;
 
 	/**
 	 * Sets whether to inspect message classes for the
-	 * {@link PulsarTypeMapping @PulsarTypeMapping} annotation during topic resolution.
-	 * @param usePulsarTypeMappingAnnotations whether to inspect messages for the
-	 * annotation
+	 * {@link PulsarMessage @PulsarMessage} annotation during topic resolution.
+	 * @param usePulsarMessageAnnotations whether to inspect messages for the annotation
 	 */
-	public void usePulsarTypeMappingAnnotations(boolean usePulsarTypeMappingAnnotations) {
-		this.usePulsarTypeMappingAnnotations = usePulsarTypeMappingAnnotations;
+	public void usePulsarMessageAnnotations(boolean usePulsarMessageAnnotations) {
+		this.usePulsarMessageAnnotations = usePulsarMessageAnnotations;
 	}
 
 	/**
@@ -119,8 +118,8 @@ public class DefaultTopicResolver implements TopicResolver {
 		// Check for custom topic mapping
 		String topic = this.customTopicMappings.get(messageType);
 
-		// If no custom topic mapping found, look for @PulsarTypeMapping (if enabled)
-		if (this.usePulsarTypeMappingAnnotations && topic == null) {
+		// If no custom topic mapping found, look for @PulsarMessage (if enabled)
+		if (this.usePulsarMessageAnnotations && topic == null) {
 			topic = getAnnotatedTopicInfo(messageType);
 			if (topic != null) {
 				this.addCustomTopicMapping(messageType, topic);
@@ -137,8 +136,8 @@ public class DefaultTopicResolver implements TopicResolver {
 
 	// VisibleForTesting
 	String getAnnotatedTopicInfo(Class<?> messageType) {
-		return this.pulsarTypeMappingRegistry.getTypeMappingFor(messageType)
-			.map(PulsarTypeMapping::topic)
+		return this.pulsarMessageAnnotationRegistry.getAnnotationFor(messageType)
+			.map(PulsarMessage::topic)
 			.filter(StringUtils::hasText)
 			.orElse(null);
 	}
