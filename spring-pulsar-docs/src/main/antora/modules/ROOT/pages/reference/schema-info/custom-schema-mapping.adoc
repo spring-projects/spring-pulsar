@@ -36,16 +36,14 @@ public SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer(
 ----
 
 ==== Type mapping annotation
-Another option for specifying default schema information to use for a particular message type is to mark the message class with the `@PulsarTypeMapping` annotation.
+Another option for specifying default schema information to use for a particular message type is to mark the message class with the `@PulsarMessage` annotation.
 The schema info can be specified via the `schemaType` attribute on the annotation.
 
 The following example configures the system to use JSON as the default schema when producing or consuming messages of type `Foo`:
 
 [source,java,indent=0,subs="verbatim"]
 ----
-@PulsarTypeMapping(schemaType = SchemaType.JSON)
+@PulsarMessage(schemaType = SchemaType.JSON)
 record Foo(String value) {
 }
 ----
-
-NOTE: The annotations are looked up on-demand and their result is cached. However, there is still a small performance hit on the first lookup. If you want to disable this feature you can invoke the `usePulsarTypeMappingAnnotations(false)` method on the `DefaultSchemaResolver`.

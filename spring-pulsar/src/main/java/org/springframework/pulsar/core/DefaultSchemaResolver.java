@@ -41,7 +41,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
-import org.springframework.pulsar.annotation.PulsarTypeMapping;
+import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.Assert;
 
 /**
@@ -92,18 +92,17 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	private final Map<Class<?>, Schema<?>> customSchemaMappings = new LinkedHashMap<>();
 
-	private final PulsarTypeMappingRegistry pulsarTypeMappingRegistry = new PulsarTypeMappingRegistry();
+	private final PulsarMessageAnnotationRegistry pulsarMessageAnnotationRegistry = new PulsarMessageAnnotationRegistry();
 
-	private boolean usePulsarTypeMappingAnnotations = true;
+	private boolean usePulsarMessageAnnotations = true;
 
 	/**
 	 * Sets whether to inspect message classes for the
-	 * {@link PulsarTypeMapping @PulsarTypeMapping} annotation during schema resolution.
-	 * @param usePulsarTypeMappingAnnotations whether to inspect messages for the
-	 * annotation
+	 * {@link PulsarMessage @PulsarMessage} annotation during schema resolution.
+	 * @param usePulsarMessageAnnotations whether to inspect messages for the annotation
 	 */
-	public void usePulsarTypeMappingAnnotations(boolean usePulsarTypeMappingAnnotations) {
-		this.usePulsarTypeMappingAnnotations = usePulsarTypeMappingAnnotations;
+	public void usePulsarMessageAnnotations(boolean usePulsarMessageAnnotations) {
+		this.usePulsarMessageAnnotations = usePulsarMessageAnnotations;
 	}
 
 	/**
@@ -157,8 +156,8 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		// Check for custom schema mapping
 		Schema<?> schema = this.customSchemaMappings.get(messageClass);
 
-		// If no custom schema mapping found, look for @PulsarTypeMapping (if enabled)
-		if (this.usePulsarTypeMappingAnnotations && schema == null && messageClass != null) {
+		// If no custom schema mapping found, look for @PulsarMessage (if enabled)
+		if (this.usePulsarMessageAnnotations && schema == null && messageClass != null) {
 			schema = getAnnotatedSchemaType(messageClass);
 			if (schema != null) {
 				this.addCustomSchemaMapping(messageClass, schema);
@@ -182,7 +181,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	// VisibleForTesting
 	Schema<?> getAnnotatedSchemaType(Class<?> messageClass) {
-		PulsarTypeMapping annotation = this.pulsarTypeMappingRegistry.getTypeMappingFor(messageClass).orElse(null);
+		PulsarMessage annotation = this.pulsarMessageAnnotationRegistry.getAnnotationFor(messageClass).orElse(null);
 		if (annotation == null || annotation.schemaType() == SchemaType.NONE) {
 			return null;
 		}

@@ -54,7 +54,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.pulsar.annotation.PulsarTypeMapping;
+import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.pulsar.listener.Proto;
 import org.springframework.pulsar.listener.Proto.Person;
 
@@ -431,7 +431,7 @@ class DefaultSchemaResolverTests {
 
 		@Test
 		void annotationMappingIgnoredWhenFeatureDisabled() {
-			resolver.usePulsarTypeMappingAnnotations(false);
+			resolver.usePulsarMessageAnnotations(false);
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> resolver.resolveSchema(JsonMsgType.class, false).orElseThrow())
 				.withMessage("Schema not specified and no schema found for " + JsonMsgType.class);
@@ -443,24 +443,24 @@ class DefaultSchemaResolverTests {
 			assertThat(resolver.resolveSchema(JsonMsgType.class, false).orElseThrow()).isEqualTo(Schema.STRING);
 		}
 
-		@PulsarTypeMapping(schemaType = SchemaType.JSON)
+		@PulsarMessage(schemaType = SchemaType.JSON)
 		record JsonMsgType(String value) {
 		}
 
-		@PulsarTypeMapping(schemaType = SchemaType.KEY_VALUE, messageKeyType = String.class,
+		@PulsarMessage(schemaType = SchemaType.KEY_VALUE, messageKeyType = String.class,
 				messageValueSchemaType = SchemaType.JSON)
 		record KeyValueMsgType(String key) {
 		}
 
-		@PulsarTypeMapping(schemaType = SchemaType.KEY_VALUE, messageValueSchemaType = SchemaType.JSON)
+		@PulsarMessage(schemaType = SchemaType.KEY_VALUE, messageValueSchemaType = SchemaType.JSON)
 		record KeyValueMsgTypeNoKeyInfo(String key) {
 		}
 
-		@PulsarTypeMapping(schemaType = SchemaType.KEY_VALUE, messageKeyType = String.class)
+		@PulsarMessage(schemaType = SchemaType.KEY_VALUE, messageKeyType = String.class)
 		record KeyValueMsgTypeNoValueInfo(String key) {
 		}
 
-		@PulsarTypeMapping(topic = "ignore-topic")
+		@PulsarMessage(topic = "ignore-topic")
 		record NoSchemaInfoMsgType(String value) {
 		}
 
@@ -475,7 +475,7 @@ class DefaultSchemaResolverTests {
 	record Zaa(String value) {
 	}
 
-	@PulsarTypeMapping(schemaType = SchemaType.STRING)
+	@PulsarMessage(schemaType = SchemaType.STRING)
 	record Zaz(String value) {
 	}
 

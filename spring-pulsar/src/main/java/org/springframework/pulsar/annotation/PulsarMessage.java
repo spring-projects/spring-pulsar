@@ -37,7 +37,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface PulsarTypeMapping {
+public @interface PulsarMessage {
 
 	/**
 	 * Default topic for the annotated message class.
