@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.junit.jupiter.api.Nested;
@@ -52,7 +51,7 @@ import org.springframework.test.context.ContextConfiguration;
 class PulsarReaderBasicTests extends PulsarReaderTestsBase {
 
 	static <T> void sendTestMessages(PulsarTemplate<T> pulsarTemplate, String topic, Schema<T> schema,
-			Function<String, T> payloadFactory) throws PulsarClientException {
+			Function<String, T> payloadFactory) {
 		pulsarTemplate.newMessage(payloadFactory.apply("foo"))
 			.withTopic(topic)
 			.withMessageCustomizer((mb) -> mb.key("key:foo"))

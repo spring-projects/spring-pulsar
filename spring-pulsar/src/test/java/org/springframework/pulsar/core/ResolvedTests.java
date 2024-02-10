@@ -34,6 +34,7 @@ import org.mockito.Mockito;
  * Unit tests for {@link Resolved}.
  *
  * @author Chris Bono
+ * @author Jonas Geiregat
  */
 class ResolvedTests {
 
@@ -94,6 +95,12 @@ class ResolvedTests {
 			verifyNoInteractions(errorAction);
 		}
 
+		@Test
+		void mappingShouldBeApplied() {
+			Resolved<String> resolved = Resolved.of("smile");
+			assertThat(resolved.map(e -> e + " even more")).isEqualTo(Resolved.of("smile even more"));
+		}
+
 	}
 
 	@Nested
@@ -148,6 +155,12 @@ class ResolvedTests {
 			resolved.ifResolvedOrElse(valueAction, errorAction);
 			verifyNoInteractions(valueAction);
 			verify(errorAction).accept(resolved.exception().get());
+		}
+
+		@Test
+		void mappingShouldNotBeApplied() {
+			Resolved<String> resolved = Resolved.failed("5150");
+			assertThat(resolved.map(String::toUpperCase)).isEqualTo(resolved);
 		}
 
 	}

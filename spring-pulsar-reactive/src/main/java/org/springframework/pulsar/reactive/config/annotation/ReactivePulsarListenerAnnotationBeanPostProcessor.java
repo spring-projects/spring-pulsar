@@ -178,7 +178,7 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 		String beanRef = reactivePulsarListener.beanRef();
 		this.listenerScope.addListener(beanRef, bean);
-		String[] topics = resolveTopics(reactivePulsarListener);
+		String[] topics = resolveTopics(reactivePulsarListener.topics());
 		String topicPattern = getTopicPattern(reactivePulsarListener);
 		processListener(endpoint, reactivePulsarListener, bean, beanName, topics, topicPattern);
 		this.listenerScope.removeListener(beanRef);
@@ -333,18 +333,6 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 	private String getTopicPattern(ReactivePulsarListener reactivePulsarListener) {
 		return resolveExpressionAsString(reactivePulsarListener.topicPattern(), "topicPattern");
-	}
-
-	private String[] resolveTopics(ReactivePulsarListener ReactivePulsarListener) {
-		String[] topics = ReactivePulsarListener.topics();
-		List<String> result = new ArrayList<>();
-		if (topics.length > 0) {
-			for (String topic1 : topics) {
-				Object topic = resolveExpression(topic1);
-				resolveAsString(topic, result);
-			}
-		}
-		return result.toArray(new String[0]);
 	}
 
 	private Collection<ReactivePulsarListener> findListenerAnnotations(Class<?> clazz) {

@@ -32,6 +32,8 @@ import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.config.BeanExpressionContext;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
@@ -68,7 +70,7 @@ public class PulsarTemplate<T>
 
 	private final SchemaResolver schemaResolver;
 
-	private final TopicResolver topicResolver;
+	private TopicResolver topicResolver;
 
 	/**
 	 * Whether to record observations.
@@ -131,6 +133,12 @@ public class PulsarTemplate<T>
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
+		if (applicationContext instanceof ConfigurableListableBeanFactory configurableListableBeanFactory) {
+			var resolver = configurableListableBeanFactory.getBeanExpressionResolver();
+			var expressionContext = new BeanExpressionContext(configurableListableBeanFactory, null);
+			this.topicResolver = new ExpressionAwareTopicResolver(this.topicResolver,
+					new DefaultExpressionResolver(resolver, expressionContext, configurableListableBeanFactory));
+		}
 	}
 
 	/**

@@ -16,8 +16,10 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
@@ -28,6 +30,7 @@ import org.springframework.lang.Nullable;
  * @param <T> the resolved type
  * @author Christophe Bornet
  * @author Chris Bono
+ * @author Jonas Geiregat
  */
 public final class Resolved<T> {
 
@@ -153,6 +156,40 @@ public final class Resolved<T> {
 			throw new RuntimeException(wrappingErrorMessage.get(), this.exception);
 		}
 		return this.value;
+	}
+
+	/**
+	 * Maps the resolved value to a new resolved value if a value was resolved. For
+	 * failure resolves, the exception is return as usual and no mapping is applied.
+	 * @param mapper the mapping function to apply to the resolved value
+	 * @param <O> the type of the new resolved value
+	 * @return a new resolved value if a value was resolved
+	 */
+	public <O> Resolved<O> map(Function<T, O> mapper) {
+		if (this.value != null && this.exception == null) {
+			O mappedValue = mapper.apply(this.value);
+			return Resolved.of(mappedValue);
+		}
+		else {
+			return Resolved.failed(this.exception);
+		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Resolved<?> resolved = (Resolved<?>) o;
+		return Objects.equals(this.value, resolved.value) && Objects.equals(this.exception, resolved.exception);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.value, this.exception);
 	}
 
 }

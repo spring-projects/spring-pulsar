@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,9 +37,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.BeanExpressionContext;
-import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.Scope;
 import org.springframework.context.ApplicationContext;
@@ -55,6 +54,7 @@ import org.springframework.messaging.converter.GenericMessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.pulsar.core.DefaultExpressionResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
@@ -78,9 +78,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 	protected ApplicationContext applicationContext;
 
-	protected BeanExpressionResolver resolver;
-
-	protected BeanExpressionContext expressionContext;
+	protected DefaultExpressionResolver expressionResolver;
 
 	protected final ListenerScope listenerScope = new ListenerScope();
 
@@ -99,10 +97,11 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 	public void setBeanFactory(BeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
-		if (beanFactory instanceof ConfigurableListableBeanFactory) {
-			this.resolver = ((ConfigurableListableBeanFactory) beanFactory).getBeanExpressionResolver();
-			this.expressionContext = new BeanExpressionContext((ConfigurableListableBeanFactory) beanFactory,
-					this.listenerScope);
+		if (beanFactory instanceof ConfigurableListableBeanFactory configurableListableBeanFactory) {
+			var resolver = configurableListableBeanFactory.getBeanExpressionResolver();
+			var expressionContext = new BeanExpressionContext(configurableListableBeanFactory, this.listenerScope);
+			this.expressionResolver = new DefaultExpressionResolver(resolver, expressionContext,
+					configurableListableBeanFactory);
 		}
 	}
 
@@ -115,64 +114,26 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 	}
 
 	protected Boolean resolveExpressionAsBoolean(String value, String attribute) {
-		Object resolved = resolveExpression(value);
-		Boolean result = null;
-		if (resolved instanceof Boolean) {
-			result = (Boolean) resolved;
-		}
-		else if (resolved instanceof String) {
-			result = Boolean.parseBoolean((String) resolved);
-		}
-		else if (resolved != null) {
-			throw new IllegalStateException(
-					THE_LEFT + attribute + "] must resolve to a Boolean or a String that can be parsed as a Boolean. "
-							+ RESOLVED_TO_LEFT + resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
-		}
-		return result;
+		var resolved = this.expressionResolver.resolve(value);
+		return resolved.resolveToBoolean()
+			.orElseThrow(() -> THE_LEFT + attribute
+					+ "] must resolve to a Boolean or a String that can be parsed as a Boolean. " + RESOLVED_TO_LEFT
+					+ resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
 	}
 
 	protected Object resolveExpression(String value) {
-		return this.resolver.evaluate(resolve(value), this.expressionContext);
+		return this.expressionResolver.resolve(value).get();
 	}
 
 	protected String resolve(String value) {
-		if (this.beanFactory != null && this.beanFactory instanceof ConfigurableBeanFactory) {
-			return ((ConfigurableBeanFactory) this.beanFactory).resolveEmbeddedValue(value);
-		}
-		return value;
+		return this.expressionResolver.resolve(value).toString();
 	}
 
 	protected String resolveExpressionAsString(String value, String attribute) {
-		Object resolved = resolveExpression(value);
-		if (resolved instanceof String) {
-			return (String) resolved;
-		}
-		else if (resolved != null) {
-			throw new IllegalStateException(THE_LEFT + attribute + "] must resolve to a String. " + RESOLVED_TO_LEFT
-					+ resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
-		}
-		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	protected void resolveAsString(Object resolvedValue, List<String> result) {
-		if (resolvedValue instanceof String[]) {
-			for (Object object : (String[]) resolvedValue) {
-				resolveAsString(object, result);
-			}
-		}
-		else if (resolvedValue instanceof String) {
-			result.add((String) resolvedValue);
-		}
-		else if (resolvedValue instanceof Iterable) {
-			for (Object object : (Iterable<Object>) resolvedValue) {
-				resolveAsString(object, result);
-			}
-		}
-		else {
-			throw new IllegalArgumentException(
-					"@PulsarListener can't resolve '%s' as a String".formatted(resolvedValue));
-		}
+		var resolved = this.expressionResolver.resolve(value);
+		return resolved.resolveToString()
+			.orElseThrow(() -> THE_LEFT + attribute + "] must resolve to a String. " + RESOLVED_TO_LEFT + resolved.get()
+					+ RIGHT_FOR_LEFT + value + "]");
 	}
 
 	protected Method checkProxy(Method methodArg, Object bean) {
@@ -209,6 +170,15 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		return method;
 	}
 
+	protected String[] resolveTopics(String... topics) {
+		List<String> result = new ArrayList<>();
+		for (String topic : topics) {
+			var resolved = this.expressionResolver.resolve(topic);
+			result.addAll(resolved.resolveToStrings());
+		}
+		return result.toArray(new String[0]);
+	}
+
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
@@ -240,20 +210,12 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 	}
 
 	protected Integer resolveExpressionAsInteger(String value, String attribute) {
-		Object resolved = resolveExpression(value);
-		Integer result = null;
-		if (resolved instanceof String) {
-			result = Integer.parseInt((String) resolved);
-		}
-		else if (resolved instanceof Number) {
-			result = ((Number) resolved).intValue();
-		}
-		else if (resolved != null) {
-			throw new IllegalStateException(
-					THE_LEFT + attribute + "] must resolve to an Number or a String that can be parsed as an Integer. "
-							+ RESOLVED_TO_LEFT + resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
-		}
-		return result;
+		var resolved = this.expressionResolver.resolve(value);
+		return resolved.resolveToInteger()
+			.orElseThrow(() -> THE_LEFT + attribute
+					+ "] must resolve to an Number or a String that can be parsed as an Integer. " + RESOLVED_TO_LEFT
+					+ resolved.getClass() + RIGHT_FOR_LEFT + value + "]");
+
 	}
 
 	public static class ListenerScope implements Scope {

@@ -168,7 +168,7 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		endpoint.setMethod(methodToUse);
 		String beanRef = pulsarListener.beanRef();
 		this.listenerScope.addListener(beanRef, bean);
-		String[] topics = resolveTopics(pulsarListener);
+		String[] topics = resolveTopics(pulsarListener.topics());
 		String topicPattern = getTopicPattern(pulsarListener);
 		processListener(endpoint, pulsarListener, bean, beanName, topics, topicPattern);
 		this.listenerScope.removeListener(beanRef);
@@ -393,18 +393,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	private String getTopicPattern(PulsarListener pulsarListener) {
 		return resolveExpressionAsString(pulsarListener.topicPattern(), "topicPattern");
-	}
-
-	private String[] resolveTopics(PulsarListener PulsarListener) {
-		String[] topics = PulsarListener.topics();
-		List<String> result = new ArrayList<>();
-		if (topics.length > 0) {
-			for (String topic1 : topics) {
-				Object topic = resolveExpression(topic1);
-				resolveAsString(topic, result);
-			}
-		}
-		return result.toArray(new String[0]);
 	}
 
 	private Set<PulsarListener> findListenerAnnotations(Method method) {

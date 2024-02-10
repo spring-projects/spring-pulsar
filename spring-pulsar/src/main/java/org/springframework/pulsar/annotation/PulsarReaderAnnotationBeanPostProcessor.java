@@ -95,7 +95,7 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 
 	private PulsarReaderEndpointRegistry endpointRegistry;
 
-	private String defaultContainerFactoryBeanName = DEFAULT_PULSAR_READER_CONTAINER_FACTORY_BEAN_NAME;
+	private final String defaultContainerFactoryBeanName = DEFAULT_PULSAR_READER_CONTAINER_FACTORY_BEAN_NAME;
 
 	private final PulsarReaderEndpointRegistrar registrar = new PulsarReaderEndpointRegistrar(
 			PulsarReaderContainerFactory.class);
@@ -165,7 +165,7 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 
 		String beanRef = pulsarReader.beanRef();
 		this.listenerScope.addListener(beanRef, bean);
-		String[] topics = resolveTopics(pulsarReader);
+		String[] topics = resolveTopics(pulsarReader.topics());
 		processReader(endpoint, pulsarReader, bean, beanName, topics);
 		this.listenerScope.removeListener(beanRef);
 	}
@@ -274,18 +274,6 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 			return resolveExpressionAsString(pulsarReader.id(), "id");
 		}
 		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
-	}
-
-	private String[] resolveTopics(PulsarReader PulsarListener) {
-		String[] topics = PulsarListener.topics();
-		List<String> result = new ArrayList<>();
-		if (topics.length > 0) {
-			for (String topic1 : topics) {
-				Object topic = resolveExpression(topic1);
-				resolveAsString(topic, result);
-			}
-		}
-		return result.toArray(new String[0]);
 	}
 
 	private Set<PulsarReader> findReaderAnnotations(Method method) {
