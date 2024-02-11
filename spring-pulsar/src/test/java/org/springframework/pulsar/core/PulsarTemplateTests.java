@@ -17,6 +17,7 @@
 package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -40,6 +41,7 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SchemaSerializationException;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +55,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Tests for {@link PulsarTemplate}.
@@ -170,8 +175,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
 			.withMessageCustomizer((mb) -> mb.key("test-key"))
 			.send();
-		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING,
-				"test-message", true);
+		Message<?> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING, "test-message",
+				true);
 		assertThat(msg.getKey()).isEqualTo("test-key");
 	}
 
@@ -180,8 +185,8 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		ThrowingConsumer<PulsarTemplate<String>> sendFunction = (template) -> template.newMessage("test-message")
 			.withProducerCustomizer((sb) -> sb.producerName("test-producer"))
 			.send();
-		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING,
-				"test-message", true);
+		Message<?> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING, "test-message",
+				true);
 		assertThat(msg.getProducerName()).isEqualTo("test-producer");
 	}
 
@@ -241,22 +246,24 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			.withMessage("Topic must be specified when no default topic is configured");
 	}
 
-	private <T> Message<T> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
-			Schema<T> schema, T expectedValue, Boolean withDefaultTopic) throws Exception {
+	private <T, V> Message<?> sendAndConsume(ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic,
+			Schema<V> consumingSchema, V expectedValue, Boolean withDefaultTopic) throws Exception {
 		PulsarProducerFactory<T> senderFactory = new DefaultPulsarProducerFactory<>(client,
 				withDefaultTopic ? topic : null);
 		PulsarTemplate<T> pulsarTemplate = new PulsarTemplate<>(senderFactory);
-		return sendAndConsume(pulsarTemplate, sendFunction, topic, schema, expectedValue);
+		return sendAndConsume(pulsarTemplate, sendFunction, topic, consumingSchema, expectedValue);
 	}
 
-	private <T> Message<T> sendAndConsume(PulsarTemplate<T> template, ThrowingConsumer<PulsarTemplate<T>> sendFunction,
-			String topic, Schema<T> schema, T expectedValue) throws Exception {
-		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema)
+	private <T, V> Message<?> sendAndConsume(PulsarTemplate<T> template,
+			ThrowingConsumer<PulsarTemplate<T>> sendFunction, String topic, Schema<V> schema, V expectedValue)
+			throws Exception {
+		try (org.apache.pulsar.client.api.Consumer<?> consumer = client.newConsumer(schema)
 			.topic(topic)
 			.subscriptionName(topic + "-sub")
 			.subscribe()) {
 			sendFunction.accept(template);
-			Message<T> msg = consumer.receive(3, TimeUnit.SECONDS);
+			Message<?> msg = consumer.receive(3, TimeUnit.SECONDS);
+			consumer.acknowledge(msg);
 			assertThat(msg).isNotNull();
 			assertThat(msg.getValue()).isEqualTo(expectedValue);
 			return msg;
@@ -318,6 +325,38 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", null, null))
 				.withMessage("Schema must be specified when the message is null");
+		}
+
+	}
+
+	@Nested
+	class SendAutoProduceSchemaTests {
+
+		@Test
+		void withJsonSchema() throws Exception {
+			var topic = "ptt-auto-json-topic";
+
+			// First send to the topic as JSON to establish the schema for the topic
+			var userJsonSchema = Schema.JSON(UserRecord.class);
+			var user = new UserRecord("Jason", 5150);
+			ThrowingConsumer<PulsarTemplate<UserRecord>> sendAsUserFunction = (template) -> template.send(user,
+					userJsonSchema);
+			sendAndConsume(sendAsUserFunction, topic, userJsonSchema, user, true);
+
+			// Next send another user using byte[] with AUTO_PRODUCE - it should be
+			// consumed fine
+			var user2 = new UserRecord("Who", 6160);
+			var user2Bytes = new ObjectMapper().writeValueAsBytes(user2);
+			ThrowingConsumer<PulsarTemplate<byte[]>> sendAsBytesFunction = (template) -> template.send(user2Bytes,
+					Schema.AUTO_PRODUCE_BYTES());
+			sendAndConsume(sendAsBytesFunction, topic, userJsonSchema, user2, true);
+
+			// Finally send another user using byte[] with AUTO_PRODUCE w/ invalid payload
+			// - it should be rejected
+			var bytesProducerFactory = new DefaultPulsarProducerFactory<byte[]>(client, topic);
+			var bytesTemplate = new PulsarTemplate<>(bytesProducerFactory);
+			assertThatExceptionOfType(SchemaSerializationException.class)
+				.isThrownBy(() -> bytesTemplate.send("invalid-payload".getBytes(), Schema.AUTO_PRODUCE_BYTES()));
 		}
 
 	}

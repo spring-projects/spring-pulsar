@@ -1,8 +1,11 @@
+
+include::../../attributes/attributes-variables.adoc[]
+
 == Specifying Schema Information
 If you use Java primitive types, the framework auto-detects the schema for you, and you need not specify any schema types for publishing the data.
 For non-primitive types, if the Schema is not explicitly specified when invoking send operations on the `{template-class}`, the Spring for Apache Pulsar framework will try to build a `Schema.JSON` from the type.
 
-IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, and KEY_VALUE w/ INLINE encoding.
+IMPORTANT: Complex Schema types that are currently supported are JSON, AVRO, PROTOBUF, AUTO_PRODUCE_BYTES, and KEY_VALUE w/ INLINE encoding.
 
 === Custom Schema Mapping
 As an alternative to specifying the schema when invoking send operations on the `{template-class}` for complex types, the schema resolver can be configured with mappings for the types.
@@ -11,3 +14,14 @@ This removes the need to specify the schema as the framework consults the resolv
 include::custom-schema-mapping.adoc[]
 
 With this configuration in place, there is no need to set specify the schema on send operations.
+
+=== Producing with AUTO_SCHEMA
+If there is no chance to know the type of schema of a Pulsar topic in advance, you can use an {apache-pulsar-docs}/schema-get-started/#auto_produce[AUTO_PRODUCE] schema to publish a raw JSON or Avro payload as a `byte[]` safely.
+
+In this case, the producer validates whether the outbound bytes are compatible with the schema of the destination topic.
+
+Simply specify a schema of `Schema.AUTO_PRODUCE_BYTES()` on your template send operations as shown in the example below:
+
+include::{template-class}/template-snippet.adoc[]
+
+NOTE: This is only supported with Avro and JSON schema types.
