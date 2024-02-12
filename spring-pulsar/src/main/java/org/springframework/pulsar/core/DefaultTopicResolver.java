@@ -21,6 +21,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.StringUtils;
@@ -34,14 +41,36 @@ import org.springframework.util.StringUtils;
  *
  * @author Chris Bono
  * @author Aleksei Arsenev
+ * @author Jonas Geiregat
  */
-public class DefaultTopicResolver implements TopicResolver {
+public class DefaultTopicResolver implements TopicResolver, ApplicationContextAware {
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final Map<Class<?>, String> customTopicMappings = new LinkedHashMap<>();
 
 	private final PulsarMessageAnnotationRegistry pulsarMessageAnnotationRegistry = new PulsarMessageAnnotationRegistry();
 
 	private boolean usePulsarMessageAnnotations = true;
+
+	@Nullable
+	private ExpressionResolver expressionResolver;
+
+	/**
+	 * Create a new instance with the given expression resolver, that is able to resolve
+	 * SpEL expressions.
+	 * @param expressionResolver the expression resolver to use
+	 */
+	public DefaultTopicResolver(ExpressionResolver expressionResolver) {
+		this.expressionResolver = expressionResolver;
+	}
+
+	/**
+	 * Create a new instance with the default expression resolver without the ability to
+	 * resolve SpEL expressions.
+	 */
+	public DefaultTopicResolver() {
+	}
 
 	/**
 	 * Sets whether to inspect message classes for the
@@ -135,11 +164,40 @@ public class DefaultTopicResolver implements TopicResolver {
 	}
 
 	// VisibleForTesting
+	@Nullable
 	String getAnnotatedTopicInfo(Class<?> messageType) {
 		return this.pulsarMessageAnnotationRegistry.getAnnotationFor(messageType)
 			.map(PulsarMessage::topic)
 			.filter(StringUtils::hasText)
+			.map(this::resolveExpression)
 			.orElse(null);
+	}
+
+	private String resolveExpression(String v) {
+		return this.expressionResolver == null ? v : this.expressionResolver.resolveToString(v)
+			.orElseThrow(() -> "Failed to resolve topic expression: %s".formatted(v));
+	}
+
+	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+		if (beanFactory instanceof ConfigurableBeanFactory configurableBeanFactory) {
+			this.expressionResolver = new DefaultExpressionResolver(configurableBeanFactory);
+		}
+		else {
+			this.logger.warn(
+					() -> "Topic expressions on @PulsarMessage will not be resolved: bean factory must be %s but was %s"
+						.formatted(ConfigurableBeanFactory.class.getSimpleName(),
+								beanFactory.getClass().getSimpleName()));
+		}
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		if (applicationContext instanceof ConfigurableApplicationContext) {
+			setBeanFactory(((ConfigurableApplicationContext) applicationContext).getBeanFactory());
+		}
+		else {
+			setBeanFactory(applicationContext);
+		}
 	}
 
 }
