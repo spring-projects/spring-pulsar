@@ -48,6 +48,18 @@ record Foo(String value) {
 }
 ----
 
+Property placeholders and SpEL expressions are supported in the `@PulsarMessage` annotation,
+for example:
+[source,java,indent=0,subs="verbatim"]
+----
+@PulsarMessage(topic = "${app.topics.foo}")
+record Foo(String value) {
+}
+
+@PulsarMessage(topic = "#{someBean.getTopic()}")
+record Bar(String value) {
+}
+----
 === Custom topic resolver
 The preferred method of adding mappings is via the property mentioned above.
 However, if more control is needed you can replace the default resolver by proving your own implementation, for example:
