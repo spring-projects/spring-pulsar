@@ -174,9 +174,9 @@ class DefaultTopicResolverTests {
 			var mockExpressionResolver = mock(ExpressionResolver.class);
 			when(mockExpressionResolver.resolveToString(bazTopicExpression)).thenReturn(Resolved.of(bazTopic));
 			var expressionTopicResolver = new DefaultTopicResolver(mockExpressionResolver);
-			assertThat(expressionTopicResolver.resolveTopic(null, BazWithTopicExpression.class,
-					() -> defaultTopic).value().orElse(null))
-					.isEqualTo(bazTopic);
+			assertThat(expressionTopicResolver.resolveTopic(null, BazWithTopicExpression.class, () -> defaultTopic)
+				.value()
+				.orElse(null)).isEqualTo(bazTopic);
 			verify(mockExpressionResolver, times(1)).resolveToString(bazTopicExpression);
 		}
 
@@ -185,9 +185,7 @@ class DefaultTopicResolverTests {
 			var mockBeanFactory = mock(ConfigurableBeanFactory.class);
 			var expressionTopicResolver = new DefaultTopicResolver();
 			expressionTopicResolver.setBeanFactory(mockBeanFactory);
-			assertThat(expressionTopicResolver)
-					.extracting("expressionResolver")
-					.isNotNull();
+			assertThat(expressionTopicResolver).extracting("expressionResolver").isNotNull();
 		}
 
 		@PulsarMessage(topic = bazTopicExpression)

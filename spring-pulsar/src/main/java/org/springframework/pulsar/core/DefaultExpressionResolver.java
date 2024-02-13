@@ -51,7 +51,7 @@ public class DefaultExpressionResolver implements ExpressionResolver {
 			return Resolved.of(null);
 		}
 		return Resolved
-				.failed("The expression '%s' must resolve to a string but was: %s".formatted(expression, resolvedObj));
+			.failed("The expression '%s' must resolve to a string but was: %s".formatted(expression, resolvedObj));
 	}
 
 }

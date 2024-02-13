@@ -72,18 +72,19 @@ class ReactiveAppConfig {
 			ReactivePulsarTemplate<TopicSpELDefinedSampleMessage> topicSpELDefinedSampleMessagePulsarTemplate) {
 		return (args) -> {
 			Flux.range(0, 10)
-					.map((i) -> new SampleMessage(i, "message:" + i))
-					.map(MessageSpec::of)
-					.as((msgs) -> template.send(TOPIC, msgs))
-					.doOnNext((sendResult) -> LOG
-							.info("++++++PRODUCE REACTIVE:(" + sendResult.getMessageSpec().getValue().id() + ")------"))
-					.subscribe();
-			topicPropertyDefinedSampleMessagePulsarTemplate.send(new TopicPropertyDefinedSampleMessage(10, "message:10"))
-					.doOnNext((sendResult) -> LOG.info("++++++PRODUCE REACTIVE PROPERTY------"))
-					.subscribe();
+				.map((i) -> new SampleMessage(i, "message:" + i))
+				.map(MessageSpec::of)
+				.as((msgs) -> template.send(TOPIC, msgs))
+				.doOnNext((sendResult) -> LOG
+					.info("++++++PRODUCE REACTIVE:(" + sendResult.getMessageSpec().getValue().id() + ")------"))
+				.subscribe();
+			topicPropertyDefinedSampleMessagePulsarTemplate
+				.send(new TopicPropertyDefinedSampleMessage(10, "message:10"))
+				.doOnNext((sendResult) -> LOG.info("++++++PRODUCE REACTIVE PROPERTY------"))
+				.subscribe();
 			topicSpELDefinedSampleMessagePulsarTemplate.send(new TopicSpELDefinedSampleMessage(11, "message:11"))
-					.doOnNext((sendResult) -> LOG.info("++++++PRODUCE REACTIVE SpeL------"))
-					.subscribe();
+				.doOnNext((sendResult) -> LOG.info("++++++PRODUCE REACTIVE SpeL------"))
+				.subscribe();
 		};
 	}
 
@@ -102,4 +103,5 @@ class ReactiveAppConfig {
 	void consumerMessageFromSpELTopic(TopicSpELDefinedSampleMessage msg) {
 		LOG.info("++++++CONSUME REACTIVE:(" + msg.id() + ")------");
 	}
+
 }

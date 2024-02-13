@@ -62,14 +62,16 @@ class ImperativeAppConfig {
 	}
 
 	@Bean
-	ApplicationRunner sendMessagesToPulsarTopic(PulsarTemplate<SampleMessage> template, PulsarTemplate<TopicPropertyDefinedSampleMessage> topicPropertyDefinedSampleMessagePulsarTemplate,
+	ApplicationRunner sendMessagesToPulsarTopic(PulsarTemplate<SampleMessage> template,
+			PulsarTemplate<TopicPropertyDefinedSampleMessage> topicPropertyDefinedSampleMessagePulsarTemplate,
 			PulsarTemplate<TopicSpELDefinedSampleMessage> topicSpELDefinedSampleMessagePulsarTemplate) {
 		return (args) -> {
 			for (int i = 0; i < 10; i++) {
 				template.send(TOPIC, new SampleMessage(i, "message:" + i));
 				LOG.info("++++++PRODUCE IMPERATIVE:(" + i + ")------");
 			}
-			topicPropertyDefinedSampleMessagePulsarTemplate.send(new TopicPropertyDefinedSampleMessage(10, "message:10"));
+			topicPropertyDefinedSampleMessagePulsarTemplate
+				.send(new TopicPropertyDefinedSampleMessage(10, "message:10"));
 			LOG.info("++++++PRODUCE IMPERATIVE PROPERTY------");
 			topicSpELDefinedSampleMessagePulsarTemplate.send(new TopicSpELDefinedSampleMessage(11, "message:11"));
 			LOG.info("++++++PRODUCE IMPERATIVE SpeL------");
@@ -90,4 +92,5 @@ class ImperativeAppConfig {
 	void consumerMessageFromSpELTopic(TopicPropertyDefinedSampleMessage msg) {
 		LOG.info("++++++CONSUME IMPERATIVE:(" + msg.id() + ")------");
 	}
+
 }
