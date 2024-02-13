@@ -41,6 +41,10 @@ public interface SpringBootTestImperativeApp {
 			expectedOutput.add("++++++PRODUCE IMPERATIVE:(" + i + ")------");
 			expectedOutput.add("++++++CONSUME IMPERATIVE:(" + i + ")------");
 		});
+		expectedOutput.add("++++++PRODUCE IMPERATIVE PROPERTY------");
+		expectedOutput.add("++++++CONSUME IMPERATIVE:(10)------");
+		expectedOutput.add("++++++PRODUCE IMPERATIVE SpeL------");
+		expectedOutput.add("++++++CONSUME IMPERATIVE:(11)------");
 		Awaitility.waitAtMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(output).contains(expectedOutput));
 	}
 

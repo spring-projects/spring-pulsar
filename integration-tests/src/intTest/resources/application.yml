@@ -5,3 +5,13 @@ spring:
     consumer:
       subscription:
         initial-position: earliest
+
+---
+spring.config.activate.on-profile: smoketest.pulsar.reactive
+inttest:
+  topic: pulsar-reactive-inttest-property-topic
+
+---
+spring.config.activate.on-profile: smoketest.pulsar.imperative
+inttest:
+  topic: pulsar-inttest-property-topic

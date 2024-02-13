@@ -37,18 +37,42 @@ class ImperativeAppConfig {
 
 	private static final String TOPIC = "pulsar-inttest-topic";
 
+	private static final String SPEL_TOPIC = "pulsar-inttest-spel-topic";
+
+	private static final String PROPERTY_TOPIC = "pulsar-inttest-property-topic";
+
 	@Bean
 	PulsarTopic pulsarTestTopic() {
 		return PulsarTopic.builder(TOPIC).numberOfPartitions(1).build();
 	}
 
 	@Bean
-	ApplicationRunner sendMessagesToPulsarTopic(PulsarTemplate<SampleMessage> template) {
+	PulsarTopic pulsarPropertyTopic() {
+		return PulsarTopic.builder(PROPERTY_TOPIC).numberOfPartitions(1).build();
+	}
+
+	@Bean
+	PulsarTopic pulsarSpELTopic() {
+		return PulsarTopic.builder(SPEL_TOPIC).numberOfPartitions(1).build();
+	}
+
+	@Bean
+	public String spelTopic() {
+		return ImperativeAppConfig.SPEL_TOPIC;
+	}
+
+	@Bean
+	ApplicationRunner sendMessagesToPulsarTopic(PulsarTemplate<SampleMessage> template, PulsarTemplate<TopicPropertyDefinedSampleMessage> topicPropertyDefinedSampleMessagePulsarTemplate,
+			PulsarTemplate<TopicSpELDefinedSampleMessage> topicSpELDefinedSampleMessagePulsarTemplate) {
 		return (args) -> {
 			for (int i = 0; i < 10; i++) {
 				template.send(TOPIC, new SampleMessage(i, "message:" + i));
 				LOG.info("++++++PRODUCE IMPERATIVE:(" + i + ")------");
 			}
+			topicPropertyDefinedSampleMessagePulsarTemplate.send(new TopicPropertyDefinedSampleMessage(10, "message:10"));
+			LOG.info("++++++PRODUCE IMPERATIVE PROPERTY------");
+			topicSpELDefinedSampleMessagePulsarTemplate.send(new TopicSpELDefinedSampleMessage(11, "message:11"));
+			LOG.info("++++++PRODUCE IMPERATIVE SpeL------");
 		};
 	}
 
@@ -57,4 +81,13 @@ class ImperativeAppConfig {
 		LOG.info("++++++CONSUME IMPERATIVE:(" + msg.id() + ")------");
 	}
 
+	@PulsarListener(topics = "${inttest.topic}")
+	void consumerMessageFromPropertyTopic(TopicPropertyDefinedSampleMessage msg) {
+		LOG.info("++++++CONSUME IMPERATIVE:(" + msg.id() + ")------");
+	}
+
+	@PulsarListener(topics = "#{'pulsar-inttest-spel-' + 'topic'}")
+	void consumerMessageFromSpELTopic(TopicPropertyDefinedSampleMessage msg) {
+		LOG.info("++++++CONSUME IMPERATIVE:(" + msg.id() + ")------");
+	}
 }

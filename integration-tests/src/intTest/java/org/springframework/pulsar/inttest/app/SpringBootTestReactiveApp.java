@@ -41,6 +41,10 @@ public interface SpringBootTestReactiveApp {
 			expectedOutput.add("++++++PRODUCE REACTIVE:(" + i + ")------");
 			expectedOutput.add("++++++CONSUME REACTIVE:(" + i + ")------");
 		});
+		expectedOutput.add("++++++PRODUCE REACTIVE PROPERTY------");
+		expectedOutput.add("++++++CONSUME REACTIVE:(10)------");
+		expectedOutput.add("++++++PRODUCE REACTIVE SpeL------");
+		expectedOutput.add("++++++CONSUME REACTIVE:(11)------");
 		Awaitility.waitAtMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(output).contains(expectedOutput));
 	}
 

@@ -25,6 +25,7 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
+import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
@@ -41,20 +42,49 @@ class ReactiveAppConfig {
 
 	private static final String TOPIC = "pulsar-reactive-inttest-topic";
 
+	private static final String SPEL_TOPIC = "pulsar-reactive-inttest-spel-topic";
+
+	private static final String PROPERTY_TOPIC = "pulsar-reactive-inttest-property-topic";
+
 	@Bean
 	PulsarTopic pulsarTestTopic() {
 		return PulsarTopic.builder(TOPIC).numberOfPartitions(1).build();
 	}
 
 	@Bean
-	ApplicationRunner sendMessagesToPulsarTopic(ReactivePulsarTemplate<SampleMessage> template) {
-		return (args) -> Flux.range(0, 10)
-			.map((i) -> new SampleMessage(i, "message:" + i))
-			.map(MessageSpec::of)
-			.as((msgs) -> template.send(TOPIC, msgs))
-			.doOnNext((sendResult) -> LOG
-				.info("++++++PRODUCE REACTIVE:(" + sendResult.getMessageSpec().getValue().id() + ")------"))
-			.subscribe();
+	PulsarTopic pulsarPropertyTopic() {
+		return PulsarTopic.builder(PROPERTY_TOPIC).numberOfPartitions(1).build();
+	}
+
+	@Bean
+	PulsarTopic pulsarSpELTopic() {
+		return PulsarTopic.builder(SPEL_TOPIC).numberOfPartitions(1).build();
+	}
+
+	@Bean
+	public String spelTopic() {
+		return ReactiveAppConfig.SPEL_TOPIC;
+	}
+
+	@Bean
+	ApplicationRunner sendMessagesToPulsarTopic(ReactivePulsarTemplate<SampleMessage> template,
+			ReactivePulsarTemplate<TopicPropertyDefinedSampleMessage> topicPropertyDefinedSampleMessagePulsarTemplate,
+			ReactivePulsarTemplate<TopicSpELDefinedSampleMessage> topicSpELDefinedSampleMessagePulsarTemplate) {
+		return (args) -> {
+			Flux.range(0, 10)
+					.map((i) -> new SampleMessage(i, "message:" + i))
+					.map(MessageSpec::of)
+					.as((msgs) -> template.send(TOPIC, msgs))
+					.doOnNext((sendResult) -> LOG
+							.info("++++++PRODUCE REACTIVE:(" + sendResult.getMessageSpec().getValue().id() + ")------"))
+					.subscribe();
+			topicPropertyDefinedSampleMessagePulsarTemplate.send(new TopicPropertyDefinedSampleMessage(10, "message:10"))
+					.doOnNext((sendResult) -> LOG.info("++++++PRODUCE REACTIVE PROPERTY------"))
+					.subscribe();
+			topicSpELDefinedSampleMessagePulsarTemplate.send(new TopicSpELDefinedSampleMessage(11, "message:11"))
+					.doOnNext((sendResult) -> LOG.info("++++++PRODUCE REACTIVE SpeL------"))
+					.subscribe();
+		};
 	}
 
 	@ReactivePulsarListener(topics = TOPIC)
@@ -63,4 +93,13 @@ class ReactiveAppConfig {
 		return Mono.empty();
 	}
 
+	@PulsarListener(topics = "${inttest.topic}")
+	void consumerMessageFromPropertyTopic(TopicPropertyDefinedSampleMessage msg) {
+		LOG.info("++++++CONSUME REACTIVE:(" + msg.id() + ")------");
+	}
+
+	@PulsarListener(topics = "#{'pulsar-reactive-inttest-spel-' + 'topic'}")
+	void consumerMessageFromSpELTopic(TopicSpELDefinedSampleMessage msg) {
+		LOG.info("++++++CONSUME REACTIVE:(" + msg.id() + ")------");
+	}
 }
