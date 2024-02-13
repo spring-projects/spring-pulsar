@@ -44,14 +44,14 @@ public class DefaultExpressionResolver implements ExpressionResolver {
 	public Resolved<String> resolveToString(String expression) {
 		String placeholdersResolved = this.configurableBeanFactory.resolveEmbeddedValue(expression);
 		Object resolvedObj = this.beanExpressionResolver.evaluate(placeholdersResolved, this.beanExpressionContext);
-		if (resolvedObj instanceof String) {
-			return Resolved.of((String) resolvedObj);
+		if (resolvedObj instanceof String resolvedString) {
+			return Resolved.of(resolvedString);
 		}
-		else if (resolvedObj != null) {
-			return Resolved
+		if (resolvedObj == null) {
+			return Resolved.of(null);
+		}
+		return Resolved
 				.failed("The expression '%s' must resolve to a string but was: %s".formatted(expression, resolvedObj));
-		}
-		return Resolved.of(null);
 	}
 
 }

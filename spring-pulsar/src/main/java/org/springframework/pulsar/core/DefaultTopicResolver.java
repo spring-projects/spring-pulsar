@@ -23,10 +23,8 @@ import java.util.function.Supplier;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
@@ -43,7 +41,7 @@ import org.springframework.util.StringUtils;
  * @author Aleksei Arsenev
  * @author Jonas Geiregat
  */
-public class DefaultTopicResolver implements TopicResolver, ApplicationContextAware {
+public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -57,17 +55,15 @@ public class DefaultTopicResolver implements TopicResolver, ApplicationContextAw
 	private ExpressionResolver expressionResolver;
 
 	/**
-	 * Create a new instance with the given expression resolver, that is able to resolve
-	 * SpEL expressions.
-	 * @param expressionResolver the expression resolver to use
+	 * Constructs a new DefaultTopicResolver with the given expression resolver.
+	 * @param expressionResolver the expression resolver to use for resolving topic
 	 */
 	public DefaultTopicResolver(ExpressionResolver expressionResolver) {
 		this.expressionResolver = expressionResolver;
 	}
 
 	/**
-	 * Create a new instance with the default expression resolver without the ability to
-	 * resolve SpEL expressions.
+	 * Constructs a new DefaultTopicResolver.
 	 */
 	public DefaultTopicResolver() {
 	}
@@ -178,6 +174,7 @@ public class DefaultTopicResolver implements TopicResolver, ApplicationContextAw
 			.orElseThrow(() -> "Failed to resolve topic expression: %s".formatted(v));
 	}
 
+	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
 		if (beanFactory instanceof ConfigurableBeanFactory configurableBeanFactory) {
 			this.expressionResolver = new DefaultExpressionResolver(configurableBeanFactory);
@@ -187,16 +184,6 @@ public class DefaultTopicResolver implements TopicResolver, ApplicationContextAw
 					() -> "Topic expressions on @PulsarMessage will not be resolved: bean factory must be %s but was %s"
 						.formatted(ConfigurableBeanFactory.class.getSimpleName(),
 								beanFactory.getClass().getSimpleName()));
-		}
-	}
-
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		if (applicationContext instanceof ConfigurableApplicationContext) {
-			setBeanFactory(((ConfigurableApplicationContext) applicationContext).getBeanFactory());
-		}
-		else {
-			setBeanFactory(applicationContext);
 		}
 	}
 

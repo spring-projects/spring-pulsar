@@ -18,9 +18,11 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.stream.Stream;
 
@@ -33,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 
@@ -41,6 +44,7 @@ import org.springframework.pulsar.annotation.PulsarMessage;
  *
  * @author Chris Bono
  * @author Aleksei Arsenev
+ * @author Jonas Geiregat
  */
 class DefaultTopicResolverTests {
 
@@ -134,6 +138,8 @@ class DefaultTopicResolverTests {
 	@Nested
 	class TopicByAnnotatedMessageType {
 
+		private static final String bazTopicExpression = "#{someExpression}";
+
 		@Test
 		void customMappingTakesPrecedenceOverAnnotationMapping() {
 			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
@@ -161,6 +167,31 @@ class DefaultTopicResolverTests {
 			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
 				.isEqualTo(bazTopic);
 			verify(resolver, times(1)).getAnnotatedTopicInfo(Baz.class);
+		}
+
+		@Test
+		void annotatedMessageTypeWithTopicExpressionIsResolved() {
+			var mockExpressionResolver = mock(ExpressionResolver.class);
+			when(mockExpressionResolver.resolveToString(bazTopicExpression)).thenReturn(Resolved.of(bazTopic));
+			var expressionTopicResolver = new DefaultTopicResolver(mockExpressionResolver);
+			assertThat(expressionTopicResolver.resolveTopic(null, BazWithTopicExpression.class,
+					() -> defaultTopic).value().orElse(null))
+					.isEqualTo(bazTopic);
+			verify(mockExpressionResolver, times(1)).resolveToString(bazTopicExpression);
+		}
+
+		@Test
+		void deriveExpressionResolverFromBeanFactory() {
+			var mockBeanFactory = mock(ConfigurableBeanFactory.class);
+			var expressionTopicResolver = new DefaultTopicResolver();
+			expressionTopicResolver.setBeanFactory(mockBeanFactory);
+			assertThat(expressionTopicResolver)
+					.extracting("expressionResolver")
+					.isNotNull();
+		}
+
+		@PulsarMessage(topic = bazTopicExpression)
+		record BazWithTopicExpression(String value) {
 		}
 
 	}
