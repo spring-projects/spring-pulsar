@@ -17,16 +17,18 @@
 package org.springframework.pulsar.core;
 
 /**
- * Resolves expressions.
+ * Strategy interface for resolving a value from a string expression.
  *
  * @author Jonas Geiregat
+ * @since 1.1.0
  */
 public interface ExpressionResolver {
 
 	/**
-	 * Resolve the given expression.
+	 * Resolve the given expression as a string value.
 	 * @param expression the expression to resolve
-	 * @return the resolved value as a {@code Resolved} of {@link String}
+	 * @return a {@code Resolved} instance containing the resolved string value (can be
+	 * null) or an exception if the resolution failed.
 	 */
 	Resolved<String> resolveToString(String expression);
 

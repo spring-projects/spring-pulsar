@@ -25,6 +25,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
  * {@link ConfigurableBeanFactory} capabilities to resolve expressions.
  *
  * @author Jonas Geiregat
+ * @since 1.1.0
  */
 public class DefaultExpressionResolver implements ExpressionResolver {
 
@@ -40,6 +41,13 @@ public class DefaultExpressionResolver implements ExpressionResolver {
 		this.configurableBeanFactory = configurableBeanFactory;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * @param expression the expression to resolve (can include property placeholders and
+	 * SpEL)
+	 * @return a {@code Resolved} instance containing the resolved string value (can be
+	 * null) or an exception if the resolution failed.
+	 */
 	@Override
 	public Resolved<String> resolveToString(String expression) {
 		String placeholdersResolved = this.configurableBeanFactory.resolveEmbeddedValue(expression);
@@ -51,7 +59,7 @@ public class DefaultExpressionResolver implements ExpressionResolver {
 			return Resolved.of(null);
 		}
 		return Resolved
-				.failed("The expression '%s' must resolve to a string but was: %s".formatted(expression, resolvedObj));
+			.failed("The expression '%s' must resolve to a string but was: %s".formatted(expression, resolvedObj));
 	}
 
 }

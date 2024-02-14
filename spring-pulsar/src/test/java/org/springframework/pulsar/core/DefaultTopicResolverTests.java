@@ -18,11 +18,9 @@ package org.springframework.pulsar.core;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.stream.Stream;
 
@@ -35,9 +33,17 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
+import org.springframework.pulsar.core.DefaultTopicResolverTests.TopicByAnnotatedMessageType.WithTopicExpression.WithTopicExpressionConfig;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * Unit tests for {@link DefaultTopicResolver}.
@@ -138,8 +144,6 @@ class DefaultTopicResolverTests {
 	@Nested
 	class TopicByAnnotatedMessageType {
 
-		private static final String bazTopicExpression = "#{someExpression}";
-
 		@Test
 		void customMappingTakesPrecedenceOverAnnotationMapping() {
 			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
@@ -169,29 +173,63 @@ class DefaultTopicResolverTests {
 			verify(resolver, times(1)).getAnnotatedTopicInfo(Baz.class);
 		}
 
-		@Test
-		void annotatedMessageTypeWithTopicExpressionIsResolved() {
-			var mockExpressionResolver = mock(ExpressionResolver.class);
-			when(mockExpressionResolver.resolveToString(bazTopicExpression)).thenReturn(Resolved.of(bazTopic));
-			var expressionTopicResolver = new DefaultTopicResolver(mockExpressionResolver);
-			assertThat(expressionTopicResolver.resolveTopic(null, BazWithTopicExpression.class,
-					() -> defaultTopic).value().orElse(null))
-					.isEqualTo(bazTopic);
-			verify(mockExpressionResolver, times(1)).resolveToString(bazTopicExpression);
-		}
+		/**
+		 * Lightweight integration tests for the expression resolver functionality in
+		 * {@link DefaultTopicResolver}.
+		 * <p>
+		 * Starts up a small Spring context which in turns provides the bean factory and
+		 * expression resolver to the topic resolver.
+		 */
+		@Nested
+		@SpringJUnitConfig
+		@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+		@ContextConfiguration(classes = WithTopicExpressionConfig.class)
+		@TestPropertySource(properties = { "app.customPropertyTopic = my-custom-property-topic" })
+		class WithTopicExpression {
 
-		@Test
-		void deriveExpressionResolverFromBeanFactory() {
-			var mockBeanFactory = mock(ConfigurableBeanFactory.class);
-			var expressionTopicResolver = new DefaultTopicResolver();
-			expressionTopicResolver.setBeanFactory(mockBeanFactory);
-			assertThat(expressionTopicResolver)
-					.extracting("expressionResolver")
-					.isNotNull();
-		}
+			// @formatter:off
+			@Test
+			void propertyPlaceholderExpressionIsResolved(@Autowired DefaultTopicResolver topicResolver) {
+				assertThat(topicResolver.resolveTopic(null, MsgTypeWithTopicPropertyExpression.class, () -> defaultTopic)
+							.value().orElse(null)).isEqualTo("my-custom-property-topic");
 
-		@PulsarMessage(topic = bazTopicExpression)
-		record BazWithTopicExpression(String value) {
+			}
+
+			@Test
+			void spelExpressionIsResolved(@Autowired DefaultTopicResolver topicResolver) {
+				assertThat(topicResolver.resolveTopic(null, MsgTypeWithTopicSpELExpression.class, () -> defaultTopic)
+					.value().orElse(null)).isEqualTo("my-custom-spel-topic");
+			}
+
+			@Test
+			void embeddedExpressionIsResolved(@Autowired DefaultTopicResolver topicResolver) {
+				assertThat(topicResolver.resolveTopic(null, MsgTypeWithTopicEmbeddedExpression.class, () -> defaultTopic)
+							.value().orElse(null)).isEqualTo("my-custom-property-topic".toUpperCase());
+			}
+			// @formatter:on
+
+			@Configuration(proxyBeanMethods = false)
+			static class WithTopicExpressionConfig {
+
+				@Bean
+				DefaultTopicResolver defaultTopicResolver() {
+					return new DefaultTopicResolver();
+				}
+
+			}
+
+			@PulsarMessage(topic = "${app.customPropertyTopic}")
+			record MsgTypeWithTopicPropertyExpression(String value) {
+			}
+
+			@PulsarMessage(topic = "#{T(java.lang.String).valueOf('my-custom-spel-topic')}")
+			record MsgTypeWithTopicSpELExpression(String value) {
+			}
+
+			@PulsarMessage(topic = "#{T(java.lang.String).valueOf('${app.customPropertyTopic}').toUpperCase()}")
+			record MsgTypeWithTopicEmbeddedExpression(String value) {
+			}
+
 		}
 
 	}
