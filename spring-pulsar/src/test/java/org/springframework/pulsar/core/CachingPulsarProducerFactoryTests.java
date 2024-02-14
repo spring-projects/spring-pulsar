@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.cache.provider.CacheProvider;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerCacheKey;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerWithCloseCallback;
+import org.springframework.pulsar.test.support.model.UserPojo;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -74,7 +75,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Test
-	void createProducerMultipleCalls() throws PulsarClientException {
+	void createProducerMultipleCalls() {
 		var producerFactory = newProducerFactory();
 		var cacheKey = new ProducerCacheKey<>(schema, "topic1", null, null);
 		var producer1 = producerFactory.createProducer(schema, "topic1");
@@ -103,7 +104,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@SuppressWarnings("resource")
 	@Test
-	void createProducerWithMatrixOfCacheKeys() throws PulsarClientException {
+	void createProducerWithMatrixOfCacheKeys() {
 		String topic1 = "topic1";
 		String topic2 = "topic2";
 		var schema1 = new StringSchema();
@@ -167,7 +168,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Test
-	void factoryDestroyCleansUpCacheAndClosesProducers() throws PulsarClientException {
+	void factoryDestroyCleansUpCacheAndClosesProducers() {
 		CachingPulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, null, null);
 		var actualProducer1 = actualProducer(producerFactory.createProducer(schema, "topic1"));
 		var actualProducer2 = actualProducer(producerFactory.createProducer(schema, "topic2"));
@@ -183,7 +184,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Test
-	void producerEvictedFromCache() throws PulsarClientException {
+	void producerEvictedFromCache() {
 		CachingPulsarProducerFactory<String> producerFactory = new CachingPulsarProducerFactory<>(pulsarClient, null,
 				null, new DefaultTopicResolver(), Duration.ofSeconds(3L), 10L, 2);
 		var actualProducer = actualProducer(producerFactory.createProducer(schema, "topic1"));
@@ -306,7 +307,21 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 					arguments(
 							Named.of("differentNullInterceptor",
 									new ProducerCacheKey<>(Schema.STRING, "topic1", encryptionKeys1, customizers1)),
-							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false));
+							new ProducerCacheKey<>(Schema.STRING, "topic1", null, null), false),
+					arguments(
+							Named.of("sameAutoProduceSchemaSameTopic",
+									new ProducerCacheKey<>(Schema.AUTO_PRODUCE_BYTES(), "topic1", null, null)),
+							new ProducerCacheKey<>(Schema.AUTO_PRODUCE_BYTES(), "topic1", null, null), true),
+					arguments(
+							Named.of("autoProduceSchemaOneWithAndOneWithoutSchemaInfo",
+									new ProducerCacheKey<>(Schema.AUTO_PRODUCE_BYTES(), "topic1", null, null)),
+							new ProducerCacheKey<>(Schema.AUTO_PRODUCE_BYTES(Schema.AVRO(UserPojo.class)), "topic1",
+									null, null),
+							true),
+					arguments(
+							Named.of("sameAutoProduceSchemaDifferentTopic",
+									new ProducerCacheKey<>(Schema.AUTO_PRODUCE_BYTES(), "topic1", null, null)),
+							new ProducerCacheKey<>(Schema.AUTO_PRODUCE_BYTES(), "topic2", null, null), false));
 		}
 
 	}
@@ -315,7 +330,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	class RestartFactoryTests {
 
 		@Test
-		void restartLifecycle() throws PulsarClientException {
+		void restartLifecycle() {
 			var producerFactory = (CachingPulsarProducerFactory<String>) producerFactory(pulsarClient, null, null);
 			producerFactory.start();
 			var producer1 = producerFactory.createProducer(schema, "topic1");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SchemaSerializationException;
 import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
@@ -47,9 +48,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 /**
  * Tests for {@link ReactivePulsarTemplate}.
@@ -157,8 +161,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			.withMessageCustomizer((mb) -> mb.key("test-key"))
 			.send()
 			.subscribe();
-		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING,
-				"test-message", true);
+		Message<?> msg = sendAndConsume(sendFunction, "sendMessageWithMessageCustomizer", Schema.STRING, "test-message",
+				true);
 		assertThat(msg.getKey()).isEqualTo("test-key");
 	}
 
@@ -168,15 +172,15 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			.withSenderCustomizer((sb) -> sb.producerName("test-producer"))
 			.send()
 			.subscribe();
-		Message<String> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING,
-				"test-message", true);
+		Message<?> msg = sendAndConsume(sendFunction, "sendMessageWithSenderCustomizer", Schema.STRING, "test-message",
+				true);
 		assertThat(msg.getProducerName()).isEqualTo("test-producer");
 	}
 
 	@ParameterizedTest
 	@ValueSource(booleans = { true, false })
 	void sendMessageWithTopicInferredByTypeMappings(boolean producerFactoryHasDefaultTopic) throws Exception {
-		String topic = "ptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
+		String topic = "rptt-topicInferred-" + producerFactoryHasDefaultTopic + "-topic";
 		ReactivePulsarSenderFactory<Foo> producerFactory = DefaultReactivePulsarSenderFactory.<Foo>builderFor(client)
 			.withDefaultTopic(producerFactoryHasDefaultTopic ? "fake-topic" : null)
 			.build();
@@ -200,8 +204,8 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			.withMessage("Topic must be specified when no default topic is configured");
 	}
 
-	private <T> Message<T> sendAndConsume(Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic,
-			Schema<T> schema, @Nullable T expectedValue, Boolean withDefaultTopic) throws Exception {
+	private <T, V> Message<?> sendAndConsume(Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic,
+			Schema<V> schema, @Nullable V expectedValue, Boolean withDefaultTopic) throws Exception {
 		ReactivePulsarSenderFactory<T> senderFactory = DefaultReactivePulsarSenderFactory.<T>builderFor(client)
 			.withDefaultTopic(withDefaultTopic ? topic : null)
 			.build();
@@ -209,16 +213,16 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 		return sendAndConsume(pulsarTemplate, sendFunction, topic, schema, expectedValue);
 	}
 
-	private <T> Message<T> sendAndConsume(ReactivePulsarTemplate<T> template,
-			Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic, Schema<T> schema, @Nullable T expectedValue)
+	private <T, V> Message<?> sendAndConsume(ReactivePulsarTemplate<T> template,
+			Consumer<ReactivePulsarTemplate<T>> sendFunction, String topic, Schema<V> schema, @Nullable V expectedValue)
 			throws Exception {
-		try (org.apache.pulsar.client.api.Consumer<T> consumer = client.newConsumer(schema)
+		try (org.apache.pulsar.client.api.Consumer<V> consumer = client.newConsumer(schema)
 			.topic(topic)
 			.subscriptionName(topic + "-sub")
 			.subscribe()) {
 			sendFunction.accept(template);
-
-			Message<T> msg = consumer.receive(3, TimeUnit.SECONDS);
+			Message<?> msg = consumer.receive(3, TimeUnit.SECONDS);
+			consumer.acknowledge(msg);
 			assertThat(msg).isNotNull();
 			assertThat(msg.getValue()).isEqualTo(expectedValue);
 			return msg;
@@ -230,7 +234,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void withSpecifiedSchema() throws Exception {
-			String topic = "ptt-specificSchema-topic";
+			String topic = "rptt-specificSchema-topic";
 			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 			ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (
 					template) -> template.send(foo, Schema.AVRO(Foo.class)).subscribe();
@@ -239,7 +243,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void withSchemaInferredByMessageType() throws Exception {
-			String topic = "ptt-nospecificSchema-topic";
+			String topic = "rptt-nospecificSchema-topic";
 			Foo foo = new Foo("Foo-" + UUID.randomUUID(), "Bar-" + UUID.randomUUID());
 			ThrowingConsumer<ReactivePulsarTemplate<Foo>> sendFunction = (template) -> template.send(foo).subscribe();
 			sendAndConsume(sendFunction, topic, Schema.JSON(Foo.class), foo, true);
@@ -247,7 +251,7 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 		@Test
 		void withSchemaInferredByTypeMappings() throws Exception {
-			String topic = "ptt-schemaInferred-topic";
+			String topic = "rptt-schemaInferred-topic";
 			ReactivePulsarSenderFactory<Foo> producerFactory = DefaultReactivePulsarSenderFactory
 				.<Foo>builderFor(client)
 				.withDefaultTopic(topic)
@@ -289,6 +293,41 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 			assertThatIllegalArgumentException()
 				.isThrownBy(() -> pulsarTemplate.send("sendNullWithoutSchemaFails", (String) null, null).subscribe())
 				.withMessage("Schema must be specified when the message is null");
+		}
+
+	}
+
+	@Nested
+	class SendAutoProduceSchemaTests {
+
+		@Test
+		void withJsonSchema() throws Exception {
+			var topic = "rptt-auto-json-topic";
+
+			// First send to the topic as JSON to establish the schema for the topic
+			var userJsonSchema = Schema.JSON(UserRecord.class);
+			var user = new UserRecord("Jason", 5150);
+			ThrowingConsumer<ReactivePulsarTemplate<UserRecord>> sendAsUserFunction = (
+					template) -> template.send(user, userJsonSchema).subscribe();
+			sendAndConsume(sendAsUserFunction, topic, userJsonSchema, user, true);
+
+			// Next send another user using byte[] with AUTO_PRODUCE - it should be
+			// consumed fine
+			var user2 = new UserRecord("Who", 6160);
+			var user2Bytes = new ObjectMapper().writeValueAsBytes(user2);
+			ThrowingConsumer<ReactivePulsarTemplate<byte[]>> sendAsBytesFunction = (
+					template) -> template.send(user2Bytes, Schema.AUTO_PRODUCE_BYTES()).subscribe();
+			sendAndConsume(sendAsBytesFunction, topic, userJsonSchema, user2, true);
+
+			// Finally send another user using byte[] with AUTO_PRODUCE w/ invalid payload
+			// - it should be rejected
+			var bytesSenderFactory = DefaultReactivePulsarSenderFactory.<byte[]>builderFor(client)
+				.withDefaultTopic(topic)
+				.build();
+			var bytesTemplate = new ReactivePulsarTemplate<>(bytesSenderFactory);
+
+			StepVerifier.create(bytesTemplate.send("invalid-payload".getBytes(), Schema.AUTO_PRODUCE_BYTES()))
+				.expectError(SchemaSerializationException.class);
 		}
 
 	}

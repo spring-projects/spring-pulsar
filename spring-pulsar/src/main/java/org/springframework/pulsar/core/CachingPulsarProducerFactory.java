@@ -34,7 +34,9 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.api.transaction.Transaction;
+import org.apache.pulsar.client.impl.schema.AutoProduceBytesSchema;
 import org.apache.pulsar.common.protocol.schema.SchemaHash;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
@@ -168,6 +170,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 	 */
 	static class ProducerCacheKey<T> {
 
+		private static final SchemaHash AUTO_PRODUCE_SCHEMA_HASH = SchemaHash.of(new byte[0], SchemaType.AUTO_PUBLISH);
+
 		private final Schema<T> schema;
 
 		private final SchemaHash schemaHash;
@@ -193,7 +197,8 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 			Assert.notNull(schema, () -> "'schema' must be non-null");
 			Assert.notNull(topic, () -> "'topic' must be non-null");
 			this.schema = schema;
-			this.schemaHash = SchemaHash.of(this.schema);
+			this.schemaHash = (schema instanceof AutoProduceBytesSchema) ? AUTO_PRODUCE_SCHEMA_HASH
+					: SchemaHash.of(this.schema);
 			this.topic = topic;
 			this.encryptionKeys = encryptionKeys;
 			this.customizers = customizers;
