@@ -13,6 +13,28 @@ For example, if you want to configure the issuer url for the `AuthenticationOAut
 If you use other forms, such as `issuerurl` or `issuer-url`, the setting will not be applied to the plugin.
 ====
 
+[TIP]
+====
+Using environment variables for auth parameters is typically problematic because the case sensitivity is lost during translation.
+For example, consider the following `issuerUrl` auth parameter set via an environment variable:
+[source,properties]
+----
+SPRING_PULSAR_CLIENT_AUTHENTICATION_PARAM_ISSUERURL=https://some.server.com
+----
+When Spring Boot loads this property it will use `issuerurl` (lower-cased) rather than the expected `issuerUrl` (camel-cased).
+You can get around this limitation by using the value of the env var as the value of the related auth property in your application.yml.
+Continuing the example above:
+[source,yaml]
+----
+spring:
+  pulsar:
+    client:
+      authentication:
+        param:
+          issuerUrl: ${SPRING_PULSAR_CLIENT_AUTHENTICATION_PARAM_ISSUERURL}
+----
+====
+
 When **not using Spring Boot** auto-configuration, you can use the `org.apache.pulsar.client.api.AuthenticationFactory` to create the authentication and then set it directly on the Pulsar client builder in a client customizer that you provide to the client factory.
 
 
