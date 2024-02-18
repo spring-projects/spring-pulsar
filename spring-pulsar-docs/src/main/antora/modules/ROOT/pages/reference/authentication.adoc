@@ -44,6 +44,7 @@ The following listings show how to configure each of the supported authenticatio
 .[.underline]#Click ##here## for **Athenz**#
 [%collapsible]
 [source, yaml]
+====
 ----
 spring:
   pulsar:
@@ -58,11 +59,13 @@ spring:
           keyId: ...
 ----
 NOTE: This also requires xref:reference/pulsar.adoc#tls-encryption[TLS encryption].
+====
 
 [[Token]]
 .[.underline]#Click ##here## for **Token**#
 [%collapsible]
 [source, yaml]
+====
 ----
 spring:
   pulsar:
@@ -72,11 +75,13 @@ spring:
         param:
           token: some-token-goes-here
 ----
+====
 
 [[Basic]]
 .[.underline]#Click ##here## for **Basic**#
 [%collapsible]
 [source, yaml]
+====
 ----
 spring:
   pulsar:
@@ -87,11 +92,13 @@ spring:
           userId: ...
           password: ...
 ----
+====
 
 [[OAuth2]]
 .[.underline]#Click ##here## for **OAuth2**#
 [%collapsible]
 [source, yaml]
+====
 ----
 spring:
   pulsar:
@@ -104,11 +111,13 @@ spring:
           audience: ...
           scope: ...
 ----
+====
 
 [[Sasl]]
 .[.underline]#Click ##here## for **Sasl**#
 [%collapsible]
 [source, yaml]
+====
 ----
 spring:
   pulsar:
@@ -119,6 +128,7 @@ spring:
           saslJaasClientSectionName: ...
           serverType: ...
 ----
+====
 
 [[mTlS-pem]]
 .[.underline]#Click ##here## for **mTLS (PEM)**#
