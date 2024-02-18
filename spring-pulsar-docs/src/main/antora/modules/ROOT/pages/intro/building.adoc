@@ -1,5 +1,5 @@
 [[building-project]]
-== Building the Project
+= Building the Project
 
 include::../attributes/attributes-variables.adoc[]
 

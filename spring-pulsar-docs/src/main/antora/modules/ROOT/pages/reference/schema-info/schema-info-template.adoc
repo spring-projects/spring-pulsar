@@ -13,8 +13,12 @@ This removes the need to specify the schema as the framework consults the resolv
 
 include::custom-schema-mapping.adoc[]
 
+[[template-default-schema-annotation]]
+include::custom-schema-mapping-annotation.adoc[leveloffset=+2]
+
 With this configuration in place, there is no need to set specify the schema on send operations.
 
+[[template-auto-produce]]
 === Producing with AUTO_SCHEMA
 If there is no chance to know the type of schema of a Pulsar topic in advance, you can use an {apache-pulsar-docs}/schema-get-started/#auto_produce[AUTO_PRODUCE] schema to publish a raw JSON or Avro payload as a `byte[]` safely.
 
