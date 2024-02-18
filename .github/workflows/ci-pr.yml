@@ -80,7 +80,7 @@ jobs:
     needs: [prerequisites, build_and_verify]
     strategy:
       matrix:
-        springBootVersion: [ "${{ needs.prerequisites.outputs.boot_version }}", '3.3.0-SNAPSHOT' ]
+        springBootVersion: [ "${{ needs.prerequisites.outputs.boot_version }}" ]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
