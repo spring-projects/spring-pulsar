@@ -34,6 +34,7 @@ NOTE: The `message-type` is the fully-qualified name of the message class.
 
 WARNING: If the message (or the first message of a `Publisher` input) is `null`, the framework won't be able to determine the topic from it. Another method shall be used to specify the topic if your application is likely to send `null` messages.
 
+[[default-topic-via-annotation]]
 === Specified via annotation
 
 When no topic is passed into the API and there are no custom topic mappings configured, the system looks for a `@PulsarMessage` annotation on the class of the message being produced or consumed.

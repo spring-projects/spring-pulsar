@@ -296,6 +296,7 @@ void listen(String message) {
 
 TIP: The properties used are direct Pulsar consumer properties, not the `spring.pulsar.consumer` application configuration properties
 
+[[listener-auto-consume]]
 ==== Generic records with AUTO_CONSUME
 If there is no chance to know the type of schema of a Pulsar topic in advance, you can use the `AUTO_CONSUME` schema type to consume generic records.
 In this case, the topic deserializes messages into `GenericRecord` objects using the schema info associated with the topic.

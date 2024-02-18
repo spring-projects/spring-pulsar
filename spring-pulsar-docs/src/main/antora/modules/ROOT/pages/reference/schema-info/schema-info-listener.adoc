@@ -10,6 +10,9 @@ This removes the need to set the schema on the listener as the framework consult
 
 include::custom-schema-mapping.adoc[]
 
+[[listener-default-schema-annotation]]
+include::custom-schema-mapping-annotation.adoc[leveloffset=+2]
+
 With this configuration in place, there is no need to set the schema on the listener, for example:
 
 include::{listener-class}/listener-snippet.adoc[]
