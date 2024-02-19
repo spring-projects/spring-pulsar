@@ -13,6 +13,7 @@ For example, if you want to configure the issuer url for the `AuthenticationOAut
 If you use other forms, such as `issuerurl` or `issuer-url`, the setting will not be applied to the plugin.
 ====
 
+[[client-authentication-env-vars]]
 [TIP]
 ====
 Using environment variables for auth parameters is typically problematic because the case sensitivity is lost during translation.
