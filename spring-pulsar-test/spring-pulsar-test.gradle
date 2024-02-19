@@ -8,4 +8,8 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter-api'
     implementation 'org.testcontainers:pulsar'
     implementation 'org.testcontainers:junit-jupiter'
+    implementation 'org.awaitility:awaitility'
+    implementation project(':spring-pulsar')
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
