@@ -107,6 +107,19 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 				.getDisplayName();
 	}
 
+	protected String calculateNextSnapshotVersion(String version) {
+		VersionInfo versionSegments = parseVersion(version);
+		String majorSegment = versionSegments.major();
+		String minorSegment = versionSegments.minor();
+		String patchSegment = versionSegments.patch();
+		String modifier = versionSegments.modifier();
+		System.out.println("modifier = " + modifier);
+		if (modifier == null) {
+			patchSegment = String.valueOf(Integer.parseInt(patchSegment) + 1);
+		}
+		return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
+	}
+
 	record VersionInfo(String major, String minor, String patch, @Nullable String modifier) {
 	}
 }

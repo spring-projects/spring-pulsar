@@ -28,16 +28,4 @@ public abstract class UpdateToNextBootSnapshotVersionTask extends UpdateProjectV
 		updateVersionInTomlVersions(SPRING_BOOT_VERSION_FOR_SAMPLES_PROPERTY, SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY, this::calculateNextSnapshotVersion);
 	}
 
-	private String calculateNextSnapshotVersion(String version) {
-		VersionInfo versionSegments = parseVersion(version);
-		String majorSegment = versionSegments.major();
-		String minorSegment = versionSegments.minor();
-		String patchSegment = versionSegments.patch();
-		String modifier = versionSegments.modifier();
-		if (modifier == null) {
-			patchSegment = String.valueOf(Integer.parseInt(patchSegment) + 1);
-		}
-		return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
-	}
-
 }
