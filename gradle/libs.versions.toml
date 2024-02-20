@@ -1,6 +1,6 @@
 [versions]
 # product
-brave = "5.17.1"
+brave = "6.0.1"
 caffeine = "3.1.8"
 jackson = "2.16.1"
 jsr305 = "3.0.2"
