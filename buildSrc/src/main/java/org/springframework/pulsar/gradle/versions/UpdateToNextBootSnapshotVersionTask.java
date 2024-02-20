@@ -18,14 +18,14 @@ package org.springframework.pulsar.gradle.versions;
 
 import org.gradle.api.tasks.TaskAction;
 
-public abstract class UpdateToSnapshotVersionTask extends UpdateProjectVersionTask {
+public abstract class UpdateToNextBootSnapshotVersionTask extends UpdateProjectVersionTask {
 
 	@TaskAction
-	public void updateToSnapshotVersion() {
+	public void updateToBootSnapshotVersion() {
 		String currentVersion = getProject().getVersion().toString();
-		String nextSnapshotVersion = calculateNextSnapshotVersion(currentVersion);
-		updateVersionInGradleProperties(VERSION_PROPERTY, nextSnapshotVersion);
 		updateVersionInGradleProperties(VERSION_FOR_SAMPLES_PROPERTY, currentVersion);
+		updateVersionInTomlVersions(SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY, this::calculateNextSnapshotVersion);
+		updateVersionInTomlVersions(SPRING_BOOT_VERSION_FOR_SAMPLES_PROPERTY, SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY, this::calculateNextSnapshotVersion);
 	}
 
 	private String calculateNextSnapshotVersion(String version) {
@@ -34,10 +34,10 @@ public abstract class UpdateToSnapshotVersionTask extends UpdateProjectVersionTa
 		String minorSegment = versionSegments.minor();
 		String patchSegment = versionSegments.patch();
 		String modifier = versionSegments.modifier();
-		System.out.println("modifier = " + modifier);
 		if (modifier == null) {
 			patchSegment = String.valueOf(Integer.parseInt(patchSegment) + 1);
 		}
 		return "%s.%s.%s-SNAPSHOT".formatted(majorSegment, minorSegment, patchSegment);
 	}
+
 }
