@@ -33,6 +33,8 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 
 	static final String VERSION_FOR_SAMPLES_PROPERTY = "version.samples";
 
+	static final String SPRING_BOOT_VERSION_FOR_SAMPLES_PROPERTY = "spring-boot";
+
 	static final String SPRING_BOOT_VERSION_FOR_DOCS_PROPERTY = "spring-boot-for-docs";
 
 	static final Pattern VERSION_PATTERN = Pattern.compile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-M\\d+|-RC\\d+|-SNAPSHOT)?$");
@@ -51,6 +53,17 @@ public abstract class UpdateProjectVersionTask extends DefaultTask {
 				(p) -> currentVersionInCatalog(p, versionPropertyName),
 				newPropertyValueGivenCurrentValue,
 				(currentValue) -> "%s = \"%s\"".formatted(versionPropertyName, currentValue),
+				(newValue) -> "%s = \"%s\"".formatted(versionPropertyName, newValue));
+	}
+
+	protected void updateVersionInTomlVersions(String versionPropertyName, String sourcePropertyName,
+			Function<String, String> newPropertyValueGivenCurrentValue) {
+		var currentVersionPropertyValue = currentVersionInCatalog(getProject(), versionPropertyName);
+		var currentSourcePropertyValue = currentVersionInCatalog(getProject(), sourcePropertyName);
+		this.updatePropertyInFile("gradle/libs.versions.toml", versionPropertyName,
+				(__) -> currentSourcePropertyValue,
+				newPropertyValueGivenCurrentValue,
+				(__) -> "%s = \"%s\"".formatted(versionPropertyName, currentVersionPropertyValue),
 				(newValue) -> "%s = \"%s\"".formatted(versionPropertyName, newValue));
 	}
 

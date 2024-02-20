@@ -24,12 +24,24 @@ public class UpdateProjectVersionPlugin implements Plugin<Project> {
 	public void apply(Project project) {
 		project.getTasks().register("updateToReleaseVersion", UpdateToReleaseVersionTask.class, updateToReleaseVersionTask -> {
 			updateToReleaseVersionTask.setGroup("Release");
-			updateToReleaseVersionTask.setDescription("Updates the project version to the next release in gradle.properties");
+			updateToReleaseVersionTask.setDescription("""
+   				Updates the project version to the release version in gradle.properties and
+   				the boot version used by docs to the upcoming boot release version in libs.versions.toml.""");
 			updateToReleaseVersionTask.setReleaseVersion((String) project.findProperty("releaseVersion"));
 		});
 		project.getTasks().register("updateToSnapshotVersion", UpdateToSnapshotVersionTask.class, updateToSnapshotVersionTask -> {
 			updateToSnapshotVersionTask.setGroup("Release");
-			updateToSnapshotVersionTask.setDescription("Updates the project version to the next snapshot in gradle.properties");
+			updateToSnapshotVersionTask.setDescription("""
+   				Updates the project version to the next snapshot version and the project version 
+   				used by samples to the current released version in gradle.properties.""");
 		});
+		project.getTasks().register("updateToNextBootSnapshotVersion", UpdateToNextBootSnapshotVersionTask.class, updateToNextBootSnapshotVersionTask -> {
+			updateToNextBootSnapshotVersionTask.setGroup("Release");
+			updateToNextBootSnapshotVersionTask.setDescription("""
+   				Updates the project version used by samples to the current project version in 
+   				gradle.properties and boot version used by docs and samples to the next boot 
+   				snapshot version in libs.versions.toml.""");
+		});
+
 	}
 }
