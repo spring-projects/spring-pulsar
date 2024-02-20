@@ -1,7 +1,6 @@
 * xref:index.adoc[Overview]
 * xref:whats-new.adoc[]
 * xref:intro.adoc[]
-** xref:intro/project-state.adoc[]
 ** xref:intro/system-requirements.adoc[]
 ** xref:intro/building.adoc[]
 ** xref:intro/getting-help.adoc[]
