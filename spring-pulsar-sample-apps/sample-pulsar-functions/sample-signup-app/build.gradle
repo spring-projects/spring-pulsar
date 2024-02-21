@@ -33,6 +33,9 @@ dependencies {
 }
 
 test {
+	onlyIf {
+		project.hasProperty("sampleTests")
+	}
 	useJUnitPlatform()
 	testLogging.showStandardStreams = true
 	outputs.upToDateWhen { false }

@@ -89,6 +89,7 @@ jobs:
               -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
               -PspringPulsarVersion="$VERSION" \
               -PspringBootVersion="$BOOT_VERSION" \
+              -PsampleTests \
               :runAllSampleTests
   scan:
     needs: [prerequisites]
