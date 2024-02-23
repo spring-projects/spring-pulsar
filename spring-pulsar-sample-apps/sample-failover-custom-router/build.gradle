@@ -21,10 +21,9 @@ ext['pulsar.version'] = "${pulsarVersion}"
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-pulsar'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-// TODO add back in once samples are not run during part of the 'test' target
-//	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-//	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-//	implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+	implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 
 	testImplementation project(':spring-pulsar-test')
