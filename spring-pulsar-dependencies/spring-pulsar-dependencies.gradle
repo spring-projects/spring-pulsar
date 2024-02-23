@@ -12,7 +12,6 @@ dependencies {
 	api platform(libs.micrometer.bom)
 	api platform(libs.micrometer.tracing.bom)
 	api platform(libs.reactor.bom)
-	api platform(libs.brave.bom)
 	api platform(libs.assertj.bom)
 	api platform(libs.awaitility)
 	api platform(libs.junit.bom)
