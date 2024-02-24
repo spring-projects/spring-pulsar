@@ -2,6 +2,10 @@ spring:
   pulsar:
     producer:
       message-routing-mode: custompartition
+    template:
+      observations-enabled: true
+    listener:
+      observation-enabled: true
   docker:
     compose:
       # when run from Intellij via "Run" button, path must be set from project root

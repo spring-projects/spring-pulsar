@@ -1,6 +1,5 @@
 [versions]
 # product
-brave = "6.0.1"
 caffeine = "3.1.8"
 jackson = "2.16.1"
 jsr305 = "3.0.2"
@@ -40,7 +39,6 @@ version-catalog-update = "0.8.4"
 
 [libraries]
 # Product libs
-brave-bom = { module = "io.zipkin.brave:brave-bom", version.ref = "brave" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }

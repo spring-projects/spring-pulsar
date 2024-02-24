@@ -37,7 +37,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
-import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
