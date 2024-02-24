@@ -16,32 +16,19 @@
 
 package org.springframework.pulsar.test.support;
 
-import java.time.Duration;
-import java.util.List;
-
-import org.apache.pulsar.client.api.Message;
-
 /**
- * Assertions related step in the fluent API for building a Pulsar test consumer.
+ * Specification for defining the topic to consume from for the
+ * {@link PulsarConsumerTestUtil}.
  *
- * @param <T> the type of the message payload
  * @author Jonas Geiregat
  */
-public interface ConditionsStep<T> {
+public interface TopicSpec {
 
 	/**
-	 * The maximum timeout duration to wait for the desired number of messages to be
-	 * reached.
-	 * @param timeout the maximum timeout duration to wait
-	 * @return the next step in the fluent API
+	 * Define the topic to consume from.
+	 * @param topic the topic to consume from
+	 * @return the schema selection specification
 	 */
-	ConditionsStep<T> awaitAtMost(Duration timeout);
-
-	/**
-	 * Start consuming until the given condition is met.
-	 * @param condition the condition to be met
-	 * @return the next step in the fluent API
-	 */
-	List<Message<T>> until(Condition<T> condition);
+	SchemaSpec fromTopic(String topic);
 
 }

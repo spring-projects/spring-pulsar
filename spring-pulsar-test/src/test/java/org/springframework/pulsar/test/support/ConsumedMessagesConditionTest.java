@@ -24,22 +24,27 @@ import org.apache.pulsar.client.api.Message;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-class ConditionTest {
+/**
+ * Tests for {@link ConsumedMessagesCondition}.
+ *
+ * @author Jonas Geiregat
+ */
+class ConsumedMessagesConditionTest {
 
 	@ParameterizedTest
 	@CsvSource({ "true, true, true", "true, false, false", "false, true, false", "false, false, false" })
 	void bothConditionsShouldBeMetForAndToBeMet(boolean result1, boolean result2, boolean expected) {
-		var condition1 = new TestCondition(result1);
-		var condition2 = new TestCondition(result2);
+		var condition1 = new TestConsumedMessagesCondition(result1);
+		var condition2 = new TestConsumedMessagesCondition(result2);
 
 		assertThat(condition1.and(condition2).meets(List.of())).isEqualTo(expected);
 	}
 
-	static class TestCondition implements Condition<String> {
+	static class TestConsumedMessagesCondition implements ConsumedMessagesCondition<String> {
 
 		private final boolean result;
 
-		TestCondition(boolean result) {
+		TestConsumedMessagesCondition(boolean result) {
 			this.result = result;
 		}
 

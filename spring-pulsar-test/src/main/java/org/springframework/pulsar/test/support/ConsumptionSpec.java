@@ -16,20 +16,27 @@
 
 package org.springframework.pulsar.test.support;
 
+import java.util.List;
+
+import org.apache.pulsar.client.api.Message;
+
+import org.springframework.pulsar.PulsarException;
+
 /**
- * Exception thrown when a test fails.
+ * Terminal specification for consuming messages.
  *
+ * @param <T> the type of the message payload
  * @author Jonas Geiregat
  */
-public class PulsarTestException extends RuntimeException {
+public interface ConsumptionSpec<T> {
 
-	public PulsarTestException(String message, Throwable exception) {
-		super(message, exception);
-	}
-
-	@SuppressWarnings("unused")
-	public PulsarTestException(String message) {
-		super(message);
-	}
+	/**
+	 *
+	 * Get the consumed messages.
+	 * @return the consumed messages
+	 * @throws ConditionTimeoutException if the condition is not met within the timeout
+	 * @throws PulsarException if the condition is not met within the timeout
+	 */
+	List<Message<T>> get();
 
 }

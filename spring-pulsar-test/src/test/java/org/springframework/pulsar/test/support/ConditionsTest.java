@@ -30,6 +30,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+/**
+ * Tests for {@link Conditions}.
+ *
+ * @author Jonas Geiregat
+ */
 class ConditionsTest {
 
 	@Nested
@@ -37,9 +42,9 @@ class ConditionsTest {
 
 		@Test
 		void receivedMessageCountMeetCondition() {
-			Condition<String> condition = desiredMessageCount(2);
+			ConsumedMessagesCondition<String> consumedMessagesCondition = desiredMessageCount(2);
 
-			boolean result = condition.meets(List.of(
+			boolean result = consumedMessagesCondition.meets(List.of(
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-0".getBytes()), Schema.STRING,
 							"topic"),
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-1".getBytes()), Schema.STRING,
@@ -50,9 +55,9 @@ class ConditionsTest {
 
 		@Test
 		void receivedMessageCountDoesNotMeetCondition() {
-			Condition<String> condition = desiredMessageCount(3);
+			ConsumedMessagesCondition<String> consumedMessagesCondition = desiredMessageCount(3);
 
-			boolean result = condition.meets(List.of(
+			boolean result = consumedMessagesCondition.meets(List.of(
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-0".getBytes()), Schema.STRING,
 							"topic"),
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-1".getBytes()), Schema.STRING,
@@ -72,13 +77,13 @@ class ConditionsTest {
 	}
 
 	@Nested
-	class ContainsValueCondition {
+	class ContainsValueConsumedMessagesCondition {
 
 		@Test
 		void messageValueContainsExpectation() {
-			Condition<String> condition = Conditions.containsValue("message-1");
+			ConsumedMessagesCondition<String> consumedMessagesCondition = Conditions.containsValue("message-1");
 
-			boolean result = condition.meets(List.of(
+			boolean result = consumedMessagesCondition.meets(List.of(
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-0".getBytes()), Schema.STRING,
 							"topic"),
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-1".getBytes()), Schema.STRING,
@@ -91,9 +96,9 @@ class ConditionsTest {
 
 		@Test
 		void messageValueDoesNotContainExpectation() {
-			Condition<String> condition = Conditions.containsValue("message-3");
+			ConsumedMessagesCondition<String> consumedMessagesCondition = Conditions.containsValue("message-3");
 
-			boolean result = condition.meets(List.of(
+			boolean result = consumedMessagesCondition.meets(List.of(
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-0".getBytes()), Schema.STRING,
 							"topic"),
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-1".getBytes()), Schema.STRING,
@@ -107,13 +112,14 @@ class ConditionsTest {
 	}
 
 	@Nested
-	class ContainsValuesCondition {
+	class ContainsValuesConsumedMessagesCondition {
 
 		@Test
 		void messageValueContainsExpectation() {
-			Condition<String> condition = Conditions.containsValues("message-1", "message-2");
+			ConsumedMessagesCondition<String> consumedMessagesCondition = Conditions.containsValues("message-1",
+					"message-2");
 
-			boolean result = condition.meets(List.of(
+			boolean result = consumedMessagesCondition.meets(List.of(
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-0".getBytes()), Schema.STRING,
 							"topic"),
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-1".getBytes()), Schema.STRING,
@@ -126,9 +132,10 @@ class ConditionsTest {
 
 		@Test
 		void messageValueDoesNotContainExpectation() {
-			Condition<String> condition = Conditions.containsValues("message-3", "message-4");
+			ConsumedMessagesCondition<String> consumedMessagesCondition = Conditions.containsValues("message-3",
+					"message-4");
 
-			boolean result = condition.meets(List.of(
+			boolean result = consumedMessagesCondition.meets(List.of(
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-0".getBytes()), Schema.STRING,
 							"topic"),
 					MessageImpl.create(new MessageMetadata(), ByteBuffer.wrap("message-1".getBytes()), Schema.STRING,

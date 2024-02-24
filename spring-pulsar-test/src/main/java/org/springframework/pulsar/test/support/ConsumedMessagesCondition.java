@@ -16,21 +16,29 @@
 
 package org.springframework.pulsar.test.support;
 
-import org.apache.pulsar.client.api.Schema;
+import java.util.List;
+
+import org.apache.pulsar.client.api.Message;
 
 /**
- * Step for defining the schema to use for the {@link PulsarTestConsumer}.
+ * A condition to be used in {@link PulsarConsumerTestUtil} to verify if it meets the
+ * consumed messages.
  *
+ * @param <T> the type of the message
  * @author Jonas Geiregat
  */
-public interface SchemaStep {
+@FunctionalInterface
+public interface ConsumedMessagesCondition<T> {
 
 	/**
-	 * Define the schema to use for the {@link PulsarTestConsumer}.
-	 * @param <T> the type of the message
-	 * @param string the schema
-	 * @return the next step
+	 * Verifies that the consumed messages meet the condition.
+	 * @param messages the consumed messages
+	 * @return {@code true} if the condition is met
 	 */
-	<T> ConditionsStep<T> withSchema(Schema<T> string);
+	boolean meets(List<Message<T>> messages);
+
+	default ConsumedMessagesCondition<T> and(ConsumedMessagesCondition<T> other) {
+		return messages -> meets(messages) && other.meets(messages);
+	}
 
 }

@@ -16,28 +16,19 @@
 
 package org.springframework.pulsar.test.support;
 
-import java.util.List;
-
-import org.apache.pulsar.client.api.Message;
-
 /**
- * A condition to be used in {@link PulsarTestConsumer} to assert the consumed messages.
+ * Exception thrown when a test times out.
  *
- * @param <T> the type of the message
  * @author Jonas Geiregat
  */
-@FunctionalInterface
-public interface Condition<T> {
+public class ConditionTimeoutException extends PulsarTestException {
 
-	/**
-	 * Asserts that the consumed messages meet the condition.
-	 * @param messages the consumed messages
-	 * @return {@code true} if the condition is met
-	 */
-	boolean meets(List<Message<T>> messages);
+	public ConditionTimeoutException(String message, Throwable exception) {
+		super(message, exception);
+	}
 
-	default Condition<T> and(Condition<T> other) {
-		return messages -> meets(messages) && other.meets(messages);
+	public ConditionTimeoutException(String message) {
+		super(message);
 	}
 
 }

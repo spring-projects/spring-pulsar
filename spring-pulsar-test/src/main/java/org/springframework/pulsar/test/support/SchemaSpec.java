@@ -16,18 +16,21 @@
 
 package org.springframework.pulsar.test.support;
 
+import org.apache.pulsar.client.api.Schema;
+
 /**
- * Exception thrown when a test times out.
+ * Specification for defining the schema to use for the {@link PulsarConsumerTestUtil}.
  *
  * @author Jonas Geiregat
  */
-public interface TopicStep {
+public interface SchemaSpec {
 
 	/**
-	 * Define the topic to consume from.
-	 * @param topics the topics
-	 * @return the next step
+	 * Define the schema to use for the {@link PulsarConsumerTestUtil}.
+	 * @param <T> the type of the message
+	 * @param string the schema
+	 * @return the conditions specification
 	 */
-	SchemaStep fromTopic(String... topics);
+	<T> ConditionsSpec<T> withSchema(Schema<T> string);
 
 }

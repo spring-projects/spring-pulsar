@@ -23,7 +23,7 @@ import org.apache.pulsar.client.api.Message;
 import org.springframework.util.Assert;
 
 /**
- * Exposes a set of commonly used conditions to be used in {@link PulsarTestConsumer}.
+ * Exposes a set of commonly used conditions to be used in {@link PulsarConsumerTestUtil}.
  *
  * @author Jonas Geiregat
  */
@@ -35,18 +35,19 @@ public interface Conditions {
 	 * @param <T> the type of the message
 	 * @return the condition
 	 */
-	static <T> Condition<T> desiredMessageCount(int messageCount) {
+	static <T> ConsumedMessagesCondition<T> desiredMessageCount(int messageCount) {
 		Assert.state(messageCount > 0, "Desired message count must be greater than 0");
 		return messages -> messages.size() == messageCount;
 	}
 
 	/**
-	 * Verifies that the consumed messages value contains at least the expected value.
+	 * Verifies that at least one of the consumed messages has a payload that equals the
+	 * specified value.
 	 * @param expectation the expected value
 	 * @param <T> the type of the message
 	 * @return the condition
 	 */
-	static <T> Condition<T> containsValue(T expectation) {
+	static <T> ConsumedMessagesCondition<T> containsValue(T expectation) {
 		return messages -> messages.stream().anyMatch(message -> message.getValue().equals(expectation));
 	}
 
@@ -58,7 +59,7 @@ public interface Conditions {
 	 */
 	@SafeVarargs
 	@SuppressWarnings("varargs")
-	static <T> Condition<T> containsValues(T... expectation) {
+	static <T> ConsumedMessagesCondition<T> containsValues(T... expectation) {
 		return messages -> {
 			var values = messages.stream().map(Message::getValue).toList();
 			return Stream.of(expectation).allMatch(values::contains);

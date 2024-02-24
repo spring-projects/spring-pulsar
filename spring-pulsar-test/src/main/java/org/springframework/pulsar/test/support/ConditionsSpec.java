@@ -16,15 +16,29 @@
 
 package org.springframework.pulsar.test.support;
 
+import java.time.Duration;
+
 /**
- * Exception thrown when a test times out.
+ * Assertions related step in the fluent API for building a Pulsar test consumer.
  *
+ * @param <T> the type of the message payload
  * @author Jonas Geiregat
  */
-public class PulsarTimeOutException extends PulsarTestException {
+public interface ConditionsSpec<T> {
 
-	public PulsarTimeOutException(String message, Throwable exception) {
-		super(message, exception);
-	}
+	/**
+	 * The maximum timeout duration to wait for the desired number of messages to be
+	 * reached.
+	 * @param timeout the maximum timeout duration to wait
+	 * @return the next step in the fluent API
+	 */
+	ConditionsSpec<T> awaitAtMost(Duration timeout);
+
+	/**
+	 * Start consuming until the given condition is met.
+	 * @param consumedMessagesCondition the condition to be met
+	 * @return the next step in the fluent API
+	 */
+	ConsumptionSpec<T> until(ConsumedMessagesCondition<T> consumedMessagesCondition);
 
 }

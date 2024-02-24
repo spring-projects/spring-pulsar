@@ -37,11 +37,11 @@ import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 
 /**
- * Tests for {@link PulsarTestConsumer}.
+ * Tests for {@link PulsarConsumerTestUtil}.
  *
  * @author Jonas Geiregat
  */
-class PulsarTestConsumerTest implements PulsarTestContainerSupport {
+class PulsarTestConsumerTestUtilTest implements PulsarTestContainerSupport {
 
 	private PulsarTemplate<Object> pulsarTemplate;
 
@@ -56,39 +56,28 @@ class PulsarTestConsumerTest implements PulsarTestContainerSupport {
 
 	@Test
 	void consumerReturnsWhenConditionIsMet() {
-		var testConsumer = PulsarTestConsumer.consumeMessages(pulsarConsumerFactory)
+		var testConsumer = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
 			.fromTopic("topic-a")
 			.withSchema(Schema.STRING);
 
 		IntStream.range(0, 10).forEach(i -> pulsarTemplate.send("topic-a", "message-" + i));
 
-		List<Message<String>> messages = testConsumer.until(desiredMessageCount(2));
+		List<Message<String>> messages = testConsumer.until(desiredMessageCount(2)).get();
 
 		assertThat(messages).hasSize(2).map(Message::getValue).containsExactly("message-0", "message-1");
 	}
 
 	@Test
 	void throwExceptionWhenConditionIsNotMet() {
-		var testConsumer = PulsarTestConsumer.consumeMessages(pulsarConsumerFactory)
+		var testConsumer = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
 			.fromTopic("topic-b")
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5));
 
-		ThrowingCallable consume = () -> testConsumer.until(desiredMessageCount(20));
+		ThrowingCallable consume = () -> testConsumer.until(desiredMessageCount(20)).get();
 
-		assertThatThrownBy(consume).isInstanceOf(PulsarTimeOutException.class);
-	}
-
-	@Test
-	void throwExceptionWhenTimeoutReached() {
-		var testConsumer = PulsarTestConsumer.consumeMessages(pulsarConsumerFactory)
-			.fromTopic("topic-c")
-			.withSchema(Schema.STRING)
-			.awaitAtMost(Duration.ofSeconds(5));
-
-		ThrowingCallable consume = () -> testConsumer.until(desiredMessageCount(2));
-
-		assertThatThrownBy(consume).isInstanceOf(PulsarTimeOutException.class);
+		assertThatThrownBy(consume).isInstanceOf(ConditionTimeoutException.class)
+			.hasMessage("Condition was not met within 5 seconds");
 	}
 
 }

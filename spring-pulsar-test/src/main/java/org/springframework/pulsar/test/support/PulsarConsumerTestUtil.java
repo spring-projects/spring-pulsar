@@ -16,20 +16,20 @@
 
 package org.springframework.pulsar.test.support;
 
-import static org.awaitility.Awaitility.await;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
-import org.awaitility.core.ConditionTimeoutException;
 
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
+import org.springframework.util.Assert;
 
 /**
  * Fluent API, to be used in tests, for consuming messages from Pulsar topics until a
@@ -38,70 +38,81 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
  * @param <T> the type of the message payload
  * @author Jonas Geiregat
  */
-public class PulsarTestConsumer<T> implements TopicStep, SchemaStep, ConditionsStep<T> {
+public class PulsarConsumerTestUtil<T> implements TopicSpec, SchemaSpec, ConditionsSpec<T>, ConsumptionSpec<T> {
 
 	private final PulsarConsumerFactory<T> consumerFactory;
 
-	private List<String> topics;
-
-	private Condition<T> condition;
+	private ConsumedMessagesCondition<T> condition;
 
 	private Schema<T> schema;
 
 	private Duration timeout = Duration.ofSeconds(30);
 
-	public static <T> TopicStep consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
-		return new PulsarTestConsumer<>(pulsarConsumerFactory);
+	private List<String> topics;
+
+	public static <T> TopicSpec consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
+		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
 	}
 
-	public PulsarTestConsumer(PulsarConsumerFactory<T> consumerFactory) {
+	public PulsarConsumerTestUtil(PulsarConsumerFactory<T> consumerFactory) {
 		this.consumerFactory = consumerFactory;
 	}
 
 	@Override
-	public PulsarTestConsumer<T> fromTopic(String... topics) {
-		this.topics = List.of(topics);
+	public SchemaSpec fromTopic(String topic) {
+		Assert.state(topic != null, "Topic must not be null");
+		this.topics = List.of(topic);
 		return this;
 	}
 
 	@Override
-	public ConditionsStep<T> awaitAtMost(Duration timeout) {
+	public ConditionsSpec<T> awaitAtMost(Duration timeout) {
 		this.timeout = timeout;
 		return this;
 	}
 
 	@Override
-	public List<Message<T>> until(Condition<T> condition) {
+	public ConsumptionSpec<T> until(ConsumedMessagesCondition<T> condition) {
 		this.condition = condition;
-		try {
-			return doGet();
-		}
-		catch (ConditionTimeoutException ex) {
-			throw new PulsarTimeOutException("Timeout waiting for messages", ex);
-		}
+		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <E> ConditionsStep<E> withSchema(Schema<E> schema) {
+	public <E> ConditionsSpec<E> withSchema(Schema<E> schema) {
 		this.schema = (Schema<T>) schema;
-		return (ConditionsStep<E>) this;
+		return (ConditionsSpec<E>) this;
 	}
 
-	private List<Message<T>> doGet() {
+	@Override
+	public List<Message<T>> get() {
 		var messages = new ArrayList<Message<T>>();
-		await().atMost(this.timeout).until(() -> conditionHasBeenReached(messages));
-		return messages;
-	}
-
-	private boolean conditionHasBeenReached(List<Message<T>> messages) throws PulsarClientException {
 		try (Consumer<T> consumer = consumerFactory.createConsumer(this.schema, this.topics, "test-consumer",
 				c -> c.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest))) {
-			Message<T> message = consumer.receive();
-			messages.add(message);
-			consumer.acknowledge(message);
+			long remainingMillis = timeout.toMillis();
+			do {
+				long loopStartTime = System.currentTimeMillis();
+				var message = consumer.receive(200, TimeUnit.MILLISECONDS);
+				if (message != null) {
+					messages.add(message);
+					consumer.acknowledge(message);
+				}
+				if (this.condition != null) {
+					if (this.condition.meets(messages)) {
+						return messages;
+					}
+				}
+				remainingMillis -= System.currentTimeMillis() - loopStartTime;
+			}
+			while (remainingMillis > 0);
 		}
-		return this.condition.meets(messages);
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
+		}
+		if (this.condition != null && !this.condition.meets(messages)) {
+			throw new ConditionTimeoutException("Condition was not met within " + timeout.toSeconds() + " seconds");
+		}
+		return messages;
 	}
 
 }
