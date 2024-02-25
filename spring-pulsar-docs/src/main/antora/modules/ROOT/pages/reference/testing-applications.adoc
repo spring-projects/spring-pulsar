@@ -1,0 +1,42 @@
+[[testing-applications]]
+= Testing Applications
+include::../attributes/attributes.adoc[]
+
+The `spring-pulsar-test` dependency includes some useful utilities when testing your applications.
+
+== PulsarConsumerTestUtil
+
+`org.springframework.pulsar.test.support.PulsarConsumerTestUtil` provides a type-safe fluent API for consuming messages from a Pulsar topic within a test.
+
+[source,java]
+----
+List<Message<MyMessage>> messages = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+            .fromTopic("my-topic")
+            .withSchema(Schema.JSON(MyMessage.class))
+            .awaitAtMost(Duration.ofSeconds(5))
+            .get();
+----
+
+A `until` method is also available to allow you to specify a condition that must be met before the messages are returned.
+
+[source,java]
+----
+List<Message<MyMessage>> messages = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+            .fromTopic("my-topic")
+            .withSchema(Schema.JSON(MyMessage.class))
+            .until(messages -> messages.size() == 5)
+            .awaitAtMost(Duration.ofSeconds(5))
+            .get();
+----
+
+A set of commonly used conditions are available in `org.springframework.pulsar.test.support.ConsumedMessagesConditions`.
+
+[source,java]
+----
+List<Message<MyMessage>> messages = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+            .fromTopic("my-topic")
+            .withSchema(Schema.JSON(MyMessage.class))
+            .awaitAtMost(Duration.ofSeconds(5))
+            .until(containsExactlyExpectedValues(new MyMessage("foo"), new MyMessage("bar")))
+            .get();
+----

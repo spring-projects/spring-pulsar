@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
  * @param <T> the type of the message payload
  * @author Jonas Geiregat
  */
-public class PulsarConsumerTestUtil<T> implements TopicSpec, SchemaSpec, ConditionsSpec<T>, ConsumptionSpec<T> {
+public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, ConditionsSpec<T> {
 
 	private final PulsarConsumerFactory<T> consumerFactory;
 
@@ -50,38 +50,39 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec, SchemaSpec, Conditi
 
 	private List<String> topics;
 
-	public static <T> TopicSpec consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
+	public static <T> TopicSpec<T> consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
 	}
 
 	public PulsarConsumerTestUtil(PulsarConsumerFactory<T> consumerFactory) {
+		Assert.notNull(consumerFactory, "PulsarConsumerFactory must not be null");
 		this.consumerFactory = consumerFactory;
 	}
 
 	@Override
-	public SchemaSpec fromTopic(String topic) {
-		Assert.state(topic != null, "Topic must not be null");
+	public SchemaSpec<T> fromTopic(String topic) {
+		Assert.notNull(topic, "Topic must not be null");
 		this.topics = List.of(topic);
 		return this;
 	}
 
 	@Override
 	public ConditionsSpec<T> awaitAtMost(Duration timeout) {
+		Assert.notNull(timeout, "Timeout must not be null");
 		this.timeout = timeout;
 		return this;
 	}
 
 	@Override
-	public ConsumptionSpec<T> until(ConsumedMessagesCondition<T> condition) {
+	public ConditionsSpec<T> until(ConsumedMessagesCondition<T> condition) {
 		this.condition = condition;
 		return this;
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <E> ConditionsSpec<E> withSchema(Schema<E> schema) {
-		this.schema = (Schema<T>) schema;
-		return (ConditionsSpec<E>) this;
+	public ConditionsSpec<T> withSchema(Schema<T> schema) {
+		this.schema = schema;
+		return this;
 	}
 
 	@Override

@@ -17,6 +17,11 @@
 package org.springframework.pulsar.test.support;
 
 import java.time.Duration;
+import java.util.List;
+
+import org.apache.pulsar.client.api.Message;
+
+import org.springframework.pulsar.PulsarException;
 
 /**
  * Assertions related step in the fluent API for building a Pulsar test consumer.
@@ -39,6 +44,16 @@ public interface ConditionsSpec<T> {
 	 * @param consumedMessagesCondition the condition to be met
 	 * @return the next step in the fluent API
 	 */
-	ConsumptionSpec<T> until(ConsumedMessagesCondition<T> consumedMessagesCondition);
+	ConditionsSpec<T> until(ConsumedMessagesCondition<T> consumedMessagesCondition);
+
+	/**
+	 *
+	 * Terminal operation that will get the consumed messages within the timeout verifying
+	 * the given condition if any.
+	 * @return the consumed messages
+	 * @throws ConditionTimeoutException if the condition is not met within the timeout
+	 * @throws PulsarException if the condition is not met within the timeout
+	 */
+	List<Message<T>> get();
 
 }

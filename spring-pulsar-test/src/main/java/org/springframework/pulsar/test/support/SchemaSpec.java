@@ -23,14 +23,13 @@ import org.apache.pulsar.client.api.Schema;
  *
  * @author Jonas Geiregat
  */
-public interface SchemaSpec {
+public interface SchemaSpec<T> {
 
 	/**
 	 * Define the schema to use for the {@link PulsarConsumerTestUtil}.
-	 * @param <T> the type of the message
 	 * @param string the schema
 	 * @return the conditions specification
 	 */
-	<T> ConditionsSpec<T> withSchema(Schema<T> string);
+	ConditionsSpec<T> withSchema(Schema<T> string);
 
 }

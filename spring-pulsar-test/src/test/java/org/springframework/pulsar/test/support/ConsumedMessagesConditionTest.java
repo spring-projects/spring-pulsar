@@ -20,9 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.apache.pulsar.client.api.Message;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link ConsumedMessagesCondition}.
@@ -31,28 +29,18 @@ import org.junit.jupiter.params.provider.CsvSource;
  */
 class ConsumedMessagesConditionTest {
 
-	@ParameterizedTest
-	@CsvSource({ "true, true, true", "true, false, false", "false, true, false", "false, false, false" })
-	void bothConditionsShouldBeMetForAndToBeMet(boolean result1, boolean result2, boolean expected) {
-		var condition1 = new TestConsumedMessagesCondition(result1);
-		var condition2 = new TestConsumedMessagesCondition(result2);
-
-		assertThat(condition1.and(condition2).meets(List.of())).isEqualTo(expected);
+	@Test
+	void bothConditionShouldBeMetInOrderForAChainedAndConditionToBeMet() {
+		var trueCondition = testCondition(true);
+		var falseCondition = testCondition(false);
+		assertThat(trueCondition.and(trueCondition).meets(List.of())).isTrue();
+		assertThat(falseCondition.and(trueCondition).meets(List.of())).isFalse();
+		assertThat(trueCondition.and(falseCondition).meets(List.of())).isFalse();
+		assertThat(falseCondition.and(falseCondition).meets(List.of())).isFalse();
 	}
 
-	static class TestConsumedMessagesCondition implements ConsumedMessagesCondition<String> {
-
-		private final boolean result;
-
-		TestConsumedMessagesCondition(boolean result) {
-			this.result = result;
-		}
-
-		@Override
-		public boolean meets(List<Message<String>> messages) {
-			return result;
-		}
-
+	private ConsumedMessagesCondition<Object> testCondition(boolean b) {
+		return messages -> b;
 	}
 
 }

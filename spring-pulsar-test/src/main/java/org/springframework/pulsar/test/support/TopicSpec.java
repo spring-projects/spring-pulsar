@@ -22,13 +22,13 @@ package org.springframework.pulsar.test.support;
  *
  * @author Jonas Geiregat
  */
-public interface TopicSpec {
+public interface TopicSpec<T> {
 
 	/**
 	 * Define the topic to consume from.
 	 * @param topic the topic to consume from
 	 * @return the schema selection specification
 	 */
-	SchemaSpec fromTopic(String topic);
+	SchemaSpec<T> fromTopic(String topic);
 
 }

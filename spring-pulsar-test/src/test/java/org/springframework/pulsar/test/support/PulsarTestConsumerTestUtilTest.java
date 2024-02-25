@@ -18,7 +18,7 @@ package org.springframework.pulsar.test.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.springframework.pulsar.test.support.Conditions.desiredMessageCount;
+import static org.springframework.pulsar.test.support.ConsumedMessagesConditions.desiredMessageCount;
 
 import java.time.Duration;
 import java.util.List;
@@ -45,7 +45,7 @@ class PulsarTestConsumerTestUtilTest implements PulsarTestContainerSupport {
 
 	private PulsarTemplate<Object> pulsarTemplate;
 
-	private DefaultPulsarConsumerFactory<Object> pulsarConsumerFactory;
+	private DefaultPulsarConsumerFactory<String> pulsarConsumerFactory;
 
 	@BeforeEach
 	void setup() throws PulsarClientException {
@@ -55,12 +55,47 @@ class PulsarTestConsumerTestUtilTest implements PulsarTestContainerSupport {
 	}
 
 	@Test
+	void consumerFactoryCannotBeNull() {
+		assertThatThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("PulsarConsumerFactory must not be null");
+	}
+
+	@Test
+	void topicCannotBeNull() {
+		assertThatThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory).fromTopic(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("Topic must not be null");
+	}
+
+	@Test
+	void awaitAtMostTimeoutCannotBeNull() {
+		assertThatThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+			.fromTopic("topic-a")
+			.withSchema(Schema.STRING)
+			.awaitAtMost(null)).isInstanceOf(IllegalArgumentException.class).hasMessage("Timeout must not be null");
+	}
+
+	@Test
+	void untilConditionCanBeNull() {
+		var testConsumer = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+			.fromTopic("topic-b")
+			.withSchema(Schema.STRING)
+			.awaitAtMost(Duration.ofSeconds(2))
+			.until(null);
+
+		pulsarTemplate.send("topic-b", "message");
+
+		assertThat(testConsumer.get()).hasSize(1).map(Message::getValue).containsExactly("message");
+	}
+
+	@Test
 	void consumerReturnsWhenConditionIsMet() {
 		var testConsumer = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
-			.fromTopic("topic-a")
+			.fromTopic("topic-c")
 			.withSchema(Schema.STRING);
 
-		IntStream.range(0, 10).forEach(i -> pulsarTemplate.send("topic-a", "message-" + i));
+		IntStream.range(0, 10).forEach(i -> pulsarTemplate.send("topic-c", "message-" + i));
 
 		List<Message<String>> messages = testConsumer.until(desiredMessageCount(2)).get();
 
@@ -68,9 +103,24 @@ class PulsarTestConsumerTestUtilTest implements PulsarTestContainerSupport {
 	}
 
 	@Test
+	void consumerReturnsAllMessagesWhenNoConditionIsPresent() {
+		var testConsumer = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+			.fromTopic("topic-d")
+			.withSchema(Schema.STRING);
+
+		IntStream.range(0, 10).forEach(i -> pulsarTemplate.send("topic-d", "message-" + i));
+
+		List<Message<String>> messages = testConsumer.get();
+
+		assertThat(messages).hasSize(10)
+			.map(Message::getValue)
+			.containsExactlyElementsOf(IntStream.range(0, 10).mapToObj(i -> "message-" + i).toList());
+	}
+
+	@Test
 	void throwExceptionWhenConditionIsNotMet() {
 		var testConsumer = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
-			.fromTopic("topic-b")
+			.fromTopic("topic-e")
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5));
 

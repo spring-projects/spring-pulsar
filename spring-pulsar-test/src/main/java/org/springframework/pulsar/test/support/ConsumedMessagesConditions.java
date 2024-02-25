@@ -27,7 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Jonas Geiregat
  */
-public interface Conditions {
+public interface ConsumedMessagesConditions {
 
 	/**
 	 * Verifies that the consumed messages contain the expected message count.
@@ -41,29 +41,42 @@ public interface Conditions {
 	}
 
 	/**
-	 * Verifies that at least one of the consumed messages has a payload that equals the
-	 * specified value.
+	 * Verifies that any of the consumed messages has a payload that equals the specified
+	 * value.
 	 * @param expectation the expected value
 	 * @param <T> the type of the message
 	 * @return the condition
 	 */
-	static <T> ConsumedMessagesCondition<T> containsValue(T expectation) {
+	static <T> ConsumedMessagesCondition<T> anyMessageMatchesExpected(T expectation) {
 		return messages -> messages.stream().anyMatch(message -> message.getValue().equals(expectation));
 	}
 
 	/**
-	 * Verifies that the consumed messages value contains at least all expected values.
-	 * @param expectation the expected value
+	 * Verifies that the consumed messages value contains at all expected values.
+	 * @param expectation the expected values
 	 * @param <T> the type of the message
 	 * @return the condition
 	 */
 	@SafeVarargs
 	@SuppressWarnings("varargs")
-	static <T> ConsumedMessagesCondition<T> containsValues(T... expectation) {
+	static <T> ConsumedMessagesCondition<T> containsAllExpectedValues(T... expectation) {
 		return messages -> {
 			var values = messages.stream().map(Message::getValue).toList();
 			return Stream.of(expectation).allMatch(values::contains);
 		};
+	}
+
+	/**
+	 * Verifies that the consumed messages value contains exactly the expected values.
+	 * @param expectation the expected values
+	 * @param <T> the type of the message
+	 * @return the condition
+	 */
+	@SafeVarargs
+	@SuppressWarnings("varargs")
+	static <T> ConsumedMessagesCondition<T> containsExactlyExpectedValues(T... expectation) {
+		return ConsumedMessagesConditions.<T>desiredMessageCount(expectation.length)
+			.and(containsAllExpectedValues(expectation));
 	}
 
 }
