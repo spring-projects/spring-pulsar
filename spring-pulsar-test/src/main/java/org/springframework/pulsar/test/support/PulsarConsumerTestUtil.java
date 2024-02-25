@@ -19,6 +19,7 @@ package org.springframework.pulsar.test.support;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -88,24 +89,27 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	@Override
 	public List<Message<T>> get() {
 		var messages = new ArrayList<Message<T>>();
-		try (Consumer<T> consumer = consumerFactory.createConsumer(this.schema, this.topics, "test-consumer",
-				c -> c.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest))) {
-			long remainingMillis = timeout.toMillis();
-			do {
-				long loopStartTime = System.currentTimeMillis();
-				var message = consumer.receive(200, TimeUnit.MILLISECONDS);
-				if (message != null) {
-					messages.add(message);
-					consumer.acknowledge(message);
-				}
-				if (this.condition != null) {
-					if (this.condition.meets(messages)) {
-						return messages;
+		try {
+			String subscriptionName = UUID.randomUUID() + "-test-consumer";
+			try (Consumer<T> consumer = consumerFactory.createConsumer(this.schema, this.topics, subscriptionName,
+					c -> c.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest))) {
+				long remainingMillis = timeout.toMillis();
+				do {
+					long loopStartTime = System.currentTimeMillis();
+					var message = consumer.receive(200, TimeUnit.MILLISECONDS);
+					if (message != null) {
+						messages.add(message);
+						consumer.acknowledge(message);
 					}
+					if (this.condition != null) {
+						if (this.condition.meets(messages)) {
+							return messages;
+						}
+					}
+					remainingMillis -= System.currentTimeMillis() - loopStartTime;
 				}
-				remainingMillis -= System.currentTimeMillis() - loopStartTime;
+				while (remainingMillis > 0);
 			}
-			while (remainingMillis > 0);
 		}
 		catch (PulsarClientException ex) {
 			throw new PulsarException(ex);
