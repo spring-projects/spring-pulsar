@@ -21,10 +21,8 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.Message;
 
-import org.springframework.pulsar.PulsarException;
-
 /**
- * Assertions related step in the fluent API for building a Pulsar test consumer.
+ * Conditions related step in the fluent API for building a Pulsar test consumer.
  *
  * @param <T> the type of the message payload
  * @author Jonas Geiregat
@@ -32,27 +30,24 @@ import org.springframework.pulsar.PulsarException;
 public interface ConditionsSpec<T> {
 
 	/**
-	 * The maximum timeout duration to wait for the desired number of messages to be
-	 * reached.
-	 * @param timeout the maximum timeout duration to wait
+	 * The maximum amount of time to consume messages and wait for the condition to be
+	 * satisfied.
+	 * @param timeout the maximum amount of time for the condition to be met
 	 * @return the next step in the fluent API
 	 */
 	ConditionsSpec<T> awaitAtMost(Duration timeout);
 
 	/**
-	 * Start consuming until the given condition is met.
-	 * @param consumedMessagesCondition the condition to be met
+	 * Consume messages until the condition is satisfied.
+	 * @param condition the condition to be met
 	 * @return the next step in the fluent API
 	 */
-	ConditionsSpec<T> until(ConsumedMessagesCondition<T> consumedMessagesCondition);
+	ConditionsSpec<T> until(ConsumedMessagesCondition<T> condition);
 
 	/**
-	 *
-	 * Terminal operation that will get the consumed messages within the timeout verifying
-	 * the given condition if any.
+	 * Terminal operation that begins the message consumption using the configured specs.
 	 * @return the consumed messages
 	 * @throws ConditionTimeoutException if the condition is not met within the timeout
-	 * @throws PulsarException if the condition is not met within the timeout
 	 */
 	List<Message<T>> get();
 

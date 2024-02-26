@@ -17,18 +17,19 @@
 package org.springframework.pulsar.test.support;
 
 /**
- * Exception thrown when a test times out.
+ * Exception thrown when a condition was not fulfilled within the specified timeout.
  *
  * @author Jonas Geiregat
  */
 public class ConditionTimeoutException extends PulsarTestException {
 
-	public ConditionTimeoutException(String message, Throwable exception) {
-		super(message, exception);
-	}
-
 	public ConditionTimeoutException(String message) {
 		super(message);
+	}
+
+	@SuppressWarnings("unused")
+	public ConditionTimeoutException(String message, Throwable exception) {
+		super(message, exception);
 	}
 
 }

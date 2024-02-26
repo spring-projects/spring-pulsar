@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Jonas Geiregat
  */
-class ConsumedMessagesConditionTest {
+class ConsumedMessagesConditionTests {
 
 	@Test
 	void bothConditionShouldBeMetInOrderForAChainedAndConditionToBeMet() {

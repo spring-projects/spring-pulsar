@@ -1,42 +1,46 @@
 [[testing-applications]]
 = Testing Applications
+
 include::../attributes/attributes.adoc[]
 
 The `spring-pulsar-test` dependency includes some useful utilities when testing your applications.
 
 == PulsarConsumerTestUtil
 
-`org.springframework.pulsar.test.support.PulsarConsumerTestUtil` provides a type-safe fluent API for consuming messages from a Pulsar topic within a test.
+The `org.springframework.pulsar.test.support.PulsarConsumerTestUtil` provides a type-safe fluent API for consuming messages from a Pulsar topic within a test.
 
-[source,java]
+The following example shows how to consume messages from a topic for 5 seconds:
+[source,java,indent=0,subs="verbatim"]
 ----
-List<Message<MyMessage>> messages = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+List<Message<String>> messages = PulsarConsumerTestUtil.consumeMessages(consumerFactory)
             .fromTopic("my-topic")
-            .withSchema(Schema.JSON(MyMessage.class))
+            .withSchema(Schema.STRING)
             .awaitAtMost(Duration.ofSeconds(5))
             .get();
 ----
 
-A `until` method is also available to allow you to specify a condition that must be met before the messages are returned.
+An `until` method is also available to allow you to specify a condition that must be met before the messages are returned.
+The following example uses a condition to consume 5 messages from a topic.
 
-[source,java]
+[source,java,indent=0,subs="verbatim"]
 ----
-List<Message<MyMessage>> messages = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+List<Message<String>> messages = PulsarConsumerTestUtil.consumeMessages(consumerFactory)
             .fromTopic("my-topic")
-            .withSchema(Schema.JSON(MyMessage.class))
-            .until(messages -> messages.size() == 5)
+            .withSchema(Schema.STRING)
             .awaitAtMost(Duration.ofSeconds(5))
+            .until(messages -> messages.size() == 5)
             .get();
 ----
 
 A set of commonly used conditions are available in `org.springframework.pulsar.test.support.ConsumedMessagesConditions`.
+The following example uses the factory-provided `atLeastOneMessageMatches` condition to return the consumed messages once one of them has a value of `"boom"`.
 
-[source,java]
+[source,java,indent=0,subs="verbatim"]
 ----
-List<Message<MyMessage>> messages = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+List<Message<String>> messages = PulsarConsumerTestUtil.consumeMessages(consumerFactory)
             .fromTopic("my-topic")
-            .withSchema(Schema.JSON(MyMessage.class))
+            .withSchema(Schema.STRING)
             .awaitAtMost(Duration.ofSeconds(5))
-            .until(containsExactlyExpectedValues(new MyMessage("foo"), new MyMessage("bar")))
+            .until(ConsumedMessagesConditions.atLeastOneMessageMatches("boom"))
             .get();
 ----

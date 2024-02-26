@@ -33,8 +33,10 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
 
 /**
- * Fluent API, to be used in tests, for consuming messages from Pulsar topics until a
- * certain {@code Condition} has been met.
+ * Utility for consuming messages from Pulsar topics.
+ * <p>
+ * Exposes a Fluent builder-style API to construct the specifications for the message
+ * consumption.
  *
  * @param <T> the type of the message payload
  * @author Jonas Geiregat
@@ -68,6 +70,13 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	}
 
 	@Override
+	public ConditionsSpec<T> withSchema(Schema<T> schema) {
+		Assert.notNull(schema, "Schema must not be null");
+		this.schema = schema;
+		return this;
+	}
+
+	@Override
 	public ConditionsSpec<T> awaitAtMost(Duration timeout) {
 		Assert.notNull(timeout, "Timeout must not be null");
 		this.timeout = timeout;
@@ -81,16 +90,10 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	}
 
 	@Override
-	public ConditionsSpec<T> withSchema(Schema<T> schema) {
-		this.schema = schema;
-		return this;
-	}
-
-	@Override
 	public List<Message<T>> get() {
 		var messages = new ArrayList<Message<T>>();
 		try {
-			String subscriptionName = UUID.randomUUID() + "-test-consumer";
+			var subscriptionName = "test-consumer-%s".formatted(UUID.randomUUID());
 			try (Consumer<T> consumer = consumerFactory.createConsumer(this.schema, this.topics, subscriptionName,
 					c -> c.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest))) {
 				long remainingMillis = timeout.toMillis();
@@ -101,10 +104,8 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 						messages.add(message);
 						consumer.acknowledge(message);
 					}
-					if (this.condition != null) {
-						if (this.condition.meets(messages)) {
-							return messages;
-						}
+					if (this.condition != null && this.condition.meets(messages)) {
+						return messages;
 					}
 					remainingMillis -= System.currentTimeMillis() - loopStartTime;
 				}
@@ -115,7 +116,8 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 			throw new PulsarException(ex);
 		}
 		if (this.condition != null && !this.condition.meets(messages)) {
-			throw new ConditionTimeoutException("Condition was not met within " + timeout.toSeconds() + " seconds");
+			throw new ConditionTimeoutException(
+					"Condition was not met within %d seconds".formatted(timeout.toSeconds()));
 		}
 		return messages;
 	}
