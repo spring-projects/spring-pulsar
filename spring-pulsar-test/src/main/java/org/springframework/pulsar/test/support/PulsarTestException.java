@@ -16,20 +16,22 @@
 
 package org.springframework.pulsar.test.support;
 
+import org.springframework.core.NestedRuntimeException;
+
 /**
- * Exception thrown when a test fails.
+ * Generic exception thrown when something related to testing fails.
  *
  * @author Jonas Geiregat
  */
-public class PulsarTestException extends RuntimeException {
-
-	public PulsarTestException(String message, Throwable exception) {
-		super(message, exception);
-	}
+public class PulsarTestException extends NestedRuntimeException {
 
 	@SuppressWarnings("unused")
 	public PulsarTestException(String message) {
 		super(message);
+	}
+
+	public PulsarTestException(String message, Throwable exception) {
+		super(message, exception);
 	}
 
 }

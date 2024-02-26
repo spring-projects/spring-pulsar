@@ -23,7 +23,8 @@ import org.apache.pulsar.client.api.Message;
 import org.springframework.util.Assert;
 
 /**
- * Exposes a set of commonly used conditions to be used in {@link PulsarConsumerTestUtil}.
+ * A factory for creating commonly used {@link ConsumedMessagesCondition conditions} that
+ * can be used with {@link PulsarConsumerTestUtil}.
  *
  * @author Jonas Geiregat
  */
@@ -41,42 +42,30 @@ public interface ConsumedMessagesConditions {
 	}
 
 	/**
-	 * Verifies that any of the consumed messages has a payload that equals the specified
-	 * value.
+	 * Verifies that the expected value equals the message payload value of at least one
+	 * consumed message.
 	 * @param expectation the expected value
 	 * @param <T> the type of the message
 	 * @return the condition
 	 */
-	static <T> ConsumedMessagesCondition<T> anyMessageMatchesExpected(T expectation) {
-		return messages -> messages.stream().anyMatch(message -> message.getValue().equals(expectation));
+	static <T> ConsumedMessagesCondition<T> atLeastOneMessageMatches(T expectation) {
+		return messages -> messages.stream().map(Message::getValue).anyMatch(expectation::equals);
 	}
 
 	/**
-	 * Verifies that the consumed messages value contains at all expected values.
+	 * Verifies that each expected value equals the message payload value of at least one
+	 * consumed message.
 	 * @param expectation the expected values
 	 * @param <T> the type of the message
 	 * @return the condition
 	 */
 	@SafeVarargs
 	@SuppressWarnings("varargs")
-	static <T> ConsumedMessagesCondition<T> containsAllExpectedValues(T... expectation) {
+	static <T> ConsumedMessagesCondition<T> atLeastOneMessageMatchesEachOf(T... expectation) {
 		return messages -> {
 			var values = messages.stream().map(Message::getValue).toList();
 			return Stream.of(expectation).allMatch(values::contains);
 		};
-	}
-
-	/**
-	 * Verifies that the consumed messages value contains exactly the expected values.
-	 * @param expectation the expected values
-	 * @param <T> the type of the message
-	 * @return the condition
-	 */
-	@SafeVarargs
-	@SuppressWarnings("varargs")
-	static <T> ConsumedMessagesCondition<T> containsExactlyExpectedValues(T... expectation) {
-		return ConsumedMessagesConditions.<T>desiredMessageCount(expectation.length)
-			.and(containsAllExpectedValues(expectation));
 	}
 
 }

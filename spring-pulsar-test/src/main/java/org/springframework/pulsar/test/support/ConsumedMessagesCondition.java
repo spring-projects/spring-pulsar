@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.pulsar.client.api.Message;
 
 /**
- * A condition to be used in {@link PulsarConsumerTestUtil} to verify if it meets the
- * consumed messages.
+ * A condition to be used in {@link PulsarConsumerTestUtil} to verify if the consumed
+ * messages satisfy the given criteria.
  *
  * @param <T> the type of the message
  * @author Jonas Geiregat
@@ -31,9 +31,9 @@ import org.apache.pulsar.client.api.Message;
 public interface ConsumedMessagesCondition<T> {
 
 	/**
-	 * Verifies that the consumed messages meet the condition.
+	 * Determines if the consumed messages meets the condition.
 	 * @param messages the consumed messages
-	 * @return {@code true} if the condition is met
+	 * @return whether the consumed messages meet the condition
 	 */
 	boolean meets(List<Message<T>> messages);
 
