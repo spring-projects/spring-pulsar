@@ -61,16 +61,16 @@ public class PulsarTemplate<T>
 
 	private final PulsarProducerFactory<T> producerFactory;
 
-	private final List<ProducerInterceptor> interceptors;
-
 	private final SchemaResolver schemaResolver;
 
 	private final TopicResolver topicResolver;
 
+	private final List<ProducerBuilderCustomizer<T>> interceptorsCustomizers;
+
 	/**
 	 * Whether to record observations.
 	 */
-	private boolean observationEnabled;
+	private final boolean observationEnabled;
 
 	/**
 	 * The registry to record observations with.
@@ -119,10 +119,19 @@ public class PulsarTemplate<T>
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors,
 			SchemaResolver schemaResolver, TopicResolver topicResolver, boolean observationEnabled) {
 		this.producerFactory = producerFactory;
-		this.interceptors = interceptors;
 		this.schemaResolver = schemaResolver;
 		this.topicResolver = topicResolver;
 		this.observationEnabled = observationEnabled;
+		if (!CollectionUtils.isEmpty(interceptors)) {
+			this.interceptorsCustomizers = interceptors.stream().map(this::adaptInterceptorToCustomizer).toList();
+		}
+		else {
+			this.interceptorsCustomizers = null;
+		}
+	}
+
+	private ProducerBuilderCustomizer<T> adaptInterceptorToCustomizer(ProducerInterceptor interceptor) {
+		return b -> b.intercept(interceptor);
 	}
 
 	@Override
@@ -278,8 +287,8 @@ public class PulsarTemplate<T>
 			throws PulsarClientException {
 		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.resolveSchema(message).orElseThrow() : schema;
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
-		if (!CollectionUtils.isEmpty(this.interceptors)) {
-			customizers.add(builder -> this.interceptors.forEach(builder::intercept));
+		if (!CollectionUtils.isEmpty(this.interceptorsCustomizers)) {
+			customizers.addAll(this.interceptorsCustomizers);
 		}
 		if (producerCustomizer != null) {
 			customizers.add(producerCustomizer);
