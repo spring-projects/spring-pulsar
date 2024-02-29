@@ -204,7 +204,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("interceptorInvocationTestProvider")
-	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws Exception {
+	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) {
 		PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client, topic);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
 		pulsarTemplate.send("test-interceptor");
