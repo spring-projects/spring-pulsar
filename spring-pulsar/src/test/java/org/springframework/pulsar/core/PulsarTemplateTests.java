@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.pulsar.client.api.Message;
@@ -219,6 +220,35 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 						Collections.singletonList(mock(ProducerInterceptor.class))),
 				arguments(Named.of("multipleInterceptors", "iit-topic-2"),
 						List.of(mock(ProducerInterceptor.class), mock(ProducerInterceptor.class))));
+	}
+
+	@Test
+	void interceptorUsedAsCacheKeyProperly() {
+		var producerFactory = new CachingPulsarProducerFactory<String>(client, null, null, new DefaultTopicResolver(),
+				Duration.ofSeconds(10L), 10L, 10);
+		try {
+			var interceptors = List.of(mock(ProducerInterceptor.class));
+			var pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
+			assertCacheSize(producerFactory, 0);
+			IntStream.range(0, 3).forEach((i) -> {
+				pulsarTemplate.send("test-intercept-topic", "test-interceptor-" + i);
+				assertCacheSize(producerFactory, 1);
+			});
+			assertCacheSize(producerFactory, 1);
+		}
+		finally {
+			// The CPPF returns producers that do not actually close when the template
+			// calls close on them - destroy does close the producers though
+			if (producerFactory != null) {
+				producerFactory.destroy();
+			}
+		}
+	}
+
+	private <T> void assertCacheSize(CachingPulsarProducerFactory<T> producerFactory, int expectedSize) {
+		assertThat(producerFactory).extracting("producerCache.cache.cache")
+			.asInstanceOf(InstanceOfAssertFactories.MAP)
+			.hasSize(expectedSize);
 	}
 
 	@ParameterizedTest
