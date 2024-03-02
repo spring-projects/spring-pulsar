@@ -198,7 +198,7 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("interceptorInvocationTestProvider")
-	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) {
+	void interceptorInvocationTest(String topic, List<ProducerInterceptor> interceptors) throws PulsarClientException {
 		PulsarProducerFactory<String> producerFactory = new DefaultPulsarProducerFactory<>(client, topic);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
 		pulsarTemplate.send("test-interceptor");
@@ -213,6 +213,35 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 						Collections.singletonList(mock(ProducerInterceptor.class))),
 				arguments(Named.of("multipleInterceptors", "iit-topic-2"),
 						List.of(mock(ProducerInterceptor.class), mock(ProducerInterceptor.class))));
+	}
+
+	@Test
+	void interceptorUsedAsCacheKeyProperly() throws PulsarClientException {
+		var producerFactory = new CachingPulsarProducerFactory<String>(client, null, null, new DefaultTopicResolver(),
+				Duration.ofSeconds(10L), 10L, 10);
+		try {
+			var interceptors = List.of(mock(ProducerInterceptor.class));
+			var pulsarTemplate = new PulsarTemplate<>(producerFactory, interceptors);
+			assertCacheSize(producerFactory, 0);
+			for (int i = 0; i < 3; i++) {
+				pulsarTemplate.send("test-intercept-topic", "test-interceptor-" + i);
+				assertCacheSize(producerFactory, 1);
+			}
+			assertCacheSize(producerFactory, 1);
+		}
+		finally {
+			// The CPPF returns producers that do not actually close when the template
+			// calls close on them - destroy does close the producers though
+			if (producerFactory != null) {
+				producerFactory.destroy();
+			}
+		}
+	}
+
+	private <T> void assertCacheSize(CachingPulsarProducerFactory<T> producerFactory, int expectedSize) {
+		assertThat(producerFactory).extracting("producerCache.cache.cache")
+			.asInstanceOf(InstanceOfAssertFactories.MAP)
+			.hasSize(expectedSize);
 	}
 
 	@ParameterizedTest
