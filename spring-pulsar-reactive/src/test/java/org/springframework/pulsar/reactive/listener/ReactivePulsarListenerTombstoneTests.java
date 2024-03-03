@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.log.LogAccessor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -226,6 +227,8 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 	@ContextConfiguration(classes = SingleComplexPayloadConfig.class)
 	class SingleComplexPayload {
 
+		private final LogAccessor logger = new LogAccessor(this.getClass());
+
 		private static final String TOPIC = "rpltt-single-complex-topic";
 
 		static CountDownLatch latchWithHeaders = new CountDownLatch(3);
@@ -240,6 +243,13 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 			sendTestMessages(fooPulsarTemplate, TOPIC, Schema.JSON(Foo.class), Foo::new);
 			assertThat(latchWithHeaders.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(latchWithoutHeaders.await(10, TimeUnit.SECONDS)).isTrue();
+
+			// Temporary log to analyze CI failures due to flaky test, one such failure
+			// case:
+			// https://github.com/spring-projects/spring-pulsar/actions/runs/7598761030/job/20695067626
+			for (ReceivedMessage<Foo> message : receivedMessagesWithHeaders) {
+				logger.info(message.toString());
+			}
 			assertMessagesReceivedWithHeaders(receivedMessagesWithHeaders, Foo::new);
 			assertMessagesReceivedWithoutHeaders(receivedMessagesWithoutHeaders, Foo::new);
 		}
