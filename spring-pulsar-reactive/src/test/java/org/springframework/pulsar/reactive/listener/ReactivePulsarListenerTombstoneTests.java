@@ -244,9 +244,8 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 			assertThat(latchWithHeaders.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(latchWithoutHeaders.await(10, TimeUnit.SECONDS)).isTrue();
 
-			// Temporary log to analyze CI failures due to flaky test, one such failure
-			// case:
-			// https://github.com/spring-projects/spring-pulsar/actions/runs/7598761030/job/20695067626
+			// Temporary log to analyze CI failures due to flaky test
+			// TODO: Remove once CI failure addressed
 			for (ReceivedMessage<Foo> message : receivedMessagesWithHeaders) {
 				logger.info(message.toString());
 			}

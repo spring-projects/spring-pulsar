@@ -10,5 +10,6 @@
     <logger name="org.testcontainers" level="ERROR"/>
     <logger name="com.github.dockerjava" level="ERROR"/>
     <!-- Temporary logging to analyse CI failures due to flaky test -->
+    <!-- TODO: Remove once CI failure addressed -->
     <logger name="org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTombstoneTests$SingleComplexPayload" level="INFO"/>
 </configuration>
