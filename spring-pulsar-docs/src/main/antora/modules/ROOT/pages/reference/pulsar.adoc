@@ -169,7 +169,8 @@ void sendUser() {
 }
 ----
 
-Note that variables can be used *within* the Lambda closure and can even make calls to static methods as shown below:
+In the following example, the customizer is defined as an inline Lambda which means that each call to `sendUser` uses the same Lambda instance. While it does use a variable name, it does not originate outside its closure and therefore will match as a cache key.
+This illustrates that variables can be used *within* the Lambda closure and can even make calls to static methods.
 
 [source, java]
 ----
