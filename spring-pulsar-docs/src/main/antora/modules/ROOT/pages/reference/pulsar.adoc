@@ -65,6 +65,7 @@ template.newMessage(msg)
     .send();
 ----
 
+[[single-producer-customize]]
 ==== Producer customization
 You can specify a `ProducerBuilderCustomizer` to configure the underlying Pulsar producer builder that ultimately constructs the producer used to send the outgoing message.
 
@@ -97,6 +98,12 @@ template.newMessage(msg)
     .send();
 ----
 
+The customizer will only apply to the producer used for the send operation.
+If you want to apply a customizer to all producers, you must provide them to the producer factory as described in <<global-producer-customize>>.
+
+CAUTION: The rules described in "`<<producer-caching-lambdas>>`" must be followed when using Lambda customizers.
+
+
 [[schema-info-template-imperative]]
 :template-class: PulsarTemplate
 include::schema-info/schema-info-template.adoc[leveloffset=+1]
@@ -108,11 +115,80 @@ Spring Boot auto-configuration also provides this producer factory which you can
 
 NOTE: If topic information is not specified when using the producer factory APIs directly, the same <<topic-resolution-process-imperative,topic resolution process>> used by the `PulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
+[[global-producer-customize]]
+==== Global producer customization
+The framework provides the `ProducerBuilderCustomizer` contract which allows you to configure the underlying builder which is used to construct each producer.
+To customize all producers, you can pass a list of customizers into the `PulsarProducerFactory` constructor.
+When using multiple customizers, they are applied in the order in which they appear in the list.
+
+TIP: If you use Spring Boot auto-configuration, you can specify the customizers as beans and they will be passed automatically to the `PulsarProducerFactory`, ordered according to their `@Order` annotation.
+
+If you want to apply a customizer to just a single producer, you can use the Fluent API and <<single-producer-customize,specify the customizer at send time>>.
+
 [[producer-caching]]
-==== Pulsar Producer Caching
-Each underlying Pulsar producer consumes resources. To improve performance and avoid continual creation of producers, the producer factory caches the producers that it creates. They are cached in an LRU fashion and evicted when they have not been used within a configured time period. The link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/core/CachingPulsarProducerFactory.java#L159[cache key] is composed of just enough information to ensure that callers are returned the same producer on subsequent creation requests.
+=== Pulsar Producer Caching
+Each underlying Pulsar producer consumes resources.
+To improve performance and avoid continual creation of producers, the producer factory caches the producers that it creates.
+They are cached in an LRU fashion and evicted when they have not been used within a configured time period.
+The link:{github}/blob/8e33ac0b122bc0e75df299919c956cacabcc9809/spring-pulsar/src/main/java/org/springframework/pulsar/core/CachingPulsarProducerFactory.java#L159[cache key] is composed of just enough information to ensure that callers are returned the same producer on subsequent creation requests.
 
 Additionally, you can configure the cache settings by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.producer.cache.*`] application properties.
+
+[[producer-caching-lambdas]]
+==== Caution on Lambda customizers
+Any user-provided producer customizers are also included in the cache key.
+Because the cache key relies on a valid implementation of `equals/hashCode`, one must take caution when using Lambda customizers.
+
+IMPORTANT: *RULE:* Two customizers implemented as Lambdas will match on `equals/hashCode` *if and only if* they use the same Lambda instance and do not require any variable defined outside its closure.
+
+To clarify the above rule we will look at a few examples.
+In the following example, the customizer is defined as an inline Lambda which means that each call to `sendUser` uses the same Lambda instance. Additionally, it requires no variable outside its closure. Therefore, it *will* match as a cache key.
+
+[source, java]
+----
+void sendUser() {
+    var user = randomUser();
+    template.newMessage(user)
+        .withTopic("user-topic")
+        .withProducerCustomizer((b) -> b.producerName("user"))
+        .send();
+}
+----
+
+In this next case, the customizer is defined as an inline Lambda which means that each call to `sendUser` uses the same Lambda instance. However, it requires a variable outside its closure. Therefore, it *will not* match as a cache key.
+
+[source, java]
+----
+void sendUser() {
+    var user = randomUser();
+    var name = randomName();
+    template.newMessage(user)
+        .withTopic("user-topic")
+        .withProducerCustomizer((b) -> b.producerName(name))
+        .send();
+}
+----
+
+In this final example, the customizer is defined as an inline Lambda which means that each call to `sendUser` uses the same Lambda instance. While it does use a variable name, it does not originate outside its closure and therefore *will* match as a cache key.
+This illustrates that variables can be used *within* the Lambda closure and can even make calls to static methods.
+
+[source, java]
+----
+void sendUser() {
+    var user = randomUser();
+    template.newMessage(user)
+        .withTopic("user-topic")
+        .withProducerCustomizer((b) -> {
+           var name = SomeHelper.someStaticMethod();
+           b.producerName(name);
+        })
+        .send();
+}
+----
+
+IMPORTANT: *RULE:* If your Lambda customizer is not defined *once and only once* (the same instance is used on subsequent calls) *OR* it requires variable(s) defined outside its closure then you must provide a customizer implementation with a valid `equals/hashCode` implementation.
+
+WARNING: If these rules are not followed then the producer cache will always miss and your application performance will be negatively affected.
 
 === Intercept Messages on the Producer
 Adding a `ProducerInterceptor`  lets you intercept and mutate messages received by the producer before they are published to the brokers.
