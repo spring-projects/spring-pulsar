@@ -1,8 +1,8 @@
 plugins {
-    id 'org.springframework.pulsar.spring-unpublished-module'
+	id 'org.springframework.pulsar.spring-module'
 }
 
-description = 'Spring Pulsar Test Module'
+description = 'Spring Pulsar Test Utilities Module'
 
 dependencies {
     implementation 'org.junit.jupiter:junit-jupiter-api'
