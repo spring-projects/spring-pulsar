@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 
 /**
@@ -72,6 +73,23 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
+	void whenChainedConditionAreSpecifiedMessagesAreConsumedUntilTheyAreMet() {
+		var topic = testTopic("b");
+		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+		ConsumedMessagesCondition<String> condition1 = ConsumedMessagesConditions
+				.desiredMessageCount(5);
+		ConsumedMessagesCondition<String> condition2 = ConsumedMessagesConditions
+				.atLeastOneMessageMatches("message-1");
+		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+				.fromTopic(topic)
+				.withSchema(Schema.STRING)
+				.awaitAtMost(Duration.ofSeconds(5))
+				.until(condition1.and(condition2))
+				.get();
+		assertThat(msgs).hasSize(5);
+	}
+
+	@Test
 	void whenConditionIsNotSpecifiedMessagesAreConsumedUntilAwaitDuration() {
 		var topic = testTopic("b");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
@@ -99,7 +117,8 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 
 	@Test
 	void consumerFactoryCannotBeNull() {
-		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(null))
+		PulsarConsumerFactory<String> consumerFactory = null;
+		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(consumerFactory))
 			.withMessage("PulsarConsumerFactory must not be null");
 	}
 

@@ -24,11 +24,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 
 import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
 
@@ -52,6 +54,39 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	private Duration timeout = Duration.ofSeconds(30);
 
 	private List<String> topics;
+
+	public static <T> TopicSpec<T> consumeMessages() throws PulsarClientException {
+		PulsarClient pulsarClient;
+		try {
+			pulsarClient = PulsarClient.builder().serviceUrl(
+					"pulsar://localhost:6650"
+			).build();
+		}
+		catch (PulsarClientException e) {
+			pulsarClient = PulsarClient.builder().serviceUrl(
+					PulsarTestContainerSupport.getPulsarBrokerUrl()
+			).build();
+		}
+		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, List.of()
+		);
+		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+	}
+
+	public static <T> TopicSpec<T> consumeMessages(String url) throws PulsarClientException {
+		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(url).build();
+		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, List.of()
+		);
+		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+	}
+
+	public static <T> TopicSpec<T> consumeMessages(PulsarClient pulsarClient) {
+		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
+				pulsarClient, List.of()
+		);
+		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+	}
 
 	public static <T> TopicSpec<T> consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
