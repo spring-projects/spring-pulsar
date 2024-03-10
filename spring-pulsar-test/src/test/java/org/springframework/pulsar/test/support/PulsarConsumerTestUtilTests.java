@@ -73,23 +73,6 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void whenChainedConditionAreSpecifiedMessagesAreConsumedUntilTheyAreMet() {
-		var topic = testTopic("b");
-		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		ConsumedMessagesCondition<String> condition1 = ConsumedMessagesConditions
-				.desiredMessageCount(5);
-		ConsumedMessagesCondition<String> condition2 = ConsumedMessagesConditions
-				.atLeastOneMessageMatches("message-1");
-		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
-				.fromTopic(topic)
-				.withSchema(Schema.STRING)
-				.awaitAtMost(Duration.ofSeconds(5))
-				.until(condition1.and(condition2))
-				.get();
-		assertThat(msgs).hasSize(5);
-	}
-
-	@Test
 	void whenConditionIsNotSpecifiedMessagesAreConsumedUntilAwaitDuration() {
 		var topic = testTopic("b");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
@@ -116,8 +99,25 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
+	void whenChainedConditionAreSpecifiedMessagesAreConsumedUntilTheyAreMet() {
+		var topic = testTopic("d");
+		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+		ConsumedMessagesCondition<String> condition1 = ConsumedMessagesConditions
+				.desiredMessageCount(5);
+		ConsumedMessagesCondition<String> condition2 = ConsumedMessagesConditions
+				.atLeastOneMessageMatches("message-1");
+		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+				.fromTopic(topic)
+				.withSchema(Schema.STRING)
+				.awaitAtMost(Duration.ofSeconds(5))
+				.until(condition1.and(condition2))
+				.get();
+		assertThat(msgs).hasSize(5);
+	}
+
+	@Test
 	void exceptionIsThrownWhenMultipleUntilConditionsAreChainedTogether() {
-		var topic = testTopic("b");
+		var topic = testTopic("e");
 		IntStream.range(0, 1).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
 		assertThatExceptionOfType(IllegalStateException.class)
 			.isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
