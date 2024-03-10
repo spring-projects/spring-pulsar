@@ -55,20 +55,22 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	private List<String> topics;
 
+	private boolean calledUntil = false;
+
 	public static <T> TopicSpec<T> consumeMessages() throws PulsarClientException {
 		PulsarClient pulsarClient;
 		try {
 			pulsarClient = PulsarClient.builder().serviceUrl(
-					"pulsar://localhost:6650"
+				"pulsar://localhost:6650"
 			).build();
 		}
 		catch (PulsarClientException e) {
 			pulsarClient = PulsarClient.builder().serviceUrl(
-					PulsarTestContainerSupport.getPulsarBrokerUrl()
+				PulsarTestContainerSupport.getPulsarBrokerUrl()
 			).build();
 		}
 		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, List.of()
+			pulsarClient, List.of()
 		);
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
 	}
@@ -76,14 +78,14 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	public static <T> TopicSpec<T> consumeMessages(String url) throws PulsarClientException {
 		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(url).build();
 		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, List.of()
+			pulsarClient, List.of()
 		);
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
 	}
 
 	public static <T> TopicSpec<T> consumeMessages(PulsarClient pulsarClient) {
 		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(
-				pulsarClient, List.of()
+			pulsarClient, List.of()
 		);
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
 	}
@@ -120,6 +122,12 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	@Override
 	public ConditionsSpec<T> until(ConsumedMessagesCondition<T> condition) {
+		if (calledUntil) {
+			throw new IllegalStateException(
+				"Multiple calls to 'until' are not allowed. Use 'and' to combine conditions."
+			);
+		}
+		this.calledUntil = true;
 		this.condition = condition;
 		return this;
 	}

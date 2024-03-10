@@ -116,6 +116,23 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
+	void exceptionIsThrownWhenMultipleUntilConditionsAreChainedTogether() {
+		var topic = testTopic("b");
+		IntStream.range(0, 1).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+		assertThatExceptionOfType(IllegalStateException.class)
+			.isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+				.fromTopic(topic)
+				.withSchema(Schema.STRING)
+				.awaitAtMost(Duration.ofSeconds(5))
+				.until(ConsumedMessagesConditions.desiredMessageCount(1))
+				.until(ConsumedMessagesConditions.atLeastOneMessageMatches("message-0"))
+				.get())
+			.withMessage(
+				"Multiple calls to 'until' are not allowed. Use 'and' to combine conditions."
+			);
+	}
+
+	@Test
 	void consumerFactoryCannotBeNull() {
 		PulsarConsumerFactory<String> consumerFactory = null;
 		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(consumerFactory))
