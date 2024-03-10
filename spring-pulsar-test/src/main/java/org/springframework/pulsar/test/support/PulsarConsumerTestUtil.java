@@ -24,11 +24,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 
 import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.util.Assert;
 
@@ -52,6 +54,30 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	private Duration timeout = Duration.ofSeconds(30);
 
 	private List<String> topics;
+
+	private boolean untilMethodAlreadyCalled = false;
+
+	public static <T> TopicSpec<T> consumeMessages() {
+		if (PulsarTestContainerSupport.isContainerStarted()) {
+			return PulsarConsumerTestUtil.consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl());
+		}
+		return PulsarConsumerTestUtil.consumeMessages("pulsar://localhost:6650");
+	}
+
+	public static <T> TopicSpec<T> consumeMessages(String url) {
+		Assert.notNull(url, "url must not be null");
+		try {
+			return PulsarConsumerTestUtil.consumeMessages(PulsarClient.builder().serviceUrl(url).build());
+		}
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
+		}
+	}
+
+	public static <T> TopicSpec<T> consumeMessages(PulsarClient pulsarClient) {
+		Assert.notNull(pulsarClient, "pulsarClient must not be null");
+		return PulsarConsumerTestUtil.consumeMessages(new DefaultPulsarConsumerFactory<>(pulsarClient, List.of()));
+	}
 
 	public static <T> TopicSpec<T> consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
@@ -85,6 +111,11 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	@Override
 	public ConditionsSpec<T> until(ConsumedMessagesCondition<T> condition) {
+		if (untilMethodAlreadyCalled) {
+			throw new IllegalStateException(
+					"Multiple calls to 'until' are not allowed. Use 'and' to combine conditions.");
+		}
+		this.untilMethodAlreadyCalled = true;
 		this.condition = condition;
 		return this;
 	}
