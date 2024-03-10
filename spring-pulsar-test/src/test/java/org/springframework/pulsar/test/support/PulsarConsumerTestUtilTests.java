@@ -102,16 +102,14 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	void whenChainedConditionAreSpecifiedMessagesAreConsumedUntilTheyAreMet() {
 		var topic = testTopic("d");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		ConsumedMessagesCondition<String> condition1 = ConsumedMessagesConditions
-				.desiredMessageCount(5);
-		ConsumedMessagesCondition<String> condition2 = ConsumedMessagesConditions
-				.atLeastOneMessageMatches("message-1");
+		ConsumedMessagesCondition<String> condition1 = ConsumedMessagesConditions.desiredMessageCount(5);
+		ConsumedMessagesCondition<String> condition2 = ConsumedMessagesConditions.atLeastOneMessageMatches("message-1");
 		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
-				.fromTopic(topic)
-				.withSchema(Schema.STRING)
-				.awaitAtMost(Duration.ofSeconds(5))
-				.until(condition1.and(condition2))
-				.get();
+			.fromTopic(topic)
+			.withSchema(Schema.STRING)
+			.awaitAtMost(Duration.ofSeconds(5))
+			.until(condition1.and(condition2))
+			.get();
 		assertThat(msgs).hasSize(5);
 	}
 
@@ -127,9 +125,7 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 				.until(ConsumedMessagesConditions.desiredMessageCount(1))
 				.until(ConsumedMessagesConditions.atLeastOneMessageMatches("message-0"))
 				.get())
-			.withMessage(
-				"Multiple calls to 'until' are not allowed. Use 'and' to combine conditions."
-			);
+			.withMessage("Multiple calls to 'until' are not allowed. Use 'and' to combine conditions.");
 	}
 
 	@Test
