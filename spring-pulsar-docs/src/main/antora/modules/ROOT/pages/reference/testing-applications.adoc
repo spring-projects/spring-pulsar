@@ -44,3 +44,39 @@ List<Message<String>> messages = PulsarConsumerTestUtil.consumeMessages(consumer
             .until(ConsumedMessagesConditions.atLeastOneMessageMatches("boom"))
             .get();
 ----
+
+== PulsarTestContainerSupport
+
+The `org.springframework.pulsar.test.support.PulsarTestContainerSupport` interface provides a static Pulsar Testcontainer.
+When using Junit Jupiter, the container is automatically started once per test class via `@BeforeAll` annotation.
+
+The following example shows how you can use the container support in a `@SpringBootTest` in conjunction with the previously mentioned `PulsarConsumerTestUtil`.
+
+[source,java,indent=0,subs="verbatim"]
+----
+@SpringBootTest
+class MyApplicationTests implements PulsarTestContainerSupport {
+
+	@DynamicPropertySource
+	static void pulsarProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.pulsar.client.service-url", PULSAR_CONTAINER::getPulsarBrokerUrl);
+		registry.add("spring.pulsar.admin.service-url", PULSAR_CONTAINER::getHttpServiceUrl);
+	}
+
+	@Test
+	void sendAndReceiveWorksAsExpected(
+			@Autowired PulsarTemplate<String> template,
+			@Autowired PulsarConsumerFactory<String> consumerFactory) {
+		var topic = "some-topic";
+		var msg = "foo-5150";
+		template.send(topic, msg);
+		var matchedUsers = PulsarConsumerTestUtil.consumeMessages(consumerFactory)
+				.fromTopic(topic)
+				.withSchema(Schema.STRING)
+				.awaitAtMost(Duration.ofSeconds(2))
+				.until(ConsumedMessagesConditions.atLeastOneMessageMatches(msg))
+				.get();
+		assertThat(matchedUsers).hasSize(1);
+	}
+}
+----

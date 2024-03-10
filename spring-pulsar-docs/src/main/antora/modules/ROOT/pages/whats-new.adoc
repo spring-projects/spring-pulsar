@@ -21,3 +21,7 @@ The APIs provided by the framework no longer throw the checked `PulsarClientExce
 
 WARNING: If you were previously catching or rethrowing `PulsarClientException` just to appease the compiler and were not actually handling the exception, you can simply remove your `catch` or `throws` clause.
 If you were actually handling the exception then you will need to replace `PulsarClientException` with `PulsarException` in your catch clause.
+
+=== Testing support
+The `spring-pulsar-test` module is now available to help test your Spring for Apache Pulsar applications.
+See xref:./reference/testing-applications.adoc#testing-applications[Testing Applications] for more details.

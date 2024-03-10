@@ -98,6 +98,8 @@ Provides the API to access Apache Pulsar using a Reactive client.
 === spring-pulsar-sample-apps
 Provides sample applications to illustrate Spring for Apache Pulsar functionality as well as provide ability for quick manual verification during development.
 
+=== spring-pulsar-test
+Provides utilities to help with testing Spring for Apache Pulsar applications.
 
 == License
 Spring for Apache Pulsar is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].

@@ -31,6 +31,10 @@ public interface PulsarTestContainerSupport {
 
 	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(getPulsarImage());
 
+	static DockerImageName getPulsarImage() {
+		return DockerImageName.parse("apachepulsar/pulsar:latest");
+	}
+
 	@BeforeAll
 	static void startContainer() {
 		PULSAR_CONTAINER.start();
@@ -38,10 +42,6 @@ public interface PulsarTestContainerSupport {
 
 	static String getPulsarBrokerUrl() {
 		return PULSAR_CONTAINER.getPulsarBrokerUrl();
-	}
-
-	static DockerImageName getPulsarImage() {
-		return DockerImageName.parse("apachepulsar/pulsar:3.2.0");
 	}
 
 	static String getHttpServiceUrl() {
