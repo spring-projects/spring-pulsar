@@ -114,7 +114,7 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void exceptionIsThrownWhenMultipleUntilConditionsAreChainedTogether() {
+	void exceptionIsThrownWhenUntilIsCalledMultipleTimes() {
 		var topic = testTopic("e");
 		IntStream.range(0, 1).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
 		assertThatExceptionOfType(IllegalStateException.class)
