@@ -48,4 +48,8 @@ public interface PulsarTestContainerSupport {
 		return PULSAR_CONTAINER.getHttpServiceUrl();
 	}
 
+	static boolean isContainerStarted() {
+		return PULSAR_CONTAINER.isRunning();
+	}
+
 }
