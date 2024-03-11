@@ -57,27 +57,26 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	private boolean calledUntil = false;
 
-	public static <T> TopicSpec<T> consumeMessages() throws PulsarClientException {
-		PulsarClient pulsarClient;
-		try {
-			pulsarClient = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
+	public static <T> TopicSpec<T> consumeMessages() {
+		if (!PulsarTestContainerSupport.isContainerStarted()) {
+			return PulsarConsumerTestUtil.consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl());
 		}
-		catch (PulsarClientException e) {
-			pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-		}
-		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of());
-		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+		return PulsarConsumerTestUtil.consumeMessages("pulsar://localhost:6650");
 	}
 
-	public static <T> TopicSpec<T> consumeMessages(String url) throws PulsarClientException {
-		PulsarClient pulsarClient = PulsarClient.builder().serviceUrl(url).build();
-		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of());
-		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+	public static <T> TopicSpec<T> consumeMessages(String url) {
+		Assert.notNull(url, "url must not be null");
+		try {
+			return PulsarConsumerTestUtil.consumeMessages(PulsarClient.builder().serviceUrl(url).build());
+		}
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
+		}
 	}
 
 	public static <T> TopicSpec<T> consumeMessages(PulsarClient pulsarClient) {
-		PulsarConsumerFactory<T> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of());
-		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+		Assert.notNull(pulsarClient, "pulsarClient must not be null");
+		return PulsarConsumerTestUtil.consumeMessages(new DefaultPulsarConsumerFactory<>(pulsarClient, List.of()));
 	}
 
 	public static <T> TopicSpec<T> consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
