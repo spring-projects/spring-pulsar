@@ -55,7 +55,7 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	private List<String> topics;
 
-	private boolean calledUntil = false;
+	private boolean untilMethodAlreadyCalled = false;
 
 	public static <T> TopicSpec<T> consumeMessages() {
 		if (!PulsarTestContainerSupport.isContainerStarted()) {
@@ -111,11 +111,11 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	@Override
 	public ConditionsSpec<T> until(ConsumedMessagesCondition<T> condition) {
-		if (calledUntil) {
+		if (untilMethodAlreadyCalled) {
 			throw new IllegalStateException(
 					"Multiple calls to 'until' are not allowed. Use 'and' to combine conditions.");
 		}
-		this.calledUntil = true;
+		this.untilMethodAlreadyCalled = true;
 		this.condition = condition;
 		return this;
 	}
