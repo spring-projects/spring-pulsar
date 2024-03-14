@@ -34,7 +34,9 @@ import org.apache.pulsar.client.api.ProducerBuilder;
  * Should be removed once the above issue is fixed.
  *
  * @author Chris Bono
+ * @deprecated since 1.1.0 for removal in 1.2.0
  */
+@Deprecated(since = "1.1.0", forRemoval = true)
 public final class ProducerBuilderConfigurationUtil {
 
 	private ProducerBuilderConfigurationUtil() {
