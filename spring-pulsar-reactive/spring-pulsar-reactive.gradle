@@ -6,9 +6,16 @@ description = 'Spring Pulsar Reactive Support'
 
 dependencies {
 	api project (':spring-pulsar')
+	api (libs.pulsar.client.reactive.api) {
+		// spring-pulsar includes a pulsar-client-api with its unwanted transitive deps excluded
+		exclude group: "org.apache.pulsar", module: "pulsar-client-api"
+	}
 	api (libs.pulsar.client.reactive.adapter) {
 		// spring-pulsar includes a pulsar-client with its unwanted transitive deps excluded
 		exclude group: "org.apache.pulsar", module: "pulsar-client"
+		// (above) we include a pulsar-client-reactive-api whose pulsar-client-api with
+		// unwanted transitive deps excluded
+		exclude group: "org.apache.pulsar", module: "pulsar-client-reactive-api"
 	}
 	api(libs.pulsar.client.reactive.producer.cache.caffeine.shaded) {
 		// (above) we include a pulsar-client-reactive-adapter whose pulsar-client with
