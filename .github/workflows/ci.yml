@@ -188,7 +188,7 @@ jobs:
           git push --tags origin
       - name: Install tooling for Github release
         run: |
-          curl -sSL -O https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.8/github-changelog-generator.jar
+          curl -sSL -O https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.10/github-changelog-generator.jar
       - name: Create Github release
         env:
           RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
