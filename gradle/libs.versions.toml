@@ -48,6 +48,7 @@ micrometer-docs-gen = { module = "io.micrometer:micrometer-docs-generator", vers
 micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 pulsar-client-all = { module = "org.apache.pulsar:pulsar-client-all", version.ref = "pulsar" }
+pulsar-client-reactive-api = { module = "org.apache.pulsar:pulsar-client-reactive-api", version.ref = "pulsar-reactive" }
 pulsar-client-reactive-adapter = { module = "org.apache.pulsar:pulsar-client-reactive-adapter", version.ref = "pulsar-reactive" }
 pulsar-client-reactive-producer-cache-caffeine-shaded = { module = "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded", version.ref = "pulsar-reactive" }
 reactor-bom = { module = "io.projectreactor:reactor-bom", version.ref = "reactor" }
