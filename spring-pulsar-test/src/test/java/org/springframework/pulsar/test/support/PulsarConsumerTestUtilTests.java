@@ -29,9 +29,13 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -41,6 +45,8 @@ import org.springframework.pulsar.core.PulsarTemplate;
  * Tests for {@link PulsarConsumerTestUtil}.
  *
  * @author Jonas Geiregat
+ * @author Kartik Shrivastava
+ * @author Chris Bono
  */
 class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 
@@ -61,9 +67,16 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 		this.pulsarTemplate = new PulsarTemplate<>(new DefaultPulsarProducerFactory<>(pulsarClient));
 	}
 
+	@AfterEach
+	void cleanupFromTest() throws PulsarClientException {
+		if (this.pulsarClient != null) {
+			this.pulsarClient.close();
+		}
+	}
+
 	@Test
-	void whenConditionIsSpecifiedMessagesAreConsumedUntilConditionIsMet() {
-		var topic = testTopic("a");
+	void whenConditionIsSpecifiedThenMessagesConsumedUntilConditionMet() {
+		var topic = testTopic("cond");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
 		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
 			.fromTopic(topic)
@@ -75,8 +88,8 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void whenConditionIsNotSpecifiedMessagesAreConsumedUntilAwaitDuration() {
-		var topic = testTopic("b");
+	void whenConditionIsNotSpecifiedThenMessagesAreConsumedUntilAwaitDuration() {
+		var topic = testTopic("no-cond");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
 		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
 			.fromTopic(topic)
@@ -89,81 +102,8 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void exceptionIsThrownWhenConditionNotMetWithinAwaitDuration() {
-		assertThatExceptionOfType(ConditionTimeoutException.class)
-			.isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
-				.fromTopic(testTopic("c"))
-				.withSchema(Schema.STRING)
-				.awaitAtMost(Duration.ofSeconds(5))
-				.until(ConsumedMessagesConditions.desiredMessageCount(3))
-				.get())
-			.withMessage("Condition was not met within 5 seconds");
-	}
-
-	@Test
-	void messagesAreConsumedWhenContainerIsRunningAndConsumeMessagesIsCalledWithoutArguments() {
-		// depends upon pulsarClient created in prepareForTest
-		var topic = testTopic("e1");
-		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.<String>consumeMessages()
-			.fromTopic(topic)
-			.withSchema(Schema.STRING)
-			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(2))
-			.get();
-		assertThat(msgs).hasSize(2);
-	}
-
-	@Test
-	void messagesAreConsumedWhenContainerIsStoppedAndConsumeMessagesIsCalledWithoutArguments() {
-		PulsarTestContainerSupport.stopContainer();
-		PulsarConsumerTestUtil.<String>consumeMessages();
-		// TODO: Complete this test
-	}
-
-	@Test
-	void messagesAreConsumedWhenConsumeMessagesIsCalledWithBrokerUrl() {
-		var topic = testTopic("e2");
-		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.<String>consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl())
-			.fromTopic(topic)
-			.withSchema(Schema.STRING)
-			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(2))
-			.get();
-		assertThat(msgs).hasSize(2);
-	}
-
-	@Test
-	void exceptionIsThrownWhenConsumeMessagesIsCalledWithNullBrokerUrl() {
-		String url = null;
-		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(url))
-			.withMessage("url must not be null");
-	}
-
-	@Test
-	void messagesAreConsumedWhenConsumeMessagesIsCalledWithPulsarClient() {
-		var topic = testTopic("e3");
-		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.<String>consumeMessages(this.pulsarClient)
-			.fromTopic(topic)
-			.withSchema(Schema.STRING)
-			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(2))
-			.get();
-		assertThat(msgs).hasSize(2);
-	}
-
-	@Test
-	void exceptionIsThrownWhenConsumeMessagesIsCalledWithNullPulsarClient() {
-		PulsarClient localPulsarClient = null;
-		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(localPulsarClient))
-			.withMessage("pulsarClient must not be null");
-	}
-
-	@Test
-	void whenChainedConditionAreSpecifiedMessagesAreConsumedUntilTheyAreMet() {
-		var topic = testTopic("d");
+	void whenChainedConditionsAreSpecifiedThenMessagesConsumedUntilAllConditionsMet() {
+		var topic = testTopic("chained-cond");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
 		ConsumedMessagesCondition<String> condition1 = ConsumedMessagesConditions.desiredMessageCount(5);
 		ConsumedMessagesCondition<String> condition2 = ConsumedMessagesConditions.atLeastOneMessageMatches("message-1");
@@ -177,9 +117,75 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	}
 
 	@Test
-	void exceptionIsThrownWhenUntilIsCalledMultipleTimes() {
-		var topic = testTopic("e");
-		IntStream.range(0, 1).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+	void whenConditionNotMetWithinAwaitDurationThenExceptionIsThrown() {
+		assertThatExceptionOfType(ConditionTimeoutException.class)
+			.isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+				.fromTopic(testTopic("cond-not-met"))
+				.withSchema(Schema.STRING)
+				.awaitAtMost(Duration.ofSeconds(5))
+				.until(ConsumedMessagesConditions.desiredMessageCount(3))
+				.get())
+			.withMessage("Condition was not met within 5 seconds");
+	}
+
+	@Test
+	void consumeMessagesWithNoArgsUsesPulsarContainerIfAvailable() {
+		var topic = testTopic("no-arg");
+		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+		var msgs = PulsarConsumerTestUtil.<String>consumeMessages()
+			.fromTopic(topic)
+			.withSchema(Schema.STRING)
+			.awaitAtMost(Duration.ofSeconds(5))
+			.until(desiredMessageCount(2))
+			.get();
+		assertThat(msgs).hasSize(2);
+	}
+
+	@Test
+	void consumeMessagesWithNoArgsUsesDefaultUrlWhenPulsarContainerNotAvailable() {
+		try (MockedStatic<PulsarTestContainerSupport> containerSupport = Mockito
+			.mockStatic(PulsarTestContainerSupport.class)) {
+			containerSupport.when(PulsarTestContainerSupport::isContainerStarted).thenReturn(false);
+			var topic = testTopic("no-arg-dft-url");
+			assertThatExceptionOfType(PulsarException.class)
+				.isThrownBy(() -> PulsarConsumerTestUtil.<String>consumeMessages()
+					.fromTopic(topic)
+					.withSchema(Schema.STRING)
+					.awaitAtMost(Duration.ofSeconds(2))
+					.get())
+				.withStackTraceContaining("Connection refused: localhost");
+		}
+	}
+
+	@Test
+	void consumeMessagesWithBrokerUrl() {
+		var topic = testTopic("url-arg");
+		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+		var msgs = PulsarConsumerTestUtil.<String>consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.fromTopic(topic)
+			.withSchema(Schema.STRING)
+			.awaitAtMost(Duration.ofSeconds(5))
+			.until(desiredMessageCount(2))
+			.get();
+		assertThat(msgs).hasSize(2);
+	}
+
+	@Test
+	void consumeMessagesWithPulsarClient() {
+		var topic = testTopic("client-arg");
+		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
+		var msgs = PulsarConsumerTestUtil.<String>consumeMessages(this.pulsarClient)
+			.fromTopic(topic)
+			.withSchema(Schema.STRING)
+			.awaitAtMost(Duration.ofSeconds(5))
+			.until(desiredMessageCount(2))
+			.get();
+		assertThat(msgs).hasSize(2);
+	}
+
+	@Test
+	void untilCannotBeCalledMultipleTimes() {
+		var topic = testTopic("until-multi");
 		assertThatExceptionOfType(IllegalStateException.class)
 			.isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
 				.fromTopic(topic)
@@ -189,6 +195,20 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 				.until(ConsumedMessagesConditions.atLeastOneMessageMatches("message-0"))
 				.get())
 			.withMessage("Multiple calls to 'until' are not allowed. Use 'and' to combine conditions.");
+	}
+
+	@Test
+	void brokerUrlCannotBeNull() {
+		String url = null;
+		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(url))
+			.withMessage("url must not be null");
+	}
+
+	@Test
+	void pulsarClientCannotBeNull() {
+		PulsarClient localPulsarClient = null;
+		assertThatIllegalArgumentException().isThrownBy(() -> PulsarConsumerTestUtil.consumeMessages(localPulsarClient))
+			.withMessage("pulsarClient must not be null");
 	}
 
 	@Test

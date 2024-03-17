@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.test.support;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -25,6 +26,7 @@ import org.testcontainers.utility.DockerImageName;
  * Provides a static {@link PulsarContainer} that can be shared across test classes.
  *
  * @author Chris Bono
+ * @author Kartik Shrivastava
  */
 @Testcontainers(disabledWithoutDocker = true)
 public interface PulsarTestContainerSupport {
@@ -40,6 +42,11 @@ public interface PulsarTestContainerSupport {
 		PULSAR_CONTAINER.start();
 	}
 
+	@AfterAll
+	static void stopContainer() {
+		PULSAR_CONTAINER.stop();
+	}
+
 	static String getPulsarBrokerUrl() {
 		return PULSAR_CONTAINER.getPulsarBrokerUrl();
 	}
@@ -50,10 +57,6 @@ public interface PulsarTestContainerSupport {
 
 	static boolean isContainerStarted() {
 		return PULSAR_CONTAINER.isRunning();
-	}
-
-	static void stopContainer() {
-		PULSAR_CONTAINER.stop();
 	}
 
 }

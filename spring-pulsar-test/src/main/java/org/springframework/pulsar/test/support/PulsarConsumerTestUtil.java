@@ -42,8 +42,10 @@ import org.springframework.util.Assert;
  *
  * @param <T> the type of the message payload
  * @author Jonas Geiregat
+ * @author Kartik Shrivastava
+ * @author Chris Bono
  */
-public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, ConditionsSpec<T> {
+public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, ConditionsSpec<T> {
 
 	private final PulsarConsumerFactory<T> consumerFactory;
 
@@ -57,6 +59,13 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 
 	private boolean untilMethodAlreadyCalled = false;
 
+	/**
+	 * Begin a builder which will consume messages from the
+	 * {@link PulsarTestContainerSupport} (if available) or the default Pulsar broker url
+	 * {@code pulsar://localhost:6650}.
+	 * @param <T> the message payload type
+	 * @return the {@link TopicSpec topic step} of the builder
+	 */
 	public static <T> TopicSpec<T> consumeMessages() {
 		if (PulsarTestContainerSupport.isContainerStarted()) {
 			return PulsarConsumerTestUtil.consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl());
@@ -64,6 +73,12 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 		return PulsarConsumerTestUtil.consumeMessages("pulsar://localhost:6650");
 	}
 
+	/**
+	 * Begin a builder which will consume messages from the specified Pulsar broker url.
+	 * @param <T> the message payload type
+	 * @param url the Pulsar broker url
+	 * @return the {@link TopicSpec topic step} of the builder
+	 */
 	public static <T> TopicSpec<T> consumeMessages(String url) {
 		Assert.notNull(url, "url must not be null");
 		try {
@@ -74,16 +89,28 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 		}
 	}
 
+	/**
+	 * Begin a builder which will consume messages with a provided Pulsar client.
+	 * @param <T> the message payload type
+	 * @param pulsarClient the client to consume with
+	 * @return the {@link TopicSpec topic step} of the builder
+	 */
 	public static <T> TopicSpec<T> consumeMessages(PulsarClient pulsarClient) {
 		Assert.notNull(pulsarClient, "pulsarClient must not be null");
 		return PulsarConsumerTestUtil.consumeMessages(new DefaultPulsarConsumerFactory<>(pulsarClient, List.of()));
 	}
 
+	/**
+	 * Begin a builder which will consume messages with a provided consumer factory.
+	 * @param <T> the message payload type
+	 * @param pulsarConsumerFactory the consumer factory to consume with
+	 * @return the {@link TopicSpec topic step} of the builder
+	 */
 	public static <T> TopicSpec<T> consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
 		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
 	}
 
-	public PulsarConsumerTestUtil(PulsarConsumerFactory<T> consumerFactory) {
+	private PulsarConsumerTestUtil(PulsarConsumerFactory<T> consumerFactory) {
 		Assert.notNull(consumerFactory, "PulsarConsumerFactory must not be null");
 		this.consumerFactory = consumerFactory;
 	}
