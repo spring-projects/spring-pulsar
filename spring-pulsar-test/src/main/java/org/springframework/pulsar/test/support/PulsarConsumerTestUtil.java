@@ -58,7 +58,7 @@ public class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, C
 	private boolean untilMethodAlreadyCalled = false;
 
 	public static <T> TopicSpec<T> consumeMessages() {
-		if (!PulsarTestContainerSupport.isContainerStarted()) {
+		if (PulsarTestContainerSupport.isContainerStarted()) {
 			return PulsarConsumerTestUtil.consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl());
 		}
 		return PulsarConsumerTestUtil.consumeMessages("pulsar://localhost:6650");
