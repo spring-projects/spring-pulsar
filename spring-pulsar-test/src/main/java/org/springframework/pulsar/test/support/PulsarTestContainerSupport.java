@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.test.support;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,8 +41,7 @@ public interface PulsarTestContainerSupport {
 		PULSAR_CONTAINER.start();
 	}
 
-	@AfterAll
-	static void stopContainer() {
+	static void stopContainer2() {
 		PULSAR_CONTAINER.stop();
 	}
 
