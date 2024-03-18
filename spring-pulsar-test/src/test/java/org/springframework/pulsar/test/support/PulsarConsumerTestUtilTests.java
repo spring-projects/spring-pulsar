@@ -29,6 +29,7 @@ import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,13 +79,13 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	void whenConditionIsSpecifiedThenMessagesConsumedUntilConditionMet() {
 		var topic = testTopic("cond");
 		IntStream.range(0, 5).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
+		var consumerTestUtil = PulsarConsumerTestUtil.consumeMessages(pulsarConsumerFactory)
 			.fromTopic(topic)
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(3))
-			.get();
-		assertThat(msgs).hasSize(3);
+			.until(desiredMessageCount(3));
+		assertThat(consumerTestUtil.get()).hasSize(3);
+		assertThatLocallyCreatedClientIsNull(consumerTestUtil);
 	}
 
 	@Test
@@ -132,17 +133,18 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 	void consumeMessagesWithNoArgsUsesPulsarContainerIfAvailable() {
 		var topic = testTopic("no-arg");
 		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.<String>consumeMessages()
+		var consumerTestUtil = PulsarConsumerTestUtil.<String>consumeMessages()
 			.fromTopic(topic)
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(2))
-			.get();
-		assertThat(msgs).hasSize(2);
+			.until(desiredMessageCount(2));
+		assertThat(consumerTestUtil.get()).hasSize(2);
+		assertThatLocallyCreatedClientIsClosed(consumerTestUtil);
 	}
 
 	@Test
 	void consumeMessagesWithNoArgsUsesDefaultUrlWhenPulsarContainerNotAvailable() {
+		// @formatter::off
 		try (MockedStatic<PulsarTestContainerSupport> containerSupport = Mockito
 			.mockStatic(PulsarTestContainerSupport.class)) {
 			containerSupport.when(PulsarTestContainerSupport::isContainerStarted).thenReturn(false);
@@ -155,32 +157,46 @@ class PulsarConsumerTestUtilTests implements PulsarTestContainerSupport {
 					.get())
 				.withStackTraceContaining("Connection refused: localhost");
 		}
+		// @formatter:on
 	}
 
 	@Test
 	void consumeMessagesWithBrokerUrl() {
 		var topic = testTopic("url-arg");
 		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.<String>consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl())
+		var consumerTestUtil = PulsarConsumerTestUtil
+			.<String>consumeMessages(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.fromTopic(topic)
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(2))
-			.get();
-		assertThat(msgs).hasSize(2);
+			.until(desiredMessageCount(2));
+		assertThat(consumerTestUtil.get()).hasSize(2);
+		assertThatLocallyCreatedClientIsClosed(consumerTestUtil);
 	}
 
 	@Test
 	void consumeMessagesWithPulsarClient() {
 		var topic = testTopic("client-arg");
 		IntStream.range(0, 2).forEach(i -> pulsarTemplate.send(topic, "message-" + i));
-		var msgs = PulsarConsumerTestUtil.<String>consumeMessages(this.pulsarClient)
+		var consumerTestUtil = PulsarConsumerTestUtil.<String>consumeMessages(this.pulsarClient)
 			.fromTopic(topic)
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5))
-			.until(desiredMessageCount(2))
-			.get();
-		assertThat(msgs).hasSize(2);
+			.until(desiredMessageCount(2));
+		assertThat(consumerTestUtil.get()).hasSize(2);
+		assertThatLocallyCreatedClientIsNull(consumerTestUtil);
+	}
+
+	private void assertThatLocallyCreatedClientIsNull(ConditionsSpec<?> consumerTestUtil) {
+		assertThat(consumerTestUtil).extracting("locallyCreatedPulsarClient").isNull();
+	}
+
+	private void assertThatLocallyCreatedClientIsClosed(ConditionsSpec<?> consumerTestUtil) {
+		assertThat(consumerTestUtil).extracting("locallyCreatedPulsarClient")
+			.isNotNull()
+			.asInstanceOf(InstanceOfAssertFactories.type(PulsarClient.class))
+			.extracting(PulsarClient::isClosed)
+			.isEqualTo(Boolean.TRUE);
 	}
 
 	@Test

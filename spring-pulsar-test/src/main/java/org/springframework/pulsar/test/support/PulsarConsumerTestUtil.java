@@ -29,6 +29,8 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 
+import org.springframework.core.log.LogAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -46,6 +48,10 @@ import org.springframework.util.Assert;
  * @author Chris Bono
  */
 public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec<T>, ConditionsSpec<T> {
+
+	private static final LogAccessor LOG = new LogAccessor(PulsarConsumerTestUtil.class);
+
+	private final PulsarClient locallyCreatedPulsarClient;
 
 	private final PulsarConsumerFactory<T> consumerFactory;
 
@@ -82,7 +88,9 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 	public static <T> TopicSpec<T> consumeMessages(String url) {
 		Assert.notNull(url, "url must not be null");
 		try {
-			return PulsarConsumerTestUtil.consumeMessages(PulsarClient.builder().serviceUrl(url).build());
+			var pulsarClient = PulsarClient.builder().serviceUrl(url).build();
+			return PulsarConsumerTestUtil.consumeMessagesInternal(pulsarClient,
+					new DefaultPulsarConsumerFactory<>(pulsarClient, List.of()));
 		}
 		catch (PulsarClientException ex) {
 			throw new PulsarException(ex);
@@ -97,7 +105,8 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 	 */
 	public static <T> TopicSpec<T> consumeMessages(PulsarClient pulsarClient) {
 		Assert.notNull(pulsarClient, "pulsarClient must not be null");
-		return PulsarConsumerTestUtil.consumeMessages(new DefaultPulsarConsumerFactory<>(pulsarClient, List.of()));
+		return PulsarConsumerTestUtil.consumeMessagesInternal(null,
+				new DefaultPulsarConsumerFactory<>(pulsarClient, List.of()));
 	}
 
 	/**
@@ -107,12 +116,19 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 	 * @return the {@link TopicSpec topic step} of the builder
 	 */
 	public static <T> TopicSpec<T> consumeMessages(PulsarConsumerFactory<T> pulsarConsumerFactory) {
-		return new PulsarConsumerTestUtil<>(pulsarConsumerFactory);
+		return PulsarConsumerTestUtil.consumeMessagesInternal(null, pulsarConsumerFactory);
 	}
 
-	private PulsarConsumerTestUtil(PulsarConsumerFactory<T> consumerFactory) {
+	private static <T> TopicSpec<T> consumeMessagesInternal(PulsarClient locallyCreatedPulsarClient,
+			PulsarConsumerFactory<T> pulsarConsumerFactory) {
+		return new PulsarConsumerTestUtil<>(locallyCreatedPulsarClient, pulsarConsumerFactory);
+	}
+
+	private PulsarConsumerTestUtil(@Nullable PulsarClient locallyCreatedPulsarClient,
+			PulsarConsumerFactory<T> consumerFactory) {
 		Assert.notNull(consumerFactory, "PulsarConsumerFactory must not be null");
 		this.consumerFactory = consumerFactory;
+		this.locallyCreatedPulsarClient = locallyCreatedPulsarClient;
 	}
 
 	@Override
@@ -172,6 +188,16 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 		}
 		catch (PulsarClientException ex) {
 			throw new PulsarException(ex);
+		}
+		finally {
+			if (this.locallyCreatedPulsarClient != null && !this.locallyCreatedPulsarClient.isClosed()) {
+				try {
+					this.locallyCreatedPulsarClient.close();
+				}
+				catch (PulsarClientException e) {
+					LOG.error(e, () -> "Failed to close locally created Pulsar client due to: " + e.getMessage());
+				}
+			}
 		}
 		if (this.condition != null && !this.condition.meets(messages)) {
 			throw new ConditionTimeoutException(
