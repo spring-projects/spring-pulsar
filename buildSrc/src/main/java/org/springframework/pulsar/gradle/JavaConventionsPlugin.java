@@ -18,13 +18,11 @@ package org.springframework.pulsar.gradle;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -33,7 +31,6 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.quality.Checkstyle;
 import org.gradle.api.plugins.quality.CheckstyleExtension;
 import org.gradle.api.plugins.quality.CheckstylePlugin;
@@ -49,7 +46,6 @@ import org.gradle.external.javadoc.CoreJavadocOptions;
 
 import org.springframework.pulsar.gradle.optional.OptionalDependenciesPlugin;
 import org.springframework.pulsar.gradle.testing.TestFailuresPlugin;
-import org.springframework.pulsar.gradle.toolchain.ToolchainPlugin;
 
 import io.spring.javaformat.gradle.SpringJavaFormatPlugin;
 import io.spring.javaformat.gradle.tasks.CheckFormat;
@@ -109,12 +105,10 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 	public void apply(Project project) {
 		project.getPlugins().withType(JavaBasePlugin.class, (java) -> {
 			configureSpringJavaFormat(project);
-			configureJavaConventions(project);
 			configureJavadocConventions(project);
 			configureTestConventions(project);
 			configureJarManifestConventions(project);
 			configureDependencyManagement(project);
-			configureToolchain(project);
 		});
 	}
 
@@ -129,32 +123,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		DependencySet checkstyleDependencies = project.getConfigurations().getByName("checkstyle").getDependencies();
 		checkstyleDependencies
 				.add(project.getDependencies().create("io.spring.javaformat:spring-javaformat-checkstyle:" + version));
-	}
-
-	private void configureJavaConventions(Project project) {
-		if (!project.hasProperty("toolchainVersion")) {
-			JavaPluginExtension javaPluginExtension = project.getExtensions().getByType(JavaPluginExtension.class);
-			javaPluginExtension.setSourceCompatibility(JavaVersion.toVersion(SOURCE_AND_TARGET_COMPATIBILITY));
-		}
-		project.getTasks().withType(JavaCompile.class, (compile) -> {
-			compile.getOptions().setEncoding("UTF-8");
-			List<String> args = compile.getOptions().getCompilerArgs();
-			if (!args.contains("-parameters")) {
-				args.add("-parameters");
-			}
-			if (project.hasProperty("toolchainVersion")) {
-				compile.setSourceCompatibility(SOURCE_AND_TARGET_COMPATIBILITY);
-				compile.setTargetCompatibility(SOURCE_AND_TARGET_COMPATIBILITY);
-			}
-			else if (buildingWithJava17(project)) {
-				args.addAll(Arrays.asList("-Werror", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:rawtypes",
-						"-Xlint:varargs"));
-			}
-		});
-	}
-
-	private boolean buildingWithJava17(Project project) {
-		return !project.hasProperty("toolchainVersion") && JavaVersion.current() == JavaVersion.VERSION_17;
 	}
 
 	private void configureJavadocConventions(Project project) {
@@ -243,10 +211,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		dependencyManagement.getDependencies().add(pulsarDependencies);
 		project.getPlugins().withType(OptionalDependenciesPlugin.class, (optionalDependencies) -> configurations
 				.getByName(OptionalDependenciesPlugin.OPTIONAL_CONFIGURATION_NAME).extendsFrom(dependencyManagement));
-	}
-
-	private void configureToolchain(Project project) {
-		project.getPlugins().apply(ToolchainPlugin.class);
 	}
 
 }

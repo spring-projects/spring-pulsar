@@ -39,7 +39,11 @@ jobs:
     needs: [prerequisites]
     strategy:
       matrix:
-        springBootVersion: [ "${{ needs.prerequisites.outputs.boot_version }}" ]
+        include:
+          - javaVersion: 17
+            springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+          - javaVersion: 21
+            springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
@@ -50,6 +54,7 @@ jobs:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ needs.prerequisites.outputs.project_version }}
           BOOT_VERSION: ${{ matrix.springBootVersion }}
+          JAVA_VERSION: ${{ matrix.javaVersion }}
         run: |
           ./gradlew publishMavenJavaPublicationToLocalRepository
           ./gradlew \
@@ -57,5 +62,6 @@ jobs:
             -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
             -PspringPulsarVersion="$VERSION" \
             -PspringBootVersion="$BOOT_VERSION" \
+            -PtestToolchain="$JAVA_VERSION" \
             -PsampleTests \
             :runAllSampleTests

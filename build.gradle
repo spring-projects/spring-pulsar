@@ -13,6 +13,7 @@ apply from: 'gradle/jacoco-conventions.gradle'
 apply from: 'gradle/aggregate-jacoco-report.gradle'
 apply from: 'gradle/update-copyrights.gradle'
 apply from: 'gradle/version-catalog-update.gradle'
+apply from: 'gradle/java-conventions.gradle'
 
 allprojects {
 	group = 'org.springframework.pulsar'
