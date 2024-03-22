@@ -16,8 +16,6 @@
 
 package org.springframework.pulsar.gradle;
 
-import io.spring.gradle.convention.ArtifactoryPlugin;
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -27,7 +25,10 @@ import org.gradle.api.plugins.PluginManager;
 import org.springframework.pulsar.gradle.check.SonarQubeConventionsPlugin;
 import org.springframework.pulsar.gradle.publish.SpringNexusPublishPlugin;
 
+import io.spring.gradle.convention.ArtifactoryPlugin;
+
 /**
+ * Plugin for the root project.
  * @author Chris Bono
  */
 public class RootProjectPlugin implements Plugin<Project> {
