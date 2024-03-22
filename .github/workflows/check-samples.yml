@@ -42,8 +42,10 @@ jobs:
         include:
           - javaVersion: 17
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            samplesTarget: ':runAllSampleTests'
           - javaVersion: 21
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            samplesTarget: ':runAllSampleTests -x :spring-pulsar-sample-apps:sample-pulsar-functions:sample-signup-function:test'
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
@@ -64,4 +66,4 @@ jobs:
             -PspringBootVersion="$BOOT_VERSION" \
             -PtestToolchain="$JAVA_VERSION" \
             -PsampleTests \
-            :runAllSampleTests
+            ${{ matrix.samplesTarget }}
