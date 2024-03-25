@@ -96,10 +96,10 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	 */
 	public DefaultPulsarProducerFactory(PulsarClient pulsarClient, @Nullable String defaultTopic,
 			@Nullable List<ProducerBuilderCustomizer<T>> defaultConfigCustomizers, TopicResolver topicResolver) {
-		this.pulsarClient = pulsarClient;
+		this.pulsarClient = Objects.requireNonNull(pulsarClient, "pulsarClient must not be null");
 		this.defaultTopic = defaultTopic;
 		this.defaultConfigCustomizers = defaultConfigCustomizers;
-		this.topicResolver = topicResolver;
+		this.topicResolver = Objects.requireNonNull(topicResolver, "topicResolver must not be null");
 	}
 
 	@Override
@@ -117,6 +117,11 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	public Producer<T> createProducer(Schema<T> schema, @Nullable String topic,
 			@Nullable Collection<String> encryptionKeys, @Nullable List<ProducerBuilderCustomizer<T>> customizers) {
 		return doCreateProducer(schema, topic, encryptionKeys, customizers);
+	}
+
+	@Override
+	public PulsarClient getPulsarClient() {
+		return this.pulsarClient;
 	}
 
 	/**

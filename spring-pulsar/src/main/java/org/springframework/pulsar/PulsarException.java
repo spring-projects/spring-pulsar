@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar;
 
+import org.apache.pulsar.client.api.PulsarClientException;
+
 import org.springframework.core.NestedRuntimeException;
 
 /**
@@ -36,6 +38,13 @@ public class PulsarException extends NestedRuntimeException {
 
 	public PulsarException(String msg, Throwable cause) {
 		super(msg, cause);
+	}
+
+	public static PulsarException unwrap(Throwable t) {
+		if (t instanceof PulsarException ex) {
+			return ex;
+		}
+		return new PulsarException(PulsarClientException.unwrap(t));
 	}
 
 }
