@@ -1,5 +1,4 @@
-
-include::../attributes/attributes.adoc[]
+include::../../attributes/attributes.adoc[]
 
 By default, Pulsar clients communicate with Pulsar services in plain text.
 The following section describes how to configure Pulsar clients to use TLS encryption (SSL).
