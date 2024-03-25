@@ -19,9 +19,12 @@ package org.springframework.pulsar.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
@@ -29,6 +32,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
+import org.apache.pulsar.client.api.transaction.Transaction;
 
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -41,6 +45,8 @@ import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationCo
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
+import org.springframework.pulsar.transaction.PulsarTransactionUtils;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import io.micrometer.observation.Observation;
@@ -69,6 +75,8 @@ public class PulsarTemplate<T>
 
 	private final List<ProducerBuilderCustomizer<T>> interceptorsCustomizers;
 
+	private final Map<Thread, Transaction> threadBoundTransactions = new HashMap<>();
+
 	/**
 	 * Whether to record observations.
 	 */
@@ -90,6 +98,16 @@ public class PulsarTemplate<T>
 	private ApplicationContext applicationContext;
 
 	private String beanName = "";
+
+	/**
+	 * Whether this template supports transactions.
+	 */
+	private boolean transactional;
+
+	/**
+	 * Whether this template allows non-transactional operations.
+	 */
+	private boolean allowNonTransactional = true;
 
 	/**
 	 * Construct a template instance without interceptors that uses the default schema
@@ -120,9 +138,9 @@ public class PulsarTemplate<T>
 	 */
 	public PulsarTemplate(PulsarProducerFactory<T> producerFactory, List<ProducerInterceptor> interceptors,
 			SchemaResolver schemaResolver, TopicResolver topicResolver, boolean observationEnabled) {
-		this.producerFactory = producerFactory;
-		this.schemaResolver = schemaResolver;
-		this.topicResolver = topicResolver;
+		this.producerFactory = Objects.requireNonNull(producerFactory, "producerFactory must not be null");
+		this.schemaResolver = Objects.requireNonNull(schemaResolver, "schemaResolver must not be null");
+		this.topicResolver = Objects.requireNonNull(topicResolver, "topicResolver must not be null");
 		this.observationEnabled = observationEnabled;
 		if (!CollectionUtils.isEmpty(interceptors)) {
 			this.interceptorsCustomizers = interceptors.stream().map(this::adaptInterceptorToCustomizer).toList();
@@ -139,6 +157,23 @@ public class PulsarTemplate<T>
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
+	}
+
+	/**
+	 * Sets whether the template supports transactional operations.
+	 * @param transactional whether the template supports transactional operations
+	 */
+	public void setTransactional(boolean transactional) {
+		this.transactional = transactional;
+	}
+
+	/**
+	 * Sets whether the template supports non-transactional operations.
+	 * @param allowNonTransactional whether the template supports non-transactional
+	 * operations
+	 */
+	public void setAllowNonTransactional(boolean allowNonTransactional) {
+		this.allowNonTransactional = allowNonTransactional;
 	}
 
 	/**
@@ -245,7 +280,9 @@ public class PulsarTemplate<T>
 					producerCustomizer);
 			TypedMessageBuilder<T> messageBuilder;
 			try {
-				messageBuilder = producer.newMessage().value(message);
+				var txn = getTransaction();
+				messageBuilder = (txn != null) ? producer.newMessage(txn) : producer.newMessage();
+				messageBuilder = messageBuilder.value(message);
 				if (typedMessageBuilderCustomizer != null) {
 					typedMessageBuilderCustomizer.customize(messageBuilder);
 				}
@@ -284,6 +321,46 @@ public class PulsarTemplate<T>
 				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
+	@Nullable
+	private Transaction getTransaction() {
+		if (!this.transactional) {
+			return null;
+		}
+		boolean inTransaction = inTransaction();
+		Assert.state(this.allowNonTransactional || inTransaction,
+				"No transaction is in process; "
+						+ "possible solutions: run the template operation within the scope of a "
+						+ "template.executeInTransaction() operation, start a transaction with @Transactional "
+						+ "before invoking the template method, "
+						+ "run in a transaction started by a listener container when consuming a record");
+		if (!inTransaction) {
+			this.logger.trace(() -> "No txn found but allowNonTransactional is true - returning null");
+			return null;
+		}
+		Transaction txn = this.threadBoundTransactions.get(Thread.currentThread());
+		if (txn != null) {
+			this.logger.trace(() -> "Found local template txn [%s]".formatted(txn));
+			return txn;
+		}
+		// If we made it here the txn must already be in the resource holder
+		var resourceHolder = PulsarTransactionUtils.getResourceHolder(this.producerFactory.getPulsarClient());
+		Assert.state(resourceHolder != null, "No transaction found in TransactionSynchronizationManager");
+		return resourceHolder.getTransaction();
+	}
+
+	/**
+	 * Determine if the template is currently running in either a local transaction or a
+	 * transaction synchronized with the transaction resource manager.
+	 * @return whether the template is currently running in a transaction
+	 */
+	private boolean inTransaction() {
+		if (!this.transactional) {
+			return false;
+		}
+		return this.threadBoundTransactions.get(Thread.currentThread()) != null
+				|| PulsarTransactionUtils.inTransaction(this.producerFactory.getPulsarClient());
+	}
+
 	private Producer<T> prepareProducerForSend(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema,
 			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.resolveSchema(message).orElseThrow() : schema;
@@ -295,6 +372,54 @@ public class PulsarTemplate<T>
 			customizers.add(producerCustomizer);
 		}
 		return this.producerFactory.createProducer(resolvedSchema, topic, encryptionKeys, customizers);
+	}
+
+	/**
+	 * Execute some arbitrary operation(s) on the template and return the result. The
+	 * template is invoked within a local transaction and do not participate in a global
+	 * transaction (if present).
+	 * @param <R> the callback return type
+	 * @param callback the callback
+	 * @return the result
+	 * @since 1.1.0
+	 */
+	@Nullable
+	public <R> R executeInTransaction(TemplateCallback<T, R> callback) {
+		Assert.notNull(callback, "callback must not be null");
+		Assert.state(this.transactional, "This template does not support transactions");
+		var currentThread = Thread.currentThread();
+		var txn = this.threadBoundTransactions.get(currentThread);
+		Assert.state(txn == null, "Nested calls to 'executeInTransaction' are not allowed");
+		txn = newPulsarTransaction();
+		this.threadBoundTransactions.put(currentThread, txn);
+		try {
+			R result = callback.doWithTemplate(this);
+			txn.commit().get();
+			return result;
+		}
+		catch (Exception ex) {
+			if (txn != null) {
+				PulsarTransactionUtils.abort(txn);
+			}
+			throw PulsarException.unwrap(ex);
+		}
+		finally {
+			this.threadBoundTransactions.remove(currentThread);
+		}
+	}
+
+	private Transaction newPulsarTransaction() {
+		try {
+			// TODO TXN configure timeout
+			return this.producerFactory.getPulsarClient()
+				.newTransaction()
+				.withTransactionTimeout(60, TimeUnit.SECONDS)
+				.build()
+				.get();
+		}
+		catch (Exception ex) {
+			throw PulsarException.unwrap(ex);
+		}
 	}
 
 	public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
@@ -365,6 +490,24 @@ public class PulsarTemplate<T>
 			return this.template.doSendAsync(this.topic, this.message, this.schema, this.encryptionKeys,
 					this.messageCustomizer, this.producerCustomizer);
 		}
+
+	}
+
+	/**
+	 * A callback for executing arbitrary operations on a {@code PulsarTemplate}.
+	 *
+	 * @param <T> the template message payload type
+	 * @param <R> the return type
+	 */
+	public interface TemplateCallback<T, R> {
+
+		/**
+		 * Callback method given a template to execute operations on.
+		 * @param template the template
+		 * @return the result of the operations or null if no result needed
+		 */
+		@Nullable
+		R doWithTemplate(PulsarTemplate<T> template);
 
 	}
 
