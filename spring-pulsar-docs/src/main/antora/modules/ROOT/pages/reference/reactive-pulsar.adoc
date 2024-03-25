@@ -56,7 +56,7 @@ See the {spring-boot-pulsar-config-props}[`spring.pulsar.client.*`] application 
 
 [[reactive-client-authentication]]
 === Authentication
-To connect to a Pulsar cluster that requires authentication, follow xref:reference/pulsar.adoc#client-authentication[the same steps] as the imperative client.
+To connect to a Pulsar cluster that requires authentication, follow xref:reference/pulsar/pulsar-client.adoc#client-authentication[the same steps] as the imperative client.
 Again, this is because the reactive client adapts the imperative client which handles all security configuration.
 
 [[reactive-message-production]]
