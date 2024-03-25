@@ -1,3 +1,7 @@
+[[topic-resolution-process-imperative]]
+= Topic Resolution
+include::../../attributes/attributes.adoc[]
+
 A destination topic is needed when producing or consuming messages.
 The framework looks in the following ordered locations to determine a topic (stopping at the first find):
 

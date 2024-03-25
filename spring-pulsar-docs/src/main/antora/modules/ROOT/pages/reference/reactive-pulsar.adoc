@@ -498,4 +498,4 @@ Spring Boot provides this reader factory which can be configured with any of the
 
 [[topic-resolution-process-reactive]]
 == Topic Resolution
-include::topic-resolution.adoc[leveloffset=+1]
+include::pulsar/topic-resolution.adoc[leveloffset=+1]

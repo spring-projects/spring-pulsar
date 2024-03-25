@@ -1,0 +1,23 @@
+[[pulsar-client]]
+= Pulsar Client
+include::../../attributes/attributes.adoc[]
+
+When you use the Pulsar Spring Boot Starter, you get the `PulsarClient` auto-configured.
+
+By default, the application tries to connect to a local Pulsar instance at `pulsar://localhost:6650`.
+This can be adjusted by setting the `spring.pulsar.client.service-url` property to a different value.
+
+TIP: The value must be a valid {apache-pulsar-docs}/client-libraries-java/#connection-urls[Pulsar Protocol] URL
+
+You can further configure the client by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.client.*`] application properties.
+
+NOTE: If you are not using the starter, you will need to configure and register the `PulsarClient` yourself.
+There is a `DefaultPulsarClientFactory` that accepts a builder customizer that can be used to help with this.
+
+[[tls-encryption]]
+== TLS Encryption (SSL)
+include::tls-encryption.adoc[]
+
+[[client-authentication]]
+== Authentication
+include::authentication.adoc[]
