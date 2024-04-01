@@ -1,5 +1,4 @@
-
-include::../attributes/attributes.adoc[]
+include::../../attributes/attributes.adoc[]
 
 To connect to a Pulsar cluster that requires authentication, you need to specify which authentication plugin to use and any parameters required by the specified plugin.
 When **using Spring Boot** auto-configuration, you can set the plugin and the plugin parameters via configuration properties (in most cases).
@@ -59,7 +58,7 @@ spring:
           privateKey: ...
           keyId: ...
 ----
-NOTE: This also requires xref:reference/pulsar.adoc#tls-encryption[TLS encryption].
+NOTE: This also requires xref:reference/pulsar/pulsar-client.adoc#tls-encryption[TLS encryption].
 ====
 
 [[Token]]
@@ -135,7 +134,7 @@ spring:
 .[.underline]#Click ##here## for **mTLS (PEM)**#
 [%collapsible]
 ====
-NOTE: Because this option requires TLS encryption, which already requires you to xref:reference/pulsar.adoc#tls-encryption[provide a client builder customizer], it is recommended to simply add the authentication directly on the client builder in your provided TLS customizer.
+NOTE: Because this option requires TLS encryption, which already requires you to xref:reference/pulsar/pulsar-client.adoc#tls-encryption[provide a client builder customizer], it is recommended to simply add the authentication directly on the client builder in your provided TLS customizer.
 You can use the `org.apache.pulsar.client.api.AuthenticationFactory` to help create the authentication object as follows:
 [source,java]
 ----
@@ -148,7 +147,7 @@ See the official Pulsar documentation on {apache-pulsar-docs}/security-tls-authe
 .[.underline]#Click ##here## for **mTLS (JKS)**#
 [%collapsible]
 ====
-NOTE: Because this option requires TLS encryption, which already requires you to xref:reference/pulsar.adoc#tls-encryption[provide a client builder customizer], it is recommended to simply add the authentication directly on the client builder in your provided TLS customizer.
+NOTE: Because this option requires TLS encryption, which already requires you to xref:reference/pulsar/pulsar-client.adoc#tls-encryption[provide a client builder customizer], it is recommended to simply add the authentication directly on the client builder in your provided TLS customizer.
 You can use the `org.apache.pulsar.client.api.AuthenticationFactory` to help create the authentication object as follows:
 [source,java]
 ----

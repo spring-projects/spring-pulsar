@@ -8,13 +8,13 @@ This section covers the changes made from version 1.0 to version 1.1.
 
 === Auto Schema support
 If there is no chance to know the schema of a Pulsar topic in advance, you can use AUTO Schemas to produce/consume generic records to/from brokers.
-See xref:./reference/pulsar.adoc#template-auto-produce[Producing with AUTO_SCHEMA] and xref:./reference/pulsar.adoc#listener-auto-consume[Consuming with AUTO_SCHEMA] for more details.
+See xref:./reference/pulsar/message-production.adoc#template-auto-produce[Producing with AUTO_SCHEMA] and xref:./reference/pulsar/message-consumption.adoc#listener-auto-consume[Consuming with AUTO_SCHEMA] for more details.
 
 NOTE: While the above links focus on `PulsarTemplate` and `@PulsarListener`, this feature is also supported in `ReactivePulsarTemplate`, `@ReactivePulsarListener`, and `@PulsarReader`.
 Details for each can be found in their respective section of this reference guide.
 
 === Default topic/schema via message annotation
-You can now mark a message class with `@PulsarMessage` to specify the xref:./reference/pulsar.adoc#default-topic-via-annotation[default topic] and/or xref:./reference/pulsar.adoc#listener-default-schema-annotation[default schema] to use when producing/consuming messages of that type.
+You can now mark a message class with `@PulsarMessage` to specify the xref:./reference/pulsar/topic-resolution.adoc#default-topic-via-annotation[default topic] and/or xref:./reference/pulsar/message-consumption.adoc#listener-default-schema-annotation[default schema] to use when producing/consuming messages of that type.
 
 === Remove checked exceptions
 The APIs provided by the framework no longer throw the checked `PulsarClientException`, but rather the unchecked `PulsarException`.
