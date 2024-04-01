@@ -346,7 +346,8 @@ NOTE: In this version, there is no message ordering, as `Shared` subscriptions d
 
 If you need message ordering and still want a shared subscription types, you need to use the `Key_Shared` subscription type.
 
-=== Message Consumption
+[[consuming-records]]
+=== Consuming Records
 
 Let us take a look at how the message listener container enables both single-record and batch-based message consumption.
 
