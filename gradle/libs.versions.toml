@@ -1,7 +1,7 @@
 [versions]
 # product
 caffeine = "3.1.8"
-commons-compress = "1.26.0"
+commons-compress = "1.26.1"
 jackson = "2.17.0"
 jsr305 = "3.0.2"
 logback = "1.4.14"
