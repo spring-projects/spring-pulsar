@@ -6,8 +6,16 @@ description = 'Spring Pulsar Test Utilities Module'
 
 dependencies {
     implementation 'org.junit.jupiter:junit-jupiter-api'
-    implementation 'org.testcontainers:pulsar'
-    implementation 'org.testcontainers:junit-jupiter'
+	// Testcontainers brings in commons-compress 1.24.0 which has 2 CVEs.
+	// Exclude and override version to 1.26.0 until TC updates to latest
+	// commons-compress.
+    implementation('org.testcontainers:pulsar') {
+		exclude group: 'org.apache.commons', module: 'commons-compress'
+	}
+    implementation('org.testcontainers:junit-jupiter') {
+		exclude group: 'org.apache.commons', module: 'commons-compress'
+	}
+	implementation libs.commons.compress
     implementation project(':spring-pulsar')
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.junit.jupiter:junit-jupiter'
