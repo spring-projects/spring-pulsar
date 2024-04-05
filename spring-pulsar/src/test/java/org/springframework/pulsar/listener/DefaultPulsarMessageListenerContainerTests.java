@@ -17,9 +17,11 @@
 package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -396,6 +398,21 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		container.stop();
 		dlqContainer.stop();
 		pulsarClient.close();
+	}
+
+	@Test
+	void batchListenerWithRecordAckModeNotSupported() {
+		var containerProps = new PulsarContainerProperties();
+		containerProps.setSchema(Schema.STRING);
+		containerProps.setBatchListener(true);
+		containerProps.setAckMode(AckMode.RECORD);
+		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
+			throw new RuntimeException("should never get here");
+		});
+		var consumerFactory = new DefaultPulsarConsumerFactory<String>(mock(PulsarClient.class), List.of());
+		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
+		assertThatIllegalStateException().isThrownBy(() -> container.start())
+			.withMessage("Batch record listeners do not support AckMode.RECORD");
 	}
 
 }

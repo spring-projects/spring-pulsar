@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@
 package org.springframework.pulsar.listener;
 
 import org.apache.pulsar.client.api.PulsarClient;
+import org.junit.jupiter.api.BeforeAll;
+import org.testcontainers.containers.PulsarContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
-import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
@@ -34,27 +36,35 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.core.PulsarTopic;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
+import org.springframework.pulsar.transaction.PulsarTransactionManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
- * Provides base support for {@link PulsarListener @PulsarListener} tests.
+ * Provides base support for tests that use Pulsar transactions.
  *
- * @author Soby Chacko
- * @author Alexander Preuß
  * @author Chris Bono
  */
 @SpringJUnitConfig
 @DirtiesContext
-abstract class PulsarListenerTestsBase implements PulsarTestContainerSupport {
+@Testcontainers(disabledWithoutDocker = true)
+class PulsarTxnTestsBase {
 
-	@Autowired
-	protected PulsarTemplate<String> pulsarTemplate;
+	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
+		.withTransactions();
+
+	@BeforeAll
+	static void startContainer() {
+		PULSAR_CONTAINER.start();
+	}
 
 	@Autowired
 	protected PulsarClient pulsarClient;
+
+	@Autowired
+	protected PulsarTemplate<String> pulsarTemplate;
 
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
@@ -67,12 +77,17 @@ abstract class PulsarListenerTestsBase implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarClient pulsarClient() {
-			return new DefaultPulsarClientFactory(PulsarTestContainerSupport.getPulsarBrokerUrl()).createClient();
+			return new DefaultPulsarClientFactory((clientBuilder) -> {
+				clientBuilder.serviceUrl(PULSAR_CONTAINER.getPulsarBrokerUrl());
+				clientBuilder.enableTransaction(true);
+			}).createClient();
 		}
 
 		@Bean
 		PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			return new PulsarTemplate<>(pulsarProducerFactory);
+			var template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.setTransactional(true);
+			return template;
 		}
 
 		@Bean
@@ -84,19 +99,21 @@ abstract class PulsarListenerTestsBase implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarListenerContainerFactory pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory) {
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory,
-					new PulsarContainerProperties());
+				PulsarConsumerFactory<Object> pulsarConsumerFactory,
+				PulsarAwareTransactionManager pulsarTransactionManager) {
+			var containerProps = new PulsarContainerProperties();
+			containerProps.setTransactionManager(pulsarTransactionManager);
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
 		}
 
 		@Bean
 		PulsarAdministration pulsarAdministration() {
-			return new PulsarAdministration(PulsarTestContainerSupport.getHttpServiceUrl());
+			return new PulsarAdministration(PULSAR_CONTAINER.getHttpServiceUrl());
 		}
 
 		@Bean
-		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
+		PulsarAwareTransactionManager pulsarTransactionManager(PulsarClient pulsarClient) {
+			return new PulsarTransactionManager(pulsarClient);
 		}
 
 	}

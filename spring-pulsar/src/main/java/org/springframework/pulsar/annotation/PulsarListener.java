@@ -225,4 +225,14 @@ public @interface PulsarListener {
 	 */
 	String consumerCustomizer() default "";
 
+	/**
+	 * Whether this listener should execute in a transaction. The value can be a literal
+	 * string representation of boolean (e.g. {@code 'true'}) or a property placeholder
+	 * {@code ${...}} that resolves to a literal. SpEL {@code #{...}} expressions that
+	 * evaluate to a {@link Boolean} or a literal are supported.
+	 * @return whether this listener should execute in a transaction
+	 * @since 1.1.0
+	 */
+	String transactional() default "";
+
 }

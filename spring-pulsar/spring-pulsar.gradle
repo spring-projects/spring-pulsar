@@ -39,6 +39,9 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:pulsar'
+
 	// Output capture used by PulsarFunctionAdministrationTests
 	testImplementation libs.system.lambda
 	testRuntimeOnly libs.logback.classic

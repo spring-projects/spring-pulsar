@@ -236,6 +236,10 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		resolveDeadLetterPolicy(endpoint, pulsarListener);
 		resolvePulsarConsumerErrorHandler(endpoint, pulsarListener);
 		resolveConsumerCustomizer(endpoint, pulsarListener);
+		String transactional = pulsarListener.transactional();
+		if (StringUtils.hasText(transactional)) {
+			endpoint.setTransactional(resolveExpressionAsBoolean(transactional, "transactional"));
+		}
 		this.processedEndpoints.add(endpoint);
 	}
 

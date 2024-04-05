@@ -88,6 +88,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	private ConsumerBuilderCustomizer<?> consumerBuilderCustomizer;
 
+	private boolean transactional = true;
+
 	public void setBean(Object bean) {
 		this.bean = bean;
 	}
@@ -173,7 +175,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
 				.ifResolved((topic) -> pulsarContainerProperties.setTopics(Set.of(topic)));
 		}
-
+		configureTransactions(pulsarContainerProperties);
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
 		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
@@ -182,6 +184,19 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		container.setConsumerCustomizer(this.consumerBuilderCustomizer);
 
 		return messageListener;
+	}
+
+	private void configureTransactions(PulsarContainerProperties containerProps) {
+		if (!this.transactional) {
+			this.logger.debug(() -> "Listener w/ id [%s] requested no transactions - setting txn mgr to null"
+				.formatted(this.getId()));
+			containerProps.setTransactionManager(null);
+			return;
+		}
+		if (containerProps.getTransactionManager() == null) {
+			this.logger.warn(() -> "Listener w/ id [%s] requested transactions but no txn mgr available"
+				.formatted(this.getId()));
+		}
 	}
 
 	private ResolvableType resolvableType(MethodParameter methodParameter) {
@@ -264,6 +279,14 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	public void setConsumerBuilderCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer) {
 		this.consumerBuilderCustomizer = consumerBuilderCustomizer;
+	}
+
+	public boolean isTransactional() {
+		return this.transactional;
+	}
+
+	public void setTransactional(boolean transactional) {
+		this.transactional = transactional;
 	}
 
 }
