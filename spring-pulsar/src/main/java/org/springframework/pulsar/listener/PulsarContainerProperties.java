@@ -26,11 +26,14 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
+import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.util.Assert;
 
 import io.micrometer.observation.ObservationRegistry;
@@ -89,6 +92,12 @@ public class PulsarContainerProperties {
 	private PulsarListenerObservationConvention observationConvention;
 
 	private Properties pulsarConsumerProperties = new Properties();
+
+	@Nullable
+	private TransactionDefinition transactionDefinition;
+
+	@Nullable
+	private PulsarAwareTransactionManager transactionManager;
 
 	public PulsarContainerProperties(String... topics) {
 		this.topics = Set.of(topics);
@@ -272,6 +281,45 @@ public class PulsarContainerProperties {
 
 	public void setPulsarConsumerProperties(Properties pulsarConsumerProperties) {
 		this.pulsarConsumerProperties = pulsarConsumerProperties;
+	}
+
+	/**
+	 * Get the transaction definition.
+	 * @return the definition
+	 * @since 1.1.0
+	 */
+	@Nullable
+	public TransactionDefinition getTransactionDefinition() {
+		return this.transactionDefinition;
+	}
+
+	/**
+	 * Set a transaction definition with properties (e.g. timeout) that will be copied to
+	 * the container's transaction template.
+	 * @param transactionDefinition the definition
+	 * @since 1.1.0
+	 */
+	public void setTransactionDefinition(@Nullable TransactionDefinition transactionDefinition) {
+		this.transactionDefinition = transactionDefinition;
+	}
+
+	/**
+	 * Gets the transaction manager used to start transactions.
+	 * @return the transaction manager
+	 * @since 1.1.0
+	 */
+	@Nullable
+	public PulsarAwareTransactionManager getTransactionManager() {
+		return this.transactionManager;
+	}
+
+	/**
+	 * Set the transaction manager to start a transaction.
+	 * @param transactionManager the transaction manager
+	 * @since 1.1.0
+	 */
+	public void setTransactionManager(@Nullable PulsarAwareTransactionManager transactionManager) {
+		this.transactionManager = transactionManager;
 	}
 
 	public void updateContainerProperties() {

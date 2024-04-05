@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
+import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
@@ -37,6 +38,13 @@ import org.springframework.pulsar.PulsarException;
  * @author Jonas Geiregat
  */
 public interface PulsarProducerFactory<T> {
+
+	/**
+	 * Get the Pulsar client that the producer factory uses to create producers.
+	 * @return the Pulsar client that the producer factory uses to create producers
+	 * @since 1.1.0
+	 */
+	PulsarClient getPulsarClient();
 
 	/**
 	 * Create a producer.
