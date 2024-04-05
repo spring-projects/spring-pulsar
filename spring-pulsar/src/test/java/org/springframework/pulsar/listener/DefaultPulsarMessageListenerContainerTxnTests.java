@@ -87,13 +87,10 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithAutoRecordAck() throws Exception {
 		var topicIn = topicIn("rec-lstnr-auto-rec-ack");
 		var topicOut = topicOut("rec-lstnr-auto-rec-ack");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			listenerLatch.countDown();
 		});
@@ -105,13 +102,10 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithAutoRecordAckAndRollback() throws Exception {
 		var topicIn = topicIn("rec-lstnr-auto-rec-ack-rb");
 		var topicOut = topicOut("rec-lstnr-auto-rec-ack-rb");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			PulsarTransactionUtils.getResourceHolder(client).setRollbackOnly();
 			listenerLatch.countDown();
@@ -124,13 +118,11 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithManualRecordAck() throws Exception {
 		var topicIn = topicIn("rec-lstnr-manu-rec-ack");
 		var topicOut = topicOut("rec-lstnr-manu-rec-ack");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setAckMode(AckMode.MANUAL);
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarAcknowledgingMessageListener<?>) (consumer, msg, ack) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			ack.acknowledge();
 			listenerLatch.countDown();
@@ -143,13 +135,11 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithManualRecordAckAndRollback() throws Exception {
 		var topicIn = topicIn("rec-lstnr-manu-rec-ack-rb");
 		var topicOut = topicOut("rec-lstnr-manu-rec-ack-rb");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setAckMode(AckMode.MANUAL);
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarAcknowledgingMessageListener<?>) (consumer, msg, ack) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			ack.acknowledge();
 			PulsarTransactionUtils.getResourceHolder(client).setRollbackOnly();
@@ -163,13 +153,10 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerThrowsException() throws Exception {
 		var topicIn = topicIn("rec-lstnr-throws-ex");
 		var topicOut = topicOut("rec-lstnr-throws-ex");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			listenerLatch.countDown();
 			throw new RuntimeException("BOOM");
@@ -182,13 +169,10 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithNestedTxn() throws Exception {
 		var topicIn = topicIn("rec-lstnr-nested-txn");
 		var topicOut = topicOut("rec-lstnr-nested-txn");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.executeInTransaction((t) -> t.send(topicOut, msg.getValue() + "-out"));
 			listenerLatch.countDown();
 		});
@@ -200,13 +184,10 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithNestedTxnAndRollback() throws Exception {
 		var topicIn = topicIn("rec-lstnr-nested-txn-rb");
 		var topicOut = topicOut("rec-lstnr-nested-txn-rb");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.executeInTransaction((t) -> t.send(topicOut, msg.getValue() + "-out"));
 			PulsarTransactionUtils.getResourceHolder(client).setRollbackOnly();
 			listenerLatch.countDown();
@@ -219,14 +200,11 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithMultipleMessages() throws Exception {
 		var topicIn = topicIn("rec-lstnr-multi-msg");
 		var topicOut = topicOut("rec-lstnr-multi-msg");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(inputMsgs.size());
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			listenerLatch.countDown();
 		});
@@ -239,14 +217,11 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void recordListenerWithMultipleMessagesAndRollback() throws Exception {
 		var topicIn = topicIn("rec-lstnr-multi-msg-rb");
 		var topicOut = topicOut("rec-lstnr-multi-msg-rb");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
-		containerProps.setAckMode(AckMode.RECORD);
+		var containerProps = newContainerProps();
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(inputMsgs.size());
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			pulsarTemplate.send(topicOut, msg.getValue() + "-out");
 			listenerLatch.countDown();
 			if (msg.getValue().equals("msg2")) {
@@ -260,9 +235,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 
 	@Test
 	void recordListenerWithBatchAckNotSupported() {
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setAckMode(AckMode.BATCH);
 		containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> {
 			throw new RuntimeException("should never get here");
@@ -277,9 +250,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerUsesBatchAckWhenSharedSub() throws Exception {
 		var topicIn = topicIn("batch-lstr-batch-ack");
 		var topicOut = topicOut("batch-lstr-batch-ack");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.BATCH);
 		containerProps.setSubscriptionType(SubscriptionType.Shared);
@@ -287,7 +258,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> pulsarTemplate.send(topicOut, msg.getValue() + "-out"));
 			listenerLatch.countDown();
 		});
@@ -302,9 +273,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerUsesCumulativeAckWhenNotSharedSub() throws Exception {
 		var topicIn = topicIn("batch-lstr-cumltv-ack");
 		var topicOut = topicOut("batch-lstr-cumltv-ack");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.BATCH);
 		containerProps.setSubscriptionType(SubscriptionType.Exclusive);
@@ -312,7 +281,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> pulsarTemplate.send(topicOut, msg.getValue() + "-out"));
 			listenerLatch.countDown();
 		});
@@ -327,16 +296,14 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerThrowsException() throws Exception {
 		var topicIn = topicIn("batch-lstr-throws-ex");
 		var topicOut = topicOut("batch-lstr-throws-ex");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.BATCH);
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> pulsarTemplate.send(topicOut, msg.getValue() + "-out"));
 			listenerLatch.countDown();
 			throw new RuntimeException("NOPE");
@@ -349,9 +316,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerWithTxnMarkedForRollback() throws Exception {
 		var topicIn = topicIn("batch-lstr-rollback");
 		var topicOut = topicOut("batch-lstr-rollback");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.BATCH);
 		containerProps.setSubscriptionType(SubscriptionType.Exclusive);
@@ -359,7 +324,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> pulsarTemplate.send(topicOut, msg.getValue() + "-out"));
 			PulsarTransactionUtils.getResourceHolder(client).setRollbackOnly();
 			listenerLatch.countDown();
@@ -372,16 +337,14 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerWithNestedProduceTxn() throws Exception {
 		var topicIn = topicIn("batch-lstr-nested-txn");
 		var topicOut = topicOut("batch-lstr-nested-txn");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.BATCH);
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> {
 				if (msg.getValue().equals("msg2")) {
 					pulsarTemplate.executeInTransaction((t) -> t.send(topicOut, msg.getValue() + "-out"));
@@ -402,16 +365,14 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerWithManualAck() throws Exception {
 		var topicIn = topicIn("batch-lstr-man-ack");
 		var topicOut = topicOut("batch-lstr-man-ack");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.MANUAL);
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchAcknowledgingMessageListener<?>) (consumer, msgs, ack) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> pulsarTemplate.send(topicOut, msg.getValue() + "-out"));
 			ack.acknowledge(msgs.stream().map(Message::getMessageId).toList());
 			listenerLatch.countDown();
@@ -425,16 +386,14 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 	void batchListenerWithManualAckAndRollback() throws Exception {
 		var topicIn = topicIn("batch-lstr-man-ack-rb");
 		var topicOut = topicOut("batch-lstr-man-ack-rb");
-		var containerProps = new PulsarContainerProperties();
-		containerProps.setSchema(Schema.STRING);
-		containerProps.setTransactionManager(transactionManager);
+		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.MANUAL);
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(1);
 		containerProps.setMessageListener((PulsarBatchAcknowledgingMessageListener<?>) (consumer, msgs, ack) -> {
 			assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-			pulsarTemplate.setTransactional(true);
+			pulsarTemplate.transactions().setEnabled(true);
 			msgs.forEach((msg) -> pulsarTemplate.send(topicOut, msg.getValue() + "-out"));
 			ack.acknowledge(msgs.stream().map(Message::getMessageId).toList());
 			PulsarTransactionUtils.getResourceHolder(client).setRollbackOnly();
@@ -464,7 +423,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
 		try {
 			container.start();
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			if (sendInBatch) {
 				inputMsgs.forEach((msg) -> pulsarTemplate.newMessage(msg)
 					.withTopic(topicIn)
@@ -501,6 +460,15 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 			.withSchema(Schema.STRING)
 			.awaitAtMost(Duration.ofSeconds(5))
 			.get()).map(Message::getValue).containsExactlyInAnyOrderElementsOf(expectedMessages);
+	}
+
+	private PulsarContainerProperties newContainerProps() {
+		var containerProps = new PulsarContainerProperties();
+		containerProps.setSchema(Schema.STRING);
+		containerProps.transactions().setEnabled(true);
+		containerProps.transactions().setTransactionManager(transactionManager);
+		containerProps.setAckMode(AckMode.RECORD);
+		return containerProps;
 	}
 
 	private String topicIn(String testInfo) {

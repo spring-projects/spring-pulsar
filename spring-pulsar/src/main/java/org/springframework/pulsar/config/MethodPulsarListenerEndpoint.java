@@ -45,6 +45,7 @@ import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
+import org.springframework.pulsar.listener.PulsarContainerProperties.TransactionSettings;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.listener.adapter.HandlerAdapter;
@@ -88,7 +89,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	private ConsumerBuilderCustomizer<?> consumerBuilderCustomizer;
 
-	private boolean transactional = true;
+	private Boolean transactional;
 
 	public void setBean(Object bean) {
 		this.bean = bean;
@@ -175,7 +176,7 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 			topicResolver.resolveTopic(null, messageType.getRawClass(), () -> null)
 				.ifResolved((topic) -> pulsarContainerProperties.setTopics(Set.of(topic)));
 		}
-		configureTransactions(pulsarContainerProperties);
+		validateAndAdjustTransactionSettings(pulsarContainerProperties.transactions());
 		container.setNegativeAckRedeliveryBackoff(this.negativeAckRedeliveryBackoff);
 		container.setAckTimeoutRedeliveryBackoff(this.ackTimeoutRedeliveryBackoff);
 		container.setDeadLetterPolicy(this.deadLetterPolicy);
@@ -186,16 +187,23 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		return messageListener;
 	}
 
-	private void configureTransactions(PulsarContainerProperties containerProps) {
-		if (!this.transactional) {
-			this.logger.debug(() -> "Listener w/ id [%s] requested no transactions - setting txn mgr to null"
-				.formatted(this.getId()));
-			containerProps.setTransactionManager(null);
+	private void validateAndAdjustTransactionSettings(TransactionSettings txnProps) {
+		// If user did not specify transactional attribute do nothing
+		if (this.transactional == null) {
 			return;
 		}
-		if (containerProps.getTransactionManager() == null) {
+		Assert.state(!(txnProps.isRequired() && !this.transactional),
+				"Listener w/ id [%s] requested no transactions but txn are required".formatted(this.getId()));
+		if (!this.transactional) {
+			this.logger.debug(() -> "Listener w/ id [%s] requested no transactions".formatted(this.getId()));
+			txnProps.setEnabled(false);
+		}
+		else if (txnProps.getTransactionManager() == null) {
 			this.logger.warn(() -> "Listener w/ id [%s] requested transactions but no txn mgr available"
 				.formatted(this.getId()));
+		}
+		else {
+			txnProps.setEnabled(true);
 		}
 	}
 
@@ -281,11 +289,11 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		this.consumerBuilderCustomizer = consumerBuilderCustomizer;
 	}
 
-	public boolean isTransactional() {
+	public Boolean getTransactional() {
 		return this.transactional;
 	}
 
-	public void setTransactional(boolean transactional) {
+	public void setTransactional(Boolean transactional) {
 		this.transactional = transactional;
 	}
 

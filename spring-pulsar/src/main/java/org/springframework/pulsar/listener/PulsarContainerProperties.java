@@ -31,9 +31,11 @@ import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
+import org.springframework.pulsar.core.TransactionProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.Assert;
 
 import io.micrometer.observation.ObservationRegistry;
@@ -93,11 +95,7 @@ public class PulsarContainerProperties {
 
 	private Properties pulsarConsumerProperties = new Properties();
 
-	@Nullable
-	private TransactionDefinition transactionDefinition;
-
-	@Nullable
-	private PulsarAwareTransactionManager transactionManager;
+	private final TransactionSettings transactions = new TransactionSettings();
 
 	public PulsarContainerProperties(String... topics) {
 		this.topics = Set.of(topics);
@@ -284,42 +282,12 @@ public class PulsarContainerProperties {
 	}
 
 	/**
-	 * Get the transaction definition.
-	 * @return the definition
+	 * Gets the transaction settings.
+	 * @return the transaction settings
 	 * @since 1.1.0
 	 */
-	@Nullable
-	public TransactionDefinition getTransactionDefinition() {
-		return this.transactionDefinition;
-	}
-
-	/**
-	 * Set a transaction definition with properties (e.g. timeout) that will be copied to
-	 * the container's transaction template.
-	 * @param transactionDefinition the definition
-	 * @since 1.1.0
-	 */
-	public void setTransactionDefinition(@Nullable TransactionDefinition transactionDefinition) {
-		this.transactionDefinition = transactionDefinition;
-	}
-
-	/**
-	 * Gets the transaction manager used to start transactions.
-	 * @return the transaction manager
-	 * @since 1.1.0
-	 */
-	@Nullable
-	public PulsarAwareTransactionManager getTransactionManager() {
-		return this.transactionManager;
-	}
-
-	/**
-	 * Set the transaction manager to start a transaction.
-	 * @param transactionManager the transaction manager
-	 * @since 1.1.0
-	 */
-	public void setTransactionManager(@Nullable PulsarAwareTransactionManager transactionManager) {
-		this.transactionManager = transactionManager;
+	public TransactionSettings transactions() {
+		return this.transactions;
 	}
 
 	public void updateContainerProperties() {
@@ -333,6 +301,73 @@ public class PulsarContainerProperties {
 			T value = (T) this.pulsarConsumerProperties.get(key);
 			setter.accept(value);
 		}
+	}
+
+	/**
+	 * Transaction related settings.
+	 *
+	 * @since 1.1.0
+	 */
+	public static class TransactionSettings extends TransactionProperties {
+
+		@Nullable
+		private TransactionDefinition transactionDefinition;
+
+		@Nullable
+		private PulsarAwareTransactionManager transactionManager;
+
+		/**
+		 * Get the transaction definition.
+		 * @return the definition
+		 */
+		@Nullable
+		public TransactionDefinition getTransactionDefinition() {
+			return this.transactionDefinition;
+		}
+
+		/**
+		 * Set a transaction definition with properties (e.g. timeout) that will be copied
+		 * to the container's transaction template.
+		 * @param transactionDefinition the definition
+		 */
+		public void setTransactionDefinition(@Nullable TransactionDefinition transactionDefinition) {
+			this.transactionDefinition = transactionDefinition;
+		}
+
+		/**
+		 * Determines the transaction definition to use by respecting any user configured
+		 * timeout property.
+		 * @return the transaction definition to use including any user specified timeout
+		 * setting
+		 */
+		public TransactionDefinition determineTransactionDefinition() {
+			var timeout = this.getTimeout();
+			if (timeout == null) {
+				return this.transactionDefinition;
+			}
+			var txnDef = (this.transactionDefinition != null)
+					? new DefaultTransactionDefinition(this.transactionDefinition) : new DefaultTransactionDefinition();
+			txnDef.setTimeout(Math.toIntExact(timeout.toSeconds()));
+			return txnDef;
+		}
+
+		/**
+		 * Gets the transaction manager used to start transactions.
+		 * @return the transaction manager
+		 */
+		@Nullable
+		public PulsarAwareTransactionManager getTransactionManager() {
+			return this.transactionManager;
+		}
+
+		/**
+		 * Set the transaction manager to start a transaction.
+		 * @param transactionManager the transaction manager
+		 */
+		public void setTransactionManager(@Nullable PulsarAwareTransactionManager transactionManager) {
+			this.transactionManager = transactionManager;
+		}
+
 	}
 
 }

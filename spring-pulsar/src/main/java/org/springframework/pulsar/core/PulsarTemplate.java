@@ -16,7 +16,6 @@
 
 package org.springframework.pulsar.core;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,19 +100,9 @@ public class PulsarTemplate<T>
 	private String beanName = "";
 
 	/**
-	 * Whether this template supports transactions.
+	 * Transaction settings.
 	 */
-	private boolean transactional;
-
-	/**
-	 * Whether this template allows non-transactional operations.
-	 */
-	private boolean allowNonTransactional = true;
-
-	/**
-	 * The timeout to use for any transactions that originate from the template.
-	 */
-	private Duration transactionTimeout;
+	private final TransactionProperties transactionProps = new TransactionProperties();
 
 	/**
 	 * Construct a template instance without interceptors that uses the default schema
@@ -166,31 +155,12 @@ public class PulsarTemplate<T>
 	}
 
 	/**
-	 * Sets whether the template supports transactional operations.
-	 * @param transactional whether the template supports transactional operations
+	 * Gets the transaction properties.
+	 * @return the transaction properties
 	 * @since 1.1.0
 	 */
-	public void setTransactional(boolean transactional) {
-		this.transactional = transactional;
-	}
-
-	/**
-	 * Sets whether the template supports non-transactional operations.
-	 * @param allowNonTransactional whether the template supports non-transactional
-	 * operations
-	 * @since 1.1.0
-	 */
-	public void setAllowNonTransactional(boolean allowNonTransactional) {
-		this.allowNonTransactional = allowNonTransactional;
-	}
-
-	/**
-	 * Sets the timeout to use for any transactions that originate from the template.
-	 * @param transactionTimeout the timeout
-	 * @since 1.1.0
-	 */
-	public void setTransactionTimeout(Duration transactionTimeout) {
-		this.transactionTimeout = transactionTimeout;
+	public TransactionProperties transactions() {
+		return this.transactionProps;
 	}
 
 	/**
@@ -340,11 +310,12 @@ public class PulsarTemplate<T>
 
 	@Nullable
 	private Transaction getTransaction() {
-		if (!this.transactional) {
+		if (!this.transactions().isEnabled()) {
 			return null;
 		}
+		boolean allowNonTransactional = !this.transactions().isRequired();
 		boolean inTransaction = inTransaction();
-		Assert.state(this.allowNonTransactional || inTransaction,
+		Assert.state(allowNonTransactional || inTransaction,
 				"No transaction is in process; "
 						+ "possible solutions: run the template operation within the scope of a "
 						+ "template.executeInTransaction() operation, start a transaction with @Transactional "
@@ -363,7 +334,7 @@ public class PulsarTemplate<T>
 		// or there is an actual active transaction that we need to sync a Pulsar txn with
 		// hence the call to 'obtainResourceHolder' rather than 'getResourceHolder'
 		var resourceHolder = PulsarTransactionUtils.obtainResourceHolder(this.producerFactory.getPulsarClient(),
-				this.transactionTimeout);
+				this.transactions().getTimeout());
 		return resourceHolder.getTransaction();
 	}
 
@@ -373,7 +344,7 @@ public class PulsarTemplate<T>
 	 * @return whether the template is currently running in a transaction
 	 */
 	private boolean inTransaction() {
-		if (!this.transactional) {
+		if (!this.transactions().isEnabled()) {
 			return false;
 		}
 		return this.threadBoundTransactions.get(Thread.currentThread()) != null
@@ -405,7 +376,7 @@ public class PulsarTemplate<T>
 	@Nullable
 	public <R> R executeInTransaction(TemplateCallback<T, R> callback) {
 		Assert.notNull(callback, "callback must not be null");
-		Assert.state(this.transactional, "This template does not support transactions");
+		Assert.state(this.transactions().isEnabled(), "This template does not support transactions");
 		var currentThread = Thread.currentThread();
 		var txn = this.threadBoundTransactions.get(currentThread);
 		Assert.state(txn == null, "Nested calls to 'executeInTransaction' are not allowed");
@@ -430,8 +401,9 @@ public class PulsarTemplate<T>
 	private Transaction newPulsarTransaction() {
 		try {
 			var txnBuilder = this.producerFactory.getPulsarClient().newTransaction();
-			if (this.transactionTimeout != null) {
-				txnBuilder.withTransactionTimeout(this.transactionTimeout.toSeconds(), TimeUnit.SECONDS);
+			if (this.transactions().getTimeout() != null) {
+				long timeoutSecs = this.transactions().getTimeout().toSeconds();
+				txnBuilder.withTransactionTimeout(timeoutSecs, TimeUnit.SECONDS);
 			}
 			return txnBuilder.build().get();
 		}

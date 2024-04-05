@@ -64,6 +64,7 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
 import org.springframework.pulsar.event.ConsumerStartedEvent;
 import org.springframework.pulsar.event.ConsumerStartingEvent;
+import org.springframework.pulsar.listener.PulsarContainerProperties.TransactionSettings;
 import org.springframework.pulsar.observation.DefaultPulsarListenerObservationConvention;
 import org.springframework.pulsar.observation.PulsarListenerObservation;
 import org.springframework.pulsar.observation.PulsarMessageReceiverContext;
@@ -255,18 +256,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			this.isBatchListener = this.containerProperties.isBatchListener();
 			this.ackMode = this.containerProperties.getAckMode();
 			this.subscriptionType = this.containerProperties.getSubscriptionType();
-			this.transactionManager = this.containerProperties.getTransactionManager();
+			validateTransactionSettings(this.containerProperties.transactions());
+			this.transactionManager = this.containerProperties.transactions().getTransactionManager();
 			this.transactionTemplate = determineTransactionTemplate();
-
-			var txnRecordListenerWithBatchAckMode = (this.transactionManager != null && !this.isBatchListener
-					&& this.containerProperties.getAckMode() == AckMode.BATCH);
-			Assert.state(!(txnRecordListenerWithBatchAckMode),
-					"Transactional record listeners can not use batch ack mode");
-
-			var batchListenerWithRecordAckMode = (this.isBatchListener
-					&& this.containerProperties.getAckMode() == AckMode.RECORD);
-			Assert.state(!(batchListenerWithRecordAckMode), "Batch record listeners do not support AckMode.RECORD");
-
 			if (messageListener instanceof PulsarBatchMessageListener) {
 				this.batchMessageListener = (PulsarBatchMessageListener<T>) messageListener;
 				this.listener = null;
@@ -323,13 +315,32 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
+		private void validateTransactionSettings(TransactionSettings txnProps) {
+			if (!txnProps.isEnabled()) {
+				return;
+			}
+			var missingRequiredTxnMgr = txnProps.isRequired() && txnProps.getTransactionManager() == null;
+			Assert.state(!missingRequiredTxnMgr, "Transactions are required but txn manager is null");
+
+			var txnRecordListenerWithBatchAckMode = (txnProps.getTransactionManager() != null && !this.isBatchListener
+					&& this.containerProperties.getAckMode() == AckMode.BATCH);
+			Assert.state(!(txnRecordListenerWithBatchAckMode),
+					"Transactional record listeners can not use batch ack mode");
+
+			var batchListenerWithRecordAckMode = (this.isBatchListener
+					&& this.containerProperties.getAckMode() == AckMode.RECORD);
+			Assert.state(!(batchListenerWithRecordAckMode), "Batch record listeners do not support AckMode.RECORD");
+
+			// TODO custom errorHandler w/ transactions not supported
+		}
+
 		@Nullable
 		private TransactionTemplate determineTransactionTemplate() {
 			if (this.transactionManager == null) {
 				return null;
 			}
-			TransactionTemplate template = new TransactionTemplate(this.transactionManager);
-			TransactionDefinition definition = this.containerProperties.getTransactionDefinition();
+			var template = new TransactionTemplate(this.transactionManager);
+			var definition = this.containerProperties.transactions().determineTransactionDefinition();
 			Assert.state(
 					definition == null
 							|| definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRED

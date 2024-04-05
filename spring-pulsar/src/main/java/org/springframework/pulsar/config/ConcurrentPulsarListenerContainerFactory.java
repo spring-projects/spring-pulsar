@@ -74,8 +74,15 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
 		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
-		properties.setTransactionManager(this.getContainerProperties().getTransactionManager());
-		properties.setTransactionDefinition(this.getContainerProperties().getTransactionDefinition());
+
+		var parentTxnProps = this.getContainerProperties().transactions();
+		var childTxnProps = properties.transactions();
+		childTxnProps.setEnabled(parentTxnProps.isEnabled());
+		childTxnProps.setRequired(parentTxnProps.isRequired());
+		childTxnProps.setTimeout(parentTxnProps.getTimeout());
+		childTxnProps.setTransactionDefinition(parentTxnProps.getTransactionDefinition());
+		childTxnProps.setTransactionManager(parentTxnProps.getTransactionManager());
+
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
 			properties.setTopics(new HashSet<>(endpoint.getTopics()));
 		}

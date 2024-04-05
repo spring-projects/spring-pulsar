@@ -84,7 +84,7 @@ class PulsarTemplateLocalTransactionTests {
 	private PulsarTemplate<String> newTransactionalTemplate() {
 		var senderFactory = new DefaultPulsarProducerFactory<String>(client, null);
 		var pulsarTemplate = new PulsarTemplate<>(senderFactory);
-		pulsarTemplate.setTransactional(true);
+		pulsarTemplate.transactions().setEnabled(true);
 		return pulsarTemplate;
 	}
 
@@ -159,7 +159,7 @@ class PulsarTemplateLocalTransactionTests {
 	@Test
 	void transactionsNotAllowedWithNonTransactionalTemplate() {
 		var pulsarTemplate = newTransactionalTemplate();
-		pulsarTemplate.setTransactional(false);
+		pulsarTemplate.transactions().setEnabled(false);
 		assertThatIllegalStateException().isThrownBy(() -> pulsarTemplate.executeInTransaction((template) -> "boom"))
 			.withMessage("This template does not support transactions");
 	}
@@ -176,7 +176,7 @@ class PulsarTemplateLocalTransactionTests {
 	void sendFailsWhenNotInTxnAndAllowNonTxnFlagIsFalse() {
 		String topic = "pttt-no-txn-topic";
 		var pulsarTemplate = newTransactionalTemplate();
-		pulsarTemplate.setAllowNonTransactional(false);
+		pulsarTemplate.transactions().setRequired(true);
 		assertThatIllegalStateException().isThrownBy(() -> pulsarTemplate.send(topic, "msg1"))
 			.withMessageStartingWith("No transaction is in process; possible solutions: run");
 	}
@@ -187,7 +187,7 @@ class PulsarTemplateLocalTransactionTests {
 		String topic = "pttt-no-txn-%s-topic".formatted(shouldExplicitlySetAllowNonTxnFlag);
 		var pulsarTemplate = newTransactionalTemplate();
 		if (shouldExplicitlySetAllowNonTxnFlag) {
-			pulsarTemplate.setAllowNonTransactional(true);
+			pulsarTemplate.transactions().setRequired(false);
 		}
 		pulsarTemplate.send(topic, "msg1");
 		assertMessagesCommitted(topic, List.of("msg1"));
