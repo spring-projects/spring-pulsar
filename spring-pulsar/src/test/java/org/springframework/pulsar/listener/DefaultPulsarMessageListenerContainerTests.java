@@ -404,6 +404,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	void batchListenerWithRecordAckModeNotSupported() {
 		var containerProps = new PulsarContainerProperties();
 		containerProps.setSchema(Schema.STRING);
+		containerProps.transactions().setEnabled(true);
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.RECORD);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
