@@ -295,7 +295,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toList();
 		assertMessagesAvailableInOutputTopic(topicOut, outputMsgs);
 
-		//  TODO assert AckUtils.handleAck(this.consumer, messages, txn);
+		// TODO assert AckUtils.handleAck(this.consumer, messages, txn);
 	}
 
 	@Test
