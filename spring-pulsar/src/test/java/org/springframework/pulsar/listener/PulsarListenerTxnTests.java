@@ -81,7 +81,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsCommitted() throws Exception {
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			pulsarTemplate.sendAsync(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
@@ -97,7 +97,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			@Transactional
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.setTransactional(true);
+				template.transactions().setEnabled(true);
 				template.send(topicOut, msg + "-out");
 				latch.countDown();
 			}
@@ -116,7 +116,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsNotCommitted() throws Exception {
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			pulsarTemplate.sendAsync(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
@@ -132,7 +132,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			@Transactional
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.setTransactional(true);
+				template.transactions().setEnabled(true);
 				template.send(topicOut, msg + "-out");
 				latch.countDown();
 				throw new RuntimeException("BOOM");
@@ -152,7 +152,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsCommitted() throws Exception {
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			pulsarTemplate.sendAsync(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
@@ -167,7 +167,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.setTransactional(true);
+				template.transactions().setEnabled(true);
 				template.send(topicOut, msg + "-out");
 				latch.countDown();
 			}
@@ -186,7 +186,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsNotCommitted() throws Exception {
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			pulsarTemplate.sendAsync(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
@@ -201,7 +201,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.setTransactional(true);
+				template.transactions().setEnabled(true);
 				template.send(topicOut, msg + "-out");
 				latch.countDown();
 				throw new RuntimeException("BOOM-record");
@@ -222,7 +222,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessagesAreCommitted() throws Exception {
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			inputMsgs.forEach((msg) -> pulsarTemplate.newMessage(msg)
 				.withTopic(topicIn)
 				.withProducerCustomizer((pb) -> pb.enableBatching(true)
@@ -244,7 +244,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			@PulsarListener(topics = topicIn, batch = true)
 			void listen(List<String> msgs) {
 				assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-				template.setTransactional(true);
+				template.transactions().setEnabled(true);
 				msgs.forEach((msg) -> template.send(topicOut, msg + "-out"));
 				latch.countDown();
 			}
@@ -264,7 +264,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessagesAreNotCommitted() throws Exception {
-			pulsarTemplate.setTransactional(false);
+			pulsarTemplate.transactions().setEnabled(false);
 			inputMsgs.forEach((msg) -> pulsarTemplate.newMessage(msg)
 				.withTopic(topicIn)
 				.withProducerCustomizer((pb) -> pb.enableBatching(true)
@@ -285,7 +285,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			@PulsarListener(topics = topicIn, batch = true)
 			void listen(List<String> msgs) {
 				assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-				template.setTransactional(true);
+				template.transactions().setEnabled(true);
 				msgs.forEach((msg) -> template.send(topicOut, msg + "-out"));
 				latch.countDown();
 				throw new RuntimeException("BOOM-batch");

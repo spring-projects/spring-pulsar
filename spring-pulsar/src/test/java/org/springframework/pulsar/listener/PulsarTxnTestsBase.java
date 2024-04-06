@@ -86,7 +86,7 @@ class PulsarTxnTestsBase {
 		@Bean
 		PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.setTransactional(true);
+			template.transactions().setEnabled(true);
 			return template;
 		}
 
@@ -102,7 +102,7 @@ class PulsarTxnTestsBase {
 				PulsarConsumerFactory<Object> pulsarConsumerFactory,
 				PulsarAwareTransactionManager pulsarTransactionManager) {
 			var containerProps = new PulsarContainerProperties();
-			containerProps.setTransactionManager(pulsarTransactionManager);
+			containerProps.transactions().setTransactionManager(pulsarTransactionManager);
 			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
 		}
 
