@@ -1,0 +1,3 @@
+[[topic-resolution-process-reactive]]
+= Topic Resolution
+include::../pulsar/topic-resolution.adoc[]
