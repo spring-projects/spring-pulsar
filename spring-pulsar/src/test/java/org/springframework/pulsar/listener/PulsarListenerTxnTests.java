@@ -51,6 +51,10 @@ import org.springframework.transaction.annotation.Transactional;
  */
 class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
+	private void sendInputMessageNonTransactionally(String topic, String msg) {
+		nonTransactionalPulsarTemplate.send(topic, msg);
+	}
+
 	private void assertNoMessagesAvailableInOutputTopic(String topicOut) {
 		assertThat(PulsarConsumerTestUtil.<String>consumeMessages(pulsarClient)
 			.fromTopic(topicOut)
@@ -81,8 +85,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsCommitted() throws Exception {
-			pulsarTemplate.transactions().setEnabled(false);
-			pulsarTemplate.sendAsync(topicIn, "msg1");
+			sendInputMessageNonTransactionally(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
 		}
@@ -92,13 +95,12 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		static class ListenerWithExternalTransactionConfig {
 
 			@Autowired
-			private PulsarTemplate<String> template;
+			private PulsarTemplate<String> transactionalPulsarTemplate;
 
 			@Transactional
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.transactions().setEnabled(true);
-				template.send(topicOut, msg + "-out");
+				transactionalPulsarTemplate.send(topicOut, msg + "-out");
 				latch.countDown();
 			}
 
@@ -116,8 +118,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsNotCommitted() throws Exception {
-			pulsarTemplate.transactions().setEnabled(false);
-			pulsarTemplate.sendAsync(topicIn, "msg1");
+			sendInputMessageNonTransactionally(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
 		}
@@ -127,13 +128,12 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		static class ListenerWithExternalTransactionRollbackConfig {
 
 			@Autowired
-			private PulsarTemplate<String> template;
+			private PulsarTemplate<String> transactionalPulsarTemplate;
 
 			@Transactional
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.transactions().setEnabled(true);
-				template.send(topicOut, msg + "-out");
+				transactionalPulsarTemplate.send(topicOut, msg + "-out");
 				latch.countDown();
 				throw new RuntimeException("BOOM");
 			}
@@ -152,8 +152,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsCommitted() throws Exception {
-			pulsarTemplate.transactions().setEnabled(false);
-			pulsarTemplate.sendAsync(topicIn, "msg1");
+			sendInputMessageNonTransactionally(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
 		}
@@ -163,12 +162,11 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		static class RecordListenerWithCommitConfig {
 
 			@Autowired
-			private PulsarTemplate<String> template;
+			private PulsarTemplate<String> transactionalPulsarTemplate;
 
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.transactions().setEnabled(true);
-				template.send(topicOut, msg + "-out");
+				transactionalPulsarTemplate.send(topicOut, msg + "-out");
 				latch.countDown();
 			}
 
@@ -186,8 +184,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsNotCommitted() throws Exception {
-			pulsarTemplate.transactions().setEnabled(false);
-			pulsarTemplate.sendAsync(topicIn, "msg1");
+			sendInputMessageNonTransactionally(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
 		}
@@ -197,12 +194,11 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		static class RecordListenerWithRollbackConfig {
 
 			@Autowired
-			private PulsarTemplate<String> template;
+			private PulsarTemplate<String> transactionalPulsarTemplate;
 
 			@PulsarListener(topics = topicIn, ackMode = AckMode.RECORD)
 			void listen(String msg) {
-				template.transactions().setEnabled(true);
-				template.send(topicOut, msg + "-out");
+				transactionalPulsarTemplate.send(topicOut, msg + "-out");
 				latch.countDown();
 				throw new RuntimeException("BOOM-record");
 			}
@@ -222,8 +218,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessagesAreCommitted() throws Exception {
-			pulsarTemplate.transactions().setEnabled(false);
-			inputMsgs.forEach((msg) -> pulsarTemplate.newMessage(msg)
+			inputMsgs.forEach((msg) -> nonTransactionalPulsarTemplate.newMessage(msg)
 				.withTopic(topicIn)
 				.withProducerCustomizer((pb) -> pb.enableBatching(true)
 					.batchingMaxPublishDelay(500, TimeUnit.MILLISECONDS)
@@ -239,13 +234,12 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		static class BatchListenerWithCommitConfig {
 
 			@Autowired
-			private PulsarTemplate<String> template;
+			private PulsarTemplate<String> transactionalPulsarTemplate;
 
 			@PulsarListener(topics = topicIn, batch = true)
 			void listen(List<String> msgs) {
 				assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-				template.transactions().setEnabled(true);
-				msgs.forEach((msg) -> template.send(topicOut, msg + "-out"));
+				msgs.forEach((msg) -> transactionalPulsarTemplate.send(topicOut, msg + "-out"));
 				latch.countDown();
 			}
 
@@ -264,8 +258,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessagesAreNotCommitted() throws Exception {
-			pulsarTemplate.transactions().setEnabled(false);
-			inputMsgs.forEach((msg) -> pulsarTemplate.newMessage(msg)
+			inputMsgs.forEach((msg) -> nonTransactionalPulsarTemplate.newMessage(msg)
 				.withTopic(topicIn)
 				.withProducerCustomizer((pb) -> pb.enableBatching(true)
 					.batchingMaxPublishDelay(500, TimeUnit.MILLISECONDS)
@@ -280,13 +273,12 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		static class BatchListenerWithRollbackConfig {
 
 			@Autowired
-			private PulsarTemplate<String> template;
+			private PulsarTemplate<String> transactionalPulsarTemplate;
 
 			@PulsarListener(topics = topicIn, batch = true)
 			void listen(List<String> msgs) {
 				assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-				template.transactions().setEnabled(true);
-				msgs.forEach((msg) -> template.send(topicOut, msg + "-out"));
+				msgs.forEach((msg) -> transactionalPulsarTemplate.send(topicOut, msg + "-out"));
 				latch.countDown();
 				throw new RuntimeException("BOOM-batch");
 			}

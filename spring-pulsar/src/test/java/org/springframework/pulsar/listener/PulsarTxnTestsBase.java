@@ -23,6 +23,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
@@ -64,7 +65,12 @@ class PulsarTxnTestsBase {
 	protected PulsarClient pulsarClient;
 
 	@Autowired
-	protected PulsarTemplate<String> pulsarTemplate;
+	@Qualifier("transactionalPulsarTemplate")
+	protected PulsarTemplate<String> transactionalPulsarTemplate;
+
+	@Autowired
+	@Qualifier("nonTransactionalPulsarTemplate")
+	protected PulsarTemplate<String> nonTransactionalPulsarTemplate;
 
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
@@ -84,9 +90,16 @@ class PulsarTxnTestsBase {
 		}
 
 		@Bean
-		PulsarTemplate<String> pulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
+		PulsarTemplate<String> transactionalPulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
 			template.transactions().setEnabled(true);
+			return template;
+		}
+
+		@Bean
+		PulsarTemplate<String> nonTransactionalPulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
+			var template = new PulsarTemplate<>(pulsarProducerFactory);
+			template.transactions().setEnabled(false);
 			return template;
 		}
 
@@ -102,6 +115,8 @@ class PulsarTxnTestsBase {
 				PulsarConsumerFactory<Object> pulsarConsumerFactory,
 				PulsarAwareTransactionManager pulsarTransactionManager) {
 			var containerProps = new PulsarContainerProperties();
+			containerProps.transactions().setEnabled(true);
+			containerProps.transactions().setRequired(false);
 			containerProps.transactions().setTransactionManager(pulsarTransactionManager);
 			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
 		}
