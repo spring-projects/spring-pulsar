@@ -41,7 +41,7 @@ public interface PulsarTestContainerSupport {
 	}
 
 	static DockerImageName getPulsarImage() {
-		return DockerImageName.parse("apachepulsar/pulsar:3.1.2");
+		return DockerImageName.parse("apachepulsar/pulsar:3.1.3");
 	}
 
 	static String getHttpServiceUrl() {
