@@ -41,7 +41,7 @@ public interface PulsarTestContainerSupport {
 		PULSAR_CONTAINER.start();
 	}
 
-	static void stopContainer2() {
+	static void stopContainer() {
 		PULSAR_CONTAINER.stop();
 	}
 
