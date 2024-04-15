@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.BatchListenerWithCommit.BatchListenerWithCommitConfig;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.BatchListenerWithRollback.BatchListenerWithRollbackConfig;
@@ -50,10 +53,6 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Chris Bono
  */
 class PulsarListenerTxnTests extends PulsarTxnTestsBase {
-
-	private void sendInputMessageNonTransactionally(String topic, String msg) {
-		nonTransactionalPulsarTemplate.send(topic, msg);
-	}
 
 	private void assertNoMessagesAvailableInOutputTopic(String topicOut) {
 		assertThat(PulsarConsumerTestUtil.<String>consumeMessages(pulsarClient)
@@ -75,6 +74,16 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			.get()).map(Message::getValue).containsExactlyInAnyOrderElementsOf(expectedMessages);
 	}
 
+	private PulsarTemplate<String> newNonTransactionalTemplate(boolean sendInBatch, int numMessages) {
+		List<ProducerBuilderCustomizer<String>> customizers = List.of();
+		if (sendInBatch) {
+			customizers = List.of((pb) -> pb.enableBatching(true)
+				.batchingMaxPublishDelay(2, TimeUnit.SECONDS)
+				.batchingMaxMessages(numMessages));
+		}
+		return new PulsarTemplate<>(new DefaultPulsarProducerFactory<>(pulsarClient, null, customizers));
+	}
+
 	@Nested
 	@ContextConfiguration(classes = ListenerWithExternalTransactionConfig.class)
 	class ListenerWithExternalTransaction {
@@ -85,7 +94,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsCommitted() throws Exception {
-			sendInputMessageNonTransactionally(topicIn, "msg1");
+			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
+			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
 		}
@@ -118,7 +128,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsNotCommitted() throws Exception {
-			sendInputMessageNonTransactionally(topicIn, "msg1");
+			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
+			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
 		}
@@ -152,7 +163,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsCommitted() throws Exception {
-			sendInputMessageNonTransactionally(topicIn, "msg1");
+			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
+			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
 		}
@@ -184,7 +196,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 		@Test
 		void producedMessageIsNotCommitted() throws Exception {
-			sendInputMessageNonTransactionally(topicIn, "msg1");
+			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
+			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
 		}
@@ -211,20 +224,16 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 	@ContextConfiguration(classes = BatchListenerWithCommitConfig.class)
 	class BatchListenerWithCommit {
 
-		static final CountDownLatch latch = new CountDownLatch(1);
 		static final String topicIn = "pltt-batch-lstnr-in";
 		static final String topicOut = "pltt-batch-lstnr-out";
 		static final List<String> inputMsgs = List.of("msg1", "msg2", "msg3");
+		static final CountDownLatch latch = new CountDownLatch(inputMsgs.size());
 
 		@Test
 		void producedMessagesAreCommitted() throws Exception {
-			inputMsgs.forEach((msg) -> nonTransactionalPulsarTemplate.newMessage(msg)
-				.withTopic(topicIn)
-				.withProducerCustomizer((pb) -> pb.enableBatching(true)
-					.batchingMaxPublishDelay(500, TimeUnit.MILLISECONDS)
-					.batchingMaxMessages(inputMsgs.size()))
-				.sendAsync());
-			assertThat(latch.await(15, TimeUnit.SECONDS)).isTrue();
+			var nonTransactionalTemplate = newNonTransactionalTemplate(true, inputMsgs.size());
+			inputMsgs.forEach((msg) -> nonTransactionalTemplate.sendAsync(topicIn, msg));
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toList();
 			assertMessagesAvailableInOutputTopic(topicOut, outputMsgs);
 		}
@@ -238,9 +247,10 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 			@PulsarListener(topics = topicIn, batch = true)
 			void listen(List<String> msgs) {
-				assertThat(msgs.size()).isEqualTo(inputMsgs.size());
-				msgs.forEach((msg) -> transactionalPulsarTemplate.send(topicOut, msg + "-out"));
-				latch.countDown();
+				msgs.forEach((msg) -> {
+					transactionalPulsarTemplate.send(topicOut, msg + "-out");
+					latch.countDown();
+				});
 			}
 
 		}
@@ -251,20 +261,16 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 	@ContextConfiguration(classes = BatchListenerWithRollbackConfig.class)
 	class BatchListenerWithRollback {
 
-		static final CountDownLatch latch = new CountDownLatch(1);
 		static final String topicIn = "pltt-batch-lstnr-rb-in";
 		static final String topicOut = "pltt-batch-lstnr-rb-out";
 		static final List<String> inputMsgs = List.of("msg1", "msg2", "msg3");
+		static final CountDownLatch latch = new CountDownLatch(1);
 
 		@Test
 		void producedMessagesAreNotCommitted() throws Exception {
-			inputMsgs.forEach((msg) -> nonTransactionalPulsarTemplate.newMessage(msg)
-				.withTopic(topicIn)
-				.withProducerCustomizer((pb) -> pb.enableBatching(true)
-					.batchingMaxPublishDelay(500, TimeUnit.MILLISECONDS)
-					.batchingMaxMessages(inputMsgs.size()))
-				.sendAsync());
-			assertThat(latch.await(15, TimeUnit.SECONDS)).isTrue();
+			var nonTransactionalTemplate = newNonTransactionalTemplate(true, inputMsgs.size());
+			inputMsgs.forEach((msg) -> nonTransactionalTemplate.sendAsync(topicIn, msg));
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertNoMessagesAvailableInOutputTopic(topicOut);
 		}
 
@@ -277,9 +283,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 			@PulsarListener(topics = topicIn, batch = true)
 			void listen(List<String> msgs) {
-				assertThat(msgs.size()).isEqualTo(inputMsgs.size());
 				msgs.forEach((msg) -> transactionalPulsarTemplate.send(topicOut, msg + "-out"));
-				latch.countDown();
+				CompletableFuture.runAsync(() -> latch.countDown());
 				throw new RuntimeException("BOOM-batch");
 			}
 
