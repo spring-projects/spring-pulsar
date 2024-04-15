@@ -23,7 +23,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
@@ -65,12 +64,7 @@ class PulsarTxnTestsBase {
 	protected PulsarClient pulsarClient;
 
 	@Autowired
-	@Qualifier("transactionalPulsarTemplate")
 	protected PulsarTemplate<String> transactionalPulsarTemplate;
-
-	@Autowired
-	@Qualifier("nonTransactionalPulsarTemplate")
-	protected PulsarTemplate<String> nonTransactionalPulsarTemplate;
 
 	@Configuration(proxyBeanMethods = false)
 	@EnablePulsar
@@ -93,13 +87,6 @@ class PulsarTxnTestsBase {
 		PulsarTemplate<String> transactionalPulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
 			template.transactions().setEnabled(true);
-			return template;
-		}
-
-		@Bean
-		PulsarTemplate<String> nonTransactionalPulsarTemplate(PulsarProducerFactory<String> pulsarProducerFactory) {
-			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			template.transactions().setEnabled(false);
 			return template;
 		}
 

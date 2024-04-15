@@ -565,7 +565,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					}
 				});
 			}
-			catch (RuntimeException ex) {
+			catch (Throwable ex) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(ex, "Transaction rolled back");
 			}
 		}
@@ -651,7 +651,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				return this.transactionTemplate.execute(status -> doInvokeBatchListener(messages, messageList,
 						inRetryMode, messagesPendingInBatch, getTransaction()));
 			}
-			catch (RuntimeException e) {
+			catch (Throwable e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, "Transaction rolled back");
 				return Collections.emptyList();
 			}
