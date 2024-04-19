@@ -529,7 +529,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			// All the records are processed at this point - handle acks
 			if (this.ackMode.equals(AckMode.BATCH)) {
-				handleBatchAcks(messages, null);
+				handleBatchAcksForRecordListener(messages, null);
 			}
 		}
 
@@ -670,21 +670,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						this.batchMessageListener.received(this.consumer, messageList);
 					}
 					if (this.ackMode.equals(AckMode.BATCH)) {
-						try {
-							if (isSharedSubscriptionType()) {
-								AckUtils.handleAck(this.consumer, messages, txn);
-							}
-							else {
-								Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
-								Message<T> last = stream.reduce((a, b) -> b).orElse(null);
-								AckUtils.handleAckCumulative(this.consumer, last, txn);
-							}
-						}
-						catch (PulsarException pe) {
-							DefaultPulsarMessageListenerContainer.this.logger.warn(pe,
-									() -> "Batch acknowledgment failed: " + pe.getMessage());
-							this.consumer.negativeAcknowledge(messages);
-						}
+						handleBatchAcks(messages, txn);
 					}
 					if (this.pulsarConsumerErrorHandler != null) {
 						pendingMessagesHandledSuccessfully(inRetryMode, messagesPendingInBatch);
@@ -793,25 +779,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					|| this.subscriptionType.equals(SubscriptionType.Key_Shared));
 		}
 
-		private void handleBatchAcks(Messages<T> messages, @Nullable Transaction txn) {
+		private void handleBatchAcksForRecordListener(Messages<T> messages, @Nullable Transaction txn) {
 			if (this.nackableMessages.isEmpty()) {
-				try {
-					if (messages.size() > 0) {
-						if (isSharedSubscriptionType()) {
-							AckUtils.handleAck(this.consumer, messages, txn);
-						}
-						else {
-							Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
-							Message<T> last = stream.reduce((a, b) -> b).orElse(null);
-							AckUtils.handleAckCumulative(this.consumer, last, txn);
-						}
-					}
-				}
-				catch (PulsarException pe) {
-					DefaultPulsarMessageListenerContainer.this.logger.warn(pe,
-							() -> "Batch acks failed: " + pe.getMessage());
-					this.consumer.negativeAcknowledge(messages);
-				}
+				handleBatchAcks(messages, txn);
 			}
 			else {
 				for (Message<T> message : messages) {
@@ -823,6 +793,27 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						handleAck(message, txn);
 					}
 				}
+			}
+		}
+
+		private void handleBatchAcks(Messages<T> messages, @Nullable Transaction txn) {
+			if (messages.size() <= 0) {
+				return;
+			}
+			try {
+				if (isSharedSubscriptionType()) {
+					AckUtils.handleAck(this.consumer, messages, txn);
+				}
+				else {
+					Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
+					Message<T> last = stream.reduce((a, b) -> b).orElse(null);
+					AckUtils.handleAckCumulative(this.consumer, last, txn);
+				}
+			}
+			catch (PulsarException pe) {
+				DefaultPulsarMessageListenerContainer.this.logger.warn(pe,
+						() -> "Batch acknowledgment failed: " + pe.getMessage());
+				this.consumer.negativeAcknowledge(messages);
 			}
 		}
 
