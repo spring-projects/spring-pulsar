@@ -18,20 +18,29 @@ package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.api.transaction.Transaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.ProducerBuilderCustomizer;
@@ -243,35 +253,22 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 
 	@Test
 	void batchListenerUsesBatchAckWhenSharedSub() throws Exception {
-		var topicIn = topicIn("batch-lstr-batch-ack");
-		var topicOut = topicOut("batch-lstr-batch-ack");
-		var containerProps = newContainerProps();
-		containerProps.setBatchListener(true);
-		containerProps.setAckMode(AckMode.BATCH);
-		containerProps.setSubscriptionType(SubscriptionType.Shared);
-		var inputMsgs = List.of("msg1", "msg2", "msg3");
-		var listenerLatch = new CountDownLatch(inputMsgs.size());
-		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
-			msgs.forEach((msg) -> {
-				transactionalPulsarTemplate.send(topicOut, msg.getValue() + "-out");
-				listenerLatch.countDown();
-			});
-		});
-		startContainerAndSendInputsThenWaitForLatch(topicIn, containerProps, listenerLatch, true, inputMsgs);
-		var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toList();
-		assertMessagesAvailableInOutputTopic(topicOut, outputMsgs);
-
-		// TODO assert AckUtils.handleAck(this.consumer, messages, txn);
+		batchListenerUsesProperBatchAckForSubscriptionType("batch-lstr-batch-ack", SubscriptionType.Shared);
 	}
 
 	@Test
 	void batchListenerUsesCumulativeAckWhenNotSharedSub() throws Exception {
-		var topicIn = topicIn("batch-lstr-cumltv-ack");
-		var topicOut = topicOut("batch-lstr-cumltv-ack");
+		batchListenerUsesProperBatchAckForSubscriptionType("batch-lstr-cumltv-ack", SubscriptionType.Exclusive);
+	}
+
+	private void batchListenerUsesProperBatchAckForSubscriptionType(String topicPrefix,
+			SubscriptionType subscriptionType) throws Exception {
+		var topicIn = topicIn(topicPrefix);
+		var topicOut = topicOut(topicPrefix);
 		var containerProps = newContainerProps();
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.BATCH);
-		containerProps.setSubscriptionType(SubscriptionType.Exclusive);
+		containerProps.setSubscriptionType(subscriptionType);
 		var inputMsgs = List.of("msg1", "msg2", "msg3");
 		var listenerLatch = new CountDownLatch(inputMsgs.size());
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
@@ -280,11 +277,16 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 				listenerLatch.countDown();
 			});
 		});
-		startContainerAndSendInputsThenWaitForLatch(topicIn, containerProps, listenerLatch, true, inputMsgs);
+		var spyConsumer = startContainerAndSendInputsThenWaitForLatch(topicIn, containerProps, listenerLatch, true,
+				inputMsgs);
 		var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toList();
 		assertMessagesAvailableInOutputTopic(topicOut, outputMsgs);
-
-		// TODO assert AckUtils.handleAckCumulative(this.consumer, last, txn);
+		if (subscriptionType == SubscriptionType.Shared) {
+			verify(spyConsumer).acknowledgeAsync(any(Messages.class), any(Transaction.class));
+		}
+		else {
+			verify(spyConsumer).acknowledgeCumulativeAsync(any(MessageId.class), any(Transaction.class));
+		}
 	}
 
 	@Test
@@ -403,15 +405,17 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 			.withMessage("Transactional batch listeners do not support custom error handlers");
 	}
 
-	private void startContainerAndSendInputsThenWaitForLatch(String topicIn, PulsarContainerProperties containerProps,
-			CountDownLatch listenerLatch, boolean sendInBatch, String... inputMsgs) throws InterruptedException {
-		this.startContainerAndSendInputsThenWaitForLatch(topicIn, containerProps, listenerLatch, sendInBatch,
+	private Consumer<String> startContainerAndSendInputsThenWaitForLatch(String topicIn,
+			PulsarContainerProperties containerProps, CountDownLatch listenerLatch, boolean sendInBatch,
+			String... inputMsgs) throws InterruptedException {
+		return this.startContainerAndSendInputsThenWaitForLatch(topicIn, containerProps, listenerLatch, sendInBatch,
 				Arrays.stream(inputMsgs).toList());
 	}
 
-	private void startContainerAndSendInputsThenWaitForLatch(String topicIn, PulsarContainerProperties containerProps,
-			CountDownLatch listenerLatch, boolean sendInBatch, List<String> inputMsgs) throws InterruptedException {
-		var consumerFactory = new DefaultPulsarConsumerFactory<String>(client, List.of((consumerBuilder) -> {
+	private Consumer<String> startContainerAndSendInputsThenWaitForLatch(String topicIn,
+			PulsarContainerProperties containerProps, CountDownLatch listenerLatch, boolean sendInBatch,
+			List<String> inputMsgs) throws InterruptedException {
+		var consumerFactory = new SpyPulsarConsumerFactory(client, List.of((consumerBuilder) -> {
 			consumerBuilder.topic(topicIn);
 			consumerBuilder.subscriptionName("sub-" + topicIn);
 		}));
@@ -425,6 +429,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 				// Because the latch may fire before exception is thrown - give it a pause
 				Thread.sleep(500);
 			}
+			return consumerFactory.spyConsumer;
 		}
 		finally {
 			container.stop();
@@ -476,6 +481,33 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 
 	private String topicOut(String testInfo) {
 		return "dpmlctt-%s-out".formatted(testInfo);
+	}
+
+	private static final class SpyPulsarConsumerFactory extends DefaultPulsarConsumerFactory<String> {
+
+		Consumer<String> spyConsumer;
+
+		private SpyPulsarConsumerFactory(PulsarClient pulsarClient,
+				List<ConsumerBuilderCustomizer<String>> defaultConfigCustomizers) {
+			super(pulsarClient, defaultConfigCustomizers);
+		}
+
+		@Override
+		public Consumer<String> createConsumer(Schema<String> schema, Collection<String> topics,
+				String subscriptionName, ConsumerBuilderCustomizer<String> customizer) {
+			this.spyConsumer = spy(super.createConsumer(schema, topics, subscriptionName, customizer));
+			return this.spyConsumer;
+		}
+
+		@Override
+		public Consumer<String> createConsumer(Schema<String> schema, Collection<String> topics,
+				String subscriptionName, Map<String, String> metadataProperties,
+				List<ConsumerBuilderCustomizer<String>> consumerBuilderCustomizers) {
+			this.spyConsumer = spy(super.createConsumer(schema, topics, subscriptionName, metadataProperties,
+					consumerBuilderCustomizers));
+			return this.spyConsumer;
+		}
+
 	}
 
 }
