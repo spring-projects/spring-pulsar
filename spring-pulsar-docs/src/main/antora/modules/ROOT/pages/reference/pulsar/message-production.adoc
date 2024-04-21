@@ -13,7 +13,7 @@ They return the `MessageId` of the message that was published once the message i
 The `sendAsync` method calls are asynchronous calls that are non-blocking.
 They return a `CompletableFuture`, which you can use to asynchronously receive the message ID once the messages are published.
 
-NOTE: For the API variants that do not include a topic parameter, a xref:reference/pulsar/topic-resolution.adoc#topic-resolution-process-imperative[topic resolution process] is used to determine the destination topic.
+NOTE: For the API variants that do not include a topic parameter, a xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] is used to determine the destination topic.
 
 === Simple API
 The template provides a handful of methods ({javadocs}/org/springframework/pulsar/core/PulsarOperations.html[prefixed with _'send'_]) for simple send requests. For more complicated send requests, a fluent API lets you configure more options.
@@ -78,7 +78,7 @@ include::../schema-info/schema-info-template.adoc[]
 The `PulsarTemplate` relies on a `PulsarProducerFactory` to actually create the underlying producer.
 Spring Boot auto-configuration also provides this producer factory which you can further configure by specifying any of the {spring-boot-pulsar-config-props}[`spring.pulsar.producer.*`] application properties.
 
-NOTE: If topic information is not specified when using the producer factory APIs directly, the same xref:reference/pulsar/topic-resolution.adoc#topic-resolution-process-imperative[topic resolution process] used by the `PulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
+NOTE: If topic information is not specified when using the producer factory APIs directly, the same xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] used by the `PulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
 [[global-producer-customize]]
 === Global producer customization
