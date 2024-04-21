@@ -18,7 +18,6 @@
 *** xref:reference/reactive-pulsar/reactive-pulsar-client.adoc[]
 *** xref:reference/reactive-pulsar/reactive-message-production.adoc[]
 *** xref:reference/reactive-pulsar/reactive-message-consumption.adoc[]
-*** xref:reference/reactive-pulsar/reactive-topic-resolution.adoc[]
 *** xref:reference/tombstones-reactive.adoc[]
 ** xref:reference/topic-resolution.adoc[]
 ** xref:reference/pulsar-admin.adoc[]
