@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -389,7 +390,17 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 
 	@Test
 	void txnBatchListenerWithErrorHandlerNotSupported() {
-		// TODO
+		var containerProps = newContainerProps();
+		containerProps.setAckMode(AckMode.BATCH);
+		containerProps.setBatchListener(true);
+		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msg) -> {
+			throw new RuntimeException("should never get here");
+		});
+		var consumerFactory = new DefaultPulsarConsumerFactory<String>(client, List.of());
+		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
+		container.setPulsarConsumerErrorHandler(mock(PulsarConsumerErrorHandler.class));
+		assertThatIllegalStateException().isThrownBy(() -> container.start())
+			.withMessage("Transactional batch listeners do not support custom error handlers");
 	}
 
 	private void startContainerAndSendInputsThenWaitForLatch(String topicIn, PulsarContainerProperties containerProps,
