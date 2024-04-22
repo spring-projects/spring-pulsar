@@ -17,6 +17,8 @@
 package org.springframework.pulsar.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -31,9 +33,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarTemplate;
@@ -286,6 +290,90 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 				msgs.forEach((msg) -> transactionalPulsarTemplate.send(topicOut, msg + "-out"));
 				CompletableFuture.runAsync(() -> latch.countDown());
 				throw new RuntimeException("BOOM-batch");
+			}
+
+		}
+
+	}
+
+	@Nested
+	class TransactionsDisabledOnListener {
+
+		static final String LISTENER_ID = "disabledOnListenerRequiredOnSettings";
+
+		@Test
+		void throwsExceptionWhenTransactionsAreRequired() {
+			assertThatIllegalStateException().isThrownBy(() -> {
+				var context = new AnnotationConfigApplicationContext();
+				context.register(TopLevelConfig.class, TransactionsDisabledOnListenerConfig.class);
+				context.registerBean("containerPropsRequiredCustomizer", PulsarContainerPropertiesCustomizer.class,
+						() -> (c) -> c.transactions().setRequired(true));
+				context.refresh();
+			}).withMessage("Listener w/ id [%s] requested no transactions but txn are required".formatted(LISTENER_ID));
+		}
+
+		@Test
+		void disablesTransactionsWhenTransactionsAreNotRequired() {
+			try (var context = new AnnotationConfigApplicationContext()) {
+				context.register(TopLevelConfig.class, TransactionsDisabledOnListenerConfig.class);
+				context.registerBean("containerPropsNotRequiredCustomizer", PulsarContainerPropertiesCustomizer.class,
+						() -> (c) -> c.transactions().setRequired(false));
+				context.refresh();
+				var container = context.getBean(PulsarListenerEndpointRegistry.class).getListenerContainer(LISTENER_ID);
+				assertThat(container).isNotNull();
+				assertThat(container.getContainerProperties()).satisfies((props) -> {
+					assertThat(props.transactions().isEnabled()).isFalse();
+					assertThat(props.transactions().isRequired()).isFalse();
+				});
+			}
+		}
+
+		static class TransactionsDisabledOnListenerConfig {
+
+			@PulsarListener(id = LISTENER_ID, batch = true, transactional = "false", topics = "not-used")
+			void listen(List<String> ignored) {
+			}
+
+		}
+
+	}
+
+	@Nested
+	class TransactionsEnabledOnListener {
+
+		static final String LISTENER_ID = "enabledOnListener";
+
+		@Test
+		void ignoresSettingWhenNoTxnManagerAvailable() {
+			assertThatException().isThrownBy(() -> {
+				var context = new AnnotationConfigApplicationContext();
+				context.register(TopLevelConfig.class, TransactionsEnabledOnListenerConfig.class);
+				context.registerBean("removeTxnManagerCustomizer", PulsarContainerPropertiesCustomizer.class,
+						() -> (c) -> c.transactions().setTransactionManager(null));
+				context.refresh();
+			})
+				.withCauseInstanceOf(IllegalStateException.class)
+				.havingCause()
+				.withMessage("Transactions are enabled but txn manager is not set");
+		}
+
+		@Test
+		void enablesTransactionsWhenTxnManagerAvailable() {
+			try (var context = new AnnotationConfigApplicationContext()) {
+				context.register(TopLevelConfig.class, TransactionsEnabledOnListenerConfig.class);
+				context.registerBean("containerPropsNotRequiredCustomizer", PulsarContainerPropertiesCustomizer.class,
+						() -> (c) -> c.transactions().setEnabled(false));
+				context.refresh();
+				var container = context.getBean(PulsarListenerEndpointRegistry.class).getListenerContainer(LISTENER_ID);
+				assertThat(container).isNotNull();
+				assertThat(container.getContainerProperties().transactions().isEnabled()).isTrue();
+			}
+		}
+
+		static class TransactionsEnabledOnListenerConfig {
+
+			@PulsarListener(id = LISTENER_ID, batch = true, transactional = "true", topics = "not-used")
+			void listen(List<String> ignored) {
 			}
 
 		}
