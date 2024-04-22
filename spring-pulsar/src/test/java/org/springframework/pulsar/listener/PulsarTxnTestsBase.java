@@ -98,14 +98,20 @@ class PulsarTxnTestsBase {
 		}
 
 		@Bean
-		PulsarListenerContainerFactory pulsarListenerContainerFactory(
-				PulsarConsumerFactory<Object> pulsarConsumerFactory,
-				PulsarAwareTransactionManager pulsarTransactionManager) {
+		PulsarContainerProperties pulsarContainerProperties(PulsarAwareTransactionManager pulsarTransactionManager) {
 			var containerProps = new PulsarContainerProperties();
 			containerProps.transactions().setEnabled(true);
 			containerProps.transactions().setRequired(false);
 			containerProps.transactions().setTransactionManager(pulsarTransactionManager);
-			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, containerProps);
+			return containerProps;
+		}
+
+		@Bean
+		PulsarListenerContainerFactory pulsarListenerContainerFactory(
+				PulsarConsumerFactory<Object> pulsarConsumerFactory, PulsarContainerProperties pulsarContainerProps,
+				ObjectProvider<PulsarContainerPropertiesCustomizer> containerPropsCustomizer) {
+			containerPropsCustomizer.ifAvailable((c) -> c.customize(pulsarContainerProps));
+			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, pulsarContainerProps);
 		}
 
 		@Bean
@@ -117,6 +123,13 @@ class PulsarTxnTestsBase {
 		PulsarAwareTransactionManager pulsarTransactionManager(PulsarClient pulsarClient) {
 			return new PulsarTransactionManager(pulsarClient);
 		}
+
+	}
+
+	@FunctionalInterface
+	interface PulsarContainerPropertiesCustomizer {
+
+		void customize(PulsarContainerProperties containerProperties);
 
 	}
 
