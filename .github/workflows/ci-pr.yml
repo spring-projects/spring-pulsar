@@ -37,6 +37,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: spring-io/spring-gradle-build-action@v2
+      - name: Check format (short circuit)
+        run: |
+          ./gradlew checkFormat
       - name: Build and run unit tests
         run: |
           ./gradlew clean build -x integrationTest --continue --scan
