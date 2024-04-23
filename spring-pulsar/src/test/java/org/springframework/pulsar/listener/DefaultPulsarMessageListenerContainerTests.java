@@ -54,6 +54,7 @@ import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -405,6 +406,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		var containerProps = new PulsarContainerProperties();
 		containerProps.setSchema(Schema.STRING);
 		containerProps.transactions().setEnabled(true);
+		containerProps.transactions().setTransactionManager(mock(PulsarAwareTransactionManager.class));
 		containerProps.setBatchListener(true);
 		containerProps.setAckMode(AckMode.RECORD);
 		containerProps.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msgs) -> {
@@ -413,7 +415,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		var consumerFactory = new DefaultPulsarConsumerFactory<String>(mock(PulsarClient.class), List.of());
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
 		assertThatIllegalStateException().isThrownBy(() -> container.start())
-			.withMessage("Batch record listeners do not support AckMode.RECORD");
+			.withMessage("Transactional batch listeners do not support AckMode.RECORD");
 	}
 
 }
