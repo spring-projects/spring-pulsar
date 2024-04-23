@@ -9,7 +9,7 @@ On the Pulsar producer side, Spring Boot auto-configuration provides a `Reactive
 The template provides send methods that accept a single message and return a `Mono<MessageId>`.
 It also provides send methods that accept multiple messages (in the form of the ReactiveStreams `Publisher` type) and return a `Flux<MessageId>`.
 
-NOTE: For the API variants that do not include a topic parameter, a xref:reference/reactive-pulsar/reactive-topic-resolution.adoc#topic-resolution-process-reactive[topic resolution process] is used to determine the destination topic.
+NOTE: For the API variants that do not include a topic parameter, a xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] is used to determine the destination topic.
 
 === Fluent API
 The template provides a {javadocs}/org/springframework/pulsar/reactive/core/ReactivePulsarOperations.html#newMessage(T)[fluent builder] to handle more complicated send requests.
@@ -57,7 +57,7 @@ The `ReactivePulsarTemplate` relies on a `ReactivePulsarSenderFactory` to actual
 
 Spring Boot provides this sender factory which can be configured with any of the {spring-boot-pulsar-config-props}[`spring.pulsar.producer.*`] application properties.
 
-NOTE: If topic information is not specified when using the sender factory APIs directly, the same xref:reference/reactive-pulsar/reactive-topic-resolution.adoc#topic-resolution-process-reactive[topic resolution process] used by the `ReactivePulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
+NOTE: If topic information is not specified when using the sender factory APIs directly, the same xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] used by the `ReactivePulsarTemplate` is used with the one exception that the "Message type default" step is **omitted**.
 
 === Producer Caching
 Each underlying Pulsar producer consumes resources.

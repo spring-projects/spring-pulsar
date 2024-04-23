@@ -32,7 +32,7 @@ Mono<Void> listen(String message) {
 }
 ----
 
-In this most basic form, when the `topics` are not directly provided, a xref:reference/reactive-pulsar/reactive-topic-resolution.adoc#topic-resolution-process-reactive[topic resolution process] is used to determine the destination topic.
+In this most basic form, when the `topics` are not directly provided, a xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] is used to determine the destination topic.
 Likewise, when the `subscriptionName` is not provided on the `@ReactivePulsarListener` annotation an auto-generated subscription name will be used.
 
 In the `ReactivePulsarListener` method shown earlier, we receive the data as `String`, but we do not specify any schema types.
@@ -206,7 +206,7 @@ The "listener" aspect is provided by the `ReactivePulsarMessageHandler` of which
 * `ReactivePulsarOneByOneMessageHandler` - handles a single message one-by-one
 * `ReactivePulsarStreamingHandler` - handles multiple messages via a `Flux`
 
-NOTE: If topic information is not specified when using the listener containers directly, the same xref:reference/reactive-pulsar/reactive-topic-resolution.adoc#topic-resolution-process-reactive[topic resolution process] used by the `ReactivePulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
+NOTE: If topic information is not specified when using the listener containers directly, the same xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] used by the `ReactivePulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
 
 [[reactive-concurrency]]
 == Concurrency
