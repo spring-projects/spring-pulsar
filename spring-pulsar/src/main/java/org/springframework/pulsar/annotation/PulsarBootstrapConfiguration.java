@@ -16,13 +16,19 @@
 
 package org.springframework.pulsar.annotation;
 
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactoryCustomizer;
 import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
+import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTemplateCustomizer;
 
 /**
  * An {@link ImportBeanDefinitionRegistrar} class that registers a
@@ -44,6 +50,30 @@ public class PulsarBootstrapConfiguration implements ImportBeanDefinitionRegistr
 
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+		if (!registry.containsBeanDefinition("pulsarTemplateCustomizerPostProcessor")) {
+			var postProcessorType = ResolvableType.forClassWithGenerics(BeanCustomizerPostProcessor.class,
+					PulsarTemplate.class, PulsarTemplateCustomizer.class);
+			@SuppressWarnings("unchecked")
+			var beanDef = BeanDefinitionBuilder
+				.rootBeanDefinition(postProcessorType,
+						() -> new BeanCustomizerPostProcessor<>(PulsarTemplate.class, PulsarTemplateCustomizer.class))
+				.getBeanDefinition();
+			registry.registerBeanDefinition("pulsarTemplateCustomizerPostProcessor", beanDef);
+		}
+
+		if (!registry.containsBeanDefinition("concurrentContainerFactoryCustomizerPostProcessor")) {
+			var postProcessorType = ResolvableType.forClassWithGenerics(BeanCustomizerPostProcessor.class,
+					ConcurrentPulsarListenerContainerFactory.class,
+					ConcurrentPulsarListenerContainerFactoryCustomizer.class);
+			@SuppressWarnings("unchecked")
+			var beanDef = BeanDefinitionBuilder
+				.rootBeanDefinition(postProcessorType,
+						() -> new BeanCustomizerPostProcessor<>(ConcurrentPulsarListenerContainerFactory.class,
+								ConcurrentPulsarListenerContainerFactoryCustomizer.class))
+				.getBeanDefinition();
+			registry.registerBeanDefinition("concurrentContainerFactoryCustomizerPostProcessor", beanDef);
+		}
+
 		if (!registry
 			.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			registry.registerBeanDefinition(
