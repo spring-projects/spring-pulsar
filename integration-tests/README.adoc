@@ -1,0 +1,53 @@
+= Integration Tests
+
+
+== Troubleshooting
+
+=== SamplePulsarApplicationSslTests suddenly start failing
+
+==== Symptom
+The `SamplePulsarApplicationSslTests` start failing (seemingly out of nowhere) w/ exceptions similar to the following:
+
+[source,shell]
+----
+2024-05-01T10:17:11.7454406Z SamplePulsarApplicationSslTests > JksBasedSslTests > initializationError FAILED
+2024-05-01T10:17:11.7455000Z     org.testcontainers.containers.ContainerLaunchException: Container startup failed for image apachepulsar/pulsar:latest
+2024-05-01T10:17:11.7455420Z         at app//org.testcontainers.containers.GenericContainer.doStart(GenericContainer.java:359)
+2024-05-01T10:17:11.7455977Z         at app//org.testcontainers.containers.GenericContainer.start(GenericContainer.java:330)
+2024-05-01T10:17:11.7456911Z         at app//org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:280)
+2024-05-01T10:17:11.7458124Z         at app//org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:267)
+2024-05-01T10:17:11.7459241Z         at app//org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:82)
+2024-05-01T10:17:11.7459952Z         at app//org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:82)
+2024-05-01T10:17:11.7460260Z         at java.base@17.0.10/java.util.ArrayList.forEach(ArrayList.java:1511)
+2024-05-01T10:17:11.7460931Z         at app//org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:82)
+2024-05-01T10:17:11.7461820Z         at app//org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:56)
+2024-05-01T10:17:11.7462321Z         at java.base@17.0.10/java.util.ArrayList.forEach(ArrayList.java:1511)
+2024-05-01T10:17:11.7462807Z         at java.base@17.0.10/java.util.ArrayList.forEach(ArrayList.java:1511)
+----
+
+If you look on the server-side (logs on the Pulsar docker container) you will see a cause similar to the following:
+
+[source,shell]
+----
+Caused by: java.security.cert.CertPathValidatorException: validity check failed
+at sun.security.provider.certpath.PKIXMasterCertPathValidator.validate(PKIXMasterCertPathValidator.java:135) ~[?:?]
+at sun.security.provider.certpath.PKIXCertPathValidator.validate(PKIXCertPathValidator.java:224) ~[?:?]
+at sun.security.provider.certpath.PKIXCertPathValidator.validate(PKIXCertPathValidator.java:144) ~[?:?]
+at sun.security.provider.certpath.PKIXCertPathValidator.engineValidate(
+~[io.netty-netty-handler-4.1.105.Final.jar:4.1.105.Final]
+at io.netty.handler.ssl.SslHandler.decodeJdkCompatible(SslHandler.java:1338) ~[io.netty-netty-handler-4.1.105.Final.jar:4.1.105.Final]
+... 20 more
+Caused by: java.security.cert.CertificateExpiredException: NotAfter: Tue Apr 30 20:49:10 UTC 2024
+----
+
+==== Cause
+The SSL certs have expired.
+
+==== Solution
+Update the SSL certs.
+
+* Replace the JKS `.p12` files (`./src/intTest/resources/ssl/jks`) with the https://github.com/spring-projects/spring-boot/tree/main/spring-boot-tests/spring-boot-smoke-tests/spring-boot-smoke-test-kafka/src/test/resources/ssl[latest JKS p12 files from Spring Boot].
+
+* Replace the PEM `.crt` + `.key` files (`./src/intTest/resources/ssl/pem`) with the https://github.com/spring-projects/spring-boot/tree/main/spring-boot-tests/spring-boot-smoke-tests/spring-boot-smoke-test-data-redis/src/test/resources/ssl[latest PEM .crt + .key files from Spring Boot].
+
+Run the `SamplePulsarApplicationSslTests` test locally to ensure all is good.
