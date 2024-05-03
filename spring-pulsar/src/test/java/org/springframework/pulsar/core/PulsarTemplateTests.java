@@ -24,6 +24,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +56,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
@@ -387,6 +391,59 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 			var bytesTemplate = new PulsarTemplate<>(bytesProducerFactory);
 			assertThatExceptionOfType(SchemaSerializationException.class)
 				.isThrownBy(() -> bytesTemplate.send("invalid-payload".getBytes(), Schema.AUTO_PRODUCE_BYTES()));
+		}
+
+	}
+
+	@Nested
+	class PulsarTemplateCustomizerTests {
+
+		@Test
+		void whenSingleCustomizerAvailableThenItIsApplied() {
+			var template = mock(PulsarTemplate.class);
+			var txnProps = mock(TransactionProperties.class);
+			when(template.transactions()).thenReturn(txnProps);
+			PulsarTemplateCustomizer<?> customizer = (t) -> t.transactions().setTimeout(Duration.ofSeconds(45));
+			try (var appContext = new AnnotationConfigApplicationContext()) {
+				appContext.registerBean(PulsarTemplate.class, () -> template);
+				appContext.registerBean(PulsarTemplateCustomizer.class, () -> customizer);
+				appContext.register(PulsarTemplateCustomizerTestsConfig.class);
+				appContext.refresh();
+				verify(txnProps).setTimeout(Duration.ofSeconds(45));
+			}
+		}
+
+		@Test
+		void whenMultipleCustomizersAvailableThenNoneAreApplied() {
+			var template = mock(PulsarTemplate.class);
+			var txnProps = mock(TransactionProperties.class);
+			when(template.transactions()).thenReturn(txnProps);
+			PulsarTemplateCustomizer<?> customizer1 = (t) -> t.transactions().setTimeout(Duration.ofSeconds(30));
+			PulsarTemplateCustomizer<?> customizer2 = (t) -> t.transactions().setTimeout(Duration.ofSeconds(45));
+			try (var appContext = new AnnotationConfigApplicationContext()) {
+				appContext.registerBean(PulsarTemplate.class, () -> template);
+				appContext.registerBean("customizer1", PulsarTemplateCustomizer.class, () -> customizer1);
+				appContext.registerBean("customizer2", PulsarTemplateCustomizer.class, () -> customizer2);
+				appContext.register(PulsarTemplateCustomizerTestsConfig.class);
+				appContext.refresh();
+				verify(txnProps, never()).setTimeout(any(Duration.class));
+			}
+		}
+
+		@Test
+		void whenNoCustomizersAvaiableThenContextStartsWithoutFailure() {
+			var template = mock(PulsarTemplate.class);
+			try (var appContext = new AnnotationConfigApplicationContext()) {
+				appContext.registerBean(PulsarTemplate.class, () -> template);
+				appContext.register(PulsarTemplateCustomizerTestsConfig.class);
+				appContext.refresh();
+			}
+		}
+
+		@Configuration(proxyBeanMethods = false)
+		@EnablePulsar
+		static class PulsarTemplateCustomizerTestsConfig {
+
 		}
 
 	}
