@@ -46,7 +46,7 @@ The SSL certs have expired.
 ==== Solution
 Update the SSL certs.
 
-* Replace the JKS `.p12` files (`./src/intTest/resources/ssl/jks`) with the https://github.com/spring-projects/spring-boot/tree/main/spring-boot-tests/spring-boot-smoke-tests/spring-boot-smoke-test-data-cassandra/src/test/resources/ssl[latest JKS p12 files from Spring Boot].
+* Replace the JKS `.p12` files (`./src/intTest/resources/ssl/jks`) with the https://github.com/spring-projects/spring-boot/tree/main/spring-boot-tests/spring-boot-smoke-tests/spring-boot-smoke-test-kafka/src/test/resources/ssl[latest JKS p12 files from Spring Boot].
 
 * Replace the PEM `.crt` + `.key` files (`./src/intTest/resources/ssl/pem`) with the https://github.com/spring-projects/spring-boot/tree/main/spring-boot-tests/spring-boot-smoke-tests/spring-boot-smoke-test-data-redis/src/test/resources/ssl[latest PEM .crt + .key files from Spring Boot].
 
