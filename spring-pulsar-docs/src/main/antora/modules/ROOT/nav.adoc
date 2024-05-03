@@ -11,6 +11,7 @@
 *** xref:reference/pulsar/message-production.adoc[]
 *** xref:reference/pulsar/message-consumption.adoc[]
 *** xref:reference/pulsar/publishing-consuming-partitioned-topics.adoc[]
+*** xref:reference/pulsar/transactions.adoc[]
 *** xref:reference/tombstones.adoc[]
 ** xref:reference/reactive-pulsar.adoc[]
 *** xref:reference/reactive-pulsar/reactive-quick-tour.adoc[]
