@@ -21,53 +21,43 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.core.PulsarTemplateCustomizer;
 import org.springframework.util.CollectionUtils;
 
 /**
- * A {@link BeanPostProcessor} that applies a customizer to beans of a specified type.
+ * Applies a {@link PulsarTemplateCustomizer} to all {@link PulsarTemplate} beans.
  * <p>
  * There must be only one customizer in the application context in order for it to be
  * applied.
  *
- * @param <B> the type of bean to customize
- * @param <C> the type of customizer
  * @author Chris Bono
  */
-class BeanCustomizerPostProcessor<B, C extends BeanCustomizer<B>>
-		implements BeanPostProcessor, ApplicationContextAware {
+class PulsarTemplateBeanCustomizerPostProcessor implements BeanPostProcessor, ApplicationContextAware {
 
 	private final LogAccessor logger = new LogAccessor(getClass());
 
-	private final Class<B> beanType;
-
-	private final Class<C> customizerType;
-
 	private ApplicationContext applicationContext;
-
-	BeanCustomizerPostProcessor(Class<B> beanType, Class<C> customizerType) {
-		this.beanType = beanType;
-		this.customizerType = customizerType;
-	}
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		if (this.beanType.isInstance(bean)) {
-			B typedBean = this.beanType.cast(bean);
-			var customizers = this.applicationContext.getBeansOfType(this.customizerType);
+		if (bean instanceof PulsarTemplate<?> template) {
+			var customizers = this.applicationContext.getBeansOfType(PulsarTemplateCustomizer.class);
 			if (CollectionUtils.isEmpty(customizers)) {
 				return bean;
 			}
 			if (customizers.size() > 1) {
 				this.logger.warn("Found multiple %s beans [%s] - must be only 1 in order to apply"
-					.formatted(this.customizerType.getSimpleName(), customizers.keySet()));
+					.formatted(PulsarTemplateCustomizer.class.getSimpleName(), customizers.keySet()));
 			}
 			else {
-				customizers.values().stream().forEach((c) -> c.customize(typedBean));
+				customizers.values().stream().forEach((c) -> c.customize(template));
 			}
 		}
 		return bean;

@@ -16,8 +16,6 @@
 
 package org.springframework.pulsar.config;
 
-import org.springframework.pulsar.annotation.BeanCustomizer;
-
 /**
  * Callback interface that can be implemented to customize a
  * {@link ConcurrentPulsarListenerContainerFactory}.
@@ -25,7 +23,13 @@ import org.springframework.pulsar.annotation.BeanCustomizer;
  * @param <T> The message payload type
  * @author Chris Bono
  */
-public interface ConcurrentPulsarListenerContainerFactoryCustomizer<T>
-		extends BeanCustomizer<ConcurrentPulsarListenerContainerFactory<T>> {
+@FunctionalInterface
+public interface ConcurrentPulsarListenerContainerFactoryCustomizer<T> {
+
+	/**
+	 * Customize a {@link ConcurrentPulsarListenerContainerFactory}.
+	 * @param containerFactory the factory to customize
+	 */
+	void customize(ConcurrentPulsarListenerContainerFactory<T> containerFactory);
 
 }

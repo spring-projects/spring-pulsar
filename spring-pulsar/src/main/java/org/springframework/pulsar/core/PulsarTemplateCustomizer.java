@@ -16,14 +16,19 @@
 
 package org.springframework.pulsar.core;
 
-import org.springframework.pulsar.annotation.BeanCustomizer;
-
 /**
  * Callback interface that can be implemented to customize a {@link PulsarTemplate}.
  *
  * @param <T> the payload type of the template
  * @author Chris Bono
  */
-public interface PulsarTemplateCustomizer<T> extends BeanCustomizer<PulsarTemplate<T>> {
+@FunctionalInterface
+public interface PulsarTemplateCustomizer<T> {
+
+	/**
+	 * Customize a {@link PulsarTemplate}.
+	 * @param template the template to customize
+	 */
+	void customize(PulsarTemplate<T> template);
 
 }
