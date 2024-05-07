@@ -20,15 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.pulsar.client.api.Message;
-import org.apache.pulsar.client.api.Schema;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -37,9 +33,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactoryCustomizer;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
-import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
-import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.BatchListenerWithCommit.BatchListenerWithCommitConfig;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.BatchListenerWithRollback.BatchListenerWithRollbackConfig;
@@ -47,7 +42,7 @@ import org.springframework.pulsar.listener.PulsarListenerTxnTests.ListenerWithEx
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.ListenerWithExternalTransactionRollback.ListenerWithExternalTransactionRollbackConfig;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.RecordListenerWithCommit.RecordListenerWithCommitConfig;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.RecordListenerWithRollback.RecordListenerWithRollbackConfig;
-import org.springframework.pulsar.test.support.PulsarConsumerTestUtil;
+import org.springframework.pulsar.transaction.PulsarTxnTestsBase;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,36 +52,6 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Chris Bono
  */
 class PulsarListenerTxnTests extends PulsarTxnTestsBase {
-
-	private void assertNoMessagesAvailableInOutputTopic(String topicOut) {
-		assertThat(PulsarConsumerTestUtil.<String>consumeMessages(pulsarClient)
-			.fromTopic(topicOut)
-			.withSchema(Schema.STRING)
-			.awaitAtMost(Duration.ofSeconds(7))
-			.get()).isEmpty();
-	}
-
-	private void assertMessagesAvailableInOutputTopic(String topicOut, String... expectedMessages) {
-		this.assertMessagesAvailableInOutputTopic(topicOut, Arrays.stream(expectedMessages).toList());
-	}
-
-	private void assertMessagesAvailableInOutputTopic(String topicOut, List<String> expectedMessages) {
-		assertThat(PulsarConsumerTestUtil.<String>consumeMessages(pulsarClient)
-			.fromTopic(topicOut)
-			.withSchema(Schema.STRING)
-			.awaitAtMost(Duration.ofSeconds(5))
-			.get()).map(Message::getValue).containsExactlyInAnyOrderElementsOf(expectedMessages);
-	}
-
-	private PulsarTemplate<String> newNonTransactionalTemplate(boolean sendInBatch, int numMessages) {
-		List<ProducerBuilderCustomizer<String>> customizers = List.of();
-		if (sendInBatch) {
-			customizers = List.of((pb) -> pb.enableBatching(true)
-				.batchingMaxPublishDelay(2, TimeUnit.SECONDS)
-				.batchingMaxMessages(numMessages));
-		}
-		return new PulsarTemplate<>(new DefaultPulsarProducerFactory<>(pulsarClient, null, customizers));
-	}
 
 	@Nested
 	@ContextConfiguration(classes = ListenerWithExternalTransactionConfig.class)
@@ -101,7 +66,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
 			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
+			assertThatMessagesAreInTopic(topicOut, "msg1-out");
 		}
 
 		@EnablePulsar
@@ -135,7 +100,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
 			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-			assertNoMessagesAvailableInOutputTopic(topicOut);
+			assertThatMessagesAreNotInTopic(topicOut, "msg1-out");
 		}
 
 		@EnablePulsar
@@ -170,7 +135,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
 			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-			assertMessagesAvailableInOutputTopic(topicOut, "msg1-out");
+			assertThatMessagesAreInTopic(topicOut, "msg1-out");
 		}
 
 		@EnablePulsar
@@ -203,7 +168,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			var nonTransactionalTemplate = newNonTransactionalTemplate(false, 1);
 			nonTransactionalTemplate.send(topicIn, "msg1");
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-			assertNoMessagesAvailableInOutputTopic(topicOut);
+			assertThatMessagesAreNotInTopic(topicOut, "msg1-out");
 		}
 
 		@EnablePulsar
@@ -238,8 +203,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			var nonTransactionalTemplate = newNonTransactionalTemplate(true, inputMsgs.size());
 			inputMsgs.forEach((msg) -> nonTransactionalTemplate.sendAsync(topicIn, msg));
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-			var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toList();
-			assertMessagesAvailableInOutputTopic(topicOut, outputMsgs);
+			var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toArray(String[]::new);
+			assertThatMessagesAreInTopic(topicOut, outputMsgs);
 		}
 
 		@EnablePulsar
@@ -275,7 +240,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			var nonTransactionalTemplate = newNonTransactionalTemplate(true, inputMsgs.size());
 			inputMsgs.forEach((msg) -> nonTransactionalTemplate.sendAsync(topicIn, msg));
 			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-			assertNoMessagesAvailableInOutputTopic(topicOut);
+			var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toArray(String[]::new);
+			assertThatMessagesAreNotInTopic(topicOut, outputMsgs);
 		}
 
 		@EnablePulsar
@@ -306,8 +272,9 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			assertThatIllegalStateException().isThrownBy(() -> {
 				var context = new AnnotationConfigApplicationContext();
 				context.register(TopLevelConfig.class, TransactionsDisabledOnListenerConfig.class);
-				context.registerBean("containerPropsRequiredCustomizer", PulsarContainerPropertiesCustomizer.class,
-						() -> (c) -> c.transactions().setRequired(true));
+				context.registerBean("containerPropsRequiredCustomizer",
+						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
+						() -> (cf) -> cf.getContainerProperties().transactions().setRequired(true));
 				context.refresh();
 			}).withMessage("Listener w/ id [%s] requested no transactions but txn are required".formatted(LISTENER_ID));
 		}
@@ -316,8 +283,9 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		void disablesTransactionsWhenTransactionsAreNotRequired() {
 			try (var context = new AnnotationConfigApplicationContext()) {
 				context.register(TopLevelConfig.class, TransactionsDisabledOnListenerConfig.class);
-				context.registerBean("containerPropsNotRequiredCustomizer", PulsarContainerPropertiesCustomizer.class,
-						() -> (c) -> c.transactions().setRequired(false));
+				context.registerBean("containerPropsNotRequiredCustomizer",
+						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
+						() -> (cf) -> cf.getContainerProperties().transactions().setRequired(false));
 				context.refresh();
 				var container = context.getBean(PulsarListenerEndpointRegistry.class).getListenerContainer(LISTENER_ID);
 				assertThat(container).isNotNull();
@@ -348,8 +316,9 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			assertThatException().isThrownBy(() -> {
 				var context = new AnnotationConfigApplicationContext();
 				context.register(TopLevelConfig.class, TransactionsEnabledOnListenerConfig.class);
-				context.registerBean("removeTxnManagerCustomizer", PulsarContainerPropertiesCustomizer.class,
-						() -> (c) -> c.transactions().setTransactionManager(null));
+				context.registerBean("removeTxnManagerCustomizer",
+						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
+						() -> (cf) -> cf.getContainerProperties().transactions().setTransactionManager(null));
 				context.refresh();
 			})
 				.withCauseInstanceOf(IllegalStateException.class)
@@ -361,8 +330,9 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 		void enablesTransactionsWhenTxnManagerAvailable() {
 			try (var context = new AnnotationConfigApplicationContext()) {
 				context.register(TopLevelConfig.class, TransactionsEnabledOnListenerConfig.class);
-				context.registerBean("containerPropsNotRequiredCustomizer", PulsarContainerPropertiesCustomizer.class,
-						() -> (c) -> c.transactions().setEnabled(false));
+				context.registerBean("containerPropsNotRequiredCustomizer",
+						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
+						() -> (cf) -> cf.getContainerProperties().transactions().setEnabled(false));
 				context.refresh();
 				var container = context.getBean(PulsarListenerEndpointRegistry.class).getListenerContainer(LISTENER_ID);
 				assertThat(container).isNotNull();
