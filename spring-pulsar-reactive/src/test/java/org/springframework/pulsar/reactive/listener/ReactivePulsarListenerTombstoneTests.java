@@ -29,6 +29,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.MessageResult;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -237,6 +238,7 @@ class ReactivePulsarListenerTombstoneTests extends ReactivePulsarListenerTestsBa
 		static List<ReceivedMessage<Foo>> receivedMessagesWithoutHeaders = new ArrayList<>();
 
 		@Test
+		@Disabled("Flaky -> see https://github.com/spring-projects/spring-pulsar/issues/561")
 		void shouldReceiveMessagesWithTombstone() throws Exception {
 			var pulsarProducerFactory = new DefaultPulsarProducerFactory<Foo>(pulsarClient);
 			var fooPulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
