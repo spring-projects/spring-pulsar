@@ -29,9 +29,6 @@ dependencies {
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
 
 	testImplementation project(':spring-pulsar-test')
-	testImplementation 'org.springframework:spring-jdbc'
-	testImplementation "org.testcontainers:mysql"
-	testImplementation 'mysql:mysql-connector-java:8.0.33'
 	testImplementation 'io.micrometer:micrometer-observation-test'
 	testImplementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	testImplementation 'io.micrometer:micrometer-tracing-test'
@@ -48,4 +45,10 @@ dependencies {
 	// Output capture used by PulsarFunctionAdministrationTests
 	testImplementation libs.system.lambda
 	testRuntimeOnly libs.logback.classic
+
+	// Used by PulsarMixedTransactionTests (Pulsar + DB)
+	testImplementation 'org.springframework:spring-jdbc'
+	testImplementation "org.testcontainers:mysql"
+	testImplementation 'mysql:mysql-connector-java:8.0.33'
+
 }
