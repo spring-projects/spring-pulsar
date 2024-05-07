@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.PulsarTemplate;
-import org.springframework.pulsar.transaction.PulsarMixedTransactionTests.PulsarProducerWithDbTransaction.PulsarProducerWithDbTransactionConfig;
-import org.springframework.pulsar.transaction.PulsarMixedTransactionTests.PulsarProducerWithDbTransaction.PulsarProducerWithDbTransactionConfig.ProducerOnlyService;
+import org.springframework.pulsar.transaction.PulsarTemplateWithDbTransactionTests.PulsarTemplateSynchronizedWithDbTransaction.PulsarTemplateSynchronizedWithDbTransactionConfig;
+import org.springframework.pulsar.transaction.PulsarTemplateWithDbTransactionTests.PulsarTemplateSynchronizedWithDbTransaction.PulsarTemplateSynchronizedWithDbTransactionConfig.TestService;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -35,39 +35,40 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
- * Tests for Pulsar transaction support with other resource transactions.
+ * Tests transaction support of {@link PulsarTemplate} when mixed with database
+ * transactions.
  *
  * @author Chris Bono
  */
-class PulsarMixedTransactionTests extends PulsarTxnWithDbTxnTestsBase {
+class PulsarTemplateWithDbTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 	@Nested
-	@ContextConfiguration(classes = PulsarProducerWithDbTransactionConfig.class)
-	class PulsarProducerWithDbTransaction {
+	@ContextConfiguration(classes = PulsarTemplateSynchronizedWithDbTransactionConfig.class)
+	class PulsarTemplateSynchronizedWithDbTransaction {
 
 		static final String topic = "ppwdbt-topic";
 
 		@Test
-		void whenDbTxnIsCommittedThenMessagesAreCommitted(@Autowired ProducerOnlyService producerService) {
+		void whenDbTxnIsCommittedThenMessagesAreCommitted(@Autowired TestService transactionalService) {
 			var thing1 = new Thing(1L, "msg1");
-			producerService.handleRequest(thing1, false, false);
+			transactionalService.handleRequest(thing1, false, false);
 			assertThatMessagesAreInTopic(topic, thing1.name());
 			assertThatMessagesAreInDb(thing1);
 		}
 
 		@Test
-		void whenDbTxnIsSetRollbackOnlyThenMessagesAreNotCommitted(@Autowired ProducerOnlyService producerService) {
+		void whenDbTxnIsSetRollbackOnlyThenMessagesAreNotCommitted(@Autowired TestService transactionalService) {
 			var thing2 = new Thing(2L, "msg2");
-			producerService.handleRequest(thing2, true, false);
+			transactionalService.handleRequest(thing2, true, false);
 			assertThatMessagesAreNotInTopic(topic, thing2.name());
 			assertThatMessagesAreNotInDb(thing2);
 		}
 
 		@Test
-		void whenServiceThrowsExceptionThenMessagesAreNotCommitted(@Autowired ProducerOnlyService producerService) {
+		void whenServiceThrowsExceptionThenMessagesAreNotCommitted(@Autowired TestService transactionalService) {
 			var thing3 = new Thing(3L, "msg3");
 			assertThatExceptionOfType(PulsarException.class)
-				.isThrownBy(() -> producerService.handleRequest(thing3, false, true))
+				.isThrownBy(() -> transactionalService.handleRequest(thing3, false, true))
 				.withMessage("Failed to commit due to chaos");
 			assertThatMessagesAreNotInTopic(topic, thing3.name());
 			assertThatMessagesAreNotInDb(thing3);
@@ -75,10 +76,10 @@ class PulsarMixedTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 		@EnableTransactionManagement
 		@Configuration
-		static class PulsarProducerWithDbTransactionConfig {
+		static class PulsarTemplateSynchronizedWithDbTransactionConfig {
 
 			@Service
-			class ProducerOnlyService {
+			class TestService {
 
 				@Autowired
 				private JdbcTemplate jdbcTemplate;
