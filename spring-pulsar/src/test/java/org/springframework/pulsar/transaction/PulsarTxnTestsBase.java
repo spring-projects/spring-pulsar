@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -36,11 +37,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory;
-import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarClientFactory;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.ProducerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
@@ -59,7 +60,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig
 @DirtiesContext
 @Testcontainers(disabledWithoutDocker = true)
-class PulsarTxnTestsBase {
+public class PulsarTxnTestsBase {
 
 	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
 		.withTransactions();
@@ -74,6 +75,16 @@ class PulsarTxnTestsBase {
 
 	@Autowired
 	protected PulsarTemplate<String> transactionalPulsarTemplate;
+
+	protected PulsarTemplate<String> newNonTransactionalTemplate(boolean sendInBatch, int numMessages) {
+		List<ProducerBuilderCustomizer<String>> customizers = List.of();
+		if (sendInBatch) {
+			customizers = List.of((pb) -> pb.enableBatching(true)
+				.batchingMaxPublishDelay(2, TimeUnit.SECONDS)
+				.batchingMaxMessages(numMessages));
+		}
+		return new PulsarTemplate<>(new DefaultPulsarProducerFactory<>(pulsarClient, null, customizers));
+	}
 
 	protected void assertThatMessagesAreInTopic(String topicOut, String... expectedMessages) {
 		assertMessagesInTopic(topicOut).contains(expectedMessages);
@@ -94,7 +105,7 @@ class PulsarTxnTestsBase {
 
 	@Configuration
 	@EnablePulsar
-	static class TopLevelConfig {
+	public static class TopLevelConfig {
 
 		@Bean
 		PulsarProducerFactory<String> pulsarProducerFactory(PulsarClient pulsarClient) {
@@ -133,7 +144,7 @@ class PulsarTxnTestsBase {
 		}
 
 		@Bean
-		PulsarListenerContainerFactory pulsarListenerContainerFactory(
+		ConcurrentPulsarListenerContainerFactory<?> pulsarListenerContainerFactory(
 				PulsarConsumerFactory<Object> pulsarConsumerFactory, PulsarContainerProperties pulsarContainerProps) {
 			return new ConcurrentPulsarListenerContainerFactory<>(pulsarConsumerFactory, pulsarContainerProps);
 		}
