@@ -50,7 +50,7 @@ class PulsarTemplateWithDbTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 		@Test
 		void whenDbTxnIsCommittedThenMessagesAreCommitted(@Autowired TestService transactionalService) {
-			var thing1 = new Thing(1L, "msg1");
+			var thing1 = new Thing(100L, "msg1");
 			transactionalService.handleRequest(thing1, false, false);
 			assertThatMessagesAreInTopic(topic, thing1.name());
 			assertThatMessagesAreInDb(thing1);
@@ -58,7 +58,7 @@ class PulsarTemplateWithDbTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 		@Test
 		void whenDbTxnIsSetRollbackOnlyThenMessagesAreNotCommitted(@Autowired TestService transactionalService) {
-			var thing2 = new Thing(2L, "msg2");
+			var thing2 = new Thing(200L, "msg2");
 			transactionalService.handleRequest(thing2, true, false);
 			assertThatMessagesAreNotInTopic(topic, thing2.name());
 			assertThatMessagesAreNotInDb(thing2);
@@ -66,7 +66,7 @@ class PulsarTemplateWithDbTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 		@Test
 		void whenServiceThrowsExceptionThenMessagesAreNotCommitted(@Autowired TestService transactionalService) {
-			var thing3 = new Thing(3L, "msg3");
+			var thing3 = new Thing(300L, "msg3");
 			assertThatExceptionOfType(PulsarException.class)
 				.isThrownBy(() -> transactionalService.handleRequest(thing3, false, true))
 				.withMessage("Failed to commit due to chaos");
