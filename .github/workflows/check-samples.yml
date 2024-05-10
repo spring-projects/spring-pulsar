@@ -42,10 +42,16 @@ jobs:
         include:
           - javaVersion: 17
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
             samplesTarget: ':runAllSampleTests'
           - javaVersion: 21
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
             samplesTarget: ':runAllSampleTests -x :spring-pulsar-sample-apps:sample-pulsar-functions:sample-signup-function:test'
+          - javaVersion: 17
+            springBootVersion: "3.2.3-SNAPSHOT"
+            springPulsarVersion: "1.0.0-SNAPSHOT"
+            samplesTarget: ':runAllSampleTests'
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
@@ -54,7 +60,7 @@ jobs:
       - name: Check samples project
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
-          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+          VERSION: ${{ matrix.springPulsarVersion }}
           BOOT_VERSION: ${{ matrix.springBootVersion }}
           JAVA_VERSION: ${{ matrix.javaVersion }}
         run: |
