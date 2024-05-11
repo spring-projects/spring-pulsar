@@ -23,7 +23,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -70,12 +69,13 @@ import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCu
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.BasicListenersTestCases.BasicListenersTestCasesConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersTest.PulsarListenerWithHeadersConfig;
-import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.User2;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.StreamingListenerTestCases.StreamingListenerTestCasesConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.reactive.support.MessageUtils;
 import org.springframework.pulsar.support.PulsarHeaders;
+import org.springframework.pulsar.test.support.model.UserPojo;
+import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
@@ -283,20 +283,20 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 		@Test
 		void jsonSchema() throws Exception {
-			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
-			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
+			PulsarProducerFactory<UserPojo> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
+			PulsarTemplate<UserPojo> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
-				template.send("json-topic", new User("Jason", i), JSONSchema.of(User.class));
+				template.send("json-topic", new UserPojo("Jason", i), JSONSchema.of(UserPojo.class));
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@Test
 		void avroSchema() throws Exception {
-			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
-			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
+			PulsarProducerFactory<UserPojo> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
+			PulsarTemplate<UserPojo> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-topic", new User("Avi", i), AvroSchema.of(User.class));
+				template.send("avro-topic", new UserPojo("Avi", i), AvroSchema.of(UserPojo.class));
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -332,14 +332,14 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 			@ReactivePulsarListener(id = "jsonListener", topics = "json-topic", schemaType = SchemaType.JSON,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenJson(User ignored) {
+			Mono<Void> listenJson(UserPojo ignored) {
 				jsonLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "avroListener", topics = "avro-topic", schemaType = SchemaType.AVRO,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenAvro(User ignored) {
+			Mono<Void> listenAvro(UserPojo ignored) {
 				avroLatch.countDown();
 				return Mono.empty();
 			}
@@ -360,61 +360,6 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 		}
 
-		static class User {
-
-			private String name;
-
-			private int age;
-
-			User() {
-
-			}
-
-			User(String name, int age) {
-				this.name = name;
-				this.age = age;
-			}
-
-			public String getName() {
-				return name;
-			}
-
-			public void setName(String name) {
-				this.name = name;
-			}
-
-			public int getAge() {
-				return age;
-			}
-
-			public void setAge(int age) {
-				this.age = age;
-			}
-
-			@Override
-			public boolean equals(Object o) {
-				if (this == o) {
-					return true;
-				}
-				if (o == null || getClass() != o.getClass()) {
-					return false;
-				}
-				User user = (User) o;
-				return age == user.age && Objects.equals(name, user.name);
-			}
-
-			@Override
-			public int hashCode() {
-				return Objects.hash(name, age);
-			}
-
-			@Override
-			public String toString() {
-				return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
-			}
-
-		}
-
 	}
 
 	@Nested
@@ -428,33 +373,33 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 		@Test
 		void jsonSchema() throws Exception {
-			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
-			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
+			PulsarProducerFactory<UserRecord> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
+			PulsarTemplate<UserRecord> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
-				template.send("json-custom-schema-topic", new User2("Jason", i), JSONSchema.of(User2.class));
+				template.send("json-custom-schema-topic", new UserRecord("Jason", i), JSONSchema.of(UserRecord.class));
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@Test
 		void avroSchema() throws Exception {
-			PulsarProducerFactory<User> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
-			PulsarTemplate<User> template = new PulsarTemplate<>(pulsarProducerFactory);
+			PulsarProducerFactory<UserPojo> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
+			PulsarTemplate<UserPojo> template = new PulsarTemplate<>(pulsarProducerFactory);
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-custom-schema-topic", new User("Avi", i), AvroSchema.of(User.class));
+				template.send("avro-custom-schema-topic", new UserPojo("Avi", i), AvroSchema.of(UserPojo.class));
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@Test
 		void keyvalueSchema() throws Exception {
-			PulsarProducerFactory<KeyValue<String, User2>> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
+			PulsarProducerFactory<KeyValue<String, UserRecord>> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(
 					pulsarClient);
-			PulsarTemplate<KeyValue<String, User2>> template = new PulsarTemplate<>(pulsarProducerFactory);
-			Schema<KeyValue<String, User2>> kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(User2.class),
-					KeyValueEncodingType.INLINE);
+			PulsarTemplate<KeyValue<String, UserRecord>> template = new PulsarTemplate<>(pulsarProducerFactory);
+			Schema<KeyValue<String, UserRecord>> kvSchema = Schema.KeyValue(Schema.STRING,
+					Schema.JSON(UserRecord.class), KeyValueEncodingType.INLINE);
 			for (int i = 0; i < 3; i++) {
-				template.send("keyvalue-custom-schema-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)),
+				template.send("keyvalue-custom-schema-topic", new KeyValue<>("Kevin", new UserRecord("Kevin", 5150)),
 						kvSchema);
 			}
 			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -480,8 +425,8 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 			@Bean
 			SchemaResolver customSchemaResolver() {
 				DefaultSchemaResolver resolver = new DefaultSchemaResolver();
-				resolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
-				resolver.addCustomSchemaMapping(User2.class, Schema.JSON(User2.class));
+				resolver.addCustomSchemaMapping(UserPojo.class, Schema.AVRO(UserPojo.class));
+				resolver.addCustomSchemaMapping(UserRecord.class, Schema.JSON(UserRecord.class));
 				resolver.addCustomSchemaMapping(Proto.Person.class, Schema.PROTOBUF(Proto.Person.class));
 				return resolver;
 			}
@@ -496,21 +441,21 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 			@ReactivePulsarListener(id = "jsonListener", topics = "json-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenJson(User2 ignored) {
+			Mono<Void> listenJson(UserRecord ignored) {
 				jsonLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "avroListener", topics = "avro-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenAvro(User ignored) {
+			Mono<Void> listenAvro(UserPojo ignored) {
 				avroLatch.countDown();
 				return Mono.empty();
 			}
 
 			@ReactivePulsarListener(id = "keyvalueListener", topics = "keyvalue-custom-schema-topic",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenKeyvalue(KeyValue<String, User2> ignored) {
+			Mono<Void> listenKeyvalue(KeyValue<String, UserRecord> ignored) {
 				keyvalueLatch.countDown();
 				return Mono.empty();
 			}
@@ -520,67 +465,6 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 			Mono<Void> listenProtobuf(Proto.Person ignored) {
 				protobufLatch.countDown();
 				return Mono.empty();
-			}
-
-			record User2(String name, int age) {
-			}
-
-		}
-
-		/**
-		 * Do not convert this to a Record as Avro does not seem to work well w/ records.
-		 */
-		static class User {
-
-			private String name;
-
-			private int age;
-
-			User() {
-
-			}
-
-			User(String name, int age) {
-				this.name = name;
-				this.age = age;
-			}
-
-			public String getName() {
-				return name;
-			}
-
-			public void setName(String name) {
-				this.name = name;
-			}
-
-			public int getAge() {
-				return age;
-			}
-
-			public void setAge(int age) {
-				this.age = age;
-			}
-
-			@Override
-			public boolean equals(Object o) {
-				if (this == o) {
-					return true;
-				}
-				if (o == null || getClass() != o.getClass()) {
-					return false;
-				}
-				User user = (User) o;
-				return age == user.age && Objects.equals(name, user.name);
-			}
-
-			@Override
-			public int hashCode() {
-				return Objects.hash(name, age);
-			}
-
-			@Override
-			public String toString() {
-				return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
 			}
 
 		}
@@ -596,11 +480,11 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 		@Test
 		void complexMessageTypeTopicMapping() throws Exception {
-			PulsarProducerFactory<User2> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
-			PulsarTemplate<User2> template = new PulsarTemplate<>(pulsarProducerFactory);
-			Schema<User2> schema = Schema.JSON(User2.class);
+			PulsarProducerFactory<UserRecord> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient);
+			PulsarTemplate<UserRecord> template = new PulsarTemplate<>(pulsarProducerFactory);
+			Schema<UserRecord> schema = Schema.JSON(UserRecord.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("rplt-topicMapping-user-topic", new User2("Jason", i), schema);
+				template.send("rplt-topicMapping-user-topic", new UserRecord("Jason", i), schema);
 			}
 			assertThat(userLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -622,7 +506,7 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 			@Bean
 			TopicResolver topicResolver() {
 				DefaultTopicResolver resolver = new DefaultTopicResolver();
-				resolver.addCustomTopicMapping(User2.class, "rplt-topicMapping-user-topic");
+				resolver.addCustomTopicMapping(UserRecord.class, "rplt-topicMapping-user-topic");
 				resolver.addCustomTopicMapping(String.class, "rplt-topicMapping-string-topic");
 				return resolver;
 			}
@@ -637,7 +521,7 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 			@ReactivePulsarListener(id = "userListener", schemaType = SchemaType.JSON,
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
-			Mono<Void> listenUser(User2 ignored) {
+			Mono<Void> listenUser(UserRecord ignored) {
 				userLatch.countDown();
 				return Mono.empty();
 			}

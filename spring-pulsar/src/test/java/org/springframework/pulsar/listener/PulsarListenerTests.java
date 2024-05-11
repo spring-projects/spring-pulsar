@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -73,6 +72,8 @@ import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
+import org.springframework.pulsar.test.support.model.UserPojo;
+import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.util.backoff.FixedBackOff;
 
@@ -400,11 +401,11 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 		@Test
 		void jsonSchema() throws Exception {
-			var pulsarProducerFactory = new DefaultPulsarProducerFactory<User>(pulsarClient);
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<UserPojo>(pulsarClient);
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			var schema = JSONSchema.of(User.class);
+			var schema = JSONSchema.of(UserPojo.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("json-topic", new User("Jason", i), schema);
+				template.send("json-topic", new UserPojo("Jason", i), schema);
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(jsonBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -412,11 +413,11 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 		@Test
 		void avroSchema() throws Exception {
-			var pulsarProducerFactory = new DefaultPulsarProducerFactory<User>(pulsarClient);
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<UserPojo>(pulsarClient);
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			var schema = AvroSchema.of(User.class);
+			var schema = AvroSchema.of(UserPojo.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-topic", new User("Avi", i), schema);
+				template.send("avro-topic", new UserPojo("Avi", i), schema);
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(avroBatchLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -452,25 +453,25 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(id = "jsonListener", topics = "json-topic", subscriptionName = "subscription-4",
 					schemaType = SchemaType.JSON, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenJson(User ignored) {
+			void listenJson(UserPojo ignored) {
 				jsonLatch.countDown();
 			}
 
 			@PulsarListener(id = "jsonBatchListener", topics = "json-topic", subscriptionName = "subscription-5",
 					schemaType = SchemaType.JSON, batch = true, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenJsonBatch(List<User> messages) {
+			void listenJsonBatch(List<UserPojo> messages) {
 				messages.forEach(m -> jsonBatchLatch.countDown());
 			}
 
 			@PulsarListener(id = "avroListener", topics = "avro-topic", subscriptionName = "subscription-6",
 					schemaType = SchemaType.AVRO, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenAvro(User ignored) {
+			void listenAvro(UserPojo ignored) {
 				avroLatch.countDown();
 			}
 
 			@PulsarListener(id = "avroBatchListener", topics = "avro-topic", subscriptionName = "subscription-7",
 					schemaType = SchemaType.AVRO, batch = true, properties = { "subscriptionInitialPosition=Earliest" })
-			void listenAvroBatch(Messages<User> messages) {
+			void listenAvroBatch(Messages<UserPojo> messages) {
 				messages.forEach(m -> avroBatchLatch.countDown());
 			}
 
@@ -504,66 +505,6 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 	}
 
-	/**
-	 * Do not convert this to a Record as Avro does not seem to work well w/ records.
-	 */
-	static class User {
-
-		private String name;
-
-		private int age;
-
-		User() {
-		}
-
-		User(String name, int age) {
-			this.name = name;
-			this.age = age;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public int getAge() {
-			return age;
-		}
-
-		public void setAge(int age) {
-			this.age = age;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) {
-				return true;
-			}
-			if (o == null || getClass() != o.getClass()) {
-				return false;
-			}
-			User user = (User) o;
-			return age == user.age && Objects.equals(name, user.name);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(name, age);
-		}
-
-		@Override
-		public String toString() {
-			return "User{" + "name='" + name + '\'' + ", age=" + age + '}';
-		}
-
-	}
-
-	record User2(String name, int age) {
-	}
-
 	@Nested
 	@ContextConfiguration(classes = SchemaCustomMappingsTestCases.SchemaCustomMappingsTestConfig.class)
 	class SchemaCustomMappingsTestCases {
@@ -575,33 +516,33 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 		@Test
 		void jsonSchema() throws Exception {
-			var pulsarProducerFactory = new DefaultPulsarProducerFactory<User2>(pulsarClient);
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<UserRecord>(pulsarClient);
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			var schema = Schema.JSON(User2.class);
+			var schema = Schema.JSON(UserRecord.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("json-custom-mappings-topic", new User2("Jason", i), schema);
+				template.send("json-custom-mappings-topic", new UserRecord("Jason", i), schema);
 			}
 			assertThat(jsonLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@Test
 		void avroSchema() throws Exception {
-			var pulsarProducerFactory = new DefaultPulsarProducerFactory<User>(pulsarClient);
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<UserPojo>(pulsarClient);
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			var schema = AvroSchema.of(User.class);
+			var schema = AvroSchema.of(UserPojo.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("avro-custom-mappings-topic", new User("Avi", i), schema);
+				template.send("avro-custom-mappings-topic", new UserPojo("Avi", i), schema);
 			}
 			assertThat(avroLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
 
 		@Test
 		void keyvalueSchema() throws Exception {
-			var pulsarProducerFactory = new DefaultPulsarProducerFactory<KeyValue<String, User2>>(pulsarClient);
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<KeyValue<String, UserRecord>>(pulsarClient);
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			var kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(User2.class), KeyValueEncodingType.INLINE);
+			var kvSchema = Schema.KeyValue(Schema.STRING, Schema.JSON(UserRecord.class), KeyValueEncodingType.INLINE);
 			for (int i = 0; i < 3; i++) {
-				template.send("keyvalue-custom-mappings-topic", new KeyValue<>("Kevin", new User2("Kevin", 5150)),
+				template.send("keyvalue-custom-mappings-topic", new KeyValue<>("Kevin", new UserRecord("Kevin", 5150)),
 						kvSchema);
 			}
 			assertThat(keyvalueLatch.await(10, TimeUnit.SECONDS)).isTrue();
@@ -626,8 +567,8 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 			@Bean
 			SchemaResolver customSchemaResolver() {
 				DefaultSchemaResolver resolver = new DefaultSchemaResolver();
-				resolver.addCustomSchemaMapping(User.class, Schema.AVRO(User.class));
-				resolver.addCustomSchemaMapping(User2.class, Schema.JSON(User2.class));
+				resolver.addCustomSchemaMapping(UserPojo.class, Schema.AVRO(UserPojo.class));
+				resolver.addCustomSchemaMapping(UserRecord.class, Schema.JSON(UserRecord.class));
 				resolver.addCustomSchemaMapping(Proto.Person.class, Schema.PROTOBUF(Proto.Person.class));
 				return resolver;
 			}
@@ -644,19 +585,19 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(id = "jsonListener", topics = "json-custom-mappings-topic",
 					subscriptionName = "subscription-4", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenJson(User2 ignored) {
+			void listenJson(UserRecord ignored) {
 				jsonLatch.countDown();
 			}
 
 			@PulsarListener(id = "avroListener", topics = "avro-custom-mappings-topic",
 					subscriptionName = "subscription-6", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenAvro(User ignored) {
+			void listenAvro(UserPojo ignored) {
 				avroLatch.countDown();
 			}
 
 			@PulsarListener(id = "keyvalueListener", topics = "keyvalue-custom-mappings-topic",
 					subscriptionName = "subscription-8", properties = { "subscriptionInitialPosition=Earliest" })
-			void listenKeyvalue(KeyValue<String, User2> ignored) {
+			void listenKeyvalue(KeyValue<String, UserRecord> ignored) {
 				keyvalueLatch.countDown();
 			}
 
@@ -679,11 +620,11 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 		@Test
 		void complexMessageTypeTopicMapping() throws Exception {
-			var pulsarProducerFactory = new DefaultPulsarProducerFactory<User2>(pulsarClient);
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<UserRecord>(pulsarClient);
 			var template = new PulsarTemplate<>(pulsarProducerFactory);
-			var schema = Schema.JSON(User2.class);
+			var schema = Schema.JSON(UserRecord.class);
 			for (int i = 0; i < 3; i++) {
-				template.send("plt-topicMapping-user-topic", new User2("Jason", i), schema);
+				template.send("plt-topicMapping-user-topic", new UserRecord("Jason", i), schema);
 			}
 			assertThat(userLatch.await(10, TimeUnit.SECONDS)).isTrue();
 		}
@@ -705,7 +646,7 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 			@Bean
 			TopicResolver topicResolver() {
 				DefaultTopicResolver resolver = new DefaultTopicResolver();
-				resolver.addCustomTopicMapping(User2.class, "plt-topicMapping-user-topic");
+				resolver.addCustomTopicMapping(UserRecord.class, "plt-topicMapping-user-topic");
 				resolver.addCustomTopicMapping(String.class, "plt-topicMapping-string-topic");
 				return resolver;
 			}
@@ -722,7 +663,7 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 			@PulsarListener(id = "userListener", schemaType = SchemaType.JSON, subscriptionName = "sub1",
 					properties = { "subscriptionInitialPosition=Earliest" })
-			void listenUser(User2 ignored) {
+			void listenUser(UserRecord ignored) {
 				userLatch.countDown();
 			}
 
