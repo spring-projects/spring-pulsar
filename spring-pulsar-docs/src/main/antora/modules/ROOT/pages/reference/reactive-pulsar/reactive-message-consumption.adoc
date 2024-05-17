@@ -112,6 +112,8 @@ Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<Foo
 NOTE: The listener method returns a `Flux<MessageResult<Void>>` where each element represents a processed message and holds the message id, value and whether it was acknowledged.
 The Spring `MessageUtils` has a set of static factory methods that can be used to create the appropriate `MessageResult` instance from a Spring message.
 
+NOTE: There is no support for using `org.apache.pulsar.client.api.Messages<T>` in a `@ReactivePulsarListener`
+
 === Configuration - Application Properties
 The listener relies on the `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer that it uses to consume messages.
 Spring Boot provides this consumer factory which you can further configure by specifying the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.

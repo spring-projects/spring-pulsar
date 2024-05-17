@@ -36,7 +36,7 @@ For `@ReactivePularListener`, the `null` payload is passed into the listener met
 | `Flux<org.apache.pulsar.client.api.Message<T>>`
 | non-null flux whose entries are non-null Pulsar messages whose `getValue()` returns `null`
 
-| `Flux<org.apache.pulsar.client.api.Messages<T>>`
+| `Flux<org.springframework.messaging.Message<T>>`
 | non-null flux whose entries are non-null Spring messages whose `getPayload()` returns `PulsarNull`
 
 |===
