@@ -111,6 +111,7 @@ Flux<MessageResult<Void>> listen2(Flux<org.springframework.messaging.Message<Foo
 
 NOTE: The listener method returns a `Flux<MessageResult<Void>>` where each element represents a processed message and holds the message id, value and whether it was acknowledged.
 The Spring `MessageUtils` has a set of static factory methods that can be used to create the appropriate `MessageResult` instance from a Spring message.
+The `MessageUtils` provides the same functionality for Spring messages as the set of factory methods on `MessagResult` does for Pulsar messages.
 
 NOTE: There is no support for using `org.apache.pulsar.client.api.Messages<T>` in a `@ReactivePulsarListener`
 
