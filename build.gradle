@@ -25,13 +25,6 @@ allprojects {
 	}
 }
 
-if (hasProperty('buildScan')) {
-	buildScan {
-		termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-		termsOfServiceAgree = 'yes'
-	}
-}
-
 nohttp {
 	allowlistFile = project.file('src/nohttp/allowlist.lines')
 	source.exclude "**/bin/**"
