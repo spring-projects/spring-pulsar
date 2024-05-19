@@ -21,3 +21,36 @@ include::tls-encryption.adoc[]
 [[client-authentication]]
 == Authentication
 include::authentication.adoc[]
+
+[[auto-cluster-failover]]
+== Automatic Cluster-Level Failover
+
+The Pulsar Spring Boot Starter also auto-configures the `PulsarClient` for {apache-pulsar-docs}/concepts-cluster-level-failover/[automatic cluster-level failover].
+
+You can use the {spring-boot-pulsar-config-props}[`spring.pulsar.client.failover.*`] application properties to configure cluster-level failover.
+
+The following example configures the client with a primary and two backup clusters.
+
+.application.yml
+[source,yaml,subs="attributes,verbatim"]
+----
+spring:
+  pulsar:
+    client:
+      service-url: "pulsar://my.primary.server:6650"
+      failover:
+        delay: 30s
+        switch-back-delay: 15s
+        check-interval: 1s
+        backup-clusters:
+          - service-url: "pulsar://my.second.server:6650"
+            authentication:
+              plugin-class-name: org.apache.pulsar.client.impl.auth.AuthenticationToken
+              param:
+                token: "my-token"
+          - service-url: "pulsar://my.third.server:6650"
+----
+
+IMPORTANT: In addition to the client configuration, there a {apache-pulsar-docs}/client-libraries-cluster-level-failover/#prerequisites[few prerequisites] on the broker that must be satisfied in order to use this feature.
+
+When not using Spring Boot auto-configuration, you can provide a client customizer that configures the client for cluster-level failover.
