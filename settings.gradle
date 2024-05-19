@@ -8,9 +8,13 @@ pluginManagement {
 }
 
 plugins {
-	id "com.gradle.enterprise" version "3.12.6"
-	id "io.spring.ge.conventions" version "0.0.13"
+	id 'com.gradle.develocity' version '3.17.2'
+	id 'io.spring.ge.conventions' version '0.0.17' apply false
 }
+
+startParameter.noBuildScan = startParameter.taskNames.contains('format')
+
+apply plugin: 'io.spring.ge.conventions'
 
 include 'spring-pulsar'
 include 'spring-pulsar-bom'
@@ -35,9 +39,11 @@ rootProject.children.findAll { !it.name.startsWith('sample-') }
 		.each {project -> project.buildFileName = "${project.name}.gradle" }
 
 settings.gradle.projectsLoaded {
-	gradleEnterprise {
+	develocity {
 		buildScan {
-			publishOnFailure()
+			publishing.onlyIf { !it.buildResult.failures.empty }
+			termsOfUseUrl = 'https://gradle.com/terms-of-service'
+			termsOfUseAgree = 'yes'
 		}
 	}
 }
