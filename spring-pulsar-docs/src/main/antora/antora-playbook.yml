@@ -40,7 +40,7 @@ urls:
 
 ui:
   bundle:
-    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.4.12/ui-bundle.zip
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.4.14/ui-bundle.zip
     snapshot: true
 
 runtime:
