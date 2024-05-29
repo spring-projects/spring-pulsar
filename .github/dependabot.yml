@@ -4,7 +4,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: sunday
+      day: wednesday
     ignore:
       - dependency-name: '*'
         update-types:
@@ -27,7 +27,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: saturday
+      day: thursday
     labels:
       - 'type: task'
     groups:
