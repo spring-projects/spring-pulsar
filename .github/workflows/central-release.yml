@@ -14,7 +14,7 @@ jobs:
     name: Release Sonatype Staging Repo
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Release Sonatype repo to Maven Central
         env:
