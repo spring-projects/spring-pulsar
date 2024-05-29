@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+    labels:
+      - 'type: dependency-upgrade'
+    groups:
+      development-dependencies:
+        update-types:
+          - patch
+        patterns:
+          - com.gradle.enterprise
+          - com.github.spotbugs
+          - io.spring.*
+          - org.ajoberstar.grgit
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+    labels:
+      - 'type: task'
+    groups:
+      development-dependencies:
+        patterns:
+          - '*'
