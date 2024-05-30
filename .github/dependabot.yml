@@ -5,6 +5,7 @@ updates:
     schedule:
       interval: weekly
       day: thursday
+    target-branch: '1.0.x'
     ignore:
       - dependency-name: '*'
         update-types:
@@ -28,6 +29,7 @@ updates:
     schedule:
       interval: weekly
       day: friday
+    target-branch: '1.0.x'
     labels:
       - 'type: task'
     groups:
