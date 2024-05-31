@@ -4,7 +4,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: thursday
+      day: saturday
     target-branch: '1.0.x'
     ignore:
       - dependency-name: '*'
@@ -28,7 +28,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: friday
+      day: saturday
     target-branch: '1.0.x'
     labels:
       - 'type: task'
