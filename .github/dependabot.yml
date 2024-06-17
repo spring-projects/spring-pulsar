@@ -1,6 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: gradle
+    target-branch: main
     directory: /
     schedule:
       interval: weekly
@@ -22,12 +23,49 @@ updates:
           - com.github.spotbugs
           - io.spring.*
           - org.ajoberstar.grgit
-
+  - package-ecosystem: gradle
+    target-branch: 1.0.x
+    directory: /
+    schedule:
+      interval: daily
+      time: '20:00'
+      timezone: Etc/UTC
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+    labels:
+      - 'type: dependency-upgrade'
+    groups:
+      development-dependencies:
+        update-types:
+          - patch
+        patterns:
+          - com.gradle.enterprise
+          - com.github.spotbugs
+          - io.spring.*
+          - org.ajoberstar.grgit
   - package-ecosystem: github-actions
+    target-branch: main
     directory: /
     schedule:
       interval: weekly
       day: sunday
+    labels:
+      - 'type: task'
+    groups:
+      development-dependencies:
+        patterns:
+          - '*'
+  - package-ecosystem: github-actions
+    target-branch: 1.0.x
+    directory: /
+    schedule:
+      interval: daily
+      time: '20:00'
+      timezone: Etc/UTC
     labels:
       - 'type: task'
     groups:
