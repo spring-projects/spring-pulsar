@@ -5,7 +5,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: sunday
+      day: saturday
     ignore:
       - dependency-name: '*'
         update-types:
@@ -27,9 +27,8 @@ updates:
     target-branch: 1.0.x
     directory: /
     schedule:
-      interval: daily
-      time: '20:00'
-      timezone: Etc/UTC
+      interval: weekly
+      day: sunday
     ignore:
       - dependency-name: '*'
         update-types:
@@ -52,7 +51,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: sunday
+      day: saturday
     labels:
       - 'type: task'
     groups:
@@ -63,9 +62,8 @@ updates:
     target-branch: 1.0.x
     directory: /
     schedule:
-      interval: daily
-      time: '20:00'
-      timezone: Etc/UTC
+      interval: weekly
+      day: sunday
     labels:
       - 'type: task'
     groups:
