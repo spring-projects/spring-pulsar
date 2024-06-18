@@ -16,8 +16,8 @@ def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayNa
 dependencies {
 	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"
 	implementation "org.apache.pulsar:pulsar-functions-api:${pulsarVersion}"
-	compileOnly 'org.projectlombok:lombok:1.18.24'
-	annotationProcessor 'org.projectlombok:lombok:1.18.24'
+	compileOnly 'org.projectlombok:lombok:1.18.32'
+	annotationProcessor 'org.projectlombok:lombok:1.18.32'
 }
 
 // Customization of jar to make a simple Uber function jar
