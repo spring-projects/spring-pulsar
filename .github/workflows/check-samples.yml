@@ -23,7 +23,7 @@ jobs:
       project_version: ${{ steps.continue.outputs.project_version }}
       boot_version: ${{ steps.continue.outputs.boot_version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: continue
         name: Determine if should continue
         run: |
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Check samples project
         env:
