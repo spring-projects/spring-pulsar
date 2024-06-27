@@ -2,7 +2,7 @@ def toolchainVersion() {
 	if (project.hasProperty('testToolchain')) {
 		return project.property('testToolchain').toString().toInteger()
 	}
-	return 17
+	return 21
 }
 
 project.afterEvaluate {
