@@ -4,21 +4,9 @@ node {
 }
 
 antora {
-	version = '3.2.0-alpha.2'
+	version = '3.2.0-alpha.4'
 	playbook = file('src/main/antora/antora-playbook.yml')
 	options = ['to-dir' : project.layout.buildDirectory.dir('site').get().toString(), clean: true, fetch: !project.gradle.startParameter.offline, stacktrace: true]
-	environment = [
-			'ALGOLIA_API_KEY': '9d489079e5ec46dbb238909fee5c9c29',
-			'ALGOLIA_APP_ID': 'WB1FQYI187',
-			'ALGOLIA_INDEX_NAME': 'springdocs',
-	]
-	dependencies = [
-			'@antora/atlas-extension': '1.0.0-alpha.1',
-			'@antora/collector-extension': '1.0.0-alpha.3',
-			'@asciidoctor/tabs': '1.0.0-beta.3',
-			'@springio/antora-extensions': '1.7.0',
-			'@springio/asciidoctor-extensions': '1.0.0-alpha.8',
-	]
 }
 
 tasks.named("generateAntoraYml") {
