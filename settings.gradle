@@ -41,7 +41,8 @@ rootProject.children.findAll { !it.name.startsWith('sample-') }
 settings.gradle.projectsLoaded {
 	develocity {
 		buildScan {
-			publishing.onlyIf { !it.buildResult.failures.empty }
+			// only publish build scan if explicitly requested w/ --scan
+			publishing.onlyIf { false }
 			termsOfUseUrl = 'https://gradle.com/terms-of-service'
 			termsOfUseAgree = 'yes'
 		}
