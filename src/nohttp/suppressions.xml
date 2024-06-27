@@ -4,4 +4,5 @@
 	"https://checkstyle.org/dtds/suppressions_1_2.dtd">
 <suppressions>
 	<suppress files=".+\.(jar|git|ico|p12|gif|jks|jpg|svg)" checks="NoHttp" />
+	<suppress files="[\\/]node_modules[\\/]" checks="NoHttp" />
 </suppressions>
