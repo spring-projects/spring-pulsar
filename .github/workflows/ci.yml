@@ -28,7 +28,7 @@ jobs:
       project_version: ${{ steps.continue.outputs.project_version }}
       boot_version: ${{ steps.continue.outputs.boot_version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: continue
         name: Determine if should continue
         run: |
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Build and run unit tests
         run: |
@@ -57,7 +57,7 @@ jobs:
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
       - name: Capture test results
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Run all sample app tests
         env:
@@ -100,7 +100,7 @@ jobs:
     needs: [build_jdk_17, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Deploy artifacts
         env:
@@ -118,7 +118,7 @@ jobs:
     needs: [build_jdk_17, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Run Antora
         run: |
@@ -150,7 +150,7 @@ jobs:
       BRANCH: ${{ github.ref_name }}
       VERSION: ${{ needs.prerequisites.outputs.project_version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
@@ -202,7 +202,7 @@ jobs:
           --notes-file $RELEASE_NOTES_FILE
       - name: Announce Release on Slack
         id: spring-pulsar-announcing
-        uses: slackapi/slack-github-action@v1.19.0
+        uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
             {
