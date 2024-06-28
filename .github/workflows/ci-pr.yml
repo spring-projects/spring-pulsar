@@ -17,7 +17,7 @@ jobs:
       project_version: ${{ steps.continue.outputs.project_version }}
       boot_version: ${{ steps.continue.outputs.boot_version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: continue
         name: Determine if should continue
         run: |
@@ -34,14 +34,14 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Build and run unit tests
         run: |
           ./gradlew clean build -x integrationTest --continue --scan
       - name: Upload Test Results
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
@@ -54,7 +54,7 @@ jobs:
           ./gradlew jacocoTestCoverageVerification --info
       - name: Upload Aggregated Jacoco Report
         if: failure() || contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jacoco-results
           path: 'build/reports/jacoco/**/*.*'
@@ -64,14 +64,14 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Run integration tests
         run: |
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
       - name: Capture Test Results
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Run all sample app tests
         env:
