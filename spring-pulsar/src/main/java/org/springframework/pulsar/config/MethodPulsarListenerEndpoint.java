@@ -57,6 +57,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link PulsarListenerEndpoint} providing the method to invoke to process an incoming
  * message for this endpoint.
@@ -73,6 +75,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	private Object bean;
 
 	private Method method;
+
+	private ObjectMapper objectMapper;
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
@@ -109,6 +113,14 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	public Method getMethod() {
 		return this.method;
+	}
+
+	public ObjectMapper getObjectMapper() {
+		return this.objectMapper;
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
 
 	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory messageHandlerMethodFactory) {
@@ -239,12 +251,12 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isBatchListener()) {
 			PulsarBatchMessagesToSpringMessageListenerAdapter<V> messageListener = new PulsarBatchMessagesToSpringMessageListenerAdapter<>(
-					this.bean, this.method);
+					this.bean, this.method, this.objectMapper);
 			listener = messageListener;
 		}
 		else {
 			PulsarRecordMessageToSpringMessageListenerAdapter<V> messageListener = new PulsarRecordMessageToSpringMessageListenerAdapter<>(
-					this.bean, this.method);
+					this.bean, this.method, this.objectMapper);
 			if (messageConverter instanceof PulsarMessageConverter) {
 				messageListener.setMessageConverter((PulsarMessageConverter) messageConverter);
 			}

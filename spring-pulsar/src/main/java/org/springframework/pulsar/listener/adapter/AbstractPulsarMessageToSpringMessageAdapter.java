@@ -43,6 +43,8 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter providing the
  * necessary infrastructure to extract the payload from a Pulsar message.
@@ -81,13 +83,14 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 
 	private boolean converterSet;
 
-	private PulsarMessageConverter<V> messageConverter = new PulsarRecordMessageConverter<V>(
-			JsonPulsarHeaderMapper.builder().build());
+	private PulsarMessageConverter<V> messageConverter;
 
 	private Type fallbackType = Object.class;
 
-	public AbstractPulsarMessageToSpringMessageAdapter(Object bean, Method method) {
+	public AbstractPulsarMessageToSpringMessageAdapter(Object bean, Method method, ObjectMapper objectMapper) {
 		this.bean = bean;
+		this.messageConverter = new PulsarRecordMessageConverter<V>(
+				JsonPulsarHeaderMapper.builder().objectMapper(objectMapper).build());
 		this.inferredType = determineInferredType(method);
 	}
 

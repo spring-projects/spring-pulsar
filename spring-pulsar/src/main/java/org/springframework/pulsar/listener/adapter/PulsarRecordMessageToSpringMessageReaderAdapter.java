@@ -23,6 +23,8 @@ import org.apache.pulsar.client.api.MessageListener;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.ReaderListener;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link MessageListener MessageListener} adapter that invokes a configurable
  * {@link HandlerAdapter}; used when the factory is configured for the listener to receive
@@ -34,8 +36,8 @@ import org.apache.pulsar.client.api.ReaderListener;
 public class PulsarRecordMessageToSpringMessageReaderAdapter<V> extends AbstractPulsarMessageToSpringMessageAdapter<V>
 		implements ReaderListener<V> {
 
-	public PulsarRecordMessageToSpringMessageReaderAdapter(Object bean, Method method) {
-		super(bean, method);
+	public PulsarRecordMessageToSpringMessageReaderAdapter(Object bean, Method method, ObjectMapper objectMapper) {
+		super(bean, method, objectMapper);
 	}
 
 	@Override

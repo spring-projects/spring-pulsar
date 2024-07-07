@@ -48,6 +48,8 @@ import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link PulsarReaderEndpoint} providing the method to invoke to process an incoming
  * message for this endpoint.
@@ -62,6 +64,8 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 	private Object bean;
 
 	private Method method;
+
+	private ObjectMapper objectMapper;
 
 	private SmartMessageConverter messagingConverter;
 
@@ -87,6 +91,14 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 	public Method getMethod() {
 		return this.method;
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
+
+	public ObjectMapper getObjectMapper() {
+		return this.objectMapper;
 	}
 
 	@Override
@@ -175,7 +187,7 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		PulsarRecordMessageToSpringMessageReaderAdapter<V> messageListener = new PulsarRecordMessageToSpringMessageReaderAdapter<>(
-				this.bean, this.method);
+				this.bean, this.method, this.objectMapper);
 		if (messageConverter instanceof PulsarMessageConverter) {
 			messageListener.setMessageConverter((PulsarMessageConverter) messageConverter);
 		}

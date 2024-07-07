@@ -53,6 +53,7 @@ import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
 
 /**
@@ -70,6 +71,8 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 	private Object bean;
 
 	private Method method;
+
+	private ObjectMapper objectMapper;
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
@@ -212,10 +215,12 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isFluxListener()) {
-			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(this.bean, this.method);
+			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(this.bean, this.method,
+					this.objectMapper);
 		}
 		else {
-			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(this.bean, this.method);
+			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(this.bean, this.method,
+					this.objectMapper);
 		}
 
 		if (messageConverter instanceof PulsarMessageConverter) {

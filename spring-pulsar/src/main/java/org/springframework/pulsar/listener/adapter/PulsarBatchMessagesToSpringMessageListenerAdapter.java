@@ -32,6 +32,8 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.PulsarBatchAcknowledgingMessageListener;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link org.apache.pulsar.client.api.MessageListener MessageListener} adapter that
  * invokes a configurable {@link HandlerAdapter}; used when the factory is configured for
@@ -43,8 +45,8 @@ import org.springframework.pulsar.listener.PulsarBatchAcknowledgingMessageListen
 public class PulsarBatchMessagesToSpringMessageListenerAdapter<V> extends AbstractPulsarMessageToSpringMessageAdapter<V>
 		implements PulsarBatchAcknowledgingMessageListener<V> {
 
-	public PulsarBatchMessagesToSpringMessageListenerAdapter(Object bean, Method method) {
-		super(bean, method);
+	public PulsarBatchMessagesToSpringMessageListenerAdapter(Object bean, Method method, ObjectMapper objectMapper) {
+		super(bean, method, objectMapper);
 	}
 
 	@Override

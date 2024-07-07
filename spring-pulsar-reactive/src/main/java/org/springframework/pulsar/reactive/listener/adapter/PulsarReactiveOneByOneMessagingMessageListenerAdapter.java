@@ -25,6 +25,7 @@ import org.springframework.pulsar.listener.adapter.HandlerAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarOneByOneMessageHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Mono;
 
 /**
@@ -39,8 +40,9 @@ import reactor.core.publisher.Mono;
 public class PulsarReactiveOneByOneMessagingMessageListenerAdapter<V>
 		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarOneByOneMessageHandler<V> {
 
-	public PulsarReactiveOneByOneMessagingMessageListenerAdapter(Object bean, Method method) {
-		super(bean, method);
+	public PulsarReactiveOneByOneMessagingMessageListenerAdapter(Object bean, Method method,
+			ObjectMapper objectMapper) {
+		super(bean, method, objectMapper);
 	}
 
 	@Override

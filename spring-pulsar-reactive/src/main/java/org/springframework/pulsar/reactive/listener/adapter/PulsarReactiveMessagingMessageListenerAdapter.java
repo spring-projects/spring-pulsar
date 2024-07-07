@@ -25,6 +25,7 @@ import org.apache.pulsar.client.api.Messages;
 import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
 
 /**
@@ -36,8 +37,8 @@ import reactor.core.publisher.Flux;
 public abstract class PulsarReactiveMessagingMessageListenerAdapter<V>
 		extends AbstractPulsarMessageToSpringMessageAdapter<V> {
 
-	public PulsarReactiveMessagingMessageListenerAdapter(Object bean, Method method) {
-		super(bean, method);
+	public PulsarReactiveMessagingMessageListenerAdapter(Object bean, Method method, ObjectMapper objectMapper) {
+		super(bean, method, objectMapper);
 	}
 
 	/**

@@ -26,6 +26,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link MessageListener MessageListener} adapter that invokes a configurable
  * {@link HandlerAdapter}; used when the factory is configured for the listener to receive
@@ -37,8 +39,8 @@ import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
 public class PulsarRecordMessageToSpringMessageListenerAdapter<V> extends AbstractPulsarMessageToSpringMessageAdapter<V>
 		implements PulsarAcknowledgingMessageListener<V> {
 
-	public PulsarRecordMessageToSpringMessageListenerAdapter(Object bean, Method method) {
-		super(bean, method);
+	public PulsarRecordMessageToSpringMessageListenerAdapter(Object bean, Method method, ObjectMapper objectMapper) {
+		super(bean, method, objectMapper);
 	}
 
 	@Override

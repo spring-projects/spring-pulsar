@@ -51,6 +51,8 @@ import org.springframework.pulsar.config.PulsarReaderEndpointRegistry;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Bean post-processor that registers methods annotated with {@link PulsarListener} to be
  * invoked by a Pulsar message listener container created under the covers by a
@@ -106,8 +108,14 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 
 	private final List<MethodPulsarReaderEndpoint<?>> processedEndpoints = new ArrayList<>();
 
+	private ObjectMapper objectMapper;
+
 	@Override
 	public void afterSingletonsInstantiated() {
+		this.beanFactory.getBeanProvider(ObjectMapper.class)
+			.stream()
+			.findAny()
+			.ifPresent(objectMapper1 -> this.objectMapper = objectMapper1);
 		this.registrar.setBeanFactory(this.beanFactory);
 		this.beanFactory.getBeanProvider(PulsarReaderConfigurer.class)
 			.forEach(c -> c.configurePulsarReaders(this.registrar));
@@ -211,6 +219,7 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 	private void processPulsarReaderAnnotation(MethodPulsarReaderEndpoint<?> endpoint, PulsarReader pulsarReader,
 			Object bean, String[] topics) {
 		endpoint.setBean(bean);
+		endpoint.setObjectMapper(this.objectMapper);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
 		endpoint.setId(getEndpointId(pulsarReader));
 		endpoint.setTopics(topics);
