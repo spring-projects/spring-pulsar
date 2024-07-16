@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  GCHAT_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
   GRADLE_ENTERPRISE_CACHE_USER: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
   GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
   GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
@@ -203,26 +203,12 @@ jobs:
           --title "Spring Pulsar $VERSION" \
           --generate-notes \
           --notes-file $RELEASE_NOTES_FILE
-      - name: Announce Release on Slack
-        id: spring-pulsar-announcing
-        uses: slackapi/slack-github-action@v1.26.0
+      - name: Announce Release in Chat
+        uses: julb/action-post-googlechat-message@v1
+        if: env.GCHAT_WEBHOOK_URL
         with:
-          payload: |
-            {
-              "text": "spring-pulsar-announcing `${{ env.VERSION }}` is available now",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "spring-pulsar-announcing `${{ env.VERSION }}` is available now"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          message: "spring-pulsar-announcing `${{ env.VERSION }}`"
+          gchat_webhook_url: ${{ env.GCHAT_WEBHOOK_URL }}
       - name: Update next snapshot version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
