@@ -47,8 +47,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -59,8 +59,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

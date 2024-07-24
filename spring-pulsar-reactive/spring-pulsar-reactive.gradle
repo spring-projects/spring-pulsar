@@ -33,6 +33,7 @@ dependencies {
 	optional libs.json.path
 
 	testImplementation project(':spring-pulsar-test')
+	testImplementation(testFixtures(project(":spring-pulsar")))
 	testRuntimeOnly libs.logback.classic
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.assertj:assertj-core'

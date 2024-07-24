@@ -49,7 +49,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.cache.provider.CacheProvider;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerCacheKey;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerWithCloseCallback;
-import org.springframework.pulsar.test.support.model.UserPojo;
+import org.springframework.pulsar.test.model.UserPojo;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
 
