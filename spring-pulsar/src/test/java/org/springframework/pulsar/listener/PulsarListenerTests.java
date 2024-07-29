@@ -72,8 +72,8 @@ import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
-import org.springframework.pulsar.test.support.model.UserPojo;
-import org.springframework.pulsar.test.support.model.UserRecord;
+import org.springframework.pulsar.test.model.UserPojo;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.util.backoff.FixedBackOff;
 

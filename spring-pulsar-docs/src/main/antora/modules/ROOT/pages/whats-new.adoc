@@ -1,5 +1,15 @@
 = What's new?
 
+[[what-s-new-in-1-2-since-1-1]]
+== What's New in 1.2 Since 1.1
+:page-section-summary-toc: 1
+
+This section covers the changes made from version 1.1 to version 1.2.
+
+=== Custom Object Mapper
+You can provide your own Jackson `ObjectMapper` that Pulsar will use when producing and consuming JSON messages.
+See xref:./reference/custom-object-mapper.adoc[Custom Object Mapper] for more details.
+
 [[what-s-new-in-1-1-since-1-0]]
 == What's New in 1.1 Since 1.0
 :page-section-summary-toc: 1

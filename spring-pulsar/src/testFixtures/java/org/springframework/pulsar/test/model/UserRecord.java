@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.test.support.model;
+package org.springframework.pulsar.test.model;
 
 /**
  * Test object (user) defined via a Java record.
  *
  * @param name the user's name
  * @param age the user's age
- * @deprecated this class is replaced with Gradle test fixtures and is only meant to be
- * used internally.
  */
-@Deprecated(since = "1.2.0", forRemoval = true)
 public record UserRecord(String name, int age) {
 }

@@ -1,5 +1,6 @@
 plugins {
 	id 'org.springframework.pulsar.spring-module'
+	id 'java-test-fixtures'
 }
 
 description = 'Spring Pulsar Core'
@@ -51,4 +52,6 @@ dependencies {
 	testImplementation "org.testcontainers:mysql"
 	testImplementation 'mysql:mysql-connector-java:8.0.33'
 
+	// Used by UserRecordDe/serializer in test fixtures
+	testFixturesApi 'com.fasterxml.jackson.core:jackson-databind'
 }

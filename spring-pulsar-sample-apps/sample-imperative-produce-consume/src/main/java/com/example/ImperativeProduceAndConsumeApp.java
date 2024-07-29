@@ -27,8 +27,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.SchemaResolver;
+import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 
 @SpringBootApplication
 public class ImperativeProduceAndConsumeApp {
@@ -55,7 +59,7 @@ public class ImperativeProduceAndConsumeApp {
 			};
 		}
 
-		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub")
+		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub")
 		void consumePrimitiveMessagesFromPulsarTopic(String msg) {
 			LOG.info("++++++CONSUME {}------", msg);
 		}
@@ -79,7 +83,7 @@ public class ImperativeProduceAndConsumeApp {
 			};
 		}
 
-		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub")
+		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub")
 		void consumeComplexMessagesFromPulsarTopic(Foo msg) {
 			LOG.info("++++++CONSUME {}------", msg);
 		}
@@ -108,7 +112,7 @@ public class ImperativeProduceAndConsumeApp {
 			};
 		}
 
-		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub")
+		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub")
 		void consumePartitionedMessagesFromPulsarTopic(String msg) {
 			LOG.info("++++++CONSUME {}------", msg);
 		}
@@ -132,7 +136,7 @@ public class ImperativeProduceAndConsumeApp {
 			};
 		}
 
-		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC+"-sub", batch = true)
+		@PulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub", batch = true)
 		void consumeBatchMessagesFromPulsarTopic(List<Foo> messages) {
 			messages.forEach((msg) -> LOG.info("++++++CONSUME {}------", msg));
 		}
@@ -161,6 +165,38 @@ public class ImperativeProduceAndConsumeApp {
 		}
 
 	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class ProduceConsumeCustomObjectMapper {
+
+		private static final String TOPIC = "produce-consume-custom-object-mapper";
+
+		@Bean
+		SchemaResolver.SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer() {
+			return (DefaultSchemaResolver schemaResolver) -> {
+				var objectMapper = UserRecordObjectMapper.withSerAndDeser();
+				schemaResolver.setObjectMapper(objectMapper);
+			};
+		}
+
+		@Bean
+		ApplicationRunner sendWithCustomObjectMapper(PulsarTemplate<UserRecord> template) {
+			return (args) -> {
+				for (int i = 0; i < 10; i++) {
+					var user = new UserRecord("user-" + i, 30);
+					template.send(TOPIC, user);
+					LOG.info("++++++PRODUCE {}------", user);
+				}
+			};
+		}
+
+		@PulsarListener(topics = TOPIC)
+		void consumeWithCustomObjectMapper(UserRecord user) {
+			LOG.info("++++++CONSUME {}------", user);
+		}
+
+	}
+
 
 	record Foo(String name, Integer value) {
 	}

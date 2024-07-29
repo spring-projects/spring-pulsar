@@ -44,6 +44,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Default schema resolver capable of handling basic message types.
  *
@@ -95,6 +97,12 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	private final PulsarMessageAnnotationRegistry pulsarMessageAnnotationRegistry = new PulsarMessageAnnotationRegistry();
 
 	private boolean usePulsarMessageAnnotations = true;
+
+	private ObjectMapper objectMapper;
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
 
 	/**
 	 * Sets whether to inspect message classes for the
@@ -168,7 +176,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		if (schema == null && returnDefault) {
 			if (messageClass != null) {
 				try {
-					return Schema.JSON(messageClass);
+					return jsonSchemaForMessageType(messageClass);
 				}
 				catch (Exception e) {
 					this.logger.debug(e, "Failed to create JSON schema for " + messageClass.getName());
@@ -224,7 +232,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 				case LOCAL_DATE -> Schema.LOCAL_DATE;
 				case LOCAL_TIME -> Schema.LOCAL_TIME;
 				case LOCAL_DATE_TIME -> Schema.LOCAL_DATE_TIME;
-				case JSON -> JSONSchema.of(requireNonNullMessageType(schemaType, messageType));
+				case JSON -> jsonSchemaForMessageType(requireNonNullMessageType(schemaType, messageType));
 				case AVRO -> AvroSchema.of(requireNonNullMessageType(schemaType, messageType));
 				case PROTOBUF -> {
 					// WARN! Leave GeneratedMessageV3 fully-qualified as the dependency is
@@ -253,6 +261,13 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		catch (RuntimeException e) {
 			return Resolved.failed(e);
 		}
+	}
+
+	private <T> JSONSchema<T> jsonSchemaForMessageType(Class<T> messageType) {
+		if (this.objectMapper != null) {
+			return JSONSchemaUtil.schemaForTypeWithObjectMapper(messageType, this.objectMapper);
+		}
+		return JSONSchema.of(messageType);
 	}
 
 	@Nullable

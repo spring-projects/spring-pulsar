@@ -59,8 +59,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
+import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -444,6 +445,24 @@ class PulsarTemplateTests implements PulsarTestContainerSupport {
 		@EnablePulsar
 		static class PulsarTemplateCustomizerTestsConfig {
 
+		}
+
+	}
+
+	@Nested
+	class CustomObjectMapperTests {
+
+		@Test
+		void sendWithCustomJsonSchema() throws Exception {
+			// Prepare the schema with custom object mapper
+			var objectMapper = UserRecordObjectMapper.withSer();
+			var schema = JSONSchemaUtil.schemaForTypeWithObjectMapper(UserRecord.class, objectMapper);
+			var topic = "ptt-custom-object-mapper-topic";
+			var user = new UserRecord("elFoo", 21);
+			// serializer adds '-ser' to name and 10 to age
+			var expectedUser = new UserRecord("elFoo-ser", 31);
+			ThrowingConsumer<PulsarTemplate<UserRecord>> sendFunction = (template) -> template.send(user, schema);
+			sendAndConsume(sendFunction, topic, schema, expectedUser, true);
 		}
 
 	}

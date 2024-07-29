@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.test.support.model;
+package org.springframework.pulsar.test.model;
 
 import java.util.Objects;
 
@@ -23,11 +23,7 @@ import java.util.Objects;
  * <p>
  * <b>WARN</b> Do not convert this to a Record as this is used for Avro tests and Avro
  * does not work well w/ records yet.
- *
- * @deprecated this class is replaced with Gradle test fixtures and is only meant to be
- * used internally.
  */
-@Deprecated(since = "1.2.0", forRemoval = true)
 public class UserPojo {
 
 	private String name;

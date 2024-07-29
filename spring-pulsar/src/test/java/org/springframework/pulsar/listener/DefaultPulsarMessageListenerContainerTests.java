@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,7 +53,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.pulsar.core.ConsumerTestUtils;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
+import org.springframework.pulsar.core.JSONSchemaUtil;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -416,6 +420,46 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
 		assertThatIllegalStateException().isThrownBy(() -> container.start())
 			.withMessage("Transactional batch listeners do not support AckMode.RECORD");
+	}
+
+	@Test
+	void basicDefaultConsumerWithCustomObjectMapper() throws Exception {
+		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+		var topic = "dpmlct-com-topic";
+		var pulsarConsumerFactory = new DefaultPulsarConsumerFactory<UserRecord>(pulsarClient,
+				List.of((consumerBuilder) -> {
+					consumerBuilder.topic(topic);
+					consumerBuilder.subscriptionName("dpmlct-com-sub");
+				}));
+		var latch = new CountDownLatch(1);
+		AtomicReference<UserRecord> consumedRecordRef = new AtomicReference<>();
+		var pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setMessageListener((PulsarRecordMessageListener<UserRecord>) (consumer, msg) -> {
+			consumedRecordRef.set(msg.getValue());
+			latch.countDown();
+		});
+
+		// Prepare the schema with custom object mapper
+		var objectMapper = UserRecordObjectMapper.withDeser();
+		var schema = JSONSchemaUtil.schemaForTypeWithObjectMapper(UserRecord.class, objectMapper);
+		pulsarContainerProperties.setSchema(schema);
+
+		// Start the container
+		var container = new DefaultPulsarMessageListenerContainer<>(pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+
+		// Send and consume message and ensure the deser was used
+		var pulsarProducerFactory = new DefaultPulsarProducerFactory<UserRecord>(pulsarClient, topic);
+		var pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		var sentUserRecord = new UserRecord("person", 51);
+		// deser adds '-deser' to name and 5 to age
+		var expectedReceivedUser = new UserRecord("person-deser", 56);
+		pulsarTemplate.sendAsync(sentUserRecord);
+		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(consumedRecordRef).hasValue(expectedReceivedUser);
+
+		container.stop();
+		pulsarClient.close();
 	}
 
 }

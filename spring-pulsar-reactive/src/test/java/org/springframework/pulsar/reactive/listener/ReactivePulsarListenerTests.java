@@ -74,8 +74,8 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.reactive.support.MessageUtils;
 import org.springframework.pulsar.support.PulsarHeaders;
-import org.springframework.pulsar.test.support.model.UserPojo;
-import org.springframework.pulsar.test.support.model.UserRecord;
+import org.springframework.pulsar.test.model.UserPojo;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;

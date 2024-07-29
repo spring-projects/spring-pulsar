@@ -31,9 +31,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.PulsarListener;
+import org.springframework.pulsar.core.DefaultSchemaResolver;
+import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
+import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -121,6 +125,36 @@ public class ReactiveSpringPulsarBootApp {
 		@PulsarListener(topics = TOPIC)
 		void listenSimple(String msg) {
 			LOG.info("++++++CONSUME {}------", msg);
+		}
+
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	static class ProduceConsumeCustomObjectMapper {
+
+		private static final String TOPIC = "sample-reactive-custom-object-mapper";
+
+		@Bean
+		SchemaResolver.SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer() {
+			return (DefaultSchemaResolver schemaResolver) -> {
+				var objectMapper = UserRecordObjectMapper.withSerAndDeser();
+				schemaResolver.setObjectMapper(objectMapper);
+			};
+		}
+
+		@Bean
+		ApplicationRunner sendWithCustomObjectMapper(ReactivePulsarTemplate<UserRecord> template) {
+			return (args) -> Flux.range(0, 10)
+					.map((i) -> MessageSpec.of(new UserRecord("user-" + i, 30)))
+					.as(messages -> template.send(TOPIC, messages))
+					.doOnNext((msr) -> LOG.info("++++++PRODUCE {}------", msr.getMessageSpec().getValue()))
+					.subscribe();
+		}
+
+		@ReactivePulsarListener(topics = TOPIC, consumerCustomizer = "subscriptionInitialPositionEarliest")
+		public Mono<Void> listenSimple(UserRecord user) {
+			LOG.info("++++++CONSUME {}------", user);
+			return Mono.empty();
 		}
 
 	}
