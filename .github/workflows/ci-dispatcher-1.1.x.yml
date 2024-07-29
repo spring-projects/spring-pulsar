@@ -1,0 +1,25 @@
+name: CI Dispatcher (1.1.x)
+
+on:
+  schedule:
+    - cron: '0 11 * * */2' # Once every other day at 11am UTC
+  workflow_dispatch:
+
+jobs:
+  dispatch_ci_workflow:
+    name: Dispatch CI workflow
+    if: github.repository == 'spring-projects/spring-pulsar'
+    strategy:
+      matrix:
+        # List of active maintenance branches.
+        branch: [ 1.1.x ]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    - name: Dispatch
+      env:
+        GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      run: gh workflow run ci.yml -r ${{ matrix.branch }}

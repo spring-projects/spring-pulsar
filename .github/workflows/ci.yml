@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'main'
+      - '1.1.x'
+      - '1.0.x'
     paths-ignore:
       - '.github/**'
   schedule:
