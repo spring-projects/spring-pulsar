@@ -118,6 +118,7 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 			var headers = new HashMap<String, Object>();
 			headers.put("foo", "bar");
 			headers.put("uuid", uuid);
+			var mapped = mapper().toPulsarHeaders(new MessageHeaders(headers));
 			assertThat(mapper().toPulsarHeaders(new MessageHeaders(headers))).containsEntry("foo", "bar")
 				.containsEntry("uuid", "\"%s\"".formatted(uuid.toString()))
 				.extractingByKey(JSON_TYPES, InstanceOfAssertFactories.STRING)

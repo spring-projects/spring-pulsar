@@ -76,6 +76,7 @@ import org.springframework.util.StringUtils;
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Jihoon Kim
  * @see PulsarListener
  * @see EnablePulsar
  * @see PulsarListenerConfigurer
@@ -270,6 +271,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	@SuppressWarnings("unchecked")
 	protected void postProcessEndpointsBeforeRegistration() {
+		PulsarHeaderObjectMapperUtils.customMapper(this.beanFactory)
+			.ifPresent((objectMapper) -> this.processedEndpoints
+				.forEach((endpoint) -> endpoint.setObjectMapper(objectMapper)));
 		if (this.processedEndpoints.size() == 1) {
 			MethodPulsarListenerEndpoint<?> endpoint = this.processedEndpoints.get(0);
 			if (endpoint.getConsumerBuilderCustomizer() != null) {

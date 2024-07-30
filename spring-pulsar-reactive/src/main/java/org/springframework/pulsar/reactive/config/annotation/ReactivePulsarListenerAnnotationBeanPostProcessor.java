@@ -46,6 +46,7 @@ import org.springframework.format.Formatter;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.AbstractPulsarAnnotationsBeanPostProcessor;
+import org.springframework.pulsar.annotation.PulsarHeaderObjectMapperUtils;
 import org.springframework.pulsar.annotation.PulsarListenerConfigurer;
 import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
@@ -79,6 +80,7 @@ import org.springframework.util.StringUtils;
  * @param <V> the payload type.
  * @author Christophe Bornet
  * @author Soby Chacko
+ * @author Jihoon Kim
  * @see ReactivePulsarListener
  * @see EnableReactivePulsar
  * @see PulsarListenerConfigurer
@@ -281,6 +283,9 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 
 	@SuppressWarnings("unchecked")
 	protected void postProcessEndpointsBeforeRegistration() {
+		PulsarHeaderObjectMapperUtils.customMapper(this.beanFactory)
+			.ifPresent((objectMapper) -> this.processedEndpoints
+				.forEach((endpoint) -> endpoint.setObjectMapper(objectMapper)));
 		if (this.processedEndpoints.size() == 1) {
 			MethodReactivePulsarListenerEndpoint<?> endpoint = this.processedEndpoints.get(0);
 			if (endpoint.getConsumerCustomizer() != null) {

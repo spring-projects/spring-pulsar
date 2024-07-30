@@ -70,6 +70,7 @@ import org.springframework.util.StringUtils;
  *
  * @param <V> the payload type.
  * @author Soby Chacko
+ * @author Jihoon Kim
  * @see PulsarReader
  * @see EnablePulsar
  * @see PulsarReaderConfigurer
@@ -237,6 +238,9 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 
 	@SuppressWarnings("unchecked")
 	protected void postProcessEndpointsBeforeRegistration() {
+		PulsarHeaderObjectMapperUtils.customMapper(this.beanFactory)
+			.ifPresent((objectMapper) -> this.processedEndpoints
+				.forEach((endpoint) -> endpoint.setObjectMapper(objectMapper)));
 		if (this.processedEndpoints.size() == 1) {
 			MethodPulsarReaderEndpoint<?> endpoint = this.processedEndpoints.get(0);
 			if (endpoint.getReaderBuilderCustomizer() != null) {
