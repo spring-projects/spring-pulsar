@@ -29,7 +29,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
@@ -48,12 +47,15 @@ import org.springframework.pulsar.support.MessageConverter;
 import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link PulsarReaderEndpoint} providing the method to invoke to process an incoming
  * message for this endpoint.
  *
  * @param <V> Message payload type
  * @author Soby Chacko
+ * @author Jihoon Kim
  */
 public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<V> {
 
@@ -62,6 +64,8 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 	private Object bean;
 
 	private Method method;
+
+	private ObjectMapper objectMapper;
 
 	private SmartMessageConverter messagingConverter;
 
@@ -87,6 +91,10 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 	public Method getMethod() {
 		return this.method;
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -172,19 +180,18 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
-
-		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
-		PulsarRecordMessageToSpringMessageReaderAdapter<V> messageListener = new PulsarRecordMessageToSpringMessageReaderAdapter<>(
+		AbstractPulsarMessageToSpringMessageAdapter<V> listener = new PulsarRecordMessageToSpringMessageReaderAdapter<>(
 				this.bean, this.method);
-		if (messageConverter instanceof PulsarMessageConverter) {
-			messageListener.setMessageConverter((PulsarMessageConverter) messageConverter);
+		if (messageConverter instanceof PulsarMessageConverter pulsarMessageConverter) {
+			listener.setMessageConverter(pulsarMessageConverter);
 		}
-		listener = messageListener;
-
 		if (this.messagingConverter != null) {
 			listener.setMessagingConverter(this.messagingConverter);
 		}
-		BeanResolver resolver = getBeanResolver();
+		if (this.objectMapper != null) {
+			listener.setObjectMapper(this.objectMapper);
+		}
+		var resolver = getBeanResolver();
 		if (resolver != null) {
 			listener.setBeanResolver(resolver);
 		}

@@ -31,7 +31,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
@@ -53,6 +52,7 @@ import org.springframework.pulsar.support.converter.PulsarMessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
 
 /**
@@ -62,6 +62,7 @@ import reactor.core.publisher.Flux;
  * @param <V> Message payload type
  * @author Christophe Bornet
  * @author Chris Bono
+ * @author Jihoon Kim
  */
 public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePulsarListenerEndpoint<V> {
 
@@ -70,6 +71,8 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 	private Object bean;
 
 	private Method method;
+
+	private ObjectMapper objectMapper;
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
@@ -209,7 +212,6 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
-
 		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isFluxListener()) {
 			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(this.bean, this.method);
@@ -217,18 +219,24 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		else {
 			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(this.bean, this.method);
 		}
-
-		if (messageConverter instanceof PulsarMessageConverter) {
-			listener.setMessageConverter((PulsarMessageConverter) messageConverter);
+		if (messageConverter instanceof PulsarMessageConverter pulsarMessageConverter) {
+			listener.setMessageConverter(pulsarMessageConverter);
 		}
 		if (this.messagingConverter != null) {
 			listener.setMessagingConverter(this.messagingConverter);
 		}
-		BeanResolver resolver = getBeanResolver();
+		if (this.objectMapper != null) {
+			listener.setObjectMapper(this.objectMapper);
+		}
+		var resolver = getBeanResolver();
 		if (resolver != null) {
 			listener.setBeanResolver(resolver);
 		}
 		return listener;
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
 
 	public void setMessagingConverter(SmartMessageConverter messagingConverter) {

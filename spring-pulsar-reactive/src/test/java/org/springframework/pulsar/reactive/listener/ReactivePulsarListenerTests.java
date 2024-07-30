@@ -50,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
@@ -68,18 +69,23 @@ import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListe
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.BasicListenersTestCases.BasicListenersTestCasesConfig;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersCustomObjectMapperTest.PulsarHeadersCustomObjectMapperTestConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersTest.PulsarListenerWithHeadersConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.StreamingListenerTestCases.StreamingListenerTestCasesConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
 import org.springframework.pulsar.reactive.support.MessageUtils;
 import org.springframework.pulsar.support.PulsarHeaders;
+import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
 import org.springframework.pulsar.test.model.UserPojo;
 import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordDeserializer;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ObjectUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -541,6 +547,7 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 	class PulsarHeadersTest {
 
 		static CountDownLatch simpleListenerLatch = new CountDownLatch(1);
+		static CountDownLatch simpleListenerPojoLatch = new CountDownLatch(1);
 		static CountDownLatch pulsarMessageListenerLatch = new CountDownLatch(1);
 		static CountDownLatch springMessagingMessageListenerLatch = new CountDownLatch(1);
 
@@ -548,20 +555,46 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 		static AtomicReference<MessageId> messageId = new AtomicReference<>();
 		static AtomicReference<String> topicName = new AtomicReference<>();
 		static AtomicReference<String> fooValue = new AtomicReference<>();
+		static AtomicReference<Object> pojoValue = new AtomicReference<>();
 		static AtomicReference<byte[]> rawData = new AtomicReference<>();
 
 		@Test
 		void simpleListenerWithHeaders() throws Exception {
-			MessageId messageId = pulsarTemplate.newMessage("hello-simple-listener")
+			var topic = "rplt-simpleListenerWithHeaders";
+			var msg = "hello-%s".formatted(topic);
+			MessageId messageId = pulsarTemplate.newMessage(msg)
 				.withMessageCustomizer(messageBuilder -> messageBuilder.property("foo", "simpleListenerWithHeaders"))
-				.withTopic("simpleListenerWithHeaders")
+				.withTopic(topic)
 				.send();
 			assertThat(simpleListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
-			assertThat(capturedData.get()).isEqualTo("hello-simple-listener");
-			assertThat(PulsarHeadersTest.messageId.get()).isEqualTo(messageId);
-			assertThat(topicName.get()).isEqualTo("persistent://public/default/simpleListenerWithHeaders");
-			assertThat(fooValue.get()).isEqualTo("simpleListenerWithHeaders");
-			assertThat(rawData.get()).isEqualTo("hello-simple-listener".getBytes(StandardCharsets.UTF_8));
+			assertThat(PulsarHeadersTest.messageId).hasValue(messageId);
+			assertThat(topicName).hasValue("persistent://public/default/%s".formatted(topic));
+			assertThat(capturedData).hasValue(msg);
+			assertThat(rawData).hasValue(msg.getBytes(StandardCharsets.UTF_8));
+			assertThat(fooValue).hasValue("simpleListenerWithHeaders");
+		}
+
+		@Test
+		void simpleListenerWithPojoHeader() throws Exception {
+			var topic = "rplt-simpleListenerWithPojoHeader";
+			var msg = "hello-%s".formatted(topic);
+			// In order to send complex headers (pojo) must manually map and set each
+			// header as follows
+			var user = new UserRecord("that", 100);
+			var headers = new HashMap<String, Object>();
+			headers.put("user", user);
+			var headerMapper = JsonPulsarHeaderMapper.builder().build();
+			var mappedHeaders = headerMapper.toPulsarHeaders(new MessageHeaders(headers));
+			MessageId messageId = pulsarTemplate.newMessage(msg)
+				.withMessageCustomizer(messageBuilder -> mappedHeaders.forEach(messageBuilder::property))
+				.withTopic(topic)
+				.send();
+			assertThat(simpleListenerPojoLatch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(PulsarHeadersTest.messageId).hasValue(messageId);
+			assertThat(topicName).hasValue("persistent://public/default/%s".formatted(topic));
+			assertThat(pojoValue).hasValue(user);
+			assertThat(capturedData).hasValue(msg);
+			assertThat(rawData).hasValue(msg.getBytes(StandardCharsets.UTF_8));
 		}
 
 		@Test
@@ -569,12 +602,12 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 			MessageId messageId = pulsarTemplate.newMessage("hello-pulsar-message-listener")
 				.withMessageCustomizer(
 						messageBuilder -> messageBuilder.property("foo", "pulsarMessageListenerWithHeaders"))
-				.withTopic("pulsarMessageListenerWithHeaders")
+				.withTopic("rplt-pulsarMessageListenerWithHeaders")
 				.send();
 			assertThat(pulsarMessageListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData.get()).isEqualTo("hello-pulsar-message-listener");
 			assertThat(PulsarHeadersTest.messageId.get()).isEqualTo(messageId);
-			assertThat(topicName.get()).isEqualTo("persistent://public/default/pulsarMessageListenerWithHeaders");
+			assertThat(topicName.get()).isEqualTo("persistent://public/default/rplt-pulsarMessageListenerWithHeaders");
 			assertThat(fooValue.get()).isEqualTo("pulsarMessageListenerWithHeaders");
 			assertThat(rawData.get()).isEqualTo("hello-pulsar-message-listener".getBytes(StandardCharsets.UTF_8));
 		}
@@ -584,13 +617,13 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 			MessageId messageId = pulsarTemplate.newMessage("hello-spring-messaging-message-listener")
 				.withMessageCustomizer(
 						messageBuilder -> messageBuilder.property("foo", "springMessagingMessageListenerWithHeaders"))
-				.withTopic("springMessagingMessageListenerWithHeaders")
+				.withTopic("rplt-springMessagingMessageListenerWithHeaders")
 				.send();
 			assertThat(springMessagingMessageListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedData.get()).isEqualTo("hello-spring-messaging-message-listener");
 			assertThat(PulsarHeadersTest.messageId.get()).isEqualTo(messageId);
 			assertThat(topicName.get())
-				.isEqualTo("persistent://public/default/springMessagingMessageListenerWithHeaders");
+				.isEqualTo("persistent://public/default/rplt-springMessagingMessageListenerWithHeaders");
 			assertThat(fooValue.get()).isEqualTo("springMessagingMessageListenerWithHeaders");
 			assertThat(rawData.get())
 				.isEqualTo("hello-spring-messaging-message-listener".getBytes(StandardCharsets.UTF_8));
@@ -600,8 +633,9 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 		@Configuration
 		static class PulsarListenerWithHeadersConfig {
 
-			@ReactivePulsarListener(subscriptionName = "simple-listener-with-headers-sub",
-					topics = "simpleListenerWithHeaders", consumerCustomizer = "subscriptionInitialPositionEarliest")
+			@ReactivePulsarListener(topics = "rplt-simpleListenerWithHeaders",
+					subscriptionName = "rplt-simple-listener-with-headers-sub",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
 			Mono<Void> simpleListenerWithHeaders(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
 					@Header(PulsarHeaders.TOPIC_NAME) String topicName, @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
 					@Header("foo") String foo) {
@@ -614,8 +648,23 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 				return Mono.empty();
 			}
 
-			@ReactivePulsarListener(subscriptionName = "pulsar-message-listener-with-headers-sub",
-					topics = "pulsarMessageListenerWithHeaders",
+			@ReactivePulsarListener(topics = "rplt-simpleListenerWithPojoHeader",
+					subscriptionName = "simpleListenerWithPojoHeader-sub",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> simpleListenerWithPojoHeader(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
+					@Header(PulsarHeaders.TOPIC_NAME) String topicName, @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
+					@Header("user") UserRecord user) {
+				capturedData.set(data);
+				PulsarHeadersTest.messageId.set(messageId);
+				PulsarHeadersTest.topicName.set(topicName);
+				pojoValue.set(user);
+				PulsarHeadersTest.rawData.set(rawData);
+				simpleListenerPojoLatch.countDown();
+				return Mono.empty();
+			}
+
+			@ReactivePulsarListener(subscriptionName = "rplt-pulsar-message-listener-with-headers-sub",
+					topics = "rplt-pulsarMessageListenerWithHeaders",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
 			Mono<Void> pulsarMessageListenerWithHeaders(Message<String> data,
 					@Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
@@ -630,8 +679,8 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 				return Mono.empty();
 			}
 
-			@ReactivePulsarListener(subscriptionName = "pulsar-message-listener-with-headers-sub",
-					topics = "springMessagingMessageListenerWithHeaders",
+			@ReactivePulsarListener(subscriptionName = "rplt-pulsar-message-listener-with-headers-sub",
+					topics = "rplt-springMessagingMessageListenerWithHeaders",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
 			Mono<Void> springMessagingMessageListenerWithHeaders(org.springframework.messaging.Message<String> data,
 					@Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
@@ -643,6 +692,62 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 				fooValue.set(foo);
 				PulsarHeadersTest.rawData.set(rawData);
 				springMessagingMessageListenerLatch.countDown();
+				return Mono.empty();
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = PulsarHeadersCustomObjectMapperTestConfig.class)
+	class PulsarHeadersCustomObjectMapperTest {
+
+		private static final String TOPIC = "rplt-listenerWithPojoHeader-custom";
+
+		private static final CountDownLatch listenerLatch = new CountDownLatch(1);
+
+		private static UserRecord userPassedIntoListener;
+
+		@Test
+		void whenPulsarHeaderObjectMapperIsDefinedThenItIsUsedToDeserializeHeaders() throws Exception {
+			var msg = "hello-%s".formatted(TOPIC);
+			// In order to send complex headers (pojo) must manually map and set each
+			// header as follows
+			var user = new UserRecord("that", 100);
+			var headers = new HashMap<String, Object>();
+			headers.put("user", user);
+			var headerMapper = JsonPulsarHeaderMapper.builder().build();
+			var mappedHeaders = headerMapper.toPulsarHeaders(new MessageHeaders(headers));
+			pulsarTemplate.newMessage(msg)
+				.withMessageCustomizer(messageBuilder -> mappedHeaders.forEach(messageBuilder::property))
+				.withTopic(TOPIC)
+				.send();
+			// Custom deser adds suffix to name and bumps age + 5
+			var expectedUser = new UserRecord(user.name() + "-deser", user.age() + 5);
+			assertThat(listenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(userPassedIntoListener).isEqualTo(expectedUser);
+		}
+
+		@Configuration(proxyBeanMethods = false)
+		static class PulsarHeadersCustomObjectMapperTestConfig {
+
+			@Bean(name = "pulsarHeaderObjectMapper")
+			ObjectMapper customObjectMapper() {
+				var objectMapper = new ObjectMapper();
+				var module = new SimpleModule();
+				module.addDeserializer(UserRecord.class, new UserRecordDeserializer());
+				objectMapper.registerModule(module);
+				return objectMapper;
+			}
+
+			@ReactivePulsarListener(topics = TOPIC, subscriptionName = TOPIC + "-sub",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenerWithPojoHeader(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
+					@Header(PulsarHeaders.TOPIC_NAME) String topicName, @Header(PulsarHeaders.RAW_DATA) byte[] rawData,
+					@Header("user") UserRecord user) {
+				userPassedIntoListener = user;
+				listenerLatch.countDown();
 				return Mono.empty();
 			}
 

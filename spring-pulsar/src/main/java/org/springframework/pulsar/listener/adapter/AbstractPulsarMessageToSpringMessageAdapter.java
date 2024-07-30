@@ -43,6 +43,8 @@ import org.springframework.pulsar.support.converter.PulsarRecordMessageConverter
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * An abstract {@link org.apache.pulsar.client.api.MessageListener} adapter providing the
  * necessary infrastructure to extract the payload from a Pulsar message.
@@ -79,21 +81,21 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 
 	private boolean isConsumerRecords;
 
-	private boolean converterSet;
+	private boolean customConverterSet;
 
-	private PulsarMessageConverter<V> messageConverter = new PulsarRecordMessageConverter<V>(
-			JsonPulsarHeaderMapper.builder().build());
+	private PulsarMessageConverter<V> messageConverter;
 
 	private Type fallbackType = Object.class;
 
 	public AbstractPulsarMessageToSpringMessageAdapter(Object bean, Method method) {
 		this.bean = bean;
+		this.messageConverter = new PulsarRecordMessageConverter<V>(JsonPulsarHeaderMapper.builder().build());
 		this.inferredType = determineInferredType(method);
 	}
 
 	public void setMessageConverter(PulsarMessageConverter<V> messageConverter) {
 		this.messageConverter = messageConverter;
-		this.converterSet = true;
+		this.customConverterSet = true;
 	}
 
 	protected final PulsarMessageConverter<V> getMessageConverter() {
@@ -101,9 +103,16 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 	}
 
 	public void setMessagingConverter(SmartMessageConverter messageConverter) {
-		Assert.isTrue(!this.converterSet, "Cannot set the SmartMessageConverter when setting the messageConverter, "
-				+ "add the SmartConverter to the message converter instead");
+		Assert.isTrue(!this.customConverterSet, "Cannot set the SmartMessageConverter on a custom messageConverter - "
+				+ "add the SmartConverter to the custom converter instead");
 		((PulsarRecordMessageConverter<V>) this.messageConverter).setMessagingConverter(messageConverter);
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		Assert.isTrue(!this.customConverterSet, "Cannot set the ObjectMapper on a custom messageConverter - "
+				+ "set the ObjectMapper on the custom converter instead");
+		this.messageConverter = new PulsarRecordMessageConverter<V>(
+				JsonPulsarHeaderMapper.builder().objectMapper(objectMapper).build());
 	}
 
 	protected Type getType() {

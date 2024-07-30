@@ -43,6 +43,24 @@ The `JsonPulsarHeaderMapper` has a property called `addToStringClasses()` that l
 During inbound mapping, they are mapped as `String`.
 By default, only `org.springframework.util.MimeType` and `org.springframework.http.MediaType` are mapped this way.
 
+===== Custom ObjectMapper
+The JSON mapper uses a reasonable configured Jasckson `ObjectMapper` to handle serialization of header values.
+However, to provide a custom object mapper one must simply provide an `ObjectMapper` bean with the name `pulsarHeaderObjectMapper`.
+For example:
+[source, java]
+----
+@Configuration(proxyBeanMethods = false)
+static class PulsarHeadersCustomObjectMapperTestConfig {
+
+    @Bean(name = "pulsarHeaderObjectMapper")
+    ObjectMapper customObjectMapper() {
+        var objectMapper = new ObjectMapper();
+		// do things with your special header object mapper here
+        return objectMapper;
+    }
+}
+----
+
 === Inbound/Outbound Patterns
 On the inbound side, by default, all Pulsar headers (message metadata plus user properties) are mapped to `MessageHeaders`.
 On the outbound side, by default, all `MessageHeaders` are mapped, except `id`, `timestamp`, and the headers that represent the Pulsar message metadata.

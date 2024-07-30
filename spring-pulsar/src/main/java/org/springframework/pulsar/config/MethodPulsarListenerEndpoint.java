@@ -32,7 +32,6 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
@@ -57,6 +56,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * A {@link PulsarListenerEndpoint} providing the method to invoke to process an incoming
  * message for this endpoint.
@@ -65,6 +66,7 @@ import org.springframework.util.StringUtils;
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Chris Bono
+ * @author Jihoon Kim
  */
 public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpoint<V> {
 
@@ -73,6 +75,8 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	private Object bean;
 
 	private Method method;
+
+	private ObjectMapper objectMapper;
 
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
@@ -109,6 +113,10 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 
 	public Method getMethod() {
 		return this.method;
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
 
 	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory messageHandlerMethodFactory) {
@@ -235,25 +243,23 @@ public class MethodPulsarListenerEndpoint<V> extends AbstractPulsarListenerEndpo
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageListenerInstance(
 			@Nullable MessageConverter messageConverter) {
-
 		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isBatchListener()) {
-			PulsarBatchMessagesToSpringMessageListenerAdapter<V> messageListener = new PulsarBatchMessagesToSpringMessageListenerAdapter<>(
-					this.bean, this.method);
-			listener = messageListener;
+			listener = new PulsarBatchMessagesToSpringMessageListenerAdapter<>(this.bean, this.method);
 		}
 		else {
-			PulsarRecordMessageToSpringMessageListenerAdapter<V> messageListener = new PulsarRecordMessageToSpringMessageListenerAdapter<>(
-					this.bean, this.method);
-			if (messageConverter instanceof PulsarMessageConverter) {
-				messageListener.setMessageConverter((PulsarMessageConverter) messageConverter);
-			}
-			listener = messageListener;
+			listener = new PulsarRecordMessageToSpringMessageListenerAdapter<>(this.bean, this.method);
+		}
+		if (messageConverter instanceof PulsarMessageConverter pulsarMessageConverter) {
+			listener.setMessageConverter(pulsarMessageConverter);
 		}
 		if (this.messagingConverter != null) {
 			listener.setMessagingConverter(this.messagingConverter);
 		}
-		BeanResolver resolver = getBeanResolver();
+		if (this.objectMapper != null) {
+			listener.setObjectMapper(this.objectMapper);
+		}
+		var resolver = getBeanResolver();
 		if (resolver != null) {
 			listener.setBeanResolver(resolver);
 		}
