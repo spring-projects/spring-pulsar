@@ -3,11 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
+      - '1.1.x'
     paths-ignore:
       - '.github/**'
-  schedule:
-    - cron: '0 10 * * *' # Once per day at 10am UTC
   workflow_dispatch:
 
 env:
