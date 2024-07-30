@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package org.springframework.pulsar.test.support.model;
+package org.springframework.pulsar.core;
+
+import org.junit.jupiter.api.Test;
 
 /**
- * Test object (user) defined via a Java record.
- *
- * @param name the user's name
- * @param age the user's age
- * @deprecated this class is replaced with Gradle test fixtures and is only meant to be
- * used internally.
+ * Tests for {@link JSONSchemaUtil}.
  */
-@Deprecated(since = "1.2.0", forRemoval = true)
-public record UserRecord(String name, int age) {
+class JsonSchemaUtilTests {
+
+	@Test
+	void foo() {
+	}
+
 }

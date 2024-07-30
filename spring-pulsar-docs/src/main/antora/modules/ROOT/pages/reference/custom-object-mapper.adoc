@@ -1,0 +1,48 @@
+[[custom-object-mapper]]
+= Custom Object Mapper
+include::../attributes/attributes.adoc[]
+
+Pulsar uses an internal Jackson `ObjectMapper` when de/serializing JSON messages.
+If you instead want to provide your own object mapper instance, you can register a `SchemaResolverCustomizer` and set your mapper on the `DefaultSchemaResolver` as follows:
+
+[source,java,indent=0,subs="verbatim"]
+----
+@Bean
+SchemaResolverCustomizer<DefaultSchemaResolver> schemaResolverCustomizer() {
+    return (DefaultSchemaResolver schemaResolver) -> {
+        var myObjectMapper = obtainMyObjectMapper();
+        schemaResolver.setObjectMapper(myObjectMapper);
+    };
+}
+----
+
+This results in your object mapper being used to de/serialize all JSON messages that go through the schema resolution process (i.e. in cases where you do not pass a schema in directly when producing/consuming messages).
+
+Under the hood, the resolver creates a special JSON schema which leverages the custom mapper and is used as the schema for all resolved JSON messages.
+
+If you need to pass schema instances directly you can use the `JSONSchemaUtil` to create schemas that respect the custom mapper.
+The following example shows how to do this when sending a message with the `PulsarTemplate` variant that takes a schema parameter:
+
+[source,java,indent=0,subs="verbatim"]
+----
+void sendMessage(PulsarTemplate<MyPojo> template, MyPojo toSend) {
+    var myObjectMapper = obtainMyObjectMapper();
+    var schema = JSONSchemaUtil.schemaForTypeWithObjectMapper(MyPojo.class, myObjectMapper);
+    template.send(toSend, schema);
+}
+----
+
+
+[CAUTION]
+====
+Pulsar configures its default object mapper in a particular way.
+Unless you have a specific reason to not do so, it is highly recommended that you configure your mapper with these same options as follows:
+[source,java,indent=0,subs="verbatim"]
+----
+myObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+myObjectMapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, false);
+myObjectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+----
+
+====
+NOTE: A later version of the framework may instead provide a customizer that operates on the default mapper rather than requiring a separate instance.

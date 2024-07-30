@@ -16,14 +16,13 @@
 
 package com.example;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import com.example.ImperativeProduceAndConsumeApp.Bar;
-import com.example.ImperativeProduceAndConsumeApp.Foo;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +30,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.example.ImperativeProduceAndConsumeApp.Bar;
+import com.example.ImperativeProduceAndConsumeApp.Foo;
 
 @SpringBootTest
 @ExtendWith(OutputCaptureExtension.class)
@@ -49,7 +50,7 @@ class ImperativeProduceAndConsumeAppTests implements PulsarTestContainerSupport 
 
 	@Test
 	void produceConsumeWithPrimitiveMessageType(CapturedOutput output) {
-		verifyProduceConsume(output,10, (i) -> "ProduceConsumeWithPrimitiveMessageType:" + i);
+		verifyProduceConsume(output, 10, (i) -> "ProduceConsumeWithPrimitiveMessageType:" + i);
 	}
 
 	@Test
@@ -60,27 +61,42 @@ class ImperativeProduceAndConsumeAppTests implements PulsarTestContainerSupport 
 
 	@Test
 	void produceConsumeWithPartitions(CapturedOutput output) {
-		verifyProduceConsume(output,10, (i) -> "ProduceConsumeWithPartitions:" + i);
+		verifyProduceConsume(output, 10, (i) -> "ProduceConsumeWithPartitions:" + i);
 	}
 
 	@Test
 	void produceConsumeBatchListener(CapturedOutput output) {
-		verifyProduceConsume(output,100,
-				(i) -> new Foo("ProduceConsumeBatchListener", i));
+		verifyProduceConsume(output, 100, (i) -> new Foo("ProduceConsumeBatchListener", i));
 	}
 
 	@Test
 	void produceConsumeDefaultMappings(CapturedOutput output) {
-		verifyProduceConsume(output,10, (i) -> new Bar("ProduceConsumeDefaultMappings:" + i));
+		verifyProduceConsume(output, 10, (i) -> new Bar("ProduceConsumeDefaultMappings:" + i));
+	}
+
+	@Test
+	void produceConsumeCustomObjectMapper(CapturedOutput output) {
+		// base age is 30 then ser adds 10 then deser adds 5
+		var expectedAge = 30 + 10 + 5;
+		verifyProduceConsume(output, 10,
+				(i) -> new UserRecord("user-%d".formatted(i), 30),
+				(i) -> new UserRecord("user-%d-ser-deser".formatted(i), expectedAge));
 	}
 
 	private void verifyProduceConsume(CapturedOutput output, int numExpectedMessages,
 			Function<Integer, Object> expectedMessageFactory) {
-		List < String > expectedOutput = new ArrayList<>();
+		this.verifyProduceConsume(output, numExpectedMessages, expectedMessageFactory, expectedMessageFactory);
+	}
+
+	private void verifyProduceConsume(CapturedOutput output, int numExpectedMessages,
+			Function<Integer, Object> expectedProducedMessageFactory,
+			Function<Integer, Object> expectedConsumedMessageFactory) {
+		var expectedOutput = new ArrayList<String>();
 		IntStream.range(0, numExpectedMessages).forEachOrdered((i) -> {
-			var msg = expectedMessageFactory.apply(i);
-			expectedOutput.add("++++++PRODUCE %s------".formatted(msg));
-			expectedOutput.add("++++++CONSUME %s------".formatted(msg));
+			var expectedProducedMsg = expectedProducedMessageFactory.apply(i);
+			var expectedConsumedMsg = expectedConsumedMessageFactory.apply(i);
+			expectedOutput.add("++++++PRODUCE %s------".formatted(expectedProducedMsg));
+			expectedOutput.add("++++++CONSUME %s------".formatted(expectedConsumedMsg));
 		});
 		Awaitility.waitAtMost(Duration.ofSeconds(15))
 				.untilAsserted(() -> assertThat(output).contains(expectedOutput));

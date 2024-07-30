@@ -52,11 +52,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import org.springframework.core.ResolvableType;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.pulsar.listener.Proto;
 import org.springframework.pulsar.listener.Proto.Person;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Unit tests for {@link DefaultSchemaResolver}.
@@ -67,6 +71,10 @@ import org.springframework.pulsar.listener.Proto.Person;
 class DefaultSchemaResolverTests {
 
 	private DefaultSchemaResolver resolver = new DefaultSchemaResolver();
+
+	private static String sanitizedClassName(Class<?> clazz) {
+		return clazz.getName().replace("$", ".");
+	}
 
 	@Nested
 	class CustomSchemaMappingsAPI {
@@ -295,10 +303,6 @@ class DefaultSchemaResolverTests {
 				.withMessage("Unsupported schema type: " + unsupportedType.name());
 		}
 
-		private String sanitizedClassName(Class<?> clazz) {
-			return clazz.getName().replace("$", ".");
-		}
-
 		@Nested
 		class SchemaTypeNone {
 
@@ -368,6 +372,38 @@ class DefaultSchemaResolverTests {
 						assertThat(keyValueSchema.getValueSchema()).isSameAs(barSchema);
 						assertThat(keyValueSchema.getKeyValueEncodingType()).isEqualTo(KeyValueEncodingType.INLINE);
 					}));
+			}
+
+		}
+
+		@Nested
+		class SchemaTypeJson {
+
+			@Test
+			void whenResolverHasObjectMapperThenReturnsCustomJsonSchema() {
+				var objectMapper = new ObjectMapper();
+				resolver.setObjectMapper(objectMapper);
+				var schema = mock(JSONSchema.class);
+				try (MockedStatic<JSONSchemaUtil> util = Mockito.mockStatic(JSONSchemaUtil.class)) {
+					util.when(() -> JSONSchemaUtil.schemaForTypeWithObjectMapper(Foo.class, objectMapper))
+						.thenReturn(schema);
+					var resolved = resolver.resolveSchema(SchemaType.JSON, ResolvableType.forType(Foo.class));
+					assertThat(resolved.value()).hasValueSatisfying((s) -> assertThat(s).isSameAs(schema));
+					util.verify(() -> JSONSchemaUtil.schemaForTypeWithObjectMapper(Foo.class, objectMapper));
+				}
+			}
+
+			@Test
+			void whenResolverDoesNotHaveObjectMapperThenReturnsDefaultJsonSchema() {
+				var objectMapper = new ObjectMapper();
+				var schema = mock(JSONSchema.class);
+				try (MockedStatic<JSONSchemaUtil> util = Mockito.mockStatic(JSONSchemaUtil.class)) {
+					util.when(() -> JSONSchemaUtil.schemaForTypeWithObjectMapper(Foo.class, objectMapper))
+						.thenReturn(schema);
+					var resolved = resolver.resolveSchema(SchemaType.JSON, ResolvableType.forType(Foo.class));
+					assertThat(resolved.value()).hasValueSatisfying((s) -> assertThat(s).isNotSameAs(schema));
+					util.verifyNoInteractions();
+				}
 			}
 
 		}

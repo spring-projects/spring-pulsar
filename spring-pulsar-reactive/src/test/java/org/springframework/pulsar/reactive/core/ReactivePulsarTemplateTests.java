@@ -47,8 +47,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
+import org.springframework.pulsar.core.JSONSchemaUtil;
+import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.pulsar.test.support.model.UserRecord;
 import org.springframework.util.function.ThrowingConsumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -328,6 +330,25 @@ class ReactivePulsarTemplateTests implements PulsarTestContainerSupport {
 
 			StepVerifier.create(bytesTemplate.send("invalid-payload".getBytes(), Schema.AUTO_PRODUCE_BYTES()))
 				.expectError(SchemaSerializationException.class);
+		}
+
+	}
+
+	@Nested
+	class CustomObjectMapperTests {
+
+		@Test
+		void sendWithCustomJsonSchema() throws Exception {
+			// Prepare the schema with custom object mapper
+			var objectMapper = UserRecordObjectMapper.withSer();
+			var schema = JSONSchemaUtil.schemaForTypeWithObjectMapper(UserRecord.class, objectMapper);
+			var topic = "rptt-custom-object-mapper-topic";
+			var user = new UserRecord("elFoo", 21);
+			// serializer adds '-ser' to name and 10 to age
+			var expectedUser = new UserRecord("elFoo-ser", 31);
+			ThrowingConsumer<ReactivePulsarTemplate<UserRecord>> sendFunction = (
+					template) -> template.send(topic, user, schema).subscribe();
+			sendAndConsume(sendFunction, topic, schema, expectedUser, false);
 		}
 
 	}

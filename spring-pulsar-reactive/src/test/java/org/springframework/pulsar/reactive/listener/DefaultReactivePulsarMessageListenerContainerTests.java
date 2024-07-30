@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -37,10 +38,13 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.core.JSONSchemaUtil;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.DefaultReactivePulsarSenderFactory;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
+import org.springframework.pulsar.test.model.UserRecord;
+import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 import reactor.core.publisher.Flux;
@@ -306,28 +310,69 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 		}
 	}
 
+	@Test
+	void oneByOneMessageHandlerWithCustomObjectMapper() throws Exception {
+		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+		ReactivePulsarMessageListenerContainer<UserRecord> container = null;
+		try {
+			// Prepare the schema with custom object mapper
+			var objectMapper = UserRecordObjectMapper.withDeser();
+			var schema = JSONSchemaUtil.schemaForTypeWithObjectMapper(UserRecord.class, objectMapper);
+
+			var reactivePulsarClient = AdaptedReactivePulsarClientFactory.create(pulsarClient);
+			var topic = topicNameForTest("com-topic");
+			var consumerFactory = createAndPrepareConsumerFactory(topic, schema, reactivePulsarClient);
+			var containerProperties = new ReactivePulsarContainerProperties<UserRecord>();
+			containerProperties.setSchema(schema);
+			var latch = new CountDownLatch(1);
+			AtomicReference<UserRecord> consumedRecordRef = new AtomicReference<>();
+			containerProperties.setMessageHandler((ReactivePulsarOneByOneMessageHandler<UserRecord>) (msg) -> {
+				consumedRecordRef.set(msg.getValue());
+				return Mono.fromRunnable(latch::countDown);
+			});
+			container = new DefaultReactivePulsarMessageListenerContainer<>(consumerFactory, containerProperties);
+			container.start();
+
+			var sentUserRecord = new UserRecord("person", 51);
+			// deser adds '-deser' to name and 5 to age
+			var expectedConsumedUser = new UserRecord("person-deser", 56);
+			createPulsarTemplate(topic, reactivePulsarClient).send(sentUserRecord).subscribe();
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(consumedRecordRef).hasValue(expectedConsumedUser);
+		}
+		finally {
+			safeStopContainer(container);
+			pulsarClient.close();
+		}
+	}
+
 	private String topicNameForTest(String suffix) {
 		return "drpmlct-" + suffix;
 	}
 
 	private DefaultReactivePulsarConsumerFactory<String> createAndPrepareConsumerFactory(String topic,
 			ReactivePulsarClient reactivePulsarClient) {
-		ReactiveMessageConsumerBuilderCustomizer<String> defaultConfig = (builder) -> {
+		return this.createAndPrepareConsumerFactory(topic, Schema.STRING, reactivePulsarClient);
+	}
+
+	private <T> DefaultReactivePulsarConsumerFactory<T> createAndPrepareConsumerFactory(String topic, Schema<T> schema,
+			ReactivePulsarClient reactivePulsarClient) {
+		ReactiveMessageConsumerBuilderCustomizer<T> defaultConfig = (builder) -> {
 			builder.topic(topic);
 			builder.subscriptionName(topic + "-sub");
 		};
-		var consumerFactory = new DefaultReactivePulsarConsumerFactory<>(reactivePulsarClient, List.of(defaultConfig));
+		var consumerFactory = new DefaultReactivePulsarConsumerFactory<T>(reactivePulsarClient, List.of(defaultConfig));
 		// Ensure subscription is created
-		consumerFactory.createConsumer(Schema.STRING).consumeNothing().block(Duration.ofSeconds(5));
+		consumerFactory.createConsumer(schema).consumeNothing().block(Duration.ofSeconds(5));
 		return consumerFactory;
 	}
 
-	private ReactivePulsarTemplate<String> createPulsarTemplate(String topic,
+	private <T> ReactivePulsarTemplate<T> createPulsarTemplate(String topic,
 			ReactivePulsarClient reactivePulsarClient) {
-		var producerFactory = DefaultReactivePulsarSenderFactory.<String>builderFor(reactivePulsarClient)
+		var producerFactory = DefaultReactivePulsarSenderFactory.<T>builderFor(reactivePulsarClient)
 			.withDefaultTopic(topic)
 			.build();
-		return new ReactivePulsarTemplate<>(producerFactory);
+		return new ReactivePulsarTemplate<T>(producerFactory);
 	}
 
 	private void safeStopContainer(ReactivePulsarMessageListenerContainer<?> container) {

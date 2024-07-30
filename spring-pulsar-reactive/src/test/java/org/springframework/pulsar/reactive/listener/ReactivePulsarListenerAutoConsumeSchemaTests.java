@@ -48,8 +48,8 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerAutoConsumeSchemaTests.ReactivePulsarListenerAutoConsumeSchemaTestsConfig;
-import org.springframework.pulsar.test.support.model.UserPojo;
-import org.springframework.pulsar.test.support.model.UserRecord;
+import org.springframework.pulsar.test.model.UserPojo;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.test.context.ContextConfiguration;
 
 import reactor.core.publisher.Mono;

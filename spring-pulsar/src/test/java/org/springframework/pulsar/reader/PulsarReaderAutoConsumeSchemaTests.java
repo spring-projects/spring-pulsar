@@ -45,8 +45,8 @@ import org.springframework.pulsar.annotation.PulsarReader;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.reader.PulsarReaderAutoConsumeSchemaTests.PulsarReaderAutoConsumeSchemaTestsConfig;
-import org.springframework.pulsar.test.support.model.UserPojo;
-import org.springframework.pulsar.test.support.model.UserRecord;
+import org.springframework.pulsar.test.model.UserPojo;
+import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
