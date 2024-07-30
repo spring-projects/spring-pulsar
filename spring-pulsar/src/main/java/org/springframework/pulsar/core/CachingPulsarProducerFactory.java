@@ -304,6 +304,7 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		}
 
 		@Override
+		@SuppressWarnings("deprecation")
 		public ProducerStats getStats() {
 			return this.producer.getStats();
 		}
