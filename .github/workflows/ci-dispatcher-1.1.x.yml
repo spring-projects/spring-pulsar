@@ -2,7 +2,7 @@ name: CI Dispatcher (1.1.x)
 
 on:
   schedule:
-    - cron: '0 11 * * */2' # Once every other day at 11am UTC
+    - cron: '0 9 * * */2' # Once every other day at 9am UTC
   workflow_dispatch:
 
 jobs:
