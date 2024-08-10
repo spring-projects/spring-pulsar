@@ -15,7 +15,7 @@ reactor = "2023.0.8"
 spring = "6.1.11"
 # tests
 assertj = "3.25.3"
-awaitility = "4.2.1"
+awaitility = "4.2.2"
 jacoco = "0.8.9"
 json-path = "2.9.0"
 junit = "5.10.3"
