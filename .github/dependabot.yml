@@ -4,8 +4,33 @@ updates:
     target-branch: main
     directory: /
     schedule:
-      interval: weekly
-      day: saturday
+      interval: "daily"
+      # 9am UTC-5
+      time: "04:00"
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+    labels:
+      - 'type: dependency-upgrade'
+    groups:
+      development-dependencies:
+        update-types:
+          - patch
+        patterns:
+          - com.gradle.enterprise
+          - com.github.spotbugs
+          - io.spring.*
+          - org.ajoberstar.grgit
+  - package-ecosystem: gradle
+    target-branch: 1.1.x
+    directory: /
+    schedule:
+      interval: "daily"
+      # 10am UTC-5
+      time: "05:00"
     ignore:
       - dependency-name: '*'
         update-types:
@@ -27,8 +52,9 @@ updates:
     target-branch: 1.0.x
     directory: /
     schedule:
-      interval: weekly
-      day: sunday
+      interval: "daily"
+      # 11am UTC-5
+      time: "06:00"
     ignore:
       - dependency-name: '*'
         update-types:
@@ -50,8 +76,20 @@ updates:
     target-branch: main
     directory: /
     schedule:
-      interval: weekly
-      day: saturday
+      interval: "weekly"
+      day: "saturday"
+    labels:
+      - 'type: task'
+    groups:
+      development-dependencies:
+        patterns:
+          - '*'
+  - package-ecosystem: github-actions
+    target-branch: 1.1.x
+    directory: /
+    schedule:
+      interval: "weekly"
+      day: "sunday"
     labels:
       - 'type: task'
     groups:
@@ -62,8 +100,8 @@ updates:
     target-branch: 1.0.x
     directory: /
     schedule:
-      interval: weekly
-      day: sunday
+      interval: "weekly"
+      day: "monday"
     labels:
       - 'type: task'
     groups:
