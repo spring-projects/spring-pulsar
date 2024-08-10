@@ -7,6 +7,12 @@ The following is the compatibility matrix:
 |===
 | Spring for Apache Pulsar | Pulsar Client | Pulsar Reactive Client | Spring Boot | Java
 
+| 1.2.x
+| 3.3.x
+| 0.6.x
+| 3.4.x
+| 17+
+
 | 1.1.x
 | 3.2.x
 | 0.5.x
