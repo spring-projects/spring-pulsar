@@ -165,6 +165,13 @@ class PulsarClientProxyTests implements PulsarTestContainerSupport {
 
 		@Test
 		void getPartitionsForTopic() {
+			this.restartableClient.getPartitionsForTopic("zTopic", true);
+			verify(this.delegateClient).getPartitionsForTopic("zTopic", true);
+		}
+
+		@Test
+		@SuppressWarnings({ "deprecation", "removal" })
+		void getPartitionsForTopicDeprecated() {
 			this.restartableClient.getPartitionsForTopic("zTopic");
 			verify(this.delegateClient).getPartitionsForTopic("zTopic");
 		}

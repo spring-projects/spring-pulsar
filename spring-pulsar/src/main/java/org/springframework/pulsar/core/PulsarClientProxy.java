@@ -170,9 +170,22 @@ final class PulsarClientProxy extends RestartableSingletonFactory<PulsarClient> 
 		this.getInstance().updateServiceUrl(serviceUrl);
 	}
 
+	/**
+	 * Get the list of partitions for a given topic.
+	 * @param topic the topic name
+	 * @return a future that will yield a list of the topic partitions
+	 * @deprecated in favor of {@link #getPartitionsForTopic(String, boolean)}
+	 * @see PulsarClient#getPartitionsForTopic(String)
+	 */
 	@Override
+	@Deprecated(since = "1.2.0", forRemoval = true)
 	public CompletableFuture<List<String>> getPartitionsForTopic(String topic) {
 		return this.getInstance().getPartitionsForTopic(topic);
+	}
+
+	@Override
+	public CompletableFuture<List<String>> getPartitionsForTopic(String topic, boolean metadataAutoCreationEnabled) {
+		return this.getInstance().getPartitionsForTopic(topic, metadataAutoCreationEnabled);
 	}
 
 	@Override
