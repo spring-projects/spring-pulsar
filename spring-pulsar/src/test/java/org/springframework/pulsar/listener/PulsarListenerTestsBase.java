@@ -35,6 +35,7 @@ import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -96,7 +97,9 @@ abstract class PulsarListenerTestsBase implements PulsarTestContainerSupport {
 
 		@Bean
 		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
+			return new PulsarTopicBuilder().name("persistent://public/default/concurrency-on-pl")
+				.numberOfPartitions(3)
+				.build();
 		}
 
 	}

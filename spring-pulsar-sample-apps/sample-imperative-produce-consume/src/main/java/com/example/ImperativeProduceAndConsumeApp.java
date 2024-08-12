@@ -30,6 +30,7 @@ import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
@@ -98,7 +99,7 @@ public class ImperativeProduceAndConsumeApp {
 
 		@Bean
 		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder(TOPIC).numberOfPartitions(3).build();
+			return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(3).build();
 		}
 
 		@Bean

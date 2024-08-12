@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.List;
@@ -263,6 +265,31 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				}
 			}
 
+		}
+
+	}
+
+	@Nested
+	class CreateConsumerUsingPulsarTopicBuilder {
+
+		private DefaultPulsarConsumerFactory<String> consumerFactory;
+
+		private PulsarTopicBuilder pulsarTopicBuilder;
+
+		@BeforeEach
+		void createConsumerFactory() {
+			pulsarTopicBuilder = spy(new PulsarTopicBuilder());
+			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, null);
+			consumerFactory.setTopicBuilder(pulsarTopicBuilder);
+		}
+
+		@Test
+		void withPulsarTopicBuilder() throws PulsarClientException {
+			try (var consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic1"),
+					"with-pulsar-topic-builder-sub", null, null)) {
+				assertThat(consumer.getTopic()).isEqualTo("persistent://public/default/topic1");
+				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic1");
+			}
 		}
 
 	}

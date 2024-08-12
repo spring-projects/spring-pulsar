@@ -130,12 +130,13 @@ public class PulsarAdministration
 	}
 
 	private String getTopicNamespaceIdentifier(PulsarTopic topic) {
-		return topic.getComponents().tenant() + "/" + topic.getComponents().namespace();
+		var components = topic.getComponents();
+		return components.tenant() + "/" + components.namespace();
 	}
 
 	private List<String> getMatchingTopicPartitions(PulsarTopic topic, List<String> existingTopics) {
 		return existingTopics.stream()
-			.filter(existing -> existing.startsWith(topic.getFullyQualifiedTopicName() + "-partition-"))
+			.filter(existing -> existing.startsWith(topic.topicName() + "-partition-"))
 			.toList();
 	}
 
@@ -143,7 +144,6 @@ public class PulsarAdministration
 		if (CollectionUtils.isEmpty(topics)) {
 			return;
 		}
-
 		try (PulsarAdmin admin = createAdminClient()) {
 			doCreateOrModifyTopicsIfNeeded(admin, topics);
 		}
@@ -163,7 +163,7 @@ public class PulsarAdministration
 				var existingTopicsInNamespace = admin.topics().getList(namespace);
 
 				for (var topic : requestedTopics) {
-					var topicName = topic.getFullyQualifiedTopicName();
+					var topicName = topic.topicName();
 					if (topic.isPartitioned()) {
 						if (existingTopicsInNamespace.contains(topicName)) {
 							throw new IllegalStateException(
@@ -214,9 +214,8 @@ public class PulsarAdministration
 	}
 
 	private void createTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToCreate) throws PulsarAdminException {
-		this.logger.debug(() -> "Creating topics: " + topicsToCreate.stream()
-			.map(PulsarTopic::getFullyQualifiedTopicName)
-			.collect(Collectors.joining(",")));
+		this.logger.debug(() -> "Creating topics: "
+				+ topicsToCreate.stream().map(PulsarTopic::topicName).collect(Collectors.joining(",")));
 		for (var topic : topicsToCreate) {
 			if (topic.isPartitioned()) {
 				admin.topics().createPartitionedTopic(topic.topicName(), topic.numberOfPartitions());
@@ -228,9 +227,8 @@ public class PulsarAdministration
 	}
 
 	private void modifyTopics(PulsarAdmin admin, Set<PulsarTopic> topicsToModify) throws PulsarAdminException {
-		this.logger.debug(() -> "Modifying topics: " + topicsToModify.stream()
-			.map(PulsarTopic::getFullyQualifiedTopicName)
-			.collect(Collectors.joining(",")));
+		this.logger.debug(() -> "Modifying topics: "
+				+ topicsToModify.stream().map(PulsarTopic::topicName).collect(Collectors.joining(",")));
 		for (var topic : topicsToModify) {
 			admin.topics().updatePartitionedTopic(topic.topicName(), topic.numberOfPartitions());
 		}

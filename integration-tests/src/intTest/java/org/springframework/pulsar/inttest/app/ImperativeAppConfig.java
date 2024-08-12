@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 
 @SpringBootConfiguration
 @EnableAutoConfiguration
@@ -39,7 +40,7 @@ class ImperativeAppConfig {
 
 	@Bean
 	PulsarTopic pulsarTestTopic() {
-		return PulsarTopic.builder(TOPIC).numberOfPartitions(1).build();
+		return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(1).build();
 	}
 
 	@Bean

@@ -17,6 +17,8 @@
 package org.springframework.pulsar.reactive.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +32,8 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 
 /**
  * Tests for {@link DefaultReactivePulsarConsumerFactory}.
@@ -100,6 +104,27 @@ class DefaultReactivePulsarConsumerFactoryTests {
 				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
 				.extracting(ReactiveMessageConsumerSpec::getConsumerName)
 				.isEqualTo("new-test-consumer");
+		}
+
+	}
+
+	@Nested
+	class FactoryCreatedWithTopicBuilder {
+
+		@Test
+		void createConsumer() {
+			var topicBuilder = spy(new PulsarTopicBuilder());
+			var consumerFactory = new DefaultReactivePulsarConsumerFactory<String>(
+					AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
+			consumerFactory.setTopicBuilder(topicBuilder);
+			var inputTopic = "my-topic";
+			var fullyQualifiedTopic = "persistent://public/default/my-topic";
+			var consumer = consumerFactory.createConsumer(SCHEMA,
+					Collections.singletonList(builder -> builder.topic(inputTopic)));
+			assertThat(consumer)
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.hasFieldOrPropertyWithValue("topicNames", List.of(fullyQualifiedTopic));
+			verify(topicBuilder).getFullyQualifiedNameForTopic(inputTopic);
 		}
 
 	}

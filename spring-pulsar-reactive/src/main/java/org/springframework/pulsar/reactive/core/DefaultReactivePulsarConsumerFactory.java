@@ -25,6 +25,7 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerBuilder;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -41,6 +42,9 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 	@Nullable
 	private final List<ReactiveMessageConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
 
+	@Nullable
+	private PulsarTopicBuilder topicBuilder;
+
 	/**
 	 * Construct an instance.
 	 * @param reactivePulsarClient the reactive client
@@ -53,6 +57,18 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
+	/**
+	 * Non-fully-qualified topic names specified on the created consumers will be
+	 * automatically fully-qualified with a default prefix
+	 * ({@code domain://tenant/namespace}) according to the specified topic builder.
+	 * @param topicBuilder the topic builder used to fully qualify topic names or null to
+	 * not fully qualify topic names
+	 * @since 1.2.0
+	 */
+	public void setTopicBuilder(@Nullable PulsarTopicBuilder topicBuilder) {
+		this.topicBuilder = topicBuilder;
+	}
+
 	@Override
 	public ReactiveMessageConsumer<T> createConsumer(Schema<T> schema) {
 		return createConsumer(schema, Collections.emptyList());
@@ -61,20 +77,28 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 	@Override
 	public ReactiveMessageConsumer<T> createConsumer(Schema<T> schema,
 			List<ReactiveMessageConsumerBuilderCustomizer<T>> customizers) {
-
 		ReactiveMessageConsumerBuilder<T> consumerBuilder = this.reactivePulsarClient.messageConsumer(schema);
-
 		// Apply the default customizers
 		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
 			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(consumerBuilder)));
 		}
-
 		// Apply the user specified customizers
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(consumerBuilder));
 		}
-
+		if (this.topicBuilder != null) {
+			this.ensureTopicNamesFullyQualified(consumerBuilder);
+		}
 		return consumerBuilder.build();
+	}
+
+	protected void ensureTopicNamesFullyQualified(ReactiveMessageConsumerBuilder<T> consumerBuilder) {
+		var mutableSpec = consumerBuilder.getMutableSpec();
+		var topics = mutableSpec.getTopicNames();
+		if (!CollectionUtils.isEmpty(topics)) {
+			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
+			mutableSpec.setTopicNames(fullyQualifiedTopics);
+		}
 	}
 
 }

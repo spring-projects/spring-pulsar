@@ -17,6 +17,8 @@
 package org.springframework.pulsar.reactive.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +30,8 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageReader;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderSpec;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
+
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 
 /**
  * Tests for {@link DefaultReactivePulsarReaderFactory}.
@@ -64,6 +68,22 @@ class DefaultReactivePulsarReaderFactoryTests {
 		assertThat(reader).extracting("readerSpec", InstanceOfAssertFactories.type(ReactiveMessageReaderSpec.class))
 			.extracting(ReactiveMessageReaderSpec::getReaderName)
 			.isEqualTo("new-test-reader");
+	}
+
+	@Test
+	void createReaderUsingTopicBuilder() {
+		var inputTopic = "my-topic";
+		var fullyQualifiedTopic = "persistent://public/default/my-topic";
+		var topicBuilder = spy(new PulsarTopicBuilder());
+		var readerFactory = new DefaultReactivePulsarReaderFactory<String>(
+				AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
+		readerFactory.setTopicBuilder(topicBuilder);
+		var reader = readerFactory.createReader(schema,
+				Collections.singletonList(builder -> builder.topic(inputTopic)));
+		assertThat(reader).extracting("readerSpec", InstanceOfAssertFactories.type(ReactiveMessageReaderSpec.class))
+			.extracting(ReactiveMessageReaderSpec::getTopicNames)
+			.isEqualTo(List.of(fullyQualifiedTopic));
+		verify(topicBuilder).getFullyQualifiedNameForTopic(inputTopic);
 	}
 
 }
