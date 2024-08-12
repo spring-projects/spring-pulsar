@@ -16,25 +16,57 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.regex.Pattern;
+
 import org.apache.pulsar.common.naming.TopicDomain;
 
+import org.springframework.util.Assert;
+
 /**
- * Model class for a Pulsar topic.
+ * Represents a Pulsar topic.
+ * <p>
+ * The input {@code topicName} must be fully-qualified. As such, it is recommended to use
+ * the {@link PulsarTopicBuilder} to create instances like this: <pre>{@code
+ * 	PulsarTopic topic = new PulsarTopicBuilder().name("my-topic").build();
+ * }</pre> The builder is more lenient and allows non-fully-qualified topic names to be
+ * input and fully qualifies the output name using its configured default tenant and
+ * namepsace.
  *
- * Use the {@link PulsarTopicBuilder} to create instances like this:
- *
- * <pre>{@code
- * 	PulsarTopic topic = PulsarTopic.builder("topic-name").build();
- * }</pre>
- *
- * @param topicName the topic name
+ * @param topicName the fully qualified topic name in the format
+ * {@code 'domain://tenant/namespace/name'}
  * @param numberOfPartitions the number of partitions, or 0 for non-partitioned topics
  * @author Alexander Preuß
+ * @author Chris Bono
+ * @see PulsarTopicBuilder
  */
 public record PulsarTopic(String topicName, int numberOfPartitions) {
 
+	// Pulsar allows (a-zA-Z_0-9) and special chars -=:. for names
+	private static final String NAME_PATTERN_STR = "[-=:\\.\\w]*";
+
+	private static Pattern TOPIC_NAME_PATTERN = Pattern.compile("(persistent|non-persistent)\\:\\/\\/(%s)\\/(%s)\\/(%s)"
+		.formatted(NAME_PATTERN_STR, NAME_PATTERN_STR, NAME_PATTERN_STR));
+
+	private static final String INVALID_NAME_MSG = "topicName %s must be fully-qualified "
+			+ "in the format 'domain://tenant/namespace/name' where "
+			+ "domain is one of ('persistent', 'non-persistent') and the other components must be "
+			+ "composed of one or more letters, digits, or special characters ('-', '=', ':', or '.')";
+
+	public PulsarTopic {
+		Assert.state(TOPIC_NAME_PATTERN.matcher(topicName).matches(), INVALID_NAME_MSG.formatted(topicName));
+		Assert.state(numberOfPartitions >= 0, "numberOfPartitions must be >= 0");
+	}
+
+	/**
+	 * Convenience method to create a topic builder with the specified topic name.
+	 * @param topicName the name of the topic
+	 * @return the topic builder instance
+	 * @deprecated As of version 1.2.0 topic builder is a registered bean - instead use an
+	 * injected instance where needed
+	 */
+	@Deprecated(since = "1.2.0", forRemoval = true)
 	public static PulsarTopicBuilder builder(String topicName) {
-		return new PulsarTopicBuilder(topicName);
+		return new PulsarTopicBuilder().name(topicName);
 	}
 
 	/**
@@ -50,28 +82,27 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	 * @return {@link TopicComponents}
 	 */
 	public TopicComponents getComponents() {
-		String[] splitTopic = this.topicName().split("/");
-		if (splitTopic.length == 1) { // e.g. 'my-topic'
-			return new TopicComponents(TopicDomain.persistent, "public", "default", splitTopic[0]);
-		}
-		else if (splitTopic.length == 3) { // e.g. 'public/default/my-topic'
-			return new TopicComponents(TopicDomain.persistent, splitTopic[0], splitTopic[1], splitTopic[2]);
-		}
-		else if (splitTopic.length == 5) { // e.g. 'persistent://public/default/my-topic'
-			String type = splitTopic[0].replace(":", "");
-			return new TopicComponents(TopicDomain.getEnum(type), splitTopic[2], splitTopic[3], splitTopic[4]);
-		}
-		throw new IllegalArgumentException("Topic name '" + this + "' has unexpected components.");
-
+		var splitTopic = this.topicName().split("/");
+		var type = splitTopic[0].replace(":", "");
+		return new TopicComponents(TopicDomain.getEnum(type), splitTopic[2], splitTopic[3], splitTopic[4]);
 	}
 
 	/**
-	 * Get the fully-qualified name of the topic.
+	 * Get the fully-qualified name of this topic in the format
+	 * {@code domain://tenant/namespace/name} where the components have the following
+	 * defaults when not specified in the original topic name used to build this topic.
+	 * <pre>
+	 * - {@code domain} is one of ('persistent', 'non-persistent') with a default of 'persistent'
+	 * - {@code tenant} has default of 'public'
+	 * - {@code namespace} has default of 'default'
+	 * </pre>
 	 * @return the fully-qualified topic name
+	 * @deprecated As of version 1.2.0 topicName must always be fully qualified, use
+	 * {@link #topicName()} instead.
 	 */
+	@Deprecated(since = "1.2.0", forRemoval = true)
 	public String getFullyQualifiedTopicName() {
-		TopicComponents components = this.getComponents();
-		return components.domain + "://" + components.tenant + "/" + components.namespace + "/" + components.name;
+		return this.topicName();
 	}
 
 	/**

@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.List;
@@ -187,6 +189,32 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 				var pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 				pulsarTemplate.send("hello john doe");
 				assertThat(reader.readNext().getValue()).isEqualTo("hello john doe");
+			}
+		}
+
+	}
+
+	@Nested
+	class WithPulsarTopicBuilder {
+
+		private DefaultPulsarReaderFactory<String> pulsarReaderFactory;
+
+		private PulsarTopicBuilder pulsarTopicBuilder;
+
+		@BeforeEach
+		void createReaderFactory() {
+			pulsarTopicBuilder = spy(new PulsarTopicBuilder());
+			pulsarReaderFactory = new DefaultPulsarReaderFactory<>(pulsarClient, null);
+			pulsarReaderFactory.setTopicBuilder(pulsarTopicBuilder);
+		}
+
+		@Test
+		void topicIsFullyQualified() throws Exception {
+			var topic = "wptb-reader-topic";
+			try (var reader = pulsarReaderFactory.createReader(List.of(topic), MessageId.earliest, Schema.STRING,
+					Collections.emptyList())) {
+				assertThat(reader.getTopic()).isEqualTo("persistent://public/default/" + topic);
+				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic(topic);
 			}
 		}
 

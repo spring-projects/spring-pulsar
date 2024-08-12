@@ -10,10 +10,27 @@ This section covers the changes made from version 1.1 to version 1.2.
 You can provide your own Jackson `ObjectMapper` that Pulsar will use when producing and consuming JSON messages.
 See xref:./reference/custom-object-mapper.adoc[Custom Object Mapper] for more details.
 
+=== Default Tenant and Namespace
+You can specify a default tenant and/or namespace to use when producing or consuming messages against a non-fully-qualified topic URL.
+See xref:./reference/default-tenant-namespace.adoc[Default Tenant / Namespace] for more details.
+
 === Deprecations
 
 ==== PulsarClient#getPartitionsForTopic(java.lang.String)
 Version `3.3.1` of the Pulsar client deprecates the `getPartitionsForTopic(java.lang.String)` in favor of `getPartitionsForTopic(java.lang.String, boolean metadataAutoCreationEnabled)`.
+
+==== PulsarTopic#builder
+The `PulsarTopicBuilder` is now a registered bean that is configured with default values for domain, tenant, and namespace.
+As such, this convenience method is no longer needed.
+Instead, inject the builder bean where needed.
+
+=== Breaking Changes
+
+==== PulsarTopic#<init>
+The `PulsarTopic` constructor now requires a fully qualified topic name (`domain://tenant/namespace/name`).
+If you are invoking the constructor you will need to be sure the topic you pass in is fully-qualified.
+A better alternative is to instead use the `PulsarTopicBuilder` as it does not require fully qualified names and will add default values for the missing components in the specified name.
+
 
 [[what-s-new-in-1-1-since-1-0]]
 == What's New in 1.1 Since 1.0

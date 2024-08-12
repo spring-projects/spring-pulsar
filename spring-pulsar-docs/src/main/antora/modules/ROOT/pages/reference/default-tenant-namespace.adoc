@@ -1,0 +1,28 @@
+[[default-tenant-namespace]]
+= Default Tenant / Namespace
+include::../attributes/attributes.adoc[]
+
+Pulsar has built-in support for {apache-pulsar-docs}/concepts-multi-tenancy/[multi-tenancy].
+When producing or consuming messages in Pulsar, the specified topic is actually a topic URL of the following format:
+```
+(persistent|non-persistent)://tenant/namespace/topic
+```
+The URL dictates which tenant and namespace the operation is targeted against.
+However, when not fully-qualified (i.e. only topic name is specified), the default tenant of `public` and namespace of `default` is used.
+
+Spring for Apache Pulsar allows you to specify a default tenant and/or namespace to use when producing or consuming messages against a non-fully-qualified topic URL.
+
+[discrete]
+== Configuration
+
+[discrete]
+=== With Spring Boot
+When using the Spring Boot you can simply set the {spring-boot-pulsar-config-props}[`spring.pulsar.defaults.tenant`] and {spring-boot-pulsar-config-props}[`spring.pulsar.defaults.namespace`] application properties to specify these defaults.
+
+[discrete]
+=== Without Spring Boot
+However, if you are instead manually configuring the components, you can provide a `PulsarTopicBuilder` configured with the desired default topic and namespace when constructing the corresponding producer or consumer factory.
+All default consumer/reader/producer factory implementations (imperative and reactive) allow a topic builder to be specified.
+
+[NOTE]
+You will need to specify the topic builder on each manually configured factory that you want to use the default tenant/namespace

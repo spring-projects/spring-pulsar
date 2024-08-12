@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.pulsar.annotation.PulsarListener;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 
 @SpringBootApplication
 public class FailoverConsumerApp {
@@ -45,7 +46,7 @@ public class FailoverConsumerApp {
 
 	@Bean
 	PulsarTopic failoverDemoTopic() {
-		return PulsarTopic.builder(TOPIC).numberOfPartitions(3).build();
+		return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(3).build();
 	}
 
 	@Bean

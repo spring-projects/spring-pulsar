@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
@@ -93,20 +94,20 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	}
 
 	protected PulsarProducerFactory<String> newProducerFactory() {
-		return producerFactory(pulsarClient, null, null);
+		return producerFactory(pulsarClient, null, null, null);
 	}
 
 	protected PulsarProducerFactory<String> newProducerFactoryWithDefaultTopic(String defaultTopic) {
-		return producerFactory(pulsarClient, defaultTopic, null);
+		return producerFactory(pulsarClient, defaultTopic, null, null);
 	}
 
 	private PulsarProducerFactory<String> newProducerFactoryWithDefaultKeys(Set<String> defaultKeys) {
-		return producerFactory(pulsarClient, null, List.of((pb) -> defaultKeys.forEach(pb::addEncryptionKey)));
+		return producerFactory(pulsarClient, null, List.of((pb) -> defaultKeys.forEach(pb::addEncryptionKey)), null);
 	}
 
 	protected PulsarProducerFactory<String> newProducerFactoryWithDefaultConfigCustomizers(
 			List<ProducerBuilderCustomizer<String>> customizers) {
-		return producerFactory(pulsarClient, null, customizers);
+		return producerFactory(pulsarClient, null, customizers, null);
 	}
 
 	/**
@@ -124,10 +125,13 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 	 * @param defaultTopic the default topic to use for the producers
 	 * @param defaultConfigCustomizers the optional list of customizers to apply to the
 	 * created producers
+	 * @param topicBuilder the optional topic builder to use for fully qualifying topic
+	 * names
 	 * @return a Pulsar producer factory instance to use for the tests
 	 */
 	protected abstract PulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
-			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers);
+			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers,
+			@Nullable PulsarTopicBuilder topicBuilder);
 
 	@Test
 	@SuppressWarnings("unchecked")
@@ -246,6 +250,21 @@ abstract class PulsarProducerFactoryTests implements PulsarTestContainerSupport 
 			var producerFactory = newProducerFactoryWithDefaultKeys(defaultKeys);
 			try (var producer = producerFactory.createProducer(schema, "topic0", userSpecifiedKeys, null)) {
 				assertThatProducerHasEncryptionKeys(producer, userSpecifiedKeys);
+			}
+		}
+
+	}
+
+	@Nested
+	class CreateProducerWithTopicBuilder {
+
+		@Test
+		void topicIsFullyQualified() throws PulsarClientException {
+			var topicBuilder = spy(new PulsarTopicBuilder());
+			var producerFactory = producerFactory(pulsarClient, null, null, topicBuilder);
+			try (var producer = producerFactory.createProducer(schema, "topic1")) {
+				assertThatProducerHasSchemaAndTopic(producer, schema, "persistent://public/default/topic1");
+				verify(topicBuilder).getFullyQualifiedNameForTopic("topic1");
 			}
 		}
 

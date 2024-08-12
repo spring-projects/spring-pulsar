@@ -26,6 +26,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 
@@ -43,7 +44,7 @@ class ReactiveAppConfig {
 
 	@Bean
 	PulsarTopic pulsarTestTopic() {
-		return PulsarTopic.builder(TOPIC).numberOfPartitions(1).build();
+		return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(1).build();
 	}
 
 	@Bean

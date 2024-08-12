@@ -25,6 +25,7 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageReaderBuilder;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -41,6 +42,9 @@ public class DefaultReactivePulsarReaderFactory<T> implements ReactivePulsarRead
 	@Nullable
 	private final List<ReactiveMessageReaderBuilderCustomizer<T>> defaultConfigCustomizers;
 
+	@Nullable
+	private PulsarTopicBuilder topicBuilder;
+
 	/**
 	 * Construct an instance.
 	 * @param reactivePulsarClient the reactive client
@@ -53,6 +57,18 @@ public class DefaultReactivePulsarReaderFactory<T> implements ReactivePulsarRead
 		this.defaultConfigCustomizers = defaultConfigCustomizers;
 	}
 
+	/**
+	 * Non-fully-qualified topic names specified on the created readers will be
+	 * automatically fully-qualified with a default prefix
+	 * ({@code domain://tenant/namespace}) according to the specified topic builder.
+	 * @param topicBuilder the topic builder used to fully qualify topic names or null to
+	 * not fully qualify topic names
+	 * @since 1.2.0
+	 */
+	public void setTopicBuilder(@Nullable PulsarTopicBuilder topicBuilder) {
+		this.topicBuilder = topicBuilder;
+	}
+
 	@Override
 	public ReactiveMessageReader<T> createReader(Schema<T> schema) {
 		return createReader(schema, Collections.emptyList());
@@ -61,20 +77,28 @@ public class DefaultReactivePulsarReaderFactory<T> implements ReactivePulsarRead
 	@Override
 	public ReactiveMessageReader<T> createReader(Schema<T> schema,
 			List<ReactiveMessageReaderBuilderCustomizer<T>> customizers) {
-
 		ReactiveMessageReaderBuilder<T> readerBuilder = this.reactivePulsarClient.messageReader(schema);
-
 		// Apply the default customizers
 		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
 			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(readerBuilder)));
 		}
-
 		// Apply the user specified customizers
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(readerBuilder));
 		}
-
+		if (this.topicBuilder != null) {
+			this.ensureTopicNamesFullyQualified(readerBuilder);
+		}
 		return readerBuilder.build();
+	}
+
+	protected void ensureTopicNamesFullyQualified(ReactiveMessageReaderBuilder<T> readerBuilder) {
+		var mutableSpec = readerBuilder.getMutableSpec();
+		var topics = mutableSpec.getTopicNames();
+		if (!CollectionUtils.isEmpty(topics)) {
+			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
+			mutableSpec.setTopicNames(fullyQualifiedTopics);
+		}
 	}
 
 }

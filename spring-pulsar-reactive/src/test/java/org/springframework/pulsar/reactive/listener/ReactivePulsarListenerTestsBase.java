@@ -32,6 +32,7 @@ import org.springframework.pulsar.core.PulsarAdministration;
 import org.springframework.pulsar.core.PulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.PulsarTopic;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.reactive.config.DefaultReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.annotation.EnableReactivePulsar;
@@ -107,7 +108,9 @@ abstract class ReactivePulsarListenerTestsBase implements PulsarTestContainerSup
 
 		@Bean
 		PulsarTopic partitionedTopic() {
-			return PulsarTopic.builder("persistent://public/default/concurrency-on-pl").numberOfPartitions(3).build();
+			return new PulsarTopicBuilder().name("persistent://public/default/concurrency-on-pl")
+				.numberOfPartitions(3)
+				.build();
 		}
 
 		@Bean

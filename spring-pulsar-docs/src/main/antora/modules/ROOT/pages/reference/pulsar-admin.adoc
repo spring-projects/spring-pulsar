@@ -28,17 +28,20 @@ For all such beans, the `PulsarAdministration` either creates the corresponding 
 
 The following example shows how to add `PulsarTopic` beans to let the `PulsarAdministration` auto-create topics for you:
 
-[source,java]
+[source,java,indent=0,subs="verbatim"]
 ----
 @Bean
 PulsarTopic simpleTopic {
-	// This will create a non-partitioned topic in the public/default namespace
-	return PulsarTopic.builder("simple-topic").build();
+    // This will create a non-partitioned persistent topic in the 'public/default' tenant/namespace
+    return new PulsarTopicBuilder().name("my-topic").build();
 }
 
 @Bean
 PulsarTopic partitionedTopic {
-	// This will create a partitioned topic with 3 partitions in the provided tenant and namespace
-	return PulsarTopic.builder("persistent://my-tenant/my-namespace/partitioned-topic", 3).build();
+    // This will create a persistent topic with 3 partitions in the provided tenant and namespace
+    return new PulsarTopicBuilder()
+        .name("persistent://my-tenant/my-namespace/partitioned-topic")
+        .numberOfPartitions(3)
+        .build();
 }
 ----

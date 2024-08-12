@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.core.TopicResolver;
 
 /**
@@ -72,6 +73,20 @@ class DefaultReactivePulsarSenderFactoryTests {
 			.withTopicResolver(customTopicResolver)
 			.build();
 		assertThat(senderFactory).hasFieldOrPropertyWithValue("topicResolver", customTopicResolver);
+	}
+
+	@Test
+	void createSenderWithTopicBuilder() {
+		var inputTopic = "my-topic";
+		var fullyQualifiedTopic = "persistent://public/default/my-topic";
+		var topicBuilder = spy(new PulsarTopicBuilder());
+		var senderFactory = DefaultReactivePulsarSenderFactory.<String>builderFor(mock(PulsarClient.class))
+			.withTopicBuilder(topicBuilder)
+			.build();
+		assertThat(senderFactory).hasFieldOrPropertyWithValue("topicBuilder", topicBuilder);
+		var sender = senderFactory.createSender(schema, inputTopic);
+		assertThatSenderHasTopic(sender, fullyQualifiedTopic);
+		verify(topicBuilder).getFullyQualifiedNameForTopic(inputTopic);
 	}
 
 	private void assertThatSenderHasTopic(ReactiveMessageSender<String> sender, String expectedTopic) {

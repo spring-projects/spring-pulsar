@@ -90,6 +90,23 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	}
 
 	@Test
+	void createProducerWithTopicBuilderAndMultipleCalls() {
+		var inputTopic = "topic1";
+		var fullyQualifiedTopic = "persistent://public/default/topic1";
+		var topicBuilder = spy(new PulsarTopicBuilder());
+		var producerFactory = producerFactory(pulsarClient, null, null, topicBuilder);
+		var cacheKey = new ProducerCacheKey<>(schema, fullyQualifiedTopic, null, null);
+		var producer1 = producerFactory.createProducer(schema, inputTopic);
+		var producer2 = producerFactory.createProducer(new StringSchema(), inputTopic);
+		var producer3 = producerFactory.createProducer(new StringSchema(), fullyQualifiedTopic);
+		assertThat(producer1).isSameAs(producer2).isSameAs(producer3);
+		CacheProvider<ProducerCacheKey<String>, Producer<String>> producerCache = getAssertedProducerCache(
+				producerFactory, Collections.singletonList(cacheKey));
+		Producer<String> cachedProducerWrapper = producerCache.asMap().get(cacheKey);
+		assertThat(cachedProducerWrapper).isSameAs(producer1);
+	}
+
+	@Test
 	void cachedProducerIsCloseSafeWrapper() throws PulsarClientException {
 		var producerFactory = newProducerFactory();
 		var wrappedProducer = producerFactory.createProducer(schema, "topic1");
@@ -169,7 +186,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Test
 	void factoryDestroyCleansUpCacheAndClosesProducers() {
-		CachingPulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, null, null);
+		CachingPulsarProducerFactory<String> producerFactory = producerFactory(pulsarClient, null, null, null);
 		var actualProducer1 = actualProducer(producerFactory.createProducer(schema, "topic1"));
 		var actualProducer2 = actualProducer(producerFactory.createProducer(schema, "topic2"));
 		var cacheKey1 = new ProducerCacheKey<>(schema, "topic1", null, null);
@@ -200,7 +217,7 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 	void createProducerEncountersException() {
 		pulsarClient = spy(pulsarClient);
 		when(this.pulsarClient.newProducer(schema)).thenThrow(new RuntimeException("5150"));
-		var producerFactory = producerFactory(pulsarClient, null, null);
+		var producerFactory = producerFactory(pulsarClient, null, null, null);
 		assertThatThrownBy(() -> producerFactory.createProducer(schema, "topic1")).isInstanceOf(RuntimeException.class)
 			.hasMessage("5150");
 		getAssertedProducerCache(producerFactory, Collections.emptyList());
@@ -230,9 +247,11 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 	@Override
 	protected CachingPulsarProducerFactory<String> producerFactory(PulsarClient pulsarClient,
-			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers) {
+			@Nullable String defaultTopic, @Nullable List<ProducerBuilderCustomizer<String>> defaultConfigCustomizers,
+			@Nullable PulsarTopicBuilder topicBuilder) {
 		var producerFactory = new CachingPulsarProducerFactory<>(pulsarClient, defaultTopic, defaultConfigCustomizers,
 				new DefaultTopicResolver(), Duration.ofMinutes(5L), 30L, 2);
+		producerFactory.setTopicBuilder(topicBuilder);
 		producerFactories.add(producerFactory);
 		return producerFactory;
 	}
@@ -331,7 +350,8 @@ class CachingPulsarProducerFactoryTests extends PulsarProducerFactoryTests {
 
 		@Test
 		void restartLifecycle() {
-			var producerFactory = (CachingPulsarProducerFactory<String>) producerFactory(pulsarClient, null, null);
+			var producerFactory = (CachingPulsarProducerFactory<String>) producerFactory(pulsarClient, null, null,
+					null);
 			producerFactory.start();
 			var producer1 = producerFactory.createProducer(schema, "topic1");
 			var producer2 = producerFactory.createProducer(schema, "topic2");

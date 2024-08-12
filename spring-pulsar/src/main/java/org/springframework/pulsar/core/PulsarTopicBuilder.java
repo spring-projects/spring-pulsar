@@ -16,23 +16,110 @@
 
 package org.springframework.pulsar.core;
 
+import org.apache.pulsar.common.naming.TopicDomain;
+
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+
 /**
  * Builder class to create {@link PulsarTopic} instances.
  *
  * @author Alexander Preuß
+ * @author Chris Bono
  */
 public class PulsarTopicBuilder {
 
-	private final String topicName;
+	private static final String FQ_TOPIC_NAME_FORMAT = "%s://%s/%s/%s";
 
+	private static final String DEFAULT_TENANT = "public";
+
+	private static final String DEFAULT_NAMESPACE = "default";
+
+	private final TopicDomain defaultDomain;
+
+	private final String defaultTenant;
+
+	private final String defaultNamespace;
+
+	@Nullable
+	private String name;
+
+	@Nullable
 	private int numberOfPartitions;
 
-	protected PulsarTopicBuilder(String topicName) {
-		this.topicName = topicName;
+	/**
+	 * Create a builder instance that uses the following defaults. <pre>
+	 * - {@code domain -> 'persistent'}
+	 * - {@code tenant -> 'public'}
+	 * - {@code namespace -> 'default'}
+	 * </pre>
+	 */
+	public PulsarTopicBuilder() {
+		this(TopicDomain.persistent, DEFAULT_TENANT, DEFAULT_NAMESPACE);
 	}
 
 	/**
-	 * Sets the number of topic partitions.
+	 * Create a builder instance that uses the specified defaults.
+	 * @param defaultDomain domain to use for the topic when not present in the name
+	 * @param defaultTenant tentant to use for the topic when not present in the name
+	 * @param defaultNamespace namespace to use for the topic when not present in the name
+	 */
+	public PulsarTopicBuilder(TopicDomain defaultDomain, String defaultTenant, String defaultNamespace) {
+		Assert.notNull(defaultDomain, "defaultDomain must not be null");
+		Assert.hasText(defaultTenant, "defaultTenant must be specified");
+		Assert.hasText(defaultNamespace, "defaultNamespace must be specified");
+		this.defaultDomain = defaultDomain;
+		this.defaultTenant = defaultTenant;
+		this.defaultNamespace = defaultNamespace;
+	}
+
+	/**
+	 * Get the fully-qualified name of the specified topic in the format
+	 * {@code domain://tenant/namespace/name}.
+	 * @param topicName the topic name to fully qualify
+	 * @return the fully-qualified topic name
+	 */
+	public String getFullyQualifiedNameForTopic(String topicName) {
+		return this.fullyQualifiedName(topicName);
+	}
+
+	/**
+	 * Set the name of the topic under construction. The following formats are accepted:
+	 * <pre>
+	 * - {@code 'name'}
+	 * - {@code 'tenant/namespace/name'}
+	 * - {@code 'domain://tenant/namespace/name'}
+	 * </pre> When the name is not fully-qualified the missing components are populated
+	 * with the corresponding default configured on the builder.
+	 * @param name the topic name
+	 * @return this builder
+	 */
+	public PulsarTopicBuilder name(String name) {
+		this.name = fullyQualifiedName(name);
+		return this;
+	}
+
+	private String fullyQualifiedName(String name) {
+		Assert.notNull(name, "name must not be null");
+		String[] splitTopic = name.split("/");
+		if (splitTopic.length == 1) { // e.g. 'my-topic'
+			return FQ_TOPIC_NAME_FORMAT.formatted(this.defaultDomain, this.defaultTenant, this.defaultNamespace,
+					splitTopic[0]);
+		}
+		if (splitTopic.length == 3) { // e.g. 'public/default/my-topic'
+			return FQ_TOPIC_NAME_FORMAT.formatted(this.defaultDomain, splitTopic[0], splitTopic[1], splitTopic[2]);
+		}
+		if (splitTopic.length == 5) { // e.g. 'persistent://public/default/my-topic'
+			String type = splitTopic[0].replace(":", "");
+			return FQ_TOPIC_NAME_FORMAT.formatted(TopicDomain.getEnum(type), splitTopic[2], splitTopic[3],
+					splitTopic[4]);
+		}
+		throw new IllegalArgumentException("Topic name '" + name + "' must be in one of "
+				+ "the following formats ('name', 'tenant/namespace/name', 'domain://tenant/namespace/name')");
+	}
+
+	/**
+	 * Sets the number of topic partitions for the topic under construction.
 	 * @param numberOfPartitions the number of topic partitions
 	 * @return this builder
 	 */
@@ -46,7 +133,7 @@ public class PulsarTopicBuilder {
 	 * @return {@link PulsarTopic}
 	 */
 	public PulsarTopic build() {
-		return new PulsarTopic(this.topicName, this.numberOfPartitions);
+		return new PulsarTopic(this.name, this.numberOfPartitions);
 	}
 
 }

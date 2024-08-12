@@ -57,6 +57,9 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	private final TopicResolver topicResolver;
 
+	@Nullable
+	private PulsarTopicBuilder topicBuilder;
+
 	/**
 	 * Construct a producer factory that uses a default topic resolver.
 	 * @param pulsarClient the client used to create the producers
@@ -100,6 +103,18 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		this.defaultTopic = defaultTopic;
 		this.defaultConfigCustomizers = defaultConfigCustomizers;
 		this.topicResolver = Objects.requireNonNull(topicResolver, "topicResolver must not be null");
+	}
+
+	/**
+	 * Non-fully-qualified topic names specified on the created producers will be
+	 * automatically fully-qualified with a default prefix
+	 * ({@code domain://tenant/namespace}) according to the specified topic builder.
+	 * @param topicBuilder the topic builder used to fully qualify topic names or null to
+	 * not fully qualify topic names
+	 * @since 1.2.0
+	 */
+	public void setTopicBuilder(@Nullable PulsarTopicBuilder topicBuilder) {
+		this.topicBuilder = topicBuilder;
 	}
 
 	@Override
@@ -169,7 +184,9 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 	}
 
 	protected String resolveTopicName(String userSpecifiedTopic) {
-		return this.topicResolver.resolveTopic(userSpecifiedTopic, this::getDefaultTopic).orElseThrow();
+		var resolvedTopic = this.topicResolver.resolveTopic(userSpecifiedTopic, this::getDefaultTopic).orElseThrow();
+		return this.topicBuilder != null ? this.topicBuilder.getFullyQualifiedNameForTopic(resolvedTopic)
+				: resolvedTopic;
 	}
 
 	@Override

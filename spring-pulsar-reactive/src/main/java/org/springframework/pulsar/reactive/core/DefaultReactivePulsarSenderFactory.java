@@ -32,6 +32,7 @@ import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultTopicResolver;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -65,14 +66,19 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	@Nullable
 	private final List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
 
+	@Nullable
+	private final PulsarTopicBuilder topicBuilder;
+
 	private DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient, TopicResolver topicResolver,
 			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache, @Nullable String defaultTopic,
-			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers) {
+			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers,
+			@Nullable PulsarTopicBuilder topicBuilder) {
 		this.reactivePulsarClient = reactivePulsarClient;
 		this.topicResolver = topicResolver;
 		this.reactiveMessageSenderCache = reactiveMessageSenderCache;
 		this.defaultTopic = defaultTopic;
 		this.defaultConfigCustomizers = defaultConfigCustomizers;
+		this.topicBuilder = topicBuilder;
 	}
 
 	/**
@@ -116,7 +122,7 @@ public final class DefaultReactivePulsarSenderFactory<T>
 	private ReactiveMessageSender<T> doCreateReactiveMessageSender(Schema<T> schema, @Nullable String topic,
 			@Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
-		String resolvedTopic = this.topicResolver.resolveTopic(topic, () -> getDefaultTopic()).orElseThrow();
+		String resolvedTopic = this.resolveTopicName(topic);
 		this.logger.trace(() -> "Creating reactive message sender for '%s' topic".formatted(resolvedTopic));
 
 		ReactiveMessageSenderBuilder<T> sender = this.reactivePulsarClient.messageSender(schema);
@@ -138,6 +144,12 @@ public final class DefaultReactivePulsarSenderFactory<T>
 		sender.topic(resolvedTopic);
 
 		return sender.build();
+	}
+
+	protected String resolveTopicName(String userSpecifiedTopic) {
+		var resolvedTopic = this.topicResolver.resolveTopic(userSpecifiedTopic, this::getDefaultTopic).orElseThrow();
+		return this.topicBuilder != null ? this.topicBuilder.getFullyQualifiedNameForTopic(resolvedTopic)
+				: resolvedTopic;
 	}
 
 	@Override
@@ -193,6 +205,9 @@ public final class DefaultReactivePulsarSenderFactory<T>
 		private TopicResolver topicResolver = new DefaultTopicResolver();
 
 		@Nullable
+		private PulsarTopicBuilder topicBuilder;
+
+		@Nullable
 		private ReactiveMessageSenderCache messageSenderCache;
 
 		@Nullable
@@ -213,6 +228,20 @@ public final class DefaultReactivePulsarSenderFactory<T>
 		 */
 		public Builder<T> withTopicResolver(TopicResolver topicResolver) {
 			this.topicResolver = topicResolver;
+			return this;
+		}
+
+		/**
+		 * Provide the topic builder to use to fully qualify topic names.
+		 * Non-fully-qualified topic names specified on the created senders will be
+		 * automatically fully-qualified with a default prefix
+		 * ({@code domain://tenant/namespace}) according to the topic builder.
+		 * @param topicBuilder the topic builder to use
+		 * @return this same builder instance
+		 * @since 1.2.0
+		 */
+		public Builder<T> withTopicBuilder(PulsarTopicBuilder topicBuilder) {
+			this.topicBuilder = topicBuilder;
 			return this;
 		}
 
@@ -266,7 +295,7 @@ public final class DefaultReactivePulsarSenderFactory<T>
 		public DefaultReactivePulsarSenderFactory<T> build() {
 			Assert.notNull(this.topicResolver, "Topic resolver is required");
 			return new DefaultReactivePulsarSenderFactory<>(this.reactivePulsarClient, this.topicResolver,
-					this.messageSenderCache, this.defaultTopic, this.defaultConfigCustomizers);
+					this.messageSenderCache, this.defaultTopic, this.defaultConfigCustomizers, this.topicBuilder);
 		}
 
 	}

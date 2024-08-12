@@ -66,11 +66,11 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 		List<String> expectedFullyQualifiedTopicNames = expectedTopics.stream().<String>mapMulti((topic, consumer) -> {
 			if (topic.isPartitioned()) {
 				for (int i = 0; i < topic.numberOfPartitions(); i++) {
-					consumer.accept(topic.getFullyQualifiedTopicName() + "-partition-" + i);
+					consumer.accept(topic.topicName() + "-partition-" + i);
 				}
 			}
 			else {
-				consumer.accept(topic.getFullyQualifiedTopicName());
+				consumer.accept(topic.topicName());
 			}
 
 		}).toList();
@@ -106,17 +106,17 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 			@Bean
 			PulsarTopic nonPartitionedTopic() {
-				return PulsarTopic.builder("cmt-non-partitioned-1").build();
+				return new PulsarTopicBuilder().name("cmt-non-partitioned-1").build();
 			}
 
 			@Bean
 			PulsarTopic nonPartitionedTopic2() {
-				return PulsarTopic.builder("cmt-non-partitioned-2").build();
+				return new PulsarTopicBuilder().name("cmt-non-partitioned-2").build();
 			}
 
 			@Bean
 			PulsarTopic partitionedTopic() {
-				return PulsarTopic.builder("cmt-partitioned-1").numberOfPartitions(4).build();
+				return new PulsarTopicBuilder().name("cmt-partitioned-1").numberOfPartitions(4).build();
 			}
 
 		}
@@ -157,14 +157,14 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 			@Bean
 			PulsarTopic partitionedGreenTopic() {
-				return PulsarTopic.builder("persistent://%s/partitioned-1".formatted(PUBLIC_GREEN_NAMESPACE))
+				return new PulsarTopicBuilder().name("persistent://%s/partitioned-1".formatted(PUBLIC_GREEN_NAMESPACE))
 					.numberOfPartitions(2)
 					.build();
 			}
 
 			@Bean
 			PulsarTopic partitionedBlueTopic() {
-				return PulsarTopic.builder("persistent://%s/partitioned-1".formatted(PUBLIC_BLUE_NAMESPACE))
+				return new PulsarTopicBuilder().name("persistent://%s/partitioned-1".formatted(PUBLIC_BLUE_NAMESPACE))
 					.numberOfPartitions(2)
 					.build();
 			}
@@ -180,7 +180,7 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 		@Test
 		void topicsExist(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
 			assertThatTopicsExist(expectedTopics.stream().toList());
-			PulsarTopic biggerTopic = PulsarTopic.builder("ipc-partitioned-1").numberOfPartitions(4).build();
+			PulsarTopic biggerTopic = new PulsarTopicBuilder().name("ipc-partitioned-1").numberOfPartitions(4).build();
 			pulsarAdministration.createOrModifyTopics(biggerTopic);
 			assertThatTopicsExist(Collections.singletonList(biggerTopic));
 		}
@@ -190,7 +190,7 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 			@Bean
 			PulsarTopic smallerTopic() {
-				return PulsarTopic.builder("ipc-partitioned-1").numberOfPartitions(1).build();
+				return new PulsarTopicBuilder().name("ipc-partitioned-1").numberOfPartitions(1).build();
 			}
 
 		}
@@ -204,7 +204,7 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 		@Test
 		void topicModificationThrows(@Autowired ObjectProvider<PulsarTopic> expectedTopics) throws Exception {
 			assertThatTopicsExist(expectedTopics.stream().toList());
-			PulsarTopic smallerTopic = PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(4).build();
+			PulsarTopic smallerTopic = new PulsarTopicBuilder().name("dpc-partitioned-1").numberOfPartitions(4).build();
 			assertThatIllegalStateException().isThrownBy(() -> pulsarAdministration.createOrModifyTopics(smallerTopic))
 				.withMessage(
 						"Topic 'persistent://public/default/dpc-partitioned-1' found w/ 8 partitions but can't shrink to 4 - needs to be deleted first");
@@ -216,7 +216,7 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 			@Bean
 			PulsarTopic biggerTopic() {
-				return PulsarTopic.builder("dpc-partitioned-1").numberOfPartitions(8).build();
+				return new PulsarTopicBuilder().name("dpc-partitioned-1").numberOfPartitions(8).build();
 			}
 
 		}
@@ -229,7 +229,7 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 		@Test
 		void unpartitionedTopicExists() throws PulsarAdminException {
-			var topic = PulsarTopic.builder("taet-foo").numberOfPartitions(0).build();
+			var topic = new PulsarTopicBuilder().name("taet-foo").numberOfPartitions(0).build();
 			pulsarAdministration.createOrModifyTopics(topic);
 			assertThatTopicsExist(List.of(topic));
 			// subsequent call should short circuit and not fail
@@ -238,7 +238,7 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 		@Test
 		void partitionedTopicExists() throws PulsarAdminException {
-			var topic = PulsarTopic.builder("taet-bar").numberOfPartitions(3).build();
+			var topic = new PulsarTopicBuilder().name("taet-bar").numberOfPartitions(3).build();
 			pulsarAdministration.createOrModifyTopics(topic);
 			assertThatTopicsExist(List.of(topic));
 			// subsequent call should short circuit and not fail
@@ -253,8 +253,8 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 		@Test
 		void unpartitionedTopicAlreadyExists() {
-			var unpartitionedTopic = PulsarTopic.builder("ctt-foo").numberOfPartitions(0).build();
-			var partitionedTopic = PulsarTopic.builder("ctt-foo").numberOfPartitions(3).build();
+			var unpartitionedTopic = new PulsarTopicBuilder().name("ctt-foo").numberOfPartitions(0).build();
+			var partitionedTopic = new PulsarTopicBuilder().name("ctt-foo").numberOfPartitions(3).build();
 			pulsarAdministration.createOrModifyTopics(unpartitionedTopic);
 			assertThatIllegalStateException()
 				.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(partitionedTopic))
@@ -264,8 +264,8 @@ public class PulsarAdministrationIntegrationTests implements PulsarTestContainer
 
 		@Test
 		void partitionedTopicAlreadyExists() {
-			var unpartitionedTopic = PulsarTopic.builder("ctt-bar").numberOfPartitions(0).build();
-			var partitionedTopic = PulsarTopic.builder("ctt-bar").numberOfPartitions(3).build();
+			var unpartitionedTopic = new PulsarTopicBuilder().name("ctt-bar").numberOfPartitions(0).build();
+			var partitionedTopic = new PulsarTopicBuilder().name("ctt-bar").numberOfPartitions(3).build();
 			pulsarAdministration.createOrModifyTopics(partitionedTopic);
 			assertThatIllegalStateException()
 				.isThrownBy(() -> pulsarAdministration.createOrModifyTopics(unpartitionedTopic))
