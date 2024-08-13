@@ -20,6 +20,7 @@ import org.apache.pulsar.common.naming.TopicDomain;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Builder class to create {@link PulsarTopic} instances.
@@ -60,17 +61,18 @@ public class PulsarTopicBuilder {
 
 	/**
 	 * Create a builder instance that uses the specified defaults.
-	 * @param defaultDomain domain to use for the topic when not present in the name
-	 * @param defaultTenant tentant to use for the topic when not present in the name
-	 * @param defaultNamespace namespace to use for the topic when not present in the name
+	 * @param defaultDomain domain to use when topic name is not fully-qualified
+	 * @param defaultTenant tenant to use when topic name is not fully-qualified or null
+	 * to use the Pulsar default tenant of 'public'
+	 * @param defaultNamespace namespace to use when topic name is not fully-qualified or
+	 * null to use the Pulsar default namespace of 'namespace'
 	 */
-	public PulsarTopicBuilder(TopicDomain defaultDomain, String defaultTenant, String defaultNamespace) {
+	public PulsarTopicBuilder(TopicDomain defaultDomain, @Nullable String defaultTenant,
+			@Nullable String defaultNamespace) {
 		Assert.notNull(defaultDomain, "defaultDomain must not be null");
-		Assert.hasText(defaultTenant, "defaultTenant must be specified");
-		Assert.hasText(defaultNamespace, "defaultNamespace must be specified");
 		this.defaultDomain = defaultDomain;
-		this.defaultTenant = defaultTenant;
-		this.defaultNamespace = defaultNamespace;
+		this.defaultTenant = StringUtils.hasText(defaultTenant) ? defaultTenant : DEFAULT_TENANT;
+		this.defaultNamespace = StringUtils.hasText(defaultNamespace) ? defaultNamespace : DEFAULT_NAMESPACE;
 	}
 
 	/**

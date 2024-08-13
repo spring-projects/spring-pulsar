@@ -80,4 +80,18 @@ class PulsarTopicBuilderTests {
 				Arguments.of(customBuilder, "persistent://foo/bar/my-topic", "persistent://foo/bar/my-topic"));
 	}
 
+	@Test
+	void whenConstructedWithNullTenantThenPulsarDefaultTenantIsUsed() {
+		var topicBuilder = new PulsarTopicBuilder(TopicDomain.persistent, null, "foo");
+		var fqTopic = topicBuilder.name("my-topic").build();
+		assertThat(fqTopic.topicName()).isEqualTo("persistent://public/foo/my-topic");
+	}
+
+	@Test
+	void whenConstructedWithNullNamespaceThenPulsarDefaultNamespaceIsUsed() {
+		var topicBuilder = new PulsarTopicBuilder(TopicDomain.persistent, "foo", null);
+		var fqTopic = topicBuilder.name("my-topic").build();
+		assertThat(fqTopic.topicName()).isEqualTo("persistent://foo/default/my-topic");
+	}
+
 }
