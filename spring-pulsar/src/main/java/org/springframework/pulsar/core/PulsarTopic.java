@@ -61,8 +61,9 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	 * Convenience method to create a topic builder with the specified topic name.
 	 * @param topicName the name of the topic
 	 * @return the topic builder instance
-	 * @deprecated As of version 1.2.0 topic builder is a registered bean - instead use an
-	 * injected instance where needed
+	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
+	 * {@link PulsarTopicBuilder#PulsarTopicBuilder()} or
+	 * {@link PulsarTopicBuilder#PulsarTopicBuilder(TopicDomain, String, String)}
 	 */
 	@Deprecated(since = "1.2.0", forRemoval = true)
 	public static PulsarTopicBuilder builder(String topicName) {
