@@ -20,9 +20,9 @@ See xref:./reference/default-tenant-namespace.adoc[Default Tenant / Namespace] f
 Version `3.3.1` of the Pulsar client deprecates the `getPartitionsForTopic(java.lang.String)` in favor of `getPartitionsForTopic(java.lang.String, boolean metadataAutoCreationEnabled)`.
 
 ==== PulsarTopic#builder
-The `PulsarTopicBuilder` is now a registered bean that is configured with default values for domain, tenant, and namespace.
-As such, this convenience method is no longer needed.
-Instead, inject the builder bean where needed.
+When using Spring Boot the `PulsarTopicBuilder` is now a registered bean that is configured with default values for domain, tenant, and namespace.
+Therefore, if you are using Spring Boot, you can simply inject the builder where needed.
+Otherwise, use one of the `PulsarTopicBuilder` constructors directly.
 
 === Breaking Changes
 
