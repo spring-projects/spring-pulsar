@@ -17,11 +17,13 @@ Spring for Apache Pulsar allows you to specify a default tenant and/or namespace
 
 [discrete]
 === With Spring Boot
-When using the Spring Boot you can simply set the {spring-boot-pulsar-config-props}[`spring.pulsar.defaults.tenant`] and {spring-boot-pulsar-config-props}[`spring.pulsar.defaults.namespace`] application properties to specify these defaults.
+When using the Spring Boot you can simply set the {spring-boot-pulsar-config-props}[`spring.pulsar.defaults.topic.tenant`] and {spring-boot-pulsar-config-props}[`spring.pulsar.defaults.topic.namespace`] application properties to specify these defaults.
+
+If you want to disable this feature, simply set the `spring.pulsar.defaults.topic.enabled` property to `false`.
 
 [discrete]
 === Without Spring Boot
-However, if you are instead manually configuring the components, you can provide a `PulsarTopicBuilder` configured with the desired default topic and namespace when constructing the corresponding producer or consumer factory.
+However, if you are instead manually configuring the components, you will have to provide a `PulsarTopicBuilder` configured with the desired default topic and namespace when constructing the corresponding producer or consumer factory.
 All default consumer/reader/producer factory implementations (imperative and reactive) allow a topic builder to be specified.
 
 [NOTE]
