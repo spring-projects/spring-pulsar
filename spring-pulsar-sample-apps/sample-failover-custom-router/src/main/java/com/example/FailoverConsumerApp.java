@@ -45,8 +45,8 @@ public class FailoverConsumerApp {
 	}
 
 	@Bean
-	PulsarTopic failoverDemoTopic() {
-		return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(3).build();
+	PulsarTopic failoverDemoTopic(PulsarTopicBuilder topicBuilder) {
+		return topicBuilder.name(TOPIC).numberOfPartitions(3).build();
 	}
 
 	@Bean
