@@ -21,7 +21,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.pulsar.common.naming.TopicDomain;
 import org.apache.pulsar.common.policies.data.TenantInfoImpl;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 
@@ -52,11 +51,6 @@ class ReactiveAppConfig {
 	static final String NFQ_TOPIC = "dtant-topic-r";
 	static final String FQ_TOPIC = "persistent://my-tenant-r/my-namespace-r/dtant-topic-r";
 	static final String MSG_PREFIX = "DefaultTenantNamespace-r:";
-
-	@Bean
-	PulsarTopicBuilder topicBuilder() {
-		return new PulsarTopicBuilder(TopicDomain.persistent, TENANT, NAMESPACE);
-	}
 
 	@Bean
 	ReactivePulsarSenderFactory<Object> reactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient,

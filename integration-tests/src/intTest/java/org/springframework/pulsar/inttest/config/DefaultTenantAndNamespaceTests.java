@@ -50,7 +50,10 @@ class DefaultTenantAndNamespaceTests {
 	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage());
 
 	@Nested
-	@SpringBootTest(classes = ImperativeAppConfig.class)
+	@SpringBootTest(classes = ImperativeAppConfig.class, properties = {
+			"spring.pulsar.defaults.topic.tenant=my-tenant-i",
+			"spring.pulsar.defaults.topic.namespace=my-namespace-i"
+	})
 	@ExtendWith(OutputCaptureExtension.class)
 	@ActiveProfiles("inttest.pulsar.imperative")
 	class WithImperativeApp {
@@ -66,7 +69,10 @@ class DefaultTenantAndNamespaceTests {
 	}
 
 	@Nested
-	@SpringBootTest(classes = ReactiveAppConfig.class)
+	@SpringBootTest(classes = ReactiveAppConfig.class, properties = {
+			"spring.pulsar.defaults.topic.tenant=my-tenant-r",
+			"spring.pulsar.defaults.topic.namespace=my-namespace-r"
+	})
 	@ExtendWith(OutputCaptureExtension.class)
 	@ActiveProfiles("inttest.pulsar.reactive")
 	class WithReactiveApp {
