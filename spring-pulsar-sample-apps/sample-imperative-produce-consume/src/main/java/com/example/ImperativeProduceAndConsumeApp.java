@@ -98,8 +98,8 @@ public class ImperativeProduceAndConsumeApp {
 		private static final String TOPIC = "produce-consume-partitions";
 
 		@Bean
-		PulsarTopic partitionedTopic() {
-			return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(3).build();
+		PulsarTopic partitionedTopic(PulsarTopicBuilder topicBuilder) {
+			return topicBuilder.name(TOPIC).numberOfPartitions(3).build();
 		}
 
 		@Bean

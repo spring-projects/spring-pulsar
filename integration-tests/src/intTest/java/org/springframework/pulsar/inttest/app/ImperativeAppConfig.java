@@ -39,8 +39,8 @@ class ImperativeAppConfig {
 	private static final String TOPIC = "pulsar-inttest-topic";
 
 	@Bean
-	PulsarTopic pulsarTestTopic() {
-		return new PulsarTopicBuilder().name(TOPIC).numberOfPartitions(1).build();
+	PulsarTopic pulsarTestTopic(PulsarTopicBuilder topicBuilder) {
+		return topicBuilder.name(TOPIC).numberOfPartitions(1).build();
 	}
 
 	@Bean

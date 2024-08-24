@@ -21,8 +21,6 @@ ext['pulsar.version'] = "${pulsarVersion}"
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-pulsar'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-	// TODO remove when new PulsarTopicBuilder published
-	implementation project(':spring-pulsar')
 	implementation(testFixtures(project(":spring-pulsar")))
 	implementation project(':spring-pulsar-test')
 	testRuntimeOnly 'ch.qos.logback:logback-classic'

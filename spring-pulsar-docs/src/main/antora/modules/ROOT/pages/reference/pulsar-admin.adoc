@@ -31,15 +31,15 @@ The following example shows how to add `PulsarTopic` beans to let the `PulsarAdm
 [source,java,indent=0,subs="verbatim"]
 ----
 @Bean
-PulsarTopic simpleTopic {
+PulsarTopic simpleTopic(PulsarTopicBuilder topicBuilder) {
     // This will create a non-partitioned persistent topic in the 'public/default' tenant/namespace
-    return new PulsarTopicBuilder().name("my-topic").build();
+    return topicBuilder.name("my-topic").build();
 }
 
 @Bean
-PulsarTopic partitionedTopic {
+PulsarTopic partitionedTopic(PulsarTopicBuilder topicBuilder) {
     // This will create a persistent topic with 3 partitions in the provided tenant and namespace
-    return new PulsarTopicBuilder()
+    return topicBuilder
         .name("persistent://my-tenant/my-namespace/partitioned-topic")
         .numberOfPartitions(3)
         .build();

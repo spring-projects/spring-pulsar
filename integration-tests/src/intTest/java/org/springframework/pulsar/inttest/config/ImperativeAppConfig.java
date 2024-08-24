@@ -21,7 +21,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.common.naming.TopicDomain;
 import org.apache.pulsar.common.policies.data.TenantInfoImpl;
 
 import org.springframework.boot.ApplicationRunner;
@@ -50,11 +49,6 @@ class ImperativeAppConfig {
 	static final String NFQ_TOPIC = "dtant-topic-i";
 	static final String FQ_TOPIC = "persistent://my-tenant-i/my-namespace-i/dtant-topic-i";
 	static final String MSG_PREFIX = "DefaultTenantNamespace-i:";
-
-	@Bean
-	PulsarTopicBuilder topicBuilder() {
-		return new PulsarTopicBuilder(TopicDomain.persistent, TENANT, NAMESPACE);
-	}
 
 	@Bean
 	PulsarProducerFactory<Object> pulsarProducerFactory(PulsarClient pulsarClient, TopicResolver topicResolver,
