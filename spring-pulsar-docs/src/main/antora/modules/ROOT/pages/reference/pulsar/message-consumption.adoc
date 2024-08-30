@@ -15,9 +15,6 @@ Spring Boot provides this consumer factory which you can further configure by sp
 
 TIP: The `spring.pulsar.consumer.subscription.name` property is ignored and is instead generated when not specified on the annotation.
 
-TIP: The `spring.pulsar.consumer.subscription.type` property is ignored and is instead taken from the value on the annotation. However, you can set the `subscriptionType = {}` on the annotation to instead use the property value as the default.
-
-
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section:
 
 [source, java]

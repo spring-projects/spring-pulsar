@@ -73,8 +73,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarListenerTests.PulsarHeadersCustomObjectMapperTest.PulsarHeadersCustomObjectMapperTestConfig;
-import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
-import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
+import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.SubscriptionTypeTestsConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
 import org.springframework.pulsar.test.model.UserPojo;
@@ -1055,102 +1054,71 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 	}
 
 	@Nested
+	@ContextConfiguration(classes = SubscriptionTypeTestsConfig.class)
 	class SubscriptionTypeTests {
 
-		@SuppressWarnings("rawtypes")
-		private static AbstractObjectAssert<?, ?> assertSubscriptionType(Consumer<?> consumer) {
-			return assertThat(consumer)
-				.extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
-				.extracting(ConsumerConfigurationData::getSubscriptionType);
+		static final CountDownLatch latchTypeNotSet = new CountDownLatch(1);
+
+		static final CountDownLatch latchTypeSetOnAnnotation = new CountDownLatch(1);
+
+		static final CountDownLatch latchTypeSetOnCustomizer = new CountDownLatch(1);
+
+		@Test
+		void defaultTypeFromContainerFactoryUsedWhenTypeNotSetAnywhere() throws Exception {
+			pulsarTemplate.send("latchTypeNotSet-topic", "hello-latchTypeNotSet");
+			assertThat(latchTypeNotSet.await(5, TimeUnit.SECONDS)).isTrue();
 		}
 
-		@Nested
-		@ContextConfiguration(classes = WithDefaultTypeConfig.class)
-		class WithDefaultType {
-
-			static final CountDownLatch latchTypeNotSet = new CountDownLatch(1);
-
-			@Test
-			void whenTypeNotSetAnywhereThenFallbackTypeIsUsed() throws Exception {
-				pulsarTemplate.send("typeNotSetAnywhere-topic", "hello-typeNotSetAnywhere");
-				assertThat(latchTypeNotSet.await(5, TimeUnit.SECONDS)).isTrue();
-			}
-
-			@Configuration(proxyBeanMethods = false)
-			static class WithDefaultTypeConfig {
-
-				@PulsarListener(topics = "typeNotSetAnywhere-topic", subscriptionName = "typeNotSetAnywhere-sub")
-				void listenWithoutTypeSetAnywhere(String ignored, Consumer<String> consumer) {
-					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Exclusive);
-					latchTypeNotSet.countDown();
-				}
-
-			}
-
+		@Test
+		void typeSetOnAnnotationOverridesDefaultTypeFromContainerFactory() throws Exception {
+			pulsarTemplate.send("typeSetOnAnnotation-topic", "hello-typeSetOnAnnotation");
+			assertThat(latchTypeSetOnAnnotation.await(5, TimeUnit.SECONDS)).isTrue();
 		}
 
-		@Nested
-		@ContextConfiguration(classes = WithSpecificTypesConfig.class)
-		class WithSpecificTypes {
+		@Test
+		void typeSetOnCustomizerOverridesTypeSetOnAnnotation() throws Exception {
+			pulsarTemplate.send("typeSetOnCustomizer-topic", "hello-typeSetOnCustomizer");
+			assertThat(latchTypeSetOnCustomizer.await(5, TimeUnit.SECONDS)).isTrue();
+		}
 
-			static final CountDownLatch latchTypeSetConsumerFactory = new CountDownLatch(1);
+		@Configuration(proxyBeanMethods = false)
+		static class SubscriptionTypeTestsConfig {
 
-			static final CountDownLatch latchTypeSetAnnotation = new CountDownLatch(1);
-
-			static final CountDownLatch latchWithCustomizer = new CountDownLatch(1);
-
-			@Test
-			void whenTypeSetOnlyInConsumerFactoryThenConsumerFactoryTypeIsUsed() throws Exception {
-				pulsarTemplate.send("typeSetConsumerFactory-topic", "hello-typeSetConsumerFactory");
-				assertThat(latchTypeSetConsumerFactory.await(5, TimeUnit.SECONDS)).isTrue();
+			@Bean
+			ConsumerBuilderCustomizer<String> consumerFactoryCustomizerSubTypeIsIgnored() {
+				return (b) -> b.subscriptionType(SubscriptionType.Shared);
 			}
 
-			@Test
-			void whenTypeSetOnAnnotationThenAnnotationTypeIsUsed() throws Exception {
-				pulsarTemplate.send("typeSetAnnotation-topic", "hello-typeSetAnnotation");
-				assertThat(latchTypeSetAnnotation.await(5, TimeUnit.SECONDS)).isTrue();
+			@PulsarListener(topics = "latchTypeNotSet-topic", subscriptionName = "latchTypeNotSet-sub")
+			void listenWithTypeNotSet(String ignored, Consumer<String> consumer) {
+				assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Exclusive);
+				latchTypeNotSet.countDown();
 			}
 
-			@Test
-			void whenTypeSetWithCustomizerThenCustomizerTypeIsUsed() throws Exception {
-				pulsarTemplate.send("typeSetCustomizer-topic", "hello-typeSetCustomizer");
-				assertThat(latchWithCustomizer.await(5, TimeUnit.SECONDS)).isTrue();
+			@PulsarListener(topics = "typeSetOnAnnotation-topic", subscriptionName = "typeSetOnAnnotation-sub",
+					subscriptionType = SubscriptionType.Key_Shared)
+			void listenWithTypeSetOnAnnotation(String ignored, Consumer<String> consumer) {
+				assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Key_Shared);
+				latchTypeSetOnAnnotation.countDown();
 			}
 
-			@Configuration(proxyBeanMethods = false)
-			static class WithSpecificTypesConfig {
+			@PulsarListener(topics = "typeSetOnCustomizer-topic", subscriptionName = "typeSetOnCustomizer-sub",
+					subscriptionType = SubscriptionType.Key_Shared, consumerCustomizer = "myCustomizer")
+			void listenWithTypeSetOnCustomizer(String ignored, Consumer<String> consumer) {
+				assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Failover);
+				latchTypeSetOnCustomizer.countDown();
+			}
 
-				@Bean
-				ConsumerBuilderCustomizer<String> consumerFactoryDefaultSubTypeCustomizer() {
-					return (b) -> b.subscriptionType(SubscriptionType.Shared);
-				}
+			@Bean
+			public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
+				return cb -> cb.subscriptionType(SubscriptionType.Failover);
+			}
 
-				@PulsarListener(topics = "typeSetConsumerFactory-topic",
-						subscriptionName = "typeSetConsumerFactory-sub", subscriptionType = {})
-				void listenWithTypeSetOnlyOnConsumerFactory(String ignored, Consumer<String> consumer) {
-					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Shared);
-					latchTypeSetConsumerFactory.countDown();
-				}
-
-				@PulsarListener(topics = "typeSetAnnotation-topic", subscriptionName = "typeSetAnnotation-sub",
-						subscriptionType = SubscriptionType.Key_Shared)
-				void listenWithTypeSetOnAnnotation(String ignored, Consumer<String> consumer) {
-					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Key_Shared);
-					latchTypeSetAnnotation.countDown();
-				}
-
-				@PulsarListener(topics = "typeSetCustomizer-topic", subscriptionName = "typeSetCustomizer-sub",
-						subscriptionType = SubscriptionType.Key_Shared, consumerCustomizer = "myCustomizer")
-				void listenWithTypeSetInCustomizer(String ignored, Consumer<String> consumer) {
-					assertSubscriptionType(consumer).isEqualTo(SubscriptionType.Failover);
-					latchWithCustomizer.countDown();
-				}
-
-				@Bean
-				public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
-					return cb -> cb.subscriptionType(SubscriptionType.Failover);
-				}
-
+			@SuppressWarnings("rawtypes")
+			private static AbstractObjectAssert<?, ?> assertSubscriptionType(Consumer<?> consumer) {
+				return assertThat(consumer)
+					.extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
+					.extracting(ConsumerConfigurationData::getSubscriptionType);
 			}
 
 		}
