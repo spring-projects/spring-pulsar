@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SubscriptionType;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
@@ -87,6 +88,7 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 		ReactivePulsarContainerProperties<T> properties = new ReactivePulsarContainerProperties<>();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
 		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
+		properties.setSubscriptionType(this.getContainerProperties().getSubscriptionType());
 
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
 			properties.setTopics(endpoint.getTopics());
@@ -103,8 +105,9 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 		if (endpoint.getSubscriptionType() != null) {
 			properties.setSubscriptionType(endpoint.getSubscriptionType());
 		}
-		else {
-			properties.setSubscriptionType(this.containerProperties.getSubscriptionType());
+		// Default to Exclusive if not set on container props or endpoint
+		if (properties.getSubscriptionType() == null) {
+			properties.setSubscriptionType(SubscriptionType.Exclusive);
 		}
 
 		if (endpoint.getSchemaType() != null) {

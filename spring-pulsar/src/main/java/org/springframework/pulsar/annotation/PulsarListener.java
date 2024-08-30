@@ -81,7 +81,7 @@ public @interface PulsarListener {
 	 * @return single element array with the subscription type or empty array to indicate
 	 * no type chosen by user
 	 */
-	SubscriptionType[] subscriptionType() default { SubscriptionType.Exclusive };
+	SubscriptionType[] subscriptionType() default {};
 
 	/**
 	 * Pulsar schema type for this listener.

@@ -304,11 +304,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						topicNames, this.containerProperties.getSubscriptionName(), properties, customizers);
 				Assert.state(this.consumer != null, "Unable to create a consumer");
 
-				// If subtype is null - update it based on the actual subtype of the
-				// underlying consumer
-				if (this.subscriptionType == null) {
-					updateSubscriptionTypeFromConsumer(this.consumer);
-				}
+				// Update sub type from underlying consumer as customizer from annotation
+				// may have updated it
+				updateSubscriptionTypeFromConsumer(this.consumer);
 			}
 			catch (PulsarException e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar exception.");

@@ -72,8 +72,7 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersCustomObjectMapperTest.PulsarHeadersCustomObjectMapperTestConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.PulsarHeadersTest.PulsarListenerWithHeadersConfig;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.StreamingListenerTestCases.StreamingListenerTestCasesConfig;
-import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithDefaultType.WithDefaultTypeConfig;
-import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.WithSpecificTypes.WithSpecificTypesConfig;
+import org.springframework.pulsar.reactive.listener.ReactivePulsarListenerTests.SubscriptionTypeTests.SubscriptionTypeTestsConfig;
 import org.springframework.pulsar.reactive.support.MessageUtils;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
@@ -816,117 +815,80 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 	}
 
 	@Nested
+	@ContextConfiguration(classes = SubscriptionTypeTestsConfig.class)
 	class SubscriptionTypeTests {
 
-		@Nested
-		@ContextConfiguration(classes = WithDefaultTypeConfig.class)
-		class WithDefaultType {
+		static final CountDownLatch latchTypeNotSet = new CountDownLatch(1);
 
-			static final CountDownLatch latchTypeNotSet = new CountDownLatch(1);
+		static final CountDownLatch latchTypeSetOnAnnotation = new CountDownLatch(1);
 
-			@Test
-			void whenTypeNotSetAnywhereThenFallbackTypeIsUsed(
-					@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
-				assertThat(consumerFactory.topicNameToConsumerSpec).hasEntrySatisfying("rpl-typeNotSetAnywhere-topic",
-						(consumerSpec) -> assertThat(consumerSpec.getSubscriptionType())
-							.isEqualTo(SubscriptionType.Exclusive));
-				pulsarTemplate.send("rpl-typeNotSetAnywhere-topic", "hello-rpl-typeNotSetAnywhere");
-				assertThat(latchTypeNotSet.await(10, TimeUnit.SECONDS)).isTrue();
-			}
+		static final CountDownLatch latchTypeSetOnCustomizer = new CountDownLatch(1);
 
-			@Configuration(proxyBeanMethods = false)
-			static class WithDefaultTypeConfig {
-
-				@ReactivePulsarListener(topics = "rpl-typeNotSetAnywhere-topic",
-						subscriptionName = "rpl-typeNotSetAnywhere-sub",
-						consumerCustomizer = "subscriptionInitialPositionEarliest")
-				Mono<Void> listenWithoutTypeSetAnywhere(String ignored) {
-					latchTypeNotSet.countDown();
-					return Mono.empty();
-				}
-
-			}
-
+		@Test
+		void defaultTypeFromContainerFactoryUsedWhenTypeNotSetAnywhere(
+				@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
+			var topic = "rpl-latchTypeNotSet-topic";
+			assertThat(consumerFactory.getSpec(topic)).extracting(ReactiveMessageConsumerSpec::getSubscriptionType)
+				.isEqualTo(SubscriptionType.Exclusive);
+			pulsarTemplate.send(topic, "hello-" + topic);
+			assertThat(latchTypeNotSet.await(5, TimeUnit.SECONDS)).isTrue();
 		}
 
-		@Nested
-		@ContextConfiguration(classes = WithSpecificTypesConfig.class)
-		class WithSpecificTypes {
+		@Test
+		void typeSetOnAnnotationOverridesDefaultTypeFromContainerFactory(
+				@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
+			var topic = "rpl-typeSetOnAnnotation-topic";
+			assertThat(consumerFactory.getSpec(topic)).extracting(ReactiveMessageConsumerSpec::getSubscriptionType)
+				.isEqualTo(SubscriptionType.Key_Shared);
+			pulsarTemplate.send(topic, "hello-" + topic);
+			assertThat(latchTypeSetOnAnnotation.await(5, TimeUnit.SECONDS)).isTrue();
+		}
 
-			static final CountDownLatch latchTypeSetConsumerFactory = new CountDownLatch(1);
+		@Test
+		void typeSetOnCustomizerOverridesTypeSetOnAnnotation(
+				@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
+			var topic = "rpl-typeSetOnCustomizer-topic";
+			assertThat(consumerFactory.getSpec(topic)).extracting(ReactiveMessageConsumerSpec::getSubscriptionType)
+				.isEqualTo(SubscriptionType.Failover);
+			pulsarTemplate.send(topic, "hello-" + topic);
+			assertThat(latchTypeSetOnCustomizer.await(5, TimeUnit.SECONDS)).isTrue();
+		}
 
-			static final CountDownLatch latchTypeSetAnnotation = new CountDownLatch(1);
+		@Configuration(proxyBeanMethods = false)
+		static class SubscriptionTypeTestsConfig {
 
-			static final CountDownLatch latchWithCustomizer = new CountDownLatch(1);
-
-			@Test
-			void whenTypeSetOnlyInConsumerFactoryThenConsumerFactoryTypeIsUsed(
-					@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
-				assertThat(consumerFactory.getSpec("rpl-typeSetConsumerFactory-topic"))
-					.extracting(ReactiveMessageConsumerSpec::getSubscriptionType)
-					.isEqualTo(SubscriptionType.Shared);
-				pulsarTemplate.send("rpl-typeSetConsumerFactory-topic", "hello-rpl-typeSetConsumerFactory");
-				assertThat(latchTypeSetConsumerFactory.await(10, TimeUnit.SECONDS)).isTrue();
+			@Bean
+			ReactiveMessageConsumerBuilderCustomizer<String> consumerFactoryDefaultSubTypeCustomizer() {
+				return (b) -> b.subscriptionType(SubscriptionType.Shared);
 			}
 
-			@Test
-			void whenTypeSetOnAnnotationThenAnnotationTypeIsUsed(
-					@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
-				assertThat(consumerFactory.getSpec("rpl-typeSetAnnotation-topic"))
-					.extracting(ReactiveMessageConsumerSpec::getSubscriptionType)
-					.isEqualTo(SubscriptionType.Key_Shared);
-				pulsarTemplate.send("rpl-typeSetAnnotation-topic", "hello-rpl-typeSetAnnotation");
-				assertThat(latchTypeSetAnnotation.await(10, TimeUnit.SECONDS)).isTrue();
+			@ReactivePulsarListener(topics = "rpl-latchTypeNotSet-topic", subscriptionName = "rpl-latchTypeNotSet-sub",
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenWithoutTypeSetAnywhere(String ignored) {
+				latchTypeNotSet.countDown();
+				return Mono.empty();
 			}
 
-			@Test
-			void whenTypeSetWithCustomizerThenCustomizerTypeIsUsed(
-					@Autowired ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory) throws Exception {
-				assertThat(consumerFactory.getSpec("rpl-typeSetCustomizer-topic"))
-					.extracting(ReactiveMessageConsumerSpec::getSubscriptionType)
-					.isEqualTo(SubscriptionType.Failover);
-				pulsarTemplate.send("rpl-typeSetCustomizer-topic", "hello-rpl-typeSetCustomizer");
-				assertThat(latchWithCustomizer.await(10, TimeUnit.SECONDS)).isTrue();
+			@ReactivePulsarListener(topics = "rpl-typeSetOnAnnotation-topic",
+					subscriptionName = "rpl-typeSetOnAnnotation-sub", subscriptionType = SubscriptionType.Key_Shared,
+					consumerCustomizer = "subscriptionInitialPositionEarliest")
+			Mono<Void> listenWithTypeSetOnAnnotation(String ignored) {
+				latchTypeSetOnAnnotation.countDown();
+				return Mono.empty();
 			}
 
-			@Configuration(proxyBeanMethods = false)
-			static class WithSpecificTypesConfig {
+			@ReactivePulsarListener(topics = "rpl-typeSetOnCustomizer-topic",
+					subscriptionName = "rpl-typeSetOnCustomizer-sub", subscriptionType = SubscriptionType.Key_Shared,
+					consumerCustomizer = "myCustomizer")
+			Mono<Void> listenWithTypeSetOnCustomizer(String ignored) {
+				latchTypeSetOnCustomizer.countDown();
+				return Mono.empty();
+			}
 
-				@Bean
-				ReactiveMessageConsumerBuilderCustomizer<String> consumerFactoryDefaultSubTypeCustomizer() {
-					return (b) -> b.subscriptionType(SubscriptionType.Shared);
-				}
-
-				@ReactivePulsarListener(topics = "rpl-typeSetConsumerFactory-topic",
-						subscriptionName = "rpl-typeSetConsumerFactory-sub", subscriptionType = {},
-						consumerCustomizer = "subscriptionInitialPositionEarliest")
-				Mono<Void> listenWithTypeSetOnlyOnConsumerFactory(String ignored) {
-					latchTypeSetConsumerFactory.countDown();
-					return Mono.empty();
-				}
-
-				@ReactivePulsarListener(topics = "rpl-typeSetAnnotation-topic",
-						subscriptionName = "rpl-typeSetAnnotation-sub", subscriptionType = SubscriptionType.Key_Shared,
-						consumerCustomizer = "subscriptionInitialPositionEarliest")
-				Mono<Void> listenWithTypeSetOnAnnotation(String ignored) {
-					latchTypeSetAnnotation.countDown();
-					return Mono.empty();
-				}
-
-				@ReactivePulsarListener(topics = "rpl-typeSetCustomizer-topic",
-						subscriptionName = "rpl-typeSetCustomizer-sub", subscriptionType = SubscriptionType.Key_Shared,
-						consumerCustomizer = "myCustomizer")
-				Mono<Void> listenWithTypeSetInCustomizer(String ignored) {
-					latchWithCustomizer.countDown();
-					return Mono.empty();
-				}
-
-				@Bean
-				public ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> myCustomizer() {
-					return cb -> cb.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
-						.subscriptionType(SubscriptionType.Failover);
-				}
-
+			@Bean
+			public ReactivePulsarListenerMessageConsumerBuilderCustomizer<String> myCustomizer() {
+				return cb -> cb.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
+					.subscriptionType(SubscriptionType.Failover);
 			}
 
 		}

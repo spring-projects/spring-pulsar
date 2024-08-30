@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.apache.pulsar.client.api.SubscriptionType;
+
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.ConcurrentPulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -74,6 +76,7 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
 		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
+		properties.setSubscriptionType(this.getContainerProperties().getSubscriptionType());
 
 		var parentTxnProps = this.getContainerProperties().transactions();
 		var childTxnProps = properties.transactions();
@@ -101,6 +104,10 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 		if (endpoint.getSubscriptionType() != null) {
 			properties.setSubscriptionType(endpoint.getSubscriptionType());
+		}
+		// Default to Exclusive if not set on container props or endpoint
+		if (properties.getSubscriptionType() == null) {
+			properties.setSubscriptionType(SubscriptionType.Exclusive);
 		}
 
 		properties.setSchemaType(endpoint.getSchemaType());
