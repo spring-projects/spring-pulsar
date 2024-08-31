@@ -118,11 +118,6 @@ NOTE: There is no support for using `org.apache.pulsar.client.api.Messages<T>` i
 === Configuration - Application Properties
 The listener relies on the `ReactivePulsarConsumerFactory` to create and manage the underlying Pulsar consumer that it uses to consume messages.
 Spring Boot provides this consumer factory which you can further configure by specifying the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
-**Most** of the configured properties on the factory will be respected in the listener with the following **exceptions**:
-
-TIP: The `spring.pulsar.consumer.subscription.name` property is ignored and is instead generated when not specified on the annotation.
-
-TIP: The `spring.pulsar.consumer.subscription.type` property is ignored and is instead taken from the value on the annotation. However, you can set the `subscriptionType = {}` on the annotation to instead use the property value as the default.
 
 === Generic records with AUTO_CONSUME
 If there is no chance to know the type of schema of a Pulsar topic in advance, you can use the `AUTO_CONSUME` schema type to consume generic records.

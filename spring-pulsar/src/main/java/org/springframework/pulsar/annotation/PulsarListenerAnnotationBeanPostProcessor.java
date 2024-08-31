@@ -214,10 +214,10 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 			PulsarListener pulsarListener, Object bean, String[] topics, String topicPattern) {
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
-		endpoint.setSubscriptionName(getEndpointSubscriptionName(pulsarListener));
 		endpoint.setId(getEndpointId(pulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
+		resolveSubscriptionName(endpoint, pulsarListener);
 		resolveSubscriptionType(endpoint, pulsarListener);
 		endpoint.setSchemaType(pulsarListener.schemaType());
 		endpoint.setAckMode(pulsarListener.ackMode());
@@ -249,6 +249,13 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 				() -> "PulsarListener.subscriptionType must have 0 or 1 elements");
 		if (pulsarListener.subscriptionType().length == 1) {
 			endpoint.setSubscriptionType(pulsarListener.subscriptionType()[0]);
+		}
+	}
+
+	private void resolveSubscriptionName(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
+		if (StringUtils.hasText(pulsarListener.subscriptionName())) {
+			endpoint
+				.setSubscriptionName(resolveExpressionAsString(pulsarListener.subscriptionName(), "subscriptionName"));
 		}
 	}
 
@@ -383,13 +390,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 			}
 			endpoint.setConsumerProperties(properties);
 		}
-	}
-
-	private String getEndpointSubscriptionName(PulsarListener pulsarListener) {
-		if (StringUtils.hasText(pulsarListener.subscriptionName())) {
-			return resolveExpressionAsString(pulsarListener.subscriptionName(), "subscriptionName");
-		}
-		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
 	private String getEndpointId(PulsarListener pulsarListener) {

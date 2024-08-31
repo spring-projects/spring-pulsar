@@ -18,6 +18,7 @@ package org.springframework.pulsar.reactive.config;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -38,6 +39,10 @@ import org.springframework.util.StringUtils;
  * @author Christophe Bornet
  */
 public class DefaultReactivePulsarListenerContainerFactory<T> implements ReactivePulsarListenerContainerFactory<T> {
+
+	private static final String SUBSCRIPTION_NAME_PREFIX = "org.springframework.Pulsar.ReactivePulsarListenerEndpointContainer#";
+
+	private static final AtomicInteger COUNTER = new AtomicInteger();
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -84,58 +89,54 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 	@SuppressWarnings("unchecked")
 	public DefaultReactivePulsarMessageListenerContainer<T> createContainerInstance(
 			ReactivePulsarListenerEndpoint<T> endpoint) {
+		var containerProps = new ReactivePulsarContainerProperties<T>();
+		var factoryProps = this.getContainerProperties();
 
-		ReactivePulsarContainerProperties<T> properties = new ReactivePulsarContainerProperties<>();
-		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
-		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
-		properties.setSubscriptionType(this.getContainerProperties().getSubscriptionType());
+		// Map factory props (defaults) to the container props
+		containerProps.setSchemaResolver(factoryProps.getSchemaResolver());
+		containerProps.setTopicResolver(factoryProps.getTopicResolver());
+		containerProps.setSubscriptionType(factoryProps.getSubscriptionType());
+		containerProps.setSubscriptionName(factoryProps.getSubscriptionName());
+		containerProps.setSchemaType(factoryProps.getSchemaType());
+		containerProps.setConcurrency(factoryProps.getConcurrency());
+		containerProps.setUseKeyOrderedProcessing(factoryProps.isUseKeyOrderedProcessing());
 
+		// Map relevant props from the endpoint to the container props
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
-			properties.setTopics(endpoint.getTopics());
+			containerProps.setTopics(endpoint.getTopics());
 		}
-
 		if (StringUtils.hasText(endpoint.getTopicPattern())) {
-			properties.setTopicsPattern(endpoint.getTopicPattern());
+			containerProps.setTopicsPattern(endpoint.getTopicPattern());
 		}
-
-		if (StringUtils.hasText(endpoint.getSubscriptionName())) {
-			properties.setSubscriptionName(endpoint.getSubscriptionName());
-		}
-
 		if (endpoint.getSubscriptionType() != null) {
-			properties.setSubscriptionType(endpoint.getSubscriptionType());
+			containerProps.setSubscriptionType(endpoint.getSubscriptionType());
 		}
-		// Default to Exclusive if not set on container props or endpoint
-		if (properties.getSubscriptionType() == null) {
-			properties.setSubscriptionType(SubscriptionType.Exclusive);
+		// Default subscription type to Exclusive when not set elsewhere
+		if (containerProps.getSubscriptionType() == null) {
+			containerProps.setSubscriptionType(SubscriptionType.Exclusive);
 		}
-
+		if (StringUtils.hasText(endpoint.getSubscriptionName())) {
+			containerProps.setSubscriptionName(endpoint.getSubscriptionName());
+		}
+		// Default subscription name to generated when not set elsewhere
+		if (!StringUtils.hasText(containerProps.getSubscriptionName())) {
+			var generatedName = SUBSCRIPTION_NAME_PREFIX + COUNTER.getAndIncrement();
+			containerProps.setSubscriptionName(generatedName);
+		}
 		if (endpoint.getSchemaType() != null) {
-			properties.setSchemaType(endpoint.getSchemaType());
+			containerProps.setSchemaType(endpoint.getSchemaType());
 		}
-		else {
-			properties.setSchemaType(this.containerProperties.getSchemaType());
+		// Default to BYTES if not set elsewhere
+		if (containerProps.getSchema() == null) {
+			containerProps.setSchema((Schema<T>) Schema.BYTES);
 		}
-
-		if (properties.getSchema() == null) {
-			properties.setSchema((Schema<T>) Schema.BYTES);
-		}
-
 		if (endpoint.getConcurrency() != null) {
-			properties.setConcurrency(endpoint.getConcurrency());
+			containerProps.setConcurrency(endpoint.getConcurrency());
 		}
-		else {
-			properties.setConcurrency(this.containerProperties.getConcurrency());
-		}
-
 		if (endpoint.getUseKeyOrderedProcessing() != null) {
-			properties.setUseKeyOrderedProcessing(endpoint.getUseKeyOrderedProcessing());
+			containerProps.setUseKeyOrderedProcessing(endpoint.getUseKeyOrderedProcessing());
 		}
-		else {
-			properties.setUseKeyOrderedProcessing(this.containerProperties.isUseKeyOrderedProcessing());
-		}
-
-		return new DefaultReactivePulsarMessageListenerContainer<>(this.getConsumerFactory(), properties);
+		return new DefaultReactivePulsarMessageListenerContainer<>(this.getConsumerFactory(), containerProps);
 	}
 
 	@Override

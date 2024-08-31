@@ -19,6 +19,7 @@ package org.springframework.pulsar.config;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 
@@ -38,6 +39,10 @@ import org.springframework.util.StringUtils;
  */
 public class ConcurrentPulsarListenerContainerFactory<T>
 		extends AbstractPulsarListenerContainerFactory<ConcurrentPulsarMessageListenerContainer<T>, T> {
+
+	private static final String SUBSCRIPTION_NAME_PREFIX = "org.springframework.Pulsar.PulsarListenerEndpointContainer#";
+
+	private static final AtomicInteger COUNTER = new AtomicInteger();
 
 	private Integer concurrency;
 
@@ -72,47 +77,50 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 
 	@Override
 	protected ConcurrentPulsarMessageListenerContainer<T> createContainerInstance(PulsarListenerEndpoint endpoint) {
+		var factoryProps = this.getContainerProperties();
+		var containerProps = new PulsarContainerProperties();
 
-		PulsarContainerProperties properties = new PulsarContainerProperties();
-		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
-		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
-		properties.setSubscriptionType(this.getContainerProperties().getSubscriptionType());
+		// Map factory props (defaults) to the container props
+		containerProps.setSchemaResolver(factoryProps.getSchemaResolver());
+		containerProps.setTopicResolver(factoryProps.getTopicResolver());
+		containerProps.setSubscriptionType(factoryProps.getSubscriptionType());
+		containerProps.setSubscriptionName(factoryProps.getSubscriptionName());
+		var factoryTxnProps = factoryProps.transactions();
+		var containerTxnProps = containerProps.transactions();
+		containerTxnProps.setEnabled(factoryTxnProps.isEnabled());
+		containerTxnProps.setRequired(factoryTxnProps.isRequired());
+		containerTxnProps.setTimeout(factoryTxnProps.getTimeout());
+		containerTxnProps.setTransactionDefinition(factoryTxnProps.getTransactionDefinition());
+		containerTxnProps.setTransactionManager(factoryTxnProps.getTransactionManager());
 
-		var parentTxnProps = this.getContainerProperties().transactions();
-		var childTxnProps = properties.transactions();
-		childTxnProps.setEnabled(parentTxnProps.isEnabled());
-		childTxnProps.setRequired(parentTxnProps.isRequired());
-		childTxnProps.setTimeout(parentTxnProps.getTimeout());
-		childTxnProps.setTransactionDefinition(parentTxnProps.getTransactionDefinition());
-		childTxnProps.setTransactionManager(parentTxnProps.getTransactionManager());
-
+		// Map relevant props from the endpoint to the container props
 		if (!CollectionUtils.isEmpty(endpoint.getTopics())) {
-			properties.setTopics(new HashSet<>(endpoint.getTopics()));
+			containerProps.setTopics(new HashSet<>(endpoint.getTopics()));
 		}
-
 		if (StringUtils.hasText(endpoint.getTopicPattern())) {
-			properties.setTopicsPattern(endpoint.getTopicPattern());
+			containerProps.setTopicsPattern(endpoint.getTopicPattern());
 		}
-
-		if (StringUtils.hasText(endpoint.getSubscriptionName())) {
-			properties.setSubscriptionName(endpoint.getSubscriptionName());
-		}
-
 		if (endpoint.isBatchListener()) {
-			properties.setBatchListener(endpoint.isBatchListener());
+			containerProps.setBatchListener(endpoint.isBatchListener());
 		}
-
+		if (StringUtils.hasText(endpoint.getSubscriptionName())) {
+			containerProps.setSubscriptionName(endpoint.getSubscriptionName());
+		}
 		if (endpoint.getSubscriptionType() != null) {
-			properties.setSubscriptionType(endpoint.getSubscriptionType());
+			containerProps.setSubscriptionType(endpoint.getSubscriptionType());
 		}
-		// Default to Exclusive if not set on container props or endpoint
-		if (properties.getSubscriptionType() == null) {
-			properties.setSubscriptionType(SubscriptionType.Exclusive);
+		// Default subscription name to generated when not set elsewhere
+		if (!StringUtils.hasText(containerProps.getSubscriptionName())) {
+			var generatedName = SUBSCRIPTION_NAME_PREFIX + COUNTER.getAndIncrement();
+			containerProps.setSubscriptionName(generatedName);
 		}
+		// Default subscription type to Exclusive when not set elsewhere
+		if (containerProps.getSubscriptionType() == null) {
+			containerProps.setSubscriptionType(SubscriptionType.Exclusive);
+		}
+		containerProps.setSchemaType(endpoint.getSchemaType());
 
-		properties.setSchemaType(endpoint.getSchemaType());
-
-		return new ConcurrentPulsarMessageListenerContainer<>(this.getConsumerFactory(), properties);
+		return new ConcurrentPulsarMessageListenerContainer<>(this.getConsumerFactory(), containerProps);
 	}
 
 	@Override

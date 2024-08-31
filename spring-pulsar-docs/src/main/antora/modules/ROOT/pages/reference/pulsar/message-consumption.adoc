@@ -11,9 +11,6 @@ When you use Spring Boot support, it automatically enables this annotation and c
 `PulsarMessageListenerContainer` uses a `PulsarConsumerFactory` to create and manage the Pulsar consumer the underlying Pulsar consumer that it uses to consume messages.
 
 Spring Boot provides this consumer factory which you can further configure by specifying the {spring-boot-pulsar-config-props}[`spring.pulsar.consumer.*`] application properties.
-**Most** of the configured properties on the factory will be respected in the listener with the following **exceptions**:
-
-TIP: The `spring.pulsar.consumer.subscription.name` property is ignored and is instead generated when not specified on the annotation.
 
 Let us revisit the `PulsarListener` code snippet we saw in the quick-tour section:
 
