@@ -118,7 +118,7 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 	public void registerEndpoint(ListenerEndpoint endpoint, @Nullable ListenerContainerFactory<?, ?> factory) {
 		Assert.notNull(endpoint, "Endpoint must be set");
-		Assert.hasText(endpoint.getSubscriptionName(), "Endpoint id must be set");
+		Assert.hasText(endpoint.getId(), "Endpoint id must be set");
 		// Factory may be null, we defer the resolution right before actually creating the
 		// container
 		PulsarListenerEndpointDescriptor descriptor = new PulsarListenerEndpointDescriptor(endpoint, factory);

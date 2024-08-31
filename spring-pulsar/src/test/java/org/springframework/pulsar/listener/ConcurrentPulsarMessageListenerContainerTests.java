@@ -212,51 +212,6 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 			Consumer<String> consumer, ConcurrentPulsarMessageListenerContainer<String> concurrentContainer) {
 	}
 
-	@SuppressWarnings("unchecked")
-	@Nested
-	class SubscriptionTypeFrom {
-
-		@Test
-		void factoryPropsUsedWhenNotSetOnEndpoint() {
-			var factoryProps = new PulsarContainerProperties();
-			factoryProps.setSubscriptionType(SubscriptionType.Shared);
-			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
-					mock(PulsarConsumerFactory.class), factoryProps);
-			var endpoint = mock(PulsarListenerEndpoint.class);
-			when(endpoint.getConcurrency()).thenReturn(1);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
-			assertThat(createdContainer.getContainerProperties().getSubscriptionType())
-				.isEqualTo(SubscriptionType.Shared);
-		}
-
-		@Test
-		void endpointTakesPrecedenceOverFactoryProps() {
-			var factoryProps = new PulsarContainerProperties();
-			factoryProps.setSubscriptionType(SubscriptionType.Shared);
-			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
-					mock(PulsarConsumerFactory.class), factoryProps);
-			var endpoint = mock(PulsarListenerEndpoint.class);
-			when(endpoint.getConcurrency()).thenReturn(1);
-			when(endpoint.getSubscriptionType()).thenReturn(SubscriptionType.Failover);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
-			assertThat(createdContainer.getContainerProperties().getSubscriptionType())
-				.isEqualTo(SubscriptionType.Failover);
-		}
-
-		@Test
-		void defaultUsedWhenNotSetOnEndpointNorFactoryProps() {
-			var factoryProps = new PulsarContainerProperties();
-			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
-					mock(PulsarConsumerFactory.class), factoryProps);
-			var endpoint = mock(PulsarListenerEndpoint.class);
-			when(endpoint.getConcurrency()).thenReturn(1);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
-			assertThat(createdContainer.getContainerProperties().getSubscriptionType())
-				.isEqualTo(SubscriptionType.Exclusive);
-		}
-
-	}
-
 	@Nested
 	class ObservationConfigurationTests {
 

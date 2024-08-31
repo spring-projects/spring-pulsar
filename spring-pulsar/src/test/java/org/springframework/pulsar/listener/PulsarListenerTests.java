@@ -47,6 +47,7 @@ import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.AbstractObjectAssert;
+import org.assertj.core.api.AbstractStringAssert;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Nested;
@@ -73,6 +74,7 @@ import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.listener.PulsarListenerTests.PulsarHeadersCustomObjectMapperTest.PulsarHeadersCustomObjectMapperTestConfig;
+import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionNameTests.SubscriptionNameTestsConfig;
 import org.springframework.pulsar.listener.PulsarListenerTests.SubscriptionTypeTests.SubscriptionTypeTestsConfig;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper;
@@ -1119,6 +1121,78 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 				return assertThat(consumer)
 					.extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
 					.extracting(ConsumerConfigurationData::getSubscriptionType);
+			}
+
+		}
+
+	}
+
+	@Nested
+	@ContextConfiguration(classes = SubscriptionNameTestsConfig.class)
+	class SubscriptionNameTests {
+
+		static final CountDownLatch latchNameNotSet = new CountDownLatch(1);
+
+		static final CountDownLatch latchNameSetOnAnnotation = new CountDownLatch(1);
+
+		static final CountDownLatch latchNameSetOnCustomizer = new CountDownLatch(1);
+
+		@Test
+		void defaultNameFromContainerFactoryUsedWhenNameNotSetAnywhere() throws Exception {
+			pulsarTemplate.send("latchNameNotSet-topic", "hello-latchNameNotSet");
+			assertThat(latchNameNotSet.await(5, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void nameSetOnAnnotationOverridesDefaultNameFromContainerFactory() throws Exception {
+			pulsarTemplate.send("nameSetOnAnnotation-topic", "hello-nameSetOnAnnotation");
+			assertThat(latchNameSetOnAnnotation.await(5, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Test
+		void nameSetOnCustomizerOverridesNameSetOnAnnotation() throws Exception {
+			pulsarTemplate.send("nameSetOnCustomizer-topic", "hello-nameSetOnCustomizer");
+			assertThat(latchNameSetOnCustomizer.await(5, TimeUnit.SECONDS)).isTrue();
+		}
+
+		@Configuration(proxyBeanMethods = false)
+		static class SubscriptionNameTestsConfig {
+
+			@Bean
+			ConsumerBuilderCustomizer<String> consumerFactoryCustomizerSubNameIsIgnored() {
+				return (b) -> b.subscriptionName("from-consumer-factory");
+			}
+
+			@PulsarListener(topics = "latchNameNotSet-topic")
+			void listenWithNameNotSet(String ignored, Consumer<String> consumer) {
+				assertSubscriptionName(consumer)
+					.startsWith("org.springframework.Pulsar.PulsarListenerEndpointContainer#");
+				latchNameNotSet.countDown();
+			}
+
+			@PulsarListener(topics = "nameSetOnAnnotation-topic", subscriptionName = "from-annotation")
+			void listenWithNameSetOnAnnotation(String ignored, Consumer<String> consumer) {
+				assertSubscriptionName(consumer).isEqualTo("from-annotation");
+				latchNameSetOnAnnotation.countDown();
+			}
+
+			@PulsarListener(topics = "nameSetOnCustomizer-topic", subscriptionName = "from-annotation",
+					consumerCustomizer = "myCustomizer")
+			void listenWithNameSetOnCustomizer(String ignored, Consumer<String> consumer) {
+				assertSubscriptionName(consumer).isEqualTo("from-customizer");
+				latchNameSetOnCustomizer.countDown();
+			}
+
+			@Bean
+			public PulsarListenerConsumerBuilderCustomizer<String> myCustomizer() {
+				return cb -> cb.subscriptionName("from-customizer");
+			}
+
+			@SuppressWarnings("rawtypes")
+			private static AbstractStringAssert<?> assertSubscriptionName(Consumer<?> consumer) {
+				return assertThat(consumer)
+					.extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
+					.extracting(ConsumerConfigurationData::getSubscriptionName, InstanceOfAssertFactories.STRING);
 			}
 
 		}

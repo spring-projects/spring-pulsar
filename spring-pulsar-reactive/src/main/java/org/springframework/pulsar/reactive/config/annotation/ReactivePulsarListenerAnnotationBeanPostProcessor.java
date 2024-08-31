@@ -230,11 +230,11 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 			ReactivePulsarListener reactivePulsarListener, Object bean, String[] topics, String topicPattern) {
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
-		endpoint.setSubscriptionName(getEndpointSubscriptionName(reactivePulsarListener));
 		endpoint.setId(getEndpointId(reactivePulsarListener));
 		endpoint.setTopics(topics);
 		endpoint.setTopicPattern(topicPattern);
 		resolveSubscriptionType(endpoint, reactivePulsarListener);
+		resolveSubscriptionName(endpoint, reactivePulsarListener);
 		endpoint.setSchemaType(reactivePulsarListener.schemaType());
 		String concurrency = reactivePulsarListener.concurrency();
 		if (StringUtils.hasText(concurrency)) {
@@ -257,11 +257,18 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 	}
 
 	private void resolveSubscriptionType(MethodReactivePulsarListenerEndpoint<?> endpoint,
-			ReactivePulsarListener reactivePulsarListener) {
-		Assert.state(reactivePulsarListener.subscriptionType().length <= 1,
+			ReactivePulsarListener listener) {
+		Assert.state(listener.subscriptionType().length <= 1,
 				() -> "ReactivePulsarListener.subscriptionType must have 0 or 1 elements");
-		if (reactivePulsarListener.subscriptionType().length == 1) {
-			endpoint.setSubscriptionType(reactivePulsarListener.subscriptionType()[0]);
+		if (listener.subscriptionType().length == 1) {
+			endpoint.setSubscriptionType(listener.subscriptionType()[0]);
+		}
+	}
+
+	private void resolveSubscriptionName(MethodReactivePulsarListenerEndpoint<?> endpoint,
+			ReactivePulsarListener listener) {
+		if (StringUtils.hasText(listener.subscriptionName())) {
+			endpoint.setSubscriptionName(resolveExpressionAsString(listener.subscriptionName(), "subscriptionName"));
 		}
 	}
 
@@ -320,13 +327,6 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 				endpoint.setConsumerCustomizer(customizer::customize);
 			}
 		}
-	}
-
-	private String getEndpointSubscriptionName(ReactivePulsarListener reactivePulsarListener) {
-		if (StringUtils.hasText(reactivePulsarListener.subscriptionName())) {
-			return resolveExpressionAsString(reactivePulsarListener.subscriptionName(), "subscriptionName");
-		}
-		return GENERATED_ID_PREFIX + this.counter.getAndIncrement();
 	}
 
 	private String getEndpointId(ReactivePulsarListener reactivePulsarListener) {
