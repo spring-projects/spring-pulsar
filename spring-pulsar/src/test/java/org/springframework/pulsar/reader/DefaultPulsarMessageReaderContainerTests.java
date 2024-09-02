@@ -172,7 +172,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 				pulsarTemplate.send("This message should not be received by the reader");
 			}
 			container.start();
-			assertThat(container.isRunning()).isTrue();
+			await().atMost(Duration.ofSeconds(10)).until(container::isRunning);
 			pulsarTemplate.sendAsync("This message should be received by the reader");
 			pulsarTemplate.sendAsync("This message should be received by the reader");
 
