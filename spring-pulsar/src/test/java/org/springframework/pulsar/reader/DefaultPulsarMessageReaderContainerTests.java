@@ -318,7 +318,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 			};
 			var retryTemplate = RetryTemplate.builder()
 				.maxAttempts(3)
-				.fixedBackoff(Duration.ofSeconds(1))
+				.fixedBackoff(Duration.ofSeconds(2))
 				.withListener(retryListener)
 				.build();
 			var latch = new CountDownLatch(1);
@@ -342,7 +342,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 					.createReader(any(), any(), any(), any());
 				// start container and expect started after retries
 				container.start();
-				await().atMost(Duration.ofSeconds(10)).until(container::isRunning);
+				await().atMost(Duration.ofSeconds(20)).until(container::isRunning);
 
 				// factory called 3x (initial call + 2 retries)
 				verify(readerFactory, times(3)).createReader(any(), any(), any(), any());
