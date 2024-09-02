@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,20 @@ package org.springframework.pulsar.reactive.listener;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 
+import org.springframework.lang.Nullable;
+import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
+import org.springframework.retry.support.RetryTemplate;
 
 /**
  * Contains runtime properties for a reactive listener container.
@@ -60,6 +64,16 @@ public class ReactivePulsarContainerProperties<T> {
 	private int concurrency = 0;
 
 	private boolean useKeyOrderedProcessing = false;
+
+	@Nullable
+	private RetryTemplate startupFailureRetryTemplate;
+
+	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
+		.maxAttempts(3)
+		.fixedBackoff(Duration.ofSeconds(10))
+		.build();
+
+	private StartupFailurePolicy startupFailurePolicy = StartupFailurePolicy.STOP;
 
 	public ReactivePulsarMessageHandler getMessageHandler() {
 		return this.messageHandler;
@@ -159,6 +173,48 @@ public class ReactivePulsarContainerProperties<T> {
 
 	public void setUseKeyOrderedProcessing(boolean useKeyOrderedProcessing) {
 		this.useKeyOrderedProcessing = useKeyOrderedProcessing;
+	}
+
+	@Nullable
+	public RetryTemplate getStartupFailureRetryTemplate() {
+		return this.startupFailureRetryTemplate;
+	}
+
+	/**
+	 * Get the default template to use to retry startup when no custom retry template has
+	 * been specified.
+	 * @return the default retry template that will retry 3 times with a fixed delay of 10
+	 * seconds between each attempt.
+	 * @since 1.2.0
+	 */
+	public RetryTemplate getDefaultStartupFailureRetryTemplate() {
+		return this.defaultStartupFailureRetryTemplate;
+	}
+
+	/**
+	 * Set the template to use to retry startup when an exception occurs during startup.
+	 * @param startupFailureRetryTemplate the retry template to use
+	 * @since 1.2.0
+	 */
+	public void setStartupFailureRetryTemplate(RetryTemplate startupFailureRetryTemplate) {
+		this.startupFailureRetryTemplate = startupFailureRetryTemplate;
+		if (this.startupFailureRetryTemplate != null) {
+			setStartupFailurePolicy(StartupFailurePolicy.RETRY);
+		}
+	}
+
+	public StartupFailurePolicy getStartupFailurePolicy() {
+		return this.startupFailurePolicy;
+	}
+
+	/**
+	 * The action to take on the container when a failure occurs during startup.
+	 * @param startupFailurePolicy action to take when a failure occurs during startup
+	 * @since 1.2.0
+	 */
+	public void setStartupFailurePolicy(StartupFailurePolicy startupFailurePolicy) {
+		this.startupFailurePolicy = Objects.requireNonNull(startupFailurePolicy,
+				"startupFailurePolicy must not be null");
 	}
 
 }

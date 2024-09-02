@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ package org.springframework.pulsar.reader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.pulsar.client.api.Message;
@@ -31,8 +30,9 @@ import org.apache.pulsar.client.api.ReaderListener;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.ReaderBuilderCustomizer;
 import org.springframework.pulsar.event.ReaderFailedToStartEvent;
@@ -53,8 +53,6 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 
 	private final AtomicReference<InternalAsyncReader> internalAsyncReader = new AtomicReference<>();
 
-	private volatile CountDownLatch startLatch = new CountDownLatch(1);
-
 	private volatile CompletableFuture<?> readerFuture;
 
 	private final AbstractPulsarMessageReaderContainer<?> thisOrParentContainer;
@@ -69,34 +67,48 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 
 	@Override
 	protected void doStart() {
-		PulsarReaderContainerProperties containerProperties = getContainerProperties();
-
-		Object readerListenerObject = containerProperties.getReaderListener();
-		AsyncTaskExecutor readerExecutor = containerProperties.getReaderTaskExecutor();
-
-		@SuppressWarnings("unchecked")
-		ReaderListener<T> readerListener = (ReaderListener<T>) readerListenerObject;
-
+		var containerProperties = getContainerProperties();
+		var readerExecutor = containerProperties.getReaderTaskExecutor();
 		if (readerExecutor == null) {
 			readerExecutor = new SimpleAsyncTaskExecutor((getBeanName() == null ? "" : getBeanName()) + "-C-");
 			containerProperties.setReaderTaskExecutor(readerExecutor);
 		}
-
-		this.internalAsyncReader.set(new InternalAsyncReader(readerListener, containerProperties));
-
-		setRunning(true);
-		this.startLatch = new CountDownLatch(1);
-		this.readerFuture = readerExecutor.submitCompletable(this.internalAsyncReader.get());
-
+		@SuppressWarnings("unchecked")
+		var readerListener = (ReaderListener<T>) containerProperties.getReaderListener();
 		try {
-			if (!this.startLatch.await(containerProperties.getReaderStartTimeout().toMillis(), TimeUnit.MILLISECONDS)) {
-				this.logger.error("Reader thread failed to start - does the configured task executor "
-						+ "have enough threads to support all containers and concurrency?");
-				publishReaderFailedToStart();
+			this.internalAsyncReader.set(new InternalAsyncReader(readerListener, containerProperties));
+		}
+		catch (Exception e) {
+			this.logger.error(e, () -> "Error starting reader container");
+			this.doStop();
+			if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.STOP) {
+				this.logger.info(() -> "Configured to stop on startup failures - exiting");
+				this.publishReaderFailedToStart();
+				throw new IllegalStateException("Error starting reader container", e);
+			}
+			if (containerProperties.getStartupFailurePolicy() != StartupFailurePolicy.RETRY) {
+				this.publishReaderFailedToStart();
 			}
 		}
-		catch (@SuppressWarnings("UNUSED") InterruptedException e) {
-			Thread.currentThread().interrupt();
+		if (this.internalAsyncReader.get() != null) {
+			this.readerFuture = readerExecutor.submitCompletable(this.internalAsyncReader.get());
+		}
+		else if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
+			this.logger.info(() -> "Configured to retry on startup failures - retrying");
+			this.readerFuture = readerExecutor.submitCompletable(() -> {
+				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
+					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
+				try {
+					this.internalAsyncReader.set(retryTemplate.<InternalAsyncReader, PulsarException>execute(
+							(__) -> new InternalAsyncReader(readerListener, containerProperties)));
+					this.internalAsyncReader.get().run();
+				}
+				catch (PulsarException ex) {
+					this.logger.error(ex, () -> "Unable to start reader container - retries exhausted");
+					this.doStop();
+					this.publishReaderFailedToStart();
+				}
+			});
 		}
 	}
 
@@ -105,7 +117,10 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 		setRunning(false);
 		try {
 			this.logger.info("Closing this consumer.");
-			this.internalAsyncReader.get().reader.close();
+			var asyncReaderRef = this.internalAsyncReader.get();
+			if (asyncReaderRef != null && asyncReaderRef.reader != null) {
+				asyncReaderRef.reader.close();
+			}
 		}
 		catch (IOException e) {
 			this.logger.error(e, () -> "Error closing Pulsar Client.");
@@ -113,7 +128,6 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 	}
 
 	private void publishReaderStartingEvent() {
-		this.startLatch.countDown();
 		ApplicationEventPublisher publisher = getApplicationEventPublisher();
 		if (publisher != null) {
 			publisher.publishEvent(new ReaderStartingEvent(this, this.thisOrParentContainer));
@@ -121,6 +135,7 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 	}
 
 	private void publishReaderStartedEvent() {
+		setRunning(true);
 		ApplicationEventPublisher publisher = getApplicationEventPublisher();
 		if (publisher != null) {
 			publisher.publishEvent(new ReaderStartedEvent(this, this.thisOrParentContainer));
@@ -150,16 +165,16 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 			this.listener = readerListener;
 			this.readerContainerProperties = readerContainerProperties;
 			this.readerBuilderCustomizer = getReaderBuilderCustomizer();
-
+			List<ReaderBuilderCustomizer<T>> customizers = this.readerBuilderCustomizer != null
+					? List.of(this.readerBuilderCustomizer) : Collections.emptyList();
 			try {
-				List<ReaderBuilderCustomizer<T>> customizers = this.readerBuilderCustomizer != null
-						? List.of(this.readerBuilderCustomizer) : Collections.emptyList();
 				this.reader = getPulsarReaderFactory().createReader(readerContainerProperties.getTopics(),
 						readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema(),
 						customizers);
 			}
-			catch (PulsarClientException e) {
-				throw new IllegalStateException("Pulsar client exceptions.", e);
+			catch (PulsarClientException ex) {
+				// TODO remove when PRF.createReader replaces PCEX w PEX
+				throw new PulsarException(ex);
 			}
 		}
 

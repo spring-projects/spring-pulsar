@@ -248,6 +248,8 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var consumerFactory = new DefaultPulsarConsumerFactory<String>(client, List.of());
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
 		assertThatIllegalStateException().isThrownBy(() -> container.start())
+			.withCauseInstanceOf(IllegalStateException.class)
+			.havingRootCause()
 			.withMessage("Transactional record listeners can not use batch ack mode");
 	}
 
@@ -402,7 +404,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
 		container.setPulsarConsumerErrorHandler(mock(PulsarConsumerErrorHandler.class));
 		assertThatIllegalStateException().isThrownBy(() -> container.start())
-			.withMessage("Transactional batch listeners do not support custom error handlers");
+			.withStackTraceContaining("Transactional batch listeners do not support custom error handlers");
 	}
 
 	private Consumer<String> startContainerAndSendInputsThenWaitForLatch(String topicIn,

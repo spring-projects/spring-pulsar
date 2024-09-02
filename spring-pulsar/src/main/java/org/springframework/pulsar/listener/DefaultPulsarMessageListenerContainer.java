@@ -22,10 +22,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,10 +54,10 @@ import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.ConsumerBuilderConfigurationUtil;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -97,8 +97,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private volatile Listener listenerConsumer;
 
-	private volatile CountDownLatch startLatch = new CountDownLatch(1);
-
 	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
 
 	private final AtomicReference<Thread> listenerConsumerThread = new AtomicReference<>();
@@ -117,28 +115,48 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	@Override
 	protected void doStart() {
-		PulsarContainerProperties containerProperties = getContainerProperties();
-		AsyncTaskExecutor consumerExecutor = containerProperties.getConsumerTaskExecutor();
+		var containerProperties = getContainerProperties();
+		var consumerExecutor = containerProperties.getConsumerTaskExecutor();
 		if (consumerExecutor == null) {
 			consumerExecutor = new SimpleAsyncTaskExecutor((getBeanName() == null ? "" : getBeanName()) + "-C-");
 			containerProperties.setConsumerTaskExecutor(consumerExecutor);
 		}
 		@SuppressWarnings("unchecked")
-		MessageListener<T> messageListener = (MessageListener<T>) containerProperties.getMessageListener();
-		this.listenerConsumer = new Listener(messageListener, this.getContainerProperties());
-		setRunning(true);
-		this.startLatch = new CountDownLatch(1);
-		this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
+		var messageListener = (MessageListener<T>) containerProperties.getMessageListener();
 		try {
-			if (!this.startLatch.await(containerProperties.getConsumerStartTimeout().toMillis(),
-					TimeUnit.MILLISECONDS)) {
-				this.logger.error("Consumer thread failed to start - does the configured task executor "
-						+ "have enough threads to support all containers and concurrency?");
-				publishConsumerFailedToStart();
+			this.listenerConsumer = new Listener(messageListener, containerProperties);
+		}
+		catch (Exception e) {
+			this.logger.error(e, () -> "Error starting listener container");
+			this.doStop();
+			if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.STOP) {
+				this.logger.info(() -> "Configured to stop on startup failures - exiting");
+				this.publishConsumerFailedToStart();
+				throw new IllegalStateException("Error starting listener container", e);
+			}
+			if (containerProperties.getStartupFailurePolicy() != StartupFailurePolicy.RETRY) {
+				this.publishConsumerFailedToStart();
 			}
 		}
-		catch (@SuppressWarnings("UNUSED") InterruptedException e) {
-			Thread.currentThread().interrupt();
+		if (this.listenerConsumer != null) {
+			this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
+		}
+		else if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
+			this.logger.info(() -> "Configured to retry on startup failures - retrying");
+			this.listenerConsumerFuture = consumerExecutor.submitCompletable(() -> {
+				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
+					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
+				try {
+					this.listenerConsumer = retryTemplate
+						.<Listener, PulsarException>execute((__) -> new Listener(messageListener, containerProperties));
+					this.listenerConsumer.run();
+				}
+				catch (PulsarException ex) {
+					this.logger.error(ex, () -> "Unable to start listener container - retries exhausted");
+					this.doStop();
+					this.publishConsumerFailedToStart();
+				}
+			});
 		}
 	}
 
@@ -146,7 +164,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	public void doStop() {
 		setRunning(false);
 		this.logger.info("Pausing consumer");
-		if (this.listenerConsumer.consumer != null) {
+		if (this.listenerConsumer != null && this.listenerConsumer.consumer != null) {
 			this.listenerConsumer.consumer.pause();
 		}
 		if (this.listenerConsumerThread.get() != null) {
@@ -167,7 +185,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 		try {
 			this.logger.info("Closing consumer");
-			if (this.listenerConsumer.consumer != null) {
+			if (this.listenerConsumer != null && this.listenerConsumer.consumer != null) {
 				this.listenerConsumer.consumer.close();
 			}
 		}
@@ -177,7 +195,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	}
 
 	private void publishConsumerStartingEvent() {
-		this.startLatch.countDown();
 		ApplicationEventPublisher publisher = getApplicationEventPublisher();
 		if (publisher != null) {
 			publisher.publishEvent(new ConsumerStartingEvent(this, this.thisOrParentContainer));
@@ -185,6 +202,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 	}
 
 	private void publishConsumerStartedEvent() {
+		this.setRunning(true);
 		ApplicationEventPublisher publisher = getApplicationEventPublisher();
 		if (publisher != null) {
 			publisher.publishEvent(new ConsumerStartedEvent(this, this.thisOrParentContainer));
@@ -273,44 +291,39 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.batchMessageListener = null;
 			}
 			this.consumerBuilderCustomizer = getConsumerBuilderCustomizer();
-			try {
-				Map<String, Object> propertiesToConsumer = extractDirectConsumerProperties();
-				populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
+			var propertiesToConsumer = extractDirectConsumerProperties();
+			populateAllNecessaryPropertiesIfNeedBe(propertiesToConsumer);
 
-				BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
-					.maxNumMessages(containerProperties.getMaxNumMessages())
-					.maxNumBytes(containerProperties.getMaxNumBytes())
-					.timeout(containerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS)
-					.build();
+			BatchReceivePolicy batchReceivePolicy = new BatchReceivePolicy.Builder()
+				.maxNumMessages(containerProperties.getMaxNumMessages())
+				.maxNumBytes(containerProperties.getMaxNumBytes())
+				.timeout(containerProperties.getBatchTimeoutMillis(), TimeUnit.MILLISECONDS)
+				.build();
 
-				/*
-				 * topicNames and properties must not be added through the builder
-				 * customizer as ConsumerBuilder::topics and ConsumerBuilder::properties
-				 * don't replace but add to the existing topics/properties.
-				 */
-				Set<String> topicNames = (Set<String>) propertiesToConsumer.remove("topicNames");
-				Map<String, String> properties = (Map<String, String>) propertiesToConsumer.remove("properties");
+			/*
+			 * topicNames and properties must not be added through the builder customizer
+			 * as ConsumerBuilder::topics and ConsumerBuilder::properties don't replace
+			 * but add to the existing topics/properties.
+			 */
+			Set<String> topicNames = (Set<String>) propertiesToConsumer.remove("topicNames");
+			var properties = (Map<String, String>) propertiesToConsumer.remove("properties");
 
-				List<ConsumerBuilderCustomizer<T>> customizers = new ArrayList<>();
-				customizers.add(builder -> {
-					ConsumerBuilderConfigurationUtil.loadConf(builder, propertiesToConsumer);
-					builder.batchReceivePolicy(batchReceivePolicy);
-				});
-				if (this.consumerBuilderCustomizer != null) {
-					customizers.add(this.consumerBuilderCustomizer);
-				}
-
-				this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
-						topicNames, this.containerProperties.getSubscriptionName(), properties, customizers);
-				Assert.state(this.consumer != null, "Unable to create a consumer");
-
-				// Update sub type from underlying consumer as customizer from annotation
-				// may have updated it
-				updateSubscriptionTypeFromConsumer(this.consumer);
+			List<ConsumerBuilderCustomizer<T>> customizers = new ArrayList<>();
+			customizers.add(builder -> {
+				ConsumerBuilderConfigurationUtil.loadConf(builder, propertiesToConsumer);
+				builder.batchReceivePolicy(batchReceivePolicy);
+			});
+			if (this.consumerBuilderCustomizer != null) {
+				customizers.add(this.consumerBuilderCustomizer);
 			}
-			catch (PulsarException e) {
-				DefaultPulsarMessageListenerContainer.this.logger.error(e, () -> "Pulsar exception.");
-			}
+
+			this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
+					topicNames, this.containerProperties.getSubscriptionName(), properties, customizers);
+			Assert.state(this.consumer != null, "Unable to create a consumer");
+
+			// Update sub type from underlying consumer as customizer from annotation
+			// may have updated it
+			updateSubscriptionTypeFromConsumer(this.consumer);
 		}
 
 		private void validateTransactionSettings(TransactionSettings txnProps) {
