@@ -202,7 +202,7 @@ jobs:
           --notes-file $RELEASE_NOTES_FILE
       - name: Announce Release on Slack
         id: spring-pulsar-announcing
-        uses: slackapi/slack-github-action@v1.26.0
+        uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
             {
