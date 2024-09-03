@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,9 +63,9 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		containerProperties.setBatchTimeoutMillis(60_000);
 		containerProperties.setMaxNumMessages(120);
 		containerProperties.setMaxNumBytes(32000);
+		containerProperties.setConcurrency(1);
 		ConcurrentPulsarListenerContainerFactory<String> containerFactory = new ConcurrentPulsarListenerContainerFactory<>(
 				consumerFactory, containerProperties);
-		containerFactory.setConcurrency(1);
 		PulsarListenerEndpoint pulsarListenerEndpoint = mock(PulsarListenerEndpoint.class);
 		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
 
