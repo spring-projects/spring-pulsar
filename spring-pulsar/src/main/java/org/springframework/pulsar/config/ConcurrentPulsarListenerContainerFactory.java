@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.springframework.util.StringUtils;
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Vedran Pavic
  */
 public class ConcurrentPulsarListenerContainerFactory<T>
 		extends AbstractPulsarListenerContainerFactory<ConcurrentPulsarMessageListenerContainer<T>, T> {
@@ -43,8 +44,6 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 	private static final String SUBSCRIPTION_NAME_PREFIX = "org.springframework.Pulsar.PulsarListenerEndpointContainer#";
 
 	private static final AtomicInteger COUNTER = new AtomicInteger();
-
-	private Integer concurrency;
 
 	public ConcurrentPulsarListenerContainerFactory(PulsarConsumerFactory<? super T> consumerFactory,
 			PulsarContainerProperties containerProperties) {
@@ -55,8 +54,9 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 	 * Specify the container concurrency.
 	 * @param concurrency the number of consumers to create.
 	 */
+	@Deprecated(since = "1.2.0", forRemoval = true)
 	public void setConcurrency(Integer concurrency) {
-		this.concurrency = concurrency;
+		getContainerProperties().setConcurrency(concurrency);
 	}
 
 	@Override
@@ -71,7 +71,6 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		};
 		ConcurrentPulsarMessageListenerContainer<T> container = createContainerInstance(endpoint);
 		initializeContainer(container, endpoint);
-		// customizeContainer(container);
 		return container;
 	}
 
@@ -130,8 +129,8 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		if (endpoint.getConcurrency() != null) {
 			instance.setConcurrency(endpoint.getConcurrency());
 		}
-		else if (this.concurrency != null) {
-			instance.setConcurrency(this.concurrency);
+		else if (getContainerProperties().getConcurrency() > 0) {
+			instance.setConcurrency(getContainerProperties().getConcurrency());
 		}
 	}
 

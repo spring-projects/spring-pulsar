@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Soby Chacko
  * @author Alexander Preuß
  * @author Chris Bono
+ * @author Vedran Pavic
  */
 public class PulsarContainerProperties {
 
@@ -76,6 +77,8 @@ public class PulsarContainerProperties {
 	private Object messageListener;
 
 	private AsyncTaskExecutor consumerTaskExecutor;
+
+	private int concurrency = 1;
 
 	private int maxNumMessages = -1;
 
@@ -125,6 +128,14 @@ public class PulsarContainerProperties {
 
 	public void setConsumerTaskExecutor(AsyncTaskExecutor consumerExecutor) {
 		this.consumerTaskExecutor = consumerExecutor;
+	}
+
+	public int getConcurrency() {
+		return this.concurrency;
+	}
+
+	public void setConcurrency(int concurrency) {
+		this.concurrency = concurrency;
 	}
 
 	public SubscriptionType getSubscriptionType() {
