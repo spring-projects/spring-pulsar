@@ -21,6 +21,7 @@
 *** xref:reference/reactive-pulsar/reactive-message-consumption.adoc[]
 *** xref:reference/tombstones-reactive.adoc[]
 ** xref:reference/topic-resolution.adoc[]
+** xref:reference/default-tenant-namespace.adoc[]
 ** xref:reference/custom-object-mapper.adoc[]
 ** xref:reference/pulsar-admin.adoc[]
 ** xref:reference/pulsar-function.adoc[]

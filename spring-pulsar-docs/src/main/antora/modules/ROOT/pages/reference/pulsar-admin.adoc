@@ -45,3 +45,11 @@ PulsarTopic partitionedTopic(PulsarTopicBuilder topicBuilder) {
         .build();
 }
 ----
+
+[[pulsar-topic-builder]]
+[NOTE]
+====
+When using Spring Boot the `PulsarTopicBuilder` is a registered bean that is configured with default values for domain, tenant, and namespace.
+You can simply inject the builder where needed.
+Otherwise, use one of the `PulsarTopicBuilder` constructors directly.
+====
