@@ -18,16 +18,25 @@ package org.springframework.pulsar.inttest.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.reactive.client.api.MessageResult;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
+import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerSpec;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
@@ -43,8 +52,12 @@ import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListener;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerMessageConsumerBuilderCustomizer;
+import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
+import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.ObjectUtils;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -132,6 +145,75 @@ class ReactivePulsarListenerIntegrationTests implements PulsarTestContainerSuppo
 			}
 			assertThat(LATCH5.await(10, TimeUnit.SECONDS)).isTrue();
 		}
+	}
+
+	@Nested
+	class ConfigPropsDrivenListener {
+
+		private static final CountDownLatch LATCH_CONFIG_PROPS = new CountDownLatch(1);
+
+		@Test
+		void subscriptionConfigPropsAreRespectedOnListener() throws Exception {
+			SpringApplication app = new SpringApplication(ConfigPropsDrivenListenerConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			try (ConfigurableApplicationContext context = app.run(
+					"--spring.pulsar.client.serviceUrl=" + PulsarTestContainerSupport.getPulsarBrokerUrl(),
+					"--my.env=dev", "--spring.pulsar.consumer.topics=rplit-config-props-topic-${my.env}",
+					"--spring.pulsar.consumer.subscription.type=Shared",
+					"--spring.pulsar.consumer.subscription.name=rplit-config-props-subs-${my.env}")) {
+				var topic = "persistent://public/default/rplit-config-props-topic-dev";
+				@SuppressWarnings("unchecked")
+				ReactivePulsarTemplate<String> pulsarTemplate = context.getBean(ReactivePulsarTemplate.class);
+				pulsarTemplate.send(topic, "hello config props driven").block();
+				assertThat(LATCH_CONFIG_PROPS.await(10, TimeUnit.SECONDS)).isTrue();
+				@SuppressWarnings("unchecked")
+				ConsumerTrackingReactivePulsarConsumerFactory<String> consumerFactory = (ConsumerTrackingReactivePulsarConsumerFactory<String>) context
+					.getBean(ReactivePulsarConsumerFactory.class);
+				assertThat(consumerFactory.getSpec(topic)).isNotNull().satisfies((consumerSpec) -> {
+					assertThat(consumerSpec.getTopicNames()).containsExactly(topic);
+					assertThat(consumerSpec.getSubscriptionName()).isEqualTo("rplit-config-props-subs-dev");
+					assertThat(consumerSpec.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
+				});
+			}
+		}
+
+		@EnableAutoConfiguration
+		@SpringBootConfiguration
+		@Import(ConsumerCustomizerConfig.class)
+		static class ConfigPropsDrivenListenerConfig {
+
+			/**
+			 * Post process the Reactive consumer factory and replace it with a tracking
+			 * wrapper around it. Because this test requires the Spring Boot config props
+			 * to be applied to the auto-configured consumer factory we can't simply
+			 * replace the consumer factory bean as the config props will not be set on
+			 * the custom consumer factory.
+			 * @return post processor to wrap a tracker around the reactive consumer
+			 * factory
+			 */
+			@Bean
+			static BeanPostProcessor consumerTrackingConsumerFactory() {
+				return new BeanPostProcessor() {
+					@SuppressWarnings({ "rawtypes", "unchecked" })
+					@Override
+					public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+						if (bean instanceof ReactivePulsarConsumerFactory rcf) {
+							return new ConsumerTrackingReactivePulsarConsumerFactory<>(
+									(ReactivePulsarConsumerFactory<String>) rcf);
+						}
+						return bean;
+					}
+				};
+			}
+
+			@ReactivePulsarListener(consumerCustomizer = "consumerCustomizer")
+			public Mono<Void> listen(String ignored) {
+				LATCH_CONFIG_PROPS.countDown();
+				return Mono.empty();
+			}
+
+		}
+
 	}
 
 	@EnableAutoConfiguration
@@ -228,6 +310,44 @@ class ReactivePulsarListenerIntegrationTests implements PulsarTestContainerSuppo
 	}
 
 	record Foo(String value) {
+	}
+
+	static class ConsumerTrackingReactivePulsarConsumerFactory<T> implements ReactivePulsarConsumerFactory<T> {
+
+		private Map<String, ReactiveMessageConsumerSpec> topicNameToConsumerSpec = new HashMap<>();
+
+		private ReactivePulsarConsumerFactory<T> delegate;
+
+		ConsumerTrackingReactivePulsarConsumerFactory(ReactivePulsarConsumerFactory<T> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public ReactiveMessageConsumer<T> createConsumer(Schema<T> schema) {
+			var consumer = this.delegate.createConsumer(schema);
+			storeSpec(consumer);
+			return consumer;
+		}
+
+		@Override
+		public ReactiveMessageConsumer<T> createConsumer(Schema<T> schema,
+				List<ReactiveMessageConsumerBuilderCustomizer<T>> reactiveMessageConsumerBuilderCustomizers) {
+			var consumer = this.delegate.createConsumer(schema, reactiveMessageConsumerBuilderCustomizers);
+			storeSpec(consumer);
+			return consumer;
+		}
+
+		private void storeSpec(ReactiveMessageConsumer<T> consumer) {
+			var consumerSpec = (ReactiveMessageConsumerSpec) ReflectionTestUtils.getField(consumer, "consumerSpec");
+			var topicNamesKey = !ObjectUtils.isEmpty(consumerSpec.getTopicNames()) ? consumerSpec.getTopicNames().get(0)
+					: "no-topics-set";
+			this.topicNameToConsumerSpec.put(topicNamesKey, consumerSpec);
+		}
+
+		ReactiveMessageConsumerSpec getSpec(String topic) {
+			return this.topicNameToConsumerSpec.get(topic);
+		}
+
 	}
 
 }
