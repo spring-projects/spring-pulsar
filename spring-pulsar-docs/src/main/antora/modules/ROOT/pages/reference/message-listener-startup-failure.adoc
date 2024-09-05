@@ -1,0 +1,28 @@
+= Handling Startup Failures
+include::../attributes/attributes-variables.adoc[]
+
+Message listener containers are started when the application context is refreshed.
+By default, any failures encountered during startup are re-thrown and the application will fail to start.
+You can adjust this behavior with the `StartupFailurePolicy` on the corresponding container properties.
+
+The available options are:
+
+- `Stop` (default) - log and re-throw the exception, effectively stopping the application
+- `Continue` - log the exception, leave the container in a non-running state, but do not stop the application
+- `Retry` - log the exception, retry to start the container asynchronously, but do not stop the application.
+
+The default retry behavior is to retry 3 times with a 10-second delay between
+each attempt.
+However, a custom retry template can be specified on the corresponding container properties.
+If the container fails to restart after the retries are exhausted, it is left in a non-running state.
+
+[discrete]
+== Configuration
+
+[discrete]
+=== With Spring Boot
+**TODO**
+
+[discrete]
+=== Without Spring Boot
+**TODO**

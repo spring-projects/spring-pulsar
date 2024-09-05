@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -46,19 +50,28 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.MultiplierRedeliveryBackoff;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.ConsumerTestUtils;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.JSONSchemaUtil;
 import org.springframework.pulsar.core.PulsarTemplate;
+import org.springframework.pulsar.event.ConsumerFailedToStartEvent;
 import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.RetryContext;
+import org.springframework.retry.RetryListener;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -67,6 +80,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Chris Bono
  */
 class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerSupport {
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Test
 	void basicDefaultConsumer() throws Exception {
@@ -152,11 +167,11 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		container.pause();
 
-		Awaitility.await().until(container::isPaused);
+		await().until(container::isPaused);
 
 		container.resume();
 
-		Awaitility.await().until(() -> !container.isPaused());
+		await().until(() -> !container.isPaused());
 
 		assertThat(latchOnLockInvocation.await(10, TimeUnit.SECONDS)).isTrue();
 		assertThat(latchOnUnlockInvocation.await(10, TimeUnit.SECONDS)).isTrue();
@@ -419,6 +434,8 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		var consumerFactory = new DefaultPulsarConsumerFactory<String>(mock(PulsarClient.class), List.of());
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
 		assertThatIllegalStateException().isThrownBy(() -> container.start())
+			.withCauseInstanceOf(IllegalStateException.class)
+			.havingRootCause()
 			.withMessage("Transactional batch listeners do not support AckMode.RECORD");
 	}
 
@@ -460,6 +477,187 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 
 		container.stop();
 		pulsarClient.close();
+	}
+
+	private void safeStopContainer(PulsarMessageListenerContainer container) {
+		try {
+			container.stop();
+		}
+		catch (Exception ex) {
+			logger.warn(ex, "Failed to stop container %s: %s".formatted(container, ex.getMessage()));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Nested
+	class WithStartupFailures {
+
+		@Test
+		void whenPolicyIsStopThenExceptionIsThrown() {
+			DefaultPulsarConsumerFactory<String> consumerFactory = mock(DefaultPulsarConsumerFactory.class);
+			var containerProps = new PulsarContainerProperties();
+			containerProps.setStartupFailurePolicy(StartupFailurePolicy.STOP);
+			containerProps.setSchema(Schema.STRING);
+			containerProps.setMessageListener((PulsarRecordMessageListener<?>) (__, ___) -> {
+			});
+			var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
+			var eventPublisher = mock(ApplicationEventPublisher.class);
+			container.setApplicationEventPublisher(eventPublisher);
+			// setup factory to throw ex when create consumer
+			var failCause = new PulsarException("please-stop");
+			when(consumerFactory.createConsumer(any(Schema.class), any(), any(), any(), any())).thenThrow(failCause);
+			// start container and expect ex thrown
+			assertThatIllegalStateException().isThrownBy(() -> container.start())
+				.withMessageStartingWith("Error starting listener container")
+				.withCause(failCause);
+			assertThat(container.isRunning()).isFalse();
+			verify(eventPublisher)
+				.publishEvent(assertArg((evt) -> assertThat(evt).isInstanceOf(ConsumerFailedToStartEvent.class)
+					.hasFieldOrPropertyWithValue("container", container)));
+		}
+
+		@Test
+		void whenPolicyIsContinueThenExceptionIsNotThrown() {
+			DefaultPulsarConsumerFactory<String> consumerFactory = mock(DefaultPulsarConsumerFactory.class);
+			var containerProps = new PulsarContainerProperties();
+			containerProps.setStartupFailurePolicy(StartupFailurePolicy.CONTINUE);
+			containerProps.setSchema(Schema.STRING);
+			containerProps.setMessageListener((PulsarRecordMessageListener<?>) (__, ___) -> {
+			});
+			var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
+			var eventPublisher = mock(ApplicationEventPublisher.class);
+			container.setApplicationEventPublisher(eventPublisher);
+			// setup factory to throw ex when create consumer
+			var failCause = new PulsarException("please-continue");
+			when(consumerFactory.createConsumer(any(Schema.class), any(), any(), any(), any())).thenThrow(failCause);
+			// start container and expect ex not thrown
+			container.start();
+			assertThat(container.isRunning()).isFalse();
+			verify(eventPublisher)
+				.publishEvent(assertArg((evt) -> assertThat(evt).isInstanceOf(ConsumerFailedToStartEvent.class)
+					.hasFieldOrPropertyWithValue("container", container)));
+		}
+
+		@Test
+		void whenPolicyIsRetryAndRetriesAreExhaustedThenContainerDoesNotStart() {
+			DefaultPulsarConsumerFactory<String> consumerFactory = mock(DefaultPulsarConsumerFactory.class);
+			var retryCount = new AtomicInteger(0);
+			var thrown = new ArrayList<Throwable>();
+			var retryListener = new RetryListener() {
+				@Override
+				public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback,
+						Throwable throwable) {
+					retryCount.set(context.getRetryCount());
+				}
+
+				@Override
+				public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback,
+						Throwable throwable) {
+					thrown.add(throwable);
+				}
+			};
+			var retryTemplate = RetryTemplate.builder()
+				.maxAttempts(2)
+				.fixedBackoff(Duration.ofSeconds(2))
+				.withListener(retryListener)
+				.build();
+			var containerProps = new PulsarContainerProperties();
+			containerProps.setStartupFailurePolicy(StartupFailurePolicy.RETRY);
+			containerProps.setStartupFailureRetryTemplate(retryTemplate);
+			containerProps.setSchema(Schema.STRING);
+			containerProps.setMessageListener((PulsarRecordMessageListener<?>) (__, ___) -> {
+			});
+			var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
+			var eventPublisher = mock(ApplicationEventPublisher.class);
+			container.setApplicationEventPublisher(eventPublisher);
+			// setup factory to throw ex on 3 attempts (initial + 2 retries)
+			var failCause = new PulsarException("please-retry-exhausted");
+			doThrow(failCause).doThrow(failCause)
+				.doThrow(failCause)
+				.when(consumerFactory)
+				.createConsumer(any(Schema.class), any(), any(), any(), any());
+			container.start();
+
+			// start container and expect ex not thrown and 2 retries
+			await().atMost(Duration.ofSeconds(15)).until(() -> retryCount.get() == 2);
+			assertThat(thrown).containsExactly(failCause, failCause);
+			assertThat(container.isRunning()).isFalse();
+			// factory called 3x (initial + 2 retries)
+			verify(consumerFactory, times(3)).createConsumer(any(Schema.class), any(), any(), any(), any());
+			verify(eventPublisher)
+				.publishEvent(assertArg((evt) -> assertThat(evt).isInstanceOf(ConsumerFailedToStartEvent.class)
+					.hasFieldOrPropertyWithValue("container", container)));
+		}
+
+		@Test
+		void whenPolicyIsRetryAndRetryIsSuccessfulThenContainerStarts() throws Exception {
+			var topic = "dpmlct-wsf-retry";
+			var pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+			var consumerFactory = spy(
+					new DefaultPulsarConsumerFactory<String>(pulsarClient, List.of((consumerBuilder) -> {
+						consumerBuilder.topic(topic);
+						consumerBuilder.subscriptionName(topic + "-sub");
+					})));
+			var retryCount = new AtomicInteger(0);
+			var thrown = new ArrayList<Throwable>();
+			var retryListener = new RetryListener() {
+				@Override
+				public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback,
+						Throwable throwable) {
+					retryCount.set(context.getRetryCount());
+				}
+
+				@Override
+				public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback,
+						Throwable throwable) {
+					thrown.add(throwable);
+				}
+			};
+			var retryTemplate = RetryTemplate.builder()
+				.maxAttempts(3)
+				.fixedBackoff(Duration.ofSeconds(2))
+				.withListener(retryListener)
+				.build();
+			var latch = new CountDownLatch(1);
+			var containerProps = new PulsarContainerProperties();
+			containerProps.setStartupFailurePolicy(StartupFailurePolicy.RETRY);
+			containerProps.setStartupFailureRetryTemplate(retryTemplate);
+			containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());
+			containerProps.setSchema(Schema.STRING);
+			var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
+			var eventPublisher = mock(ApplicationEventPublisher.class);
+			container.setApplicationEventPublisher(eventPublisher);
+			// setup factory to throw ex on initial call and 1st retry - then succeed on
+			// 2nd retry
+			var failCause = new PulsarException("please-retry");
+			doThrow(failCause).doThrow(failCause)
+				.doCallRealMethod()
+				.when(consumerFactory)
+				.createConsumer(any(Schema.class), any(), any(), any(), any());
+			try {
+				// start container and expect started after retries
+				container.start();
+				await().atMost(Duration.ofSeconds(10)).until(container::isRunning);
+
+				// factory called 3x (initial call + 2 retries)
+				verify(consumerFactory, times(3)).createConsumer(any(Schema.class), any(), any(), any(), any());
+				// only had to retry once (2nd call in retry template succeeded)
+				assertThat(retryCount).hasValue(1);
+				assertThat(thrown).containsExactly(failCause);
+				// should be able to process messages
+				var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, topic);
+				var pulsarTemplate = new PulsarTemplate<>(producerFactory);
+				pulsarTemplate.sendAsync("hello-" + topic);
+				assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+			}
+			finally {
+				safeStopContainer(container);
+			}
+			pulsarClient.close();
+		}
+
 	}
 
 }

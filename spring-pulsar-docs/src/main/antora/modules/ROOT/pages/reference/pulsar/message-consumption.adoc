@@ -951,8 +951,11 @@ The framework detects the provided bean through the `PulsarListener` and applies
 
 If you have multiple `PulsarListener` methods, and each of them have different customization rules, you should create multiple customizer beans and attach the proper customizers on each `PulsarListener`.
 
+[[message-listener-lifecycle]]
+== Message Listener Container Lifecycle
 
-== Pausing and Resuming Message Listener Containers
+[[message-listener-pause-resume]]
+=== Pausing and Resuming
 
 There are situations in which an application might want to pause message consumption temporarily and then resume later.
 Spring for Apache Pulsar provides the ability to pause and resume the underlying message listener containers.
@@ -972,6 +975,10 @@ void someMethod() {
 ----
 
 TIP: The id parameter passed to `getListenerContainer` is the container id - which will be the value of the `@PulsarListener` id attribute when pausing/resuming a `@PulsarListener`.
+
+[[message-listener-startup-failure]]
+include::../message-listener-startup-failure.adoc[leveloffset=+2]
+
 
 [[imperative-pulsar-reader]]
 == Pulsar Reader Support
@@ -1023,3 +1030,6 @@ public PulsarReaderReaderBuilderCustomizer<String> myCustomizer() {
 ----
 
 TIP: If your application only has a single `@PulsarReader` and a single `PulsarReaderReaderBuilderCustomizer` bean registered then the customizer will be automatically applied.
+
+=== Handling Startup Failures
+The same xref:#message-listener-startup-failure[startup failure facilities] available to message listener containers are available for reader containers.

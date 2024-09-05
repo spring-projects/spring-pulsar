@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package org.springframework.pulsar.reactive.listener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,6 +31,8 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder.Conc
 import org.apache.pulsar.reactive.client.internal.api.ApiImplementationFactory;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.pulsar.PulsarException;
+import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
 import org.springframework.util.CollectionUtils;
@@ -38,6 +42,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @param <T> message type.
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 		implements ReactivePulsarMessageListenerContainer<T> {
@@ -135,13 +140,50 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 
 	private void doStart() {
 		setRunning(true);
-		this.pipeline = startPipeline(this.pulsarContainerProperties);
+		var containerProps = this.getContainerProperties();
+		try {
+			this.pipeline = startPipeline(this.pulsarContainerProperties);
+		}
+		catch (Exception e) {
+			this.logger.error(e, () -> "Error starting Reactive pipeline");
+			this.doStop();
+			if (containerProps.getStartupFailurePolicy() == StartupFailurePolicy.STOP) {
+				this.logger.info(() -> "Configured to stop on startup failures - exiting");
+				throw new IllegalStateException("Error starting Reactive pipeline", e);
+			}
+		}
+		// Pipeline started w/o errors - short circuit
+		if (this.pipeline != null && this.pipeline.isRunning()) {
+			return;
+		}
+
+		if (containerProps.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
+			this.logger.info(() -> "Configured to retry on startup failures - retrying");
+			CompletableFuture.supplyAsync(() -> {
+				var retryTemplate = Optional.ofNullable(containerProps.getStartupFailureRetryTemplate())
+					.orElseGet(containerProps::getDefaultStartupFailureRetryTemplate);
+				return retryTemplate
+					.<ReactiveMessagePipeline, PulsarException>execute((__) -> startPipeline(containerProps));
+			}).whenComplete((p, ex) -> {
+				if (ex == null) {
+					this.pipeline = p;
+					setRunning(this.pipeline != null ? this.pipeline.isRunning() : false);
+				}
+				else {
+					this.logger.error(ex, () -> "Unable to start Reactive pipeline");
+					this.doStop();
+				}
+			});
+		}
 	}
 
 	public void doStop() {
 		try {
 			this.logger.info("Closing Pulsar Reactive pipeline.");
-			this.pipeline.close();
+			if (this.pipeline != null) {
+				this.pipeline.close();
+				this.pipeline = null;
+			}
 		}
 		catch (Exception e) {
 			this.logger.error(e, () -> "Error closing Pulsar Reactive pipeline.");
@@ -174,6 +216,9 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 			customizers.add(this.consumerCustomizer);
 		}
 
+		// NOTE: The following various pipeline builders always set 'pipelineRetrySpec'
+		// to null as the container controls the retry of the pipeline start. Otherwise
+		// they do not work well together.
 		ReactiveMessageConsumer<T> consumer = getReactivePulsarConsumerFactory()
 			.createConsumer(containerProperties.getSchema(), customizers);
 		ReactiveMessagePipelineBuilder<T> pipelineBuilder = ApiImplementationFactory
@@ -183,6 +228,7 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 		if (messageHandler instanceof ReactivePulsarStreamingHandler<?>) {
 			pipeline = pipelineBuilder
 				.streamingMessageHandler(((ReactivePulsarStreamingHandler<T>) messageHandler)::received)
+				.pipelineRetrySpec(null)
 				.build();
 		}
 		else {
@@ -195,10 +241,10 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 				if (containerProperties.isUseKeyOrderedProcessing()) {
 					concurrentPipelineBuilder.useKeyOrderedProcessing();
 				}
-				pipeline = concurrentPipelineBuilder.build();
+				pipeline = concurrentPipelineBuilder.pipelineRetrySpec(null).build();
 			}
 			else {
-				pipeline = pipelineBuilder.build();
+				pipeline = pipelineBuilder.pipelineRetrySpec(null).build();
 			}
 		}
 		pipeline.start();

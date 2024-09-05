@@ -137,9 +137,7 @@ public class ConcurrentPulsarMessageListenerContainer<T> extends AbstractPulsarM
 	public void doStop() {
 		if (isRunning()) {
 			setRunning(false);
-			for (DefaultPulsarMessageListenerContainer<T> pulsarMessageListenerContainer : this.containers) {
-				pulsarMessageListenerContainer.stop();
-			}
+			this.containers.forEach(DefaultPulsarMessageListenerContainer::stop);
 			this.containers.clear();
 		}
 	}

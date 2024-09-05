@@ -322,7 +322,7 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 				context.refresh();
 			})
 				.withCauseInstanceOf(IllegalStateException.class)
-				.havingCause()
+				.havingRootCause()
 				.withMessage("Transactions are enabled but txn manager is not set");
 		}
 

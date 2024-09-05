@@ -206,6 +206,9 @@ The "listener" aspect is provided by the `ReactivePulsarMessageHandler` of which
 
 NOTE: If topic information is not specified when using the listener containers directly, the same xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] used by the `ReactivePulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
 
+[[message-listener-startup-failure]]
+include::../message-listener-startup-failure.adoc[leveloffset=+2]
+
 [[reactive-concurrency]]
 == Concurrency
 When consuming records in streaming mode (`stream = true`) concurrency comes naturally via the underlying Reactive support in the client implementation.
