@@ -17,6 +17,7 @@
 package org.springframework.pulsar.listener;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -27,6 +28,7 @@ import org.apache.pulsar.common.schema.SchemaType;
 
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
@@ -34,6 +36,7 @@ import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.core.TransactionProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.Assert;
@@ -99,6 +102,16 @@ public class PulsarContainerProperties {
 	private Properties pulsarConsumerProperties = new Properties();
 
 	private final TransactionSettings transactions = new TransactionSettings();
+
+	@Nullable
+	private RetryTemplate startupFailureRetryTemplate;
+
+	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
+		.maxAttempts(3)
+		.fixedBackoff(Duration.ofSeconds(10))
+		.build();
+
+	private StartupFailurePolicy startupFailurePolicy = StartupFailurePolicy.STOP;
 
 	public PulsarContainerProperties(String... topics) {
 		this.topics = Set.of(topics);
@@ -219,9 +232,9 @@ public class PulsarContainerProperties {
 	}
 
 	/**
-	 * Set the timeout to wait for a consumer thread to start before logging an error.
-	 * Default 30 seconds.
-	 * @param consumerStartTimeout the consumer start timeout.
+	 * Set the max duration to wait for the consumer thread to start before logging an
+	 * error. The default is 30 seconds.
+	 * @param consumerStartTimeout the consumer start timeout
 	 */
 	public void setConsumerStartTimeout(Duration consumerStartTimeout) {
 		Assert.notNull(consumerStartTimeout, "'consumerStartTimeout' cannot be null");
@@ -293,12 +306,54 @@ public class PulsarContainerProperties {
 	}
 
 	/**
-	 * Gets the transaction settings.
+	 * Gets the transaction settings for the listener container.
 	 * @return the transaction settings
 	 * @since 1.1.0
 	 */
 	public TransactionSettings transactions() {
 		return this.transactions;
+	}
+
+	@Nullable
+	public RetryTemplate getStartupFailureRetryTemplate() {
+		return this.startupFailureRetryTemplate;
+	}
+
+	/**
+	 * Get the default template to use to retry startup when no custom retry template has
+	 * been specified.
+	 * @return the default retry template that will retry 3 times with a fixed delay of 10
+	 * seconds between each attempt.
+	 * @since 1.2.0
+	 */
+	public RetryTemplate getDefaultStartupFailureRetryTemplate() {
+		return this.defaultStartupFailureRetryTemplate;
+	}
+
+	/**
+	 * Set the template to use to retry startup when an exception occurs during startup.
+	 * @param startupFailureRetryTemplate the retry template to use
+	 * @since 1.2.0
+	 */
+	public void setStartupFailureRetryTemplate(RetryTemplate startupFailureRetryTemplate) {
+		this.startupFailureRetryTemplate = startupFailureRetryTemplate;
+		if (this.startupFailureRetryTemplate != null) {
+			setStartupFailurePolicy(StartupFailurePolicy.RETRY);
+		}
+	}
+
+	public StartupFailurePolicy getStartupFailurePolicy() {
+		return this.startupFailurePolicy;
+	}
+
+	/**
+	 * The action to take on the container when a failure occurs during startup.
+	 * @param startupFailurePolicy action to take when a failure occurs during startup
+	 * @since 1.2.0
+	 */
+	public void setStartupFailurePolicy(StartupFailurePolicy startupFailurePolicy) {
+		this.startupFailurePolicy = Objects.requireNonNull(startupFailurePolicy,
+				"startupFailurePolicy must not be null");
 	}
 
 	public void updateContainerProperties() {
