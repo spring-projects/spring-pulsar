@@ -24,6 +24,17 @@ When using Spring Boot the `PulsarTopicBuilder` is now a registered bean that is
 Therefore, if you are using Spring Boot, you can simply inject the builder where needed.
 Otherwise, use one of the `PulsarTopicBuilder` constructors directly.
 
+==== Listener/ReaderContainerFactory
+The `PulsarContainerFactory` common interface was introduced to bridge the gap between listener and reader container factories.
+As part of this, the following APIs were deprecated, copied, and renamed:
+
+- `ListenerContainerFactory#createListenerContainer` replaced with `ListenerContainerFactory#createRegisteredContainer`
+
+- `ReaderContainerFactory#createReaderContainer(E endpoint)` replaced with `ReaderContainerFactory#createRegisteredContainer`
+
+- `ReaderContainerFactory#createReaderContainer(String... topics)` replaced with `ReaderContainerFactory#createContainer`
+
+
 === Breaking Changes
 
 ==== PulsarTopic#<init>
