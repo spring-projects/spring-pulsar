@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public interface ListenerEndpoint<C extends MessageListenerContainer> {
 	 * Return the id of this endpoint.
 	 * @return the id of this endpoint. The id can be further qualified when the endpoint
 	 * is resolved against its actual listener container.
-	 * @see ListenerContainerFactory#createListenerContainer
+	 * @see ListenerContainerFactory#createRegisteredContainer
 	 */
 	@Nullable
 	default String getId() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,34 @@ import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
  * @param <C> Container type
  * @param <E> Endpoint type
  * @author Soby Chacko
+ * @author Chris Bono
  */
-public interface ReaderContainerFactory<C extends PulsarMessageReaderContainer, E extends PulsarReaderEndpoint<C>> {
+public interface ReaderContainerFactory<C extends PulsarMessageReaderContainer, E extends PulsarReaderEndpoint<C>>
+		extends PulsarContainerFactory<C, E> {
 
-	C createReaderContainer(E endpoint);
+	/**
+	 * Create a message reader container for the given endpoint and register the container
+	 * with the listener endpoint registry.
+	 * @param endpoint reader endpoint
+	 * @return the created container
+	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
+	 * {@link PulsarContainerFactory#createRegisteredContainer}
+	 */
+	@Deprecated(since = "1.2.0", forRemoval = true)
+	default C createReaderContainer(E endpoint) {
+		return createRegisteredContainer(endpoint);
+	}
 
-	C createReaderContainer(String... topics);
+	/**
+	 * Create a message reader container for the given endpoint.
+	 * @param topics the topics to read from
+	 * @return the created container
+	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
+	 * {@link PulsarContainerFactory#createContainer}
+	 */
+	@Deprecated(since = "1.2.0", forRemoval = true)
+	default C createReaderContainer(String... topics) {
+		return createContainer(topics);
+	}
 
 }

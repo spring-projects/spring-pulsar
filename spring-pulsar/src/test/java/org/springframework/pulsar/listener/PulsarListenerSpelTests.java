@@ -172,9 +172,9 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 
 		@Test
 		void containerFactoryDerivedFromAttribute(@Autowired PulsarListenerContainerFactory containerFactory) {
-			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("foo")));
-			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("bar")));
-			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("zaa")));
+			verify(containerFactory).createRegisteredContainer(argThat(endpoint -> endpoint.getId().equals("foo")));
+			verify(containerFactory).createRegisteredContainer(argThat(endpoint -> endpoint.getId().equals("bar")));
+			verify(containerFactory).createRegisteredContainer(argThat(endpoint -> endpoint.getId().equals("zaa")));
 		}
 
 		@EnablePulsar
@@ -187,7 +187,7 @@ class PulsarListenerSpelTests extends PulsarListenerTestsBase {
 				var mockContainerFactory = mock(PulsarListenerContainerFactory.class);
 				AbstractPulsarMessageListenerContainer<?> mockContainer = mock(
 						AbstractPulsarMessageListenerContainer.class);
-				when(mockContainerFactory.createListenerContainer(any(PulsarListenerEndpoint.class)))
+				when(mockContainerFactory.createRegisteredContainer(any(PulsarListenerEndpoint.class)))
 					.thenReturn(mockContainer);
 				return mockContainerFactory;
 			}

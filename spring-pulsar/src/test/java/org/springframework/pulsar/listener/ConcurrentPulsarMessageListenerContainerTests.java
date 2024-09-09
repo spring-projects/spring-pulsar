@@ -70,7 +70,7 @@ public class ConcurrentPulsarMessageListenerContainerTests {
 		when(pulsarListenerEndpoint.getConcurrency()).thenReturn(1);
 
 		AbstractPulsarMessageListenerContainer<String> concurrentContainer = containerFactory
-			.createListenerContainer(pulsarListenerEndpoint);
+			.createRegisteredContainer(pulsarListenerEndpoint);
 
 		PulsarContainerProperties pulsarContainerProperties = concurrentContainer.getContainerProperties();
 		assertThat(pulsarContainerProperties.getBatchTimeoutMillis()).isEqualTo(60_000);

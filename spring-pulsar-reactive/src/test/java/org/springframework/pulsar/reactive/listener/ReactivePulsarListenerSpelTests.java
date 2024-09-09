@@ -171,9 +171,9 @@ class ReactivePulsarListenerSpelTests extends ReactivePulsarListenerTestsBase {
 		@Test
 		void containerFactoryDerivedFromAttribute(
 				@Autowired ReactivePulsarListenerContainerFactory<String> containerFactory) {
-			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("foo")));
-			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("bar")));
-			verify(containerFactory).createListenerContainer(argThat(endpoint -> endpoint.getId().equals("zaa")));
+			verify(containerFactory).createRegisteredContainer(argThat(endpoint -> endpoint.getId().equals("foo")));
+			verify(containerFactory).createRegisteredContainer(argThat(endpoint -> endpoint.getId().equals("bar")));
+			verify(containerFactory).createRegisteredContainer(argThat(endpoint -> endpoint.getId().equals("zaa")));
 		}
 
 		@EnablePulsar
