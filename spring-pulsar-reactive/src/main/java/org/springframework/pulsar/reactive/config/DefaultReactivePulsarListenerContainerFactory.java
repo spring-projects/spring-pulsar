@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,23 +139,19 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 		return new DefaultReactivePulsarMessageListenerContainer<>(this.getConsumerFactory(), containerProps);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public DefaultReactivePulsarMessageListenerContainer<T> createListenerContainer(
+	public DefaultReactivePulsarMessageListenerContainer<T> createRegisteredContainer(
 			ReactivePulsarListenerEndpoint<T> endpoint) {
-		DefaultReactivePulsarMessageListenerContainer<T> instance = createContainerInstance(endpoint);
-		if (endpoint instanceof AbstractReactivePulsarListenerEndpoint) {
-			configureEndpoint((AbstractReactivePulsarListenerEndpoint<T>) endpoint);
+		var instance = createContainerInstance(endpoint);
+		if (endpoint instanceof AbstractReactivePulsarListenerEndpoint abstractReactiveEndpoint) {
+			if (abstractReactiveEndpoint.getFluxListener() == null) {
+				JavaUtils.INSTANCE.acceptIfNotNull(this.fluxListener, abstractReactiveEndpoint::setFluxListener);
+			}
 		}
-
 		endpoint.setupListenerContainer(instance, this.messageConverter);
 		initializeContainer(instance, endpoint);
 		return instance;
-	}
-
-	private void configureEndpoint(AbstractReactivePulsarListenerEndpoint<T> aplEndpoint) {
-		if (aplEndpoint.getFluxListener() == null) {
-			JavaUtils.INSTANCE.acceptIfNotNull(this.fluxListener, aplEndpoint::setFluxListener);
-		}
 	}
 
 	@Override
@@ -168,7 +164,7 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 			}
 
 		};
-		DefaultReactivePulsarMessageListenerContainer<T> container = createContainerInstance(endpoint);
+		var container = createContainerInstance(endpoint);
 		initializeContainer(container, endpoint);
 		return container;
 	}

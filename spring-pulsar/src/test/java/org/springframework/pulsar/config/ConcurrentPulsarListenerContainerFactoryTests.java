@@ -18,6 +18,8 @@ package org.springframework.pulsar.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -32,6 +34,18 @@ import org.springframework.pulsar.listener.PulsarContainerProperties;
  */
 class ConcurrentPulsarListenerContainerFactoryTests {
 
+	@SuppressWarnings({ "removal", "unchecked" })
+	@Test
+	void deprecatedCreateListenerContainerCallsReplacementApi() {
+		var containerFactory = spy(new ConcurrentPulsarListenerContainerFactory<String>(
+				mock(PulsarConsumerFactory.class), new PulsarContainerProperties()));
+		var endpoint = mock(PulsarListenerEndpoint.class);
+		when(endpoint.getConcurrency()).thenReturn(1);
+		var createdContainer = containerFactory.createListenerContainer(endpoint);
+		assertThat(createdContainer).isNotNull();
+		verify(containerFactory).createRegisteredContainer(endpoint);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Nested
 	class SubscriptionTypeFrom {
@@ -44,7 +58,7 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 					mock(PulsarConsumerFactory.class), factoryProps);
 			var endpoint = mock(PulsarListenerEndpoint.class);
 			when(endpoint.getConcurrency()).thenReturn(1);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(createdContainer.getContainerProperties().getSubscriptionType())
 				.isEqualTo(SubscriptionType.Shared);
 		}
@@ -58,7 +72,7 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 			var endpoint = mock(PulsarListenerEndpoint.class);
 			when(endpoint.getConcurrency()).thenReturn(1);
 			when(endpoint.getSubscriptionType()).thenReturn(SubscriptionType.Failover);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(createdContainer.getContainerProperties().getSubscriptionType())
 				.isEqualTo(SubscriptionType.Failover);
 		}
@@ -70,7 +84,7 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 					mock(PulsarConsumerFactory.class), factoryProps);
 			var endpoint = mock(PulsarListenerEndpoint.class);
 			when(endpoint.getConcurrency()).thenReturn(1);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(createdContainer.getContainerProperties().getSubscriptionType())
 				.isEqualTo(SubscriptionType.Exclusive);
 		}
@@ -89,7 +103,7 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 					mock(PulsarConsumerFactory.class), factoryProps);
 			var endpoint = mock(PulsarListenerEndpoint.class);
 			when(endpoint.getConcurrency()).thenReturn(1);
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(createdContainer.getContainerProperties().getSubscriptionName())
 				.isEqualTo("my-factory-subscription");
 		}
@@ -103,7 +117,7 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 			var endpoint = mock(PulsarListenerEndpoint.class);
 			when(endpoint.getConcurrency()).thenReturn(1);
 			when(endpoint.getSubscriptionName()).thenReturn("my-endpoint-subscription");
-			var createdContainer = containerFactory.createListenerContainer(endpoint);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(createdContainer.getContainerProperties().getSubscriptionName())
 				.isEqualTo("my-endpoint-subscription");
 		}
@@ -116,10 +130,10 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 			var endpoint = mock(PulsarListenerEndpoint.class);
 			when(endpoint.getConcurrency()).thenReturn(1);
 
-			var container1 = containerFactory.createListenerContainer(endpoint);
+			var container1 = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(container1.getContainerProperties().getSubscriptionName())
 				.startsWith("org.springframework.Pulsar.PulsarListenerEndpointContainer#");
-			var container2 = containerFactory.createListenerContainer(endpoint);
+			var container2 = containerFactory.createRegisteredContainer(endpoint);
 			assertThat(container2.getContainerProperties().getSubscriptionName())
 				.startsWith("org.springframework.Pulsar.PulsarListenerEndpointContainer#");
 			assertThat(container1.getContainerProperties().getSubscriptionName())

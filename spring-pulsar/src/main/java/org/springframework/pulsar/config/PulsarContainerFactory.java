@@ -16,31 +16,30 @@
 
 package org.springframework.pulsar.config;
 
-import org.springframework.pulsar.listener.MessageListenerContainer;
-
 /**
  * Factory for Pulsar message listener containers.
  *
- * @param <C> message listener container type.
- * @param <E> listener endpoint type.
- * @author Soby Chacko
- * @author Christophe Bornet
+ * @param <C> message container
+ * @param <E> message listener endpoint
  * @author Chris Bono
+ * @since 1.2.0
  */
-public interface ListenerContainerFactory<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
-		extends PulsarContainerFactory<C, E> {
+public interface PulsarContainerFactory<C, E> {
 
 	/**
-	 * Create a {@link MessageListenerContainer} for the given {@link ListenerEndpoint}.
-	 * Containers created using this method are added to the listener endpoint registry.
+	 * Create a message listener container for the given endpoint. Containers created
+	 * using this method are added to the listener endpoint registry.
 	 * @param endpoint the endpoint to configure
 	 * @return the created container
-	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
-	 * {@link PulsarContainerFactory#createRegisteredContainer}
 	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	default C createListenerContainer(E endpoint) {
-		return createRegisteredContainer(endpoint);
-	}
+	C createRegisteredContainer(E endpoint);
+
+	/**
+	 * Create and configure a container without a listener. Containers created using this
+	 * method are not added to the listener endpoint registry.
+	 * @param topics the topics.
+	 * @return the container.
+	 */
+	C createContainer(String... topics);
 
 }

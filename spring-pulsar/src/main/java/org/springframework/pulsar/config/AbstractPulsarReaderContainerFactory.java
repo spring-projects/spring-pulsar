@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPul
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public C createReaderContainer(PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
+	public C createRegisteredContainer(PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
 		C instance = createContainerInstance(endpoint);
 		JavaUtils.INSTANCE.acceptIfNotNull(endpoint.getId(), instance::setBeanName);
 		if (endpoint instanceof AbstractPulsarReaderEndpoint) {
