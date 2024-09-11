@@ -14,6 +14,12 @@ See xref:./reference/custom-object-mapper.adoc[Custom Object Mapper] for more de
 You can specify a default tenant and/or namespace to use when producing or consuming messages against a non-fully-qualified topic URL.
 See xref:./reference/default-tenant-namespace.adoc[Default Tenant / Namespace] for more details.
 
+=== Message Container Startup Policy
+You can now configure the message listener container startup failure policy to `stop`, `continue`, or `retry`.
+For more details see the corresponding section for one of the supported containers xref:./reference/pulsar/message-consumption.adoc#message-listener-startup-failure[@PulsarListener], xref:./reference/pulsar/message-consumption.adoc#message-reader-startup-failure[@PulsarReader], or xref:./reference/reactive-pulsar/reactive-message-consumption.adoc#message-listener-startup-failure[@ReactivePulsarListener]
+
+
+
 === Deprecations
 
 ==== PulsarClient#getPartitionsForTopic(java.lang.String)

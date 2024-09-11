@@ -16,13 +16,12 @@ each attempt.
 However, a custom retry template can be specified on the corresponding container properties.
 If the container fails to restart after the retries are exhausted, it is left in a non-running state.
 
-[discrete]
 == Configuration
 
 [discrete]
 === With Spring Boot
-**TODO**
+When using Spring Boot you can register a `PulsarContainerFactoryCustomizer<{container-class}<?>>` bean that sets the container startup properties.
 
 [discrete]
 === Without Spring Boot
-**TODO**
+However, if you are instead manually configuring the components, you will have to update the container startup properties accordingly when constructing the message listener container factory.

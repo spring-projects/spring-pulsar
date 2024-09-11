@@ -977,6 +977,7 @@ void someMethod() {
 TIP: The id parameter passed to `getListenerContainer` is the container id - which will be the value of the `@PulsarListener` id attribute when pausing/resuming a `@PulsarListener`.
 
 [[message-listener-startup-failure]]
+:container-class: ConcurrentPulsarListenerContainerFactory
 include::../message-listener-startup-failure.adoc[leveloffset=+2]
 
 
@@ -1031,5 +1032,6 @@ public PulsarReaderReaderBuilderCustomizer<String> myCustomizer() {
 
 TIP: If your application only has a single `@PulsarReader` and a single `PulsarReaderReaderBuilderCustomizer` bean registered then the customizer will be automatically applied.
 
-=== Handling Startup Failures
-The same xref:#message-listener-startup-failure[startup failure facilities] available to message listener containers are available for reader containers.
+[[message-reader-startup-failure]]
+:container-class: DefaultPulsarReaderContainerFactory
+include::../message-listener-startup-failure.adoc[leveloffset=+2]
