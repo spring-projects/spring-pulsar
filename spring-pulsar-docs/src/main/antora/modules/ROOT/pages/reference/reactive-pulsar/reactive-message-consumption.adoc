@@ -207,6 +207,7 @@ The "listener" aspect is provided by the `ReactivePulsarMessageHandler` of which
 NOTE: If topic information is not specified when using the listener containers directly, the same xref:reference/topic-resolution.adoc#topic-resolution-process[topic resolution process] used by the `ReactivePulsarListener` is used with the one exception that the "Message type default" step is **omitted**.
 
 [[message-listener-startup-failure]]
+:container-class: DefaultReactivePulsarListenerContainerFactory
 include::../message-listener-startup-failure.adoc[leveloffset=+2]
 
 [[reactive-concurrency]]
