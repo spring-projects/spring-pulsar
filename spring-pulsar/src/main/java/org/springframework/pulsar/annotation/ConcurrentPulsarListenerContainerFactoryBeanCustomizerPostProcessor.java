@@ -34,6 +34,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Chris Bono
  */
+@SuppressWarnings("removal")
 class ConcurrentPulsarListenerContainerFactoryBeanCustomizerPostProcessor
 		implements BeanPostProcessor, ApplicationContextAware {
 

@@ -22,8 +22,11 @@ package org.springframework.pulsar.config;
  *
  * @param <T> The message payload type
  * @author Chris Bono
+ * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
+ * {@code org.springframework.boot.autoconfigure.pulsar.PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactory<?>>}
  */
 @FunctionalInterface
+@Deprecated(since = "1.2.0", forRemoval = true)
 public interface ConcurrentPulsarListenerContainerFactoryCustomizer<T> {
 
 	/**

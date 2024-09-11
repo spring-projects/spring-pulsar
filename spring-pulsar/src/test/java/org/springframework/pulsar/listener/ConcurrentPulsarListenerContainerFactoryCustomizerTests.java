@@ -36,6 +36,7 @@ import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactor
  *
  * @author Chris Bono
  */
+@SuppressWarnings("removal")
 class ConcurrentPulsarListenerContainerFactoryCustomizerTests {
 
 	@Test

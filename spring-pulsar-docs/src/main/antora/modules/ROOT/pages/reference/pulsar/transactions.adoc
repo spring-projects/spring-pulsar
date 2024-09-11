@@ -138,13 +138,13 @@ These settings affect all listener containers, including the ones used by `@Puls
 
 When not using Spring Boot, you can adjust these settings on the container factory that you provide.
 However, when using Spring Boot, the container factory is auto-configured.
-In this case you can register a `ConcurrentPulsarListenerContainerFactoryCustomizer` bean to access and customize the container properties.
+In this case you can register a `org.springframework.boot.autoconfigure.pulsar.PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactory<?>>` bean to access and customize the container properties.
 The following example shows how to set the timeout on the container factory:
 
 [source, java]
 ----
 @Bean
-ConcurrentPulsarListenerContainerFactoryCustomizer<?> containerCustomizer() {
+PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactory<?>> containerCustomizer() {
     return (containerFactory) -> containerFactory.getContainerProperties().transactions().setTimeout(Duration.ofSeconds(45));
 }
 ----
