@@ -51,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Chris Bono
  */
+@SuppressWarnings("removal")
 class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
 	@Nested
