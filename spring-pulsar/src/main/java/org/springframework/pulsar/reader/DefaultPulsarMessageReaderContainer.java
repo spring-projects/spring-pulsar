@@ -192,15 +192,9 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 			this.readerBuilderCustomizer = getReaderBuilderCustomizer();
 			List<ReaderBuilderCustomizer<T>> customizers = this.readerBuilderCustomizer != null
 					? List.of(this.readerBuilderCustomizer) : Collections.emptyList();
-			try {
-				this.reader = getPulsarReaderFactory().createReader(readerContainerProperties.getTopics(),
-						readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema(),
-						customizers);
-			}
-			catch (PulsarClientException ex) {
-				// TODO remove when PRF.createReader replaces PCEX w PEX
-				throw new PulsarException(ex);
-			}
+			this.reader = getPulsarReaderFactory().createReader(readerContainerProperties.getTopics(),
+					readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema(),
+					customizers);
 		}
 
 		@Override

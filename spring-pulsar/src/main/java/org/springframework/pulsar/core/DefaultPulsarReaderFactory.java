@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.ReaderBuilderImpl;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -82,7 +83,7 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 
 	@Override
 	public Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema,
-			@Nullable List<ReaderBuilderCustomizer<T>> customizers) throws PulsarClientException {
+			@Nullable List<ReaderBuilderCustomizer<T>> customizers) {
 		Objects.requireNonNull(schema, "Schema must be specified");
 		ReaderBuilder<T> readerBuilder = this.pulsarClient.newReader(schema);
 
@@ -103,7 +104,12 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 			customizers.forEach(customizer -> customizer.customize(readerBuilder));
 		}
 
-		return readerBuilder.create();
+		try {
+			return readerBuilder.create();
+		}
+		catch (PulsarClientException ex) {
+			throw new PulsarException(ex);
+		}
 	}
 
 	private void replaceTopicsOnBuilder(ReaderBuilder<T> builder, Collection<String> topics) {

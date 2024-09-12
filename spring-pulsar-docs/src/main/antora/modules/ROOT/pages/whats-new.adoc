@@ -63,6 +63,9 @@ The `PulsarTopic` constructor now requires a fully qualified topic name (`domain
 If you are invoking the constructor you will need to be sure the topic you pass in is fully-qualified.
 A better alternative is to instead use the `PulsarTopicBuilder` as it does not require fully qualified names and will add default values for the missing components in the specified name.
 
+==== PulsarReaderFactory#createReader
+The `PulsarReaderFactory#createReader` API now throws an unchecked `PulsarException` rather than a checked `PulsarClientException`.
+Replace any `try/catch` blocks on this API accordingly.
 
 [[what-s-new-in-1-1-since-1-0]]
 == What's New in 1.1 Since 1.0
