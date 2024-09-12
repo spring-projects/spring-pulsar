@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
 
 import org.springframework.lang.Nullable;
+import org.springframework.pulsar.PulsarException;
 
 /**
  * Pulsar {@link Reader} factory interface.
  *
  * @param <T> Underlying message type handled by this reader.
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public interface PulsarReaderFactory<T> {
 
@@ -42,10 +44,11 @@ public interface PulsarReaderFactory<T> {
 	 * @param customizers the optional list of customizers to apply to the reader builder.
 	 * Note that the customizers are applied last and have the potential for overriding
 	 * any specified parameters or default properties.
-	 * @return Pulsar {@link Reader}
-	 * @throws PulsarClientException if there are issues when creating the reader
+	 * @return the created reader
+	 * @throws PulsarException if any {@link PulsarClientException} occurs communicating
+	 * with Pulsar
 	 */
 	Reader<T> createReader(@Nullable List<String> topics, @Nullable MessageId messageId, Schema<T> schema,
-			@Nullable List<ReaderBuilderCustomizer<T>> customizers) throws PulsarClientException;
+			@Nullable List<ReaderBuilderCustomizer<T>> customizers);
 
 }

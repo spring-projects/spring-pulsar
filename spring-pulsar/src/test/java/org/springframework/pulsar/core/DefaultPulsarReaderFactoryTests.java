@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
+import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
 /**
@@ -272,7 +273,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 			// topic name is not set in the API call or in the reader config.
 			assertThatThrownBy(() -> pulsarReaderFactory.createReader(Collections.emptyList(), MessageId.earliest,
 					Schema.STRING, Collections.emptyList()))
-				.isInstanceOf(PulsarClientException.class)
+				.isInstanceOf(PulsarException.class)
 				.hasMessageContaining("Topic name must be set on the reader builder");
 		}
 
@@ -280,7 +281,7 @@ public class DefaultPulsarReaderFactoryTests implements PulsarTestContainerSuppo
 		void missingStartingMessageId() {
 			assertThatThrownBy(() -> pulsarReaderFactory.createReader(List.of("my-reader-topic"), null, Schema.STRING,
 					Collections.emptyList()))
-				.isInstanceOf(PulsarClientException.class)
+				.isInstanceOf(PulsarException.class)
 				.hasMessageContaining(
 						"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
 		}
