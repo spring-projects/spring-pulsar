@@ -54,7 +54,11 @@ However, Spring Boot has introduced a generic message container factory customiz
 
 Replace all instances of `ConcurrentPulsarListenerContainerFactoryCustomizer` with `org.springframework.boot.autoconfigure.pulsar.PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactoryCustomizer<?>>`.
 
+=== Removals
+The following previously deprecated listener endpoint adapters have been removed in favor of default methods in the listener endpoint interfaces:
 
+- `org.springframework.pulsar.config.PulsarListenerEndpointAdapter`
+- `org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpointAdapter`
 
 === Breaking Changes
 
