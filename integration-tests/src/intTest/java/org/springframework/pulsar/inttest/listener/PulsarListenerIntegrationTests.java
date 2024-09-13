@@ -160,7 +160,8 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 			public void listen(String ignored, Consumer<String> consumer) {
 				assertThat(consumer).extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
 					.satisfies((conf) -> {
-						assertThat(conf.getSingleTopic()).isEqualTo("persistent://public/default/plit-config-props-topic-dev");
+						assertThat(conf.getSingleTopic())
+							.isEqualTo("persistent://public/default/plit-config-props-topic-dev");
 						assertThat(conf.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
 						assertThat(conf.getSubscriptionName()).isEqualTo("plit-config-props-subs-dev");
 					});
