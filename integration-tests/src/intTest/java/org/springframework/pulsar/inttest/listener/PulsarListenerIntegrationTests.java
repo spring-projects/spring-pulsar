@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ class PulsarListenerIntegrationTests implements PulsarTestContainerSupport {
 			public void listen(String ignored, Consumer<String> consumer) {
 				assertThat(consumer).extracting("conf", InstanceOfAssertFactories.type(ConsumerConfigurationData.class))
 					.satisfies((conf) -> {
-						assertThat(conf.getSingleTopic()).isEqualTo("plit-config-props-topic-dev");
+						assertThat(conf.getSingleTopic()).isEqualTo("persistent://public/default/plit-config-props-topic-dev");
 						assertThat(conf.getSubscriptionType()).isEqualTo(SubscriptionType.Shared);
 						assertThat(conf.getSubscriptionName()).isEqualTo("plit-config-props-subs-dev");
 					});
