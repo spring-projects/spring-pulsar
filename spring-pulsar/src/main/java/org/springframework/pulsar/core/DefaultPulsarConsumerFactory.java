@@ -101,10 +101,11 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		Objects.requireNonNull(schema, "Schema must be specified");
 		ConsumerBuilder<T> consumerBuilder = this.pulsarClient.newConsumer(schema);
 
-		// Apply the default config customizer (preserve the topic)
+		// Apply the default config customizer
 		if (!CollectionUtils.isEmpty(this.defaultConfigCustomizers)) {
 			this.defaultConfigCustomizers.forEach((customizer -> customizer.customize(consumerBuilder)));
 		}
+		// Preserve the passed in topics (don't let default config customizer win)
 		if (topics != null) {
 			replaceTopicsOnBuilder(consumerBuilder, topics);
 		}
@@ -117,6 +118,9 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
+		if (this.topicBuilder != null) {
+			this.ensureTopicNamesFullyQualified(consumerBuilder);
+		}
 		try {
 			return consumerBuilder.subscribe();
 		}
@@ -126,9 +130,6 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	}
 
 	private void replaceTopicsOnBuilder(ConsumerBuilder<T> builder, Collection<String> topics) {
-		if (this.topicBuilder != null) {
-			topics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
-		}
 		var builderImpl = (ConsumerBuilderImpl<T>) builder;
 		builderImpl.getConf().setTopicNames(new HashSet<>(topics));
 	}
@@ -137,6 +138,15 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			Map<String, String> metadataProperties) {
 		var builderImpl = (ConsumerBuilderImpl<T>) builder;
 		builderImpl.getConf().setProperties(new TreeMap<>(metadataProperties));
+	}
+
+	protected void ensureTopicNamesFullyQualified(ConsumerBuilder<T> builder) {
+		var builderImpl = (ConsumerBuilderImpl<T>) builder;
+		var topics = builderImpl.getConf().getTopicNames();
+		if (!CollectionUtils.isEmpty(topics)) {
+			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
+			builderImpl.getConf().setTopicNames(new HashSet<>(fullyQualifiedTopics));
+		}
 	}
 
 }
