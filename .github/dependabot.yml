@@ -1,5 +1,11 @@
 version: 2
+registries:
+  spring-milestones:
+    type: maven-repository
+    url: https://repo.spring.io/milestone
+
 updates:
+
   - package-ecosystem: gradle
     target-branch: main
     directory: /
@@ -8,13 +14,20 @@ updates:
       # 9am UTC-5
       time: "04:00"
     ignore:
+      - dependency-name: org.junit:junit-bom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: org.mockito:mockito-bom
+        update-types:
+          - version-update:semver-major
       - dependency-name: '*'
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 10
     labels:
       - 'type: dependency-upgrade'
+    registries:
+      - spring-milestones
     groups:
       development-dependencies:
         update-types:
@@ -24,6 +37,7 @@ updates:
           - com.github.spotbugs
           - io.spring.*
           - org.ajoberstar.grgit
+
   - package-ecosystem: gradle
     target-branch: 1.1.x
     directory: /
@@ -32,13 +46,20 @@ updates:
       # 10am UTC-5
       time: "05:00"
     ignore:
+      - dependency-name: org.junit:junit-bom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: org.mockito:mockito-bom
+        update-types:
+          - version-update:semver-major
       - dependency-name: '*'
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 10
     labels:
       - 'type: dependency-upgrade'
+    registries:
+      - spring-milestones
     groups:
       development-dependencies:
         update-types:
@@ -48,6 +69,7 @@ updates:
           - com.github.spotbugs
           - io.spring.*
           - org.ajoberstar.grgit
+
   - package-ecosystem: gradle
     target-branch: 1.0.x
     directory: /
@@ -56,13 +78,20 @@ updates:
       # 11am UTC-5
       time: "06:00"
     ignore:
+      - dependency-name: org.junit:junit-bom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: org.mockito:mockito-bom
+        update-types:
+          - version-update:semver-major
       - dependency-name: '*'
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 10
     labels:
       - 'type: dependency-upgrade'
+    registries:
+      - spring-milestones
     groups:
       development-dependencies:
         update-types:
@@ -72,6 +101,7 @@ updates:
           - com.github.spotbugs
           - io.spring.*
           - org.ajoberstar.grgit
+
   - package-ecosystem: github-actions
     target-branch: main
     directory: /
@@ -84,6 +114,7 @@ updates:
       development-dependencies:
         patterns:
           - '*'
+
   - package-ecosystem: github-actions
     target-branch: 1.1.x
     directory: /
@@ -96,6 +127,7 @@ updates:
       development-dependencies:
         patterns:
           - '*'
+
   - package-ecosystem: github-actions
     target-branch: 1.0.x
     directory: /
