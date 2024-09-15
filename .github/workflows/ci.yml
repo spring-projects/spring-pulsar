@@ -9,7 +9,7 @@ on:
     paths-ignore:
       - '.github/**'
   schedule:
-    - cron: '0 10 * * *' # Once per day at 10am UTC
+    - cron: '0 11 * * *' # Once per day at 11am UTC
   workflow_dispatch:
 
 env:
