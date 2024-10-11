@@ -93,9 +93,6 @@ jobs:
     needs: [prerequisites]
     if: needs.prerequisites.outputs.runjobs
     uses: ./.github/workflows/trivy-scan.yml
-    with:
-      config-path: .github/trivy-to-sarif.yaml
-      upload-results: true
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build_jdk_17, check_samples, scan]
