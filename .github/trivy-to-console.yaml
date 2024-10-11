@@ -11,6 +11,7 @@ severity:
 vulnerability:
   ignore-unfixed: true
 
+list-all-pkgs: false
 exit-code: 1
 timeout: 10m
 debug: false
