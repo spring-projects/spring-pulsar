@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.springframework.lang.Nullable;
  * the singleton {@link #INSTANCE} and then chain calls to the utility methods.
  *
  * @author Soby Chacko
+ * @author Chris Bono
  */
 public final class JavaUtils {
 
@@ -48,6 +49,15 @@ public final class JavaUtils {
 			consumer.accept(value);
 		}
 		return this;
+	}
+
+	/**
+	 * Determine if the specified class is a Lambda.
+	 * @param clazz the class to check
+	 * @return whether the specified class is a Lambda
+	 */
+	public boolean isLambda(Class<?> clazz) {
+		return clazz.isSynthetic() && clazz.getName().contains("$$Lambda") && !clazz.isAnonymousClass();
 	}
 
 }
