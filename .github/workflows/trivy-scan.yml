@@ -44,6 +44,7 @@ jobs:
           scan-type: 'fs'
           scan-ref: '${{ env.LOCAL_REPOSITORY_PATH }}/org/springframework/pulsar'
           trivy-config: ${{ inputs.config-path }}
+          github-pat: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - name: Upload Trivy scan results to GitHub Security tab
         if: inputs.upload-results
         uses: github/codeql-action/upload-sarif@v3
