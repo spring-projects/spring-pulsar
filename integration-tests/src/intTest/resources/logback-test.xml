@@ -12,4 +12,5 @@
 	<logger name="org.springframework.pulsar.function" level="INFO"/>
 	<logger name="org.springframework.pulsar.inttest.app" level="INFO"/>
 	<logger name="org.springframework.pulsar.inttest.config" level="INFO"/>
+	<logger name="org.springframework.pulsar.inttest.logging" level="INFO"/>
 </configuration>

@@ -45,6 +45,7 @@ import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationCo
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
 import org.springframework.pulsar.observation.PulsarTemplateObservation;
 import org.springframework.pulsar.observation.PulsarTemplateObservationConvention;
+import org.springframework.pulsar.support.internal.logging.LambdaCustomizerWarnLogger;
 import org.springframework.pulsar.transaction.PulsarTransactionUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -77,6 +78,8 @@ public class PulsarTemplate<T>
 
 	private final Map<Thread, Transaction> threadBoundTransactions = new HashMap<>();
 
+	private final boolean isProducerFactoryCaching;
+
 	/**
 	 * Whether to record observations.
 	 */
@@ -98,6 +101,12 @@ public class PulsarTemplate<T>
 	private ApplicationContext applicationContext;
 
 	private String beanName = "";
+
+	/**
+	 * Logs warning when Lambda is used for producer builder customizer.
+	 */
+	@Nullable
+	private LambdaCustomizerWarnLogger lambdaLogger;
 
 	/**
 	 * Transaction settings.
@@ -143,10 +152,16 @@ public class PulsarTemplate<T>
 		else {
 			this.interceptorsCustomizers = null;
 		}
+		this.isProducerFactoryCaching = (this.producerFactory instanceof CachingPulsarProducerFactory<?>);
+		this.lambdaLogger = newLambdaWarnLogger(1000);
 	}
 
 	private ProducerBuilderCustomizer<T> adaptInterceptorToCustomizer(ProducerInterceptor interceptor) {
 		return b -> b.intercept(interceptor);
+	}
+
+	private LambdaCustomizerWarnLogger newLambdaWarnLogger(long frequency) {
+		return new LambdaCustomizerWarnLogger(this.logger, frequency);
 	}
 
 	@Override
@@ -161,6 +176,15 @@ public class PulsarTemplate<T>
 	 */
 	public TransactionProperties transactions() {
 		return this.transactionProps;
+	}
+
+	/**
+	 * How often to log a warning when a Lambda producer builder customizer is used.
+	 * @param frequency how often to log warning (every Nth occurrence) or non-positive to
+	 * not log warning.
+	 */
+	public void logWarningForLambdaCustomizer(long frequency) {
+		this.lambdaLogger = (frequency > 0) ? newLambdaWarnLogger(frequency) : null;
 	}
 
 	/**
@@ -359,9 +383,16 @@ public class PulsarTemplate<T>
 			customizers.addAll(this.interceptorsCustomizers);
 		}
 		if (producerCustomizer != null) {
+			possiblyLogWarningOnUsingLambdaCustomizers(producerCustomizer);
 			customizers.add(producerCustomizer);
 		}
 		return this.producerFactory.createProducer(resolvedSchema, topic, encryptionKeys, customizers);
+	}
+
+	private void possiblyLogWarningOnUsingLambdaCustomizers(ProducerBuilderCustomizer<T> producerCustomizer) {
+		if (this.lambdaLogger != null && this.isProducerFactoryCaching) {
+			this.lambdaLogger.maybeLog(producerCustomizer);
+		}
 	}
 
 	/**
