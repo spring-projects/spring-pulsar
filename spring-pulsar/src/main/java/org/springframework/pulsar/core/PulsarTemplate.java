@@ -30,7 +30,6 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.client.api.transaction.Transaction;
 
@@ -285,25 +284,19 @@ public class PulsarTemplate<T>
 
 		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
 		Observation observation = newObservation(senderContext);
+		Producer<T> producer = null;
 		try {
 			observation.start();
-			Producer<T> producer = prepareProducerForSend(topicName, message, schema, encryptionKeys,
-					producerCustomizer);
-			TypedMessageBuilder<T> messageBuilder;
-			try {
-				var txn = getTransaction();
-				messageBuilder = (txn != null) ? producer.newMessage(txn) : producer.newMessage();
-				messageBuilder = messageBuilder.value(message);
-				if (typedMessageBuilderCustomizer != null) {
-					typedMessageBuilderCustomizer.customize(messageBuilder);
-				}
-				// propagate props to message
-				senderContext.properties().forEach(messageBuilder::property);
+			producer = prepareProducerForSend(topicName, message, schema, encryptionKeys, producerCustomizer);
+			var txn = getTransaction();
+			var messageBuilder = (txn != null) ? producer.newMessage(txn) : producer.newMessage();
+			messageBuilder = messageBuilder.value(message);
+			if (typedMessageBuilderCustomizer != null) {
+				typedMessageBuilderCustomizer.customize(messageBuilder);
 			}
-			catch (RuntimeException ex) {
-				ProducerUtils.closeProducerAsync(producer, this.logger);
-				throw ex;
-			}
+			// propagate props to message
+			senderContext.properties().forEach(messageBuilder::property);
+			var finalProducer = producer;
 			return messageBuilder.sendAsync().whenComplete((msgId, ex) -> {
 				if (ex == null) {
 					this.logger.trace(() -> "Sent msg to '%s' topic".formatted(topicName));
@@ -314,10 +307,13 @@ public class PulsarTemplate<T>
 					observation.error(ex);
 					observation.stop();
 				}
-				ProducerUtils.closeProducerAsync(producer, this.logger);
+				ProducerUtils.closeProducerAsync(finalProducer, this.logger);
 			});
 		}
 		catch (RuntimeException ex) {
+			if (producer != null) {
+				ProducerUtils.closeProducerAsync(producer, this.logger);
+			}
 			observation.error(ex);
 			observation.stop();
 			throw ex;
