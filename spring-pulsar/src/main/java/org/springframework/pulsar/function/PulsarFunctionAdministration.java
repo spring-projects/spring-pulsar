@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -314,7 +315,7 @@ public class PulsarFunctionAdministration implements SmartLifecycle {
 	}
 
 	private String functionDesc(PulsarFunctionOperations<?> function) {
-		return "'%s' %s".formatted(function.name(), function.type().toString().toLowerCase());
+		return "'%s' %s".formatted(function.name(), function.type().toString().toLowerCase(Locale.ROOT));
 	}
 
 	/**

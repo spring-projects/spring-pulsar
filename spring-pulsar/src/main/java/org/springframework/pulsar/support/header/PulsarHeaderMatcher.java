@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.support.header;
 
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.core.log.LogAccessor;
@@ -92,13 +93,13 @@ public interface PulsarHeaderMatcher {
 
 		public PatternMatch(String pattern, boolean negate) {
 			Assert.notNull(pattern, "Pattern must not be null");
-			this.pattern = pattern.toLowerCase();
+			this.pattern = pattern.toLowerCase(Locale.ROOT);
 			this.negate = negate;
 		}
 
 		@Override
 		public boolean matchHeader(String headerName) {
-			if (!PatternMatchUtils.simpleMatch(this.pattern, headerName.toLowerCase())) {
+			if (!PatternMatchUtils.simpleMatch(this.pattern, headerName.toLowerCase(Locale.ROOT))) {
 				return false;
 			}
 			LOGGER.debug(() -> "headerName=[%s] WILL %s be mapped, matched pattern=%s".formatted(headerName,
