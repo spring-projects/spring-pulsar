@@ -93,7 +93,7 @@ Given the following listener method:
 ----
 @PulsarListener(topics = "my-input-topic") // <1>
 void listen(String msg) { // <2>
-    var transformedMsg = msg.toUpperCase(); // <3>
+    var transformedMsg = msg.toUpperCase(Locale.ROOT); // <3>
     this.transactionalTemplate.send("my-output-topic", transformedMsg); // <4>
 } // <5> <6>
 ----
@@ -215,7 +215,7 @@ The DB transaction is committed first; if the Pulsar transaction fails to commit
 @PulsarListener(topics = "my-input-topic")
 @Transactional("dataSourceTransactionManager")
 void listen(String msg) {
-    var transformedMsg = msg.toUpperCase();
+    var transformedMsg = msg.toUpperCase(Locale.ROOT);
     this.pulsarTemplate.send("my-output-topic", transformedMsg);
     this.jdbcTemplate.execute("insert into my_table (data) values ('%s')".formatted(transformedMsg));
 }
