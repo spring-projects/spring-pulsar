@@ -10,7 +10,7 @@ micrometer-docs-gen = "1.0.4"
 micrometer-tracing = "1.3.5"
 protobuf = "3.25.5"
 pulsar = "3.2.4"
-pulsar-reactive = "0.5.7"
+pulsar-reactive = "0.5.8"
 reactor = "2023.0.11"
 spring = "6.1.14"
 # tests
