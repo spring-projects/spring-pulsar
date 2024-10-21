@@ -25,7 +25,7 @@ spring-dep-mgmt = "1.1.6"
 spring-boot = "3.2.11-SNAPSHOT"
 spring-boot-for-docs = "3.2.11-SNAPSHOT"
 spring-cloud-stream = "4.1.0"
-spring-retry = "2.0.9"
+spring-retry = "2.0.10"
 system-lambda = "1.2.1"
 testcontainers = "1.19.8"
 # plugins
