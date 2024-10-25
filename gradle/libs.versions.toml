@@ -36,7 +36,7 @@ grgit = "5.2.2"
 nohttp = "0.0.11"
 shadow = "8.1.1"
 versions = "0.51.0"
-version-catalog-update = "0.8.4"
+version-catalog-update = "0.8.5"
 
 [libraries]
 # Product libs
