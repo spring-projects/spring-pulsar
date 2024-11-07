@@ -25,6 +25,8 @@ on:
         default: false
         required: false
         type: boolean
+  schedule:
+    - cron: '0 14 * * */3' # Once every 3 day at 2pm UTC
 
 jobs:
   run_trivy_scan:
