@@ -13,17 +13,11 @@ The following is the compatibility matrix:
 | 3.2.x
 | 17+
 
-| 0.2.x
-| 2.11.x
-| 0.2.x
-| 3.0.x / 3.1.x^**(*)**^
-| 17+
 |===
 
 [NOTE]
 ====
-In version `1.0.0` the autoconfiguration moved into Spring Boot `3.2.x` and therefore `3.2.x` is the minimum Spring Boot version supported when using version `1.0.x` of the framework.
-
-However, prior to version `1.0.0`, the autoconfiguration support exists in the framework itself.
-^**(*)**^This makes it theoretically possible to use later versions of Spring Boot besides `3.0.x` which it is tested against and guaranteed to work with. In other words, it may work with `3.1.x` but it has not been tested against it.
+If you are currently using Pulsar `2.11.x` you may notice that it is not present in the above matrix.
+We do not currently test nor officially support running against Pulsar `2.11.x`.
+However, Pulsar is currently compatible across versions and it is likely to work for you.
 ====
