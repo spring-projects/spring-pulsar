@@ -10,7 +10,7 @@ on:
     inputs:
       run-trivy-scan:
         description: 'Run Trivy scan ?'
-        default: false
+        default: true
         required: false
         type: boolean
 
