@@ -105,9 +105,14 @@ jobs:
               -PspringBootVersion="$BOOT_VERSION" \
               -PsampleTests \
               :runAllSampleTests
+  scan:
+    needs: [prerequisites]
+    if: needs.prerequisites.outputs.runjobs
+    uses: ./.github/workflows/trivy-scan.yml
+
   done:
     runs-on: ubuntu-latest
-    needs: [ build_and_verify, check_samples ]
+    needs: [ build_and_verify, check_samples, scan ]
     steps:
       - name: 'Done'
         shell: bash
