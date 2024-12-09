@@ -95,7 +95,7 @@ jobs:
               :runAllSampleTests
   scan:
     needs: [prerequisites]
-    if: ${{ needs.prerequisites.outputs.runjobs && inputs.run-trivy-scan }}
+    if: ${{ needs.prerequisites.outputs.runjobs && !contains(inputs.run-trivy-scan, 'false') }}
     uses: ./.github/workflows/trivy-scan.yml
   deploy_artifacts:
     name: Deploy Artifacts (1.0.x)
