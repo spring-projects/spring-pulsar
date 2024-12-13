@@ -11,7 +11,7 @@ repositories {
 }
 
 def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
-def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
+def pulsarVersion = project.properties['pulsarVersion'] ?: versionCatalog.findVersion("pulsar").orElseThrow().displayName
 
 dependencies {
 	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"

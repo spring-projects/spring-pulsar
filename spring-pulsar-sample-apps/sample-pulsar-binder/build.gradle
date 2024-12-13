@@ -13,7 +13,7 @@ repositories {
 }
 
 def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
-def pulsarVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
+def pulsarVersion = project.properties['pulsarVersion'] ?: versionCatalog.findVersion("pulsar").orElseThrow().displayName
 def springCloudStreamVersion = versionCatalog.findVersion("spring-cloud-stream").orElseThrow().displayName
 
 ext['spring-pulsar.version'] = "${project.property('version.samples')}"
