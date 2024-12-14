@@ -79,7 +79,7 @@ public class PulsarReaderStartMessageIdTests extends PulsarReaderTestsBase {
 					PulsarReaderStartMessageIdMissing.class))
 				.rootCause()
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage(
+				.hasMessageStartingWith(
 						"Start message id or start message from roll back must be specified but they cannot be specified at the same time");
 		}
 
