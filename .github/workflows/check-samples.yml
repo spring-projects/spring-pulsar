@@ -61,21 +61,6 @@ jobs:
             springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
             pulsarVersion: "4.0.1"
             samplesTarget: ':runAllSampleTests'
-          - javaVersion: 17
-            springBootVersion: "3.3.7-SNAPSHOT"
-            springPulsarVersion: "1.1.7-SNAPSHOT"
-            pulsarVersion: "3.2.4"
-            samplesTarget: ':runAllSampleTests'
-          - javaVersion: 17
-            springBootVersion: "3.3.7-SNAPSHOT"
-            springPulsarVersion: "1.1.7-SNAPSHOT"
-            pulsarVersion: "3.3.3"
-            samplesTarget: ':runAllSampleTests'
-          - javaVersion: 17
-            springBootVersion: "3.3.7-SNAPSHOT"
-            springPulsarVersion: "1.1.7-SNAPSHOT"
-            pulsarVersion: "4.0.1"
-            samplesTarget: ':runAllSampleTests'
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
