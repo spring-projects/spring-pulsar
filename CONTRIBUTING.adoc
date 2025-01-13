@@ -20,18 +20,13 @@ The Spring for Apache Pulsar team and the broader community monitor the https://
 If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible.
 Ideally, that would include a small sample project that reproduces the problem.
 
-
-
 == Reporting Security Vulnerabilities
 If you think you have found a security vulnerability in Spring for Apache Pulsar please *DO NOT* disclose it publicly until we've had a chance to fix it.
 Please don't report security vulnerabilities using GitHub issues, instead head over to https://spring.io/security-policy and learn how to disclose them responsibly.
 
-
-
-== Sign the Contributor License Agreement
-Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement].
-Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do.
-Active contributors might be asked to join the core team, and given the ability to merge pull requests.
+== Developer Certificate of Origin
+All commits must include a **Signed-off-by** trailer at the end of each commit message to indicate that the contributor agrees to the Developer Certificate of Origin.
+For additional details, please refer to the blog post https://spring.io/blog/2025/01/06/hello-dco-goodbye-cla-simplifying-contributions-to-spring[Hello DCO, Goodbye CLA: Simplifying Contributions to Spring].
 
 == Git Workflow
 We develop on https://docs.github.com/en/get-started/quickstart/fork-a-repo[Forks] and follow the https://docs.github.com/en/get-started/quickstart/github-flow[Fork and Pull Request] workflow.
