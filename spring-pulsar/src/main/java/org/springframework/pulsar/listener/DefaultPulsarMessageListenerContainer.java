@@ -747,8 +747,14 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				this.pulsarConsumerErrorHandler.recoverMessage(this.consumer, pulsarMessage,
 						pulsarBatchListenerFailedException);
 				handleAck(pulsarMessage, txn);
-				messageList.remove(0);
-				messagesPendingInBatch.set(!messageList.isEmpty());
+				if (messageList.size() == 1) {
+					messageList.remove(0);
+					messagesPendingInBatch.set(false);
+				}
+				else {
+					messageList = messageList.subList(1, messageList.size());
+					messagesPendingInBatch.set(true);
+				}
 				this.pulsarConsumerErrorHandler.clearMessage();
 			}
 			return messageList;
