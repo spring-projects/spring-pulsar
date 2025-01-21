@@ -88,6 +88,7 @@ Flux<MessageResult<Void>> listen(Flux<org.apache.pulsar.client.api.Message<Strin
     return messages
         .doOnNext((msg) -> System.out.println("Received: " + msg.getValue()))
         .map(MessageResult::acknowledge);
+}
 ----
 Here we receive the records as a `Flux` of Pulsar messages.
 In addition, to enable stream consumption at the `ReactivePulsarListener` level, you need to set the `stream` property on the annotation to `true`.
@@ -293,7 +294,7 @@ You can specify this property directly as a Pulsar consumer property via a <<rea
 ----
 @Bean
 ReactiveMessageConsumerBuilderCustomizer<String> consumerCustomizer() {
-    return b -> b.property("ackTimeout", "60s");
+    return b -> b.property("ackTimeoutMillis", "60000");
 }
 ----
 
@@ -342,7 +343,7 @@ class DeadLetterPolicyConfig {
 
     @Bean
     ReactiveMessageConsumerBuilderCustomizer<String> ackTimeoutCustomizer() {
-        return b -> b.property("ackTimeout", "1s");
+        return b -> b.property("ackTimeoutMillis", "1000");
     }
 }
 ----
@@ -352,7 +353,7 @@ This bean specifies a number of things, such as the max delivery (10, in this ca
 If you do not specify a DLQ topic name, it defaults to `<topicname>-<subscriptionname>-DLQ` in Pulsar.
 Next, we provide this bean name to `ReactivePulsarListener` by setting the `deadLetterPolicy` property.
 Note that the `ReactivePulsarListener` has a subscription type of `Shared`, as the DLQ feature only works with shared subscriptions.
-This code is primarily for demonstration purposes, so we provide an `ackTimeout` value of 1 second.
+This code is primarily for demonstration purposes, so we provide an `ackTimeoutMillis` value of 1000.
 The idea is that the code throws the exception and, if Pulsar does not receive an ack within 1 second, it does a retry.
 If that cycle continues ten times (as that is our max redelivery count in the `DeadLetterPolicy`), the Pulsar consumer publishes the messages to the DLQ topic.
 We have another `ReactivePulsarListener` that listens on the DLQ topic to receive data as it is published to the DLQ topic.
