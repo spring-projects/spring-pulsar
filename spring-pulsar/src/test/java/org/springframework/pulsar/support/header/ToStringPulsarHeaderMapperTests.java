@@ -19,7 +19,6 @@ package org.springframework.pulsar.support.header;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.pulsar.support.header.PulsarHeaderMapperTestUtil.mockPulsarMessage;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,12 +42,12 @@ class ToStringPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 
 	@Override
 	AbstractPulsarHeaderMapper<?, ?> mapperWithInboundPatterns(String... patterns) {
-		return new ToStringPulsarHeaderMapper(List.of(patterns), Collections.emptyList());
+		return new ToStringPulsarHeaderMapper(List.of(patterns), List.of());
 	}
 
 	@Override
 	AbstractPulsarHeaderMapper<?, ?> mapperWithOutboundPatterns(String... patterns) {
-		return new ToStringPulsarHeaderMapper(Collections.emptyList(), List.of(patterns));
+		return new ToStringPulsarHeaderMapper(List.of(), List.of(patterns));
 	}
 
 	@Test

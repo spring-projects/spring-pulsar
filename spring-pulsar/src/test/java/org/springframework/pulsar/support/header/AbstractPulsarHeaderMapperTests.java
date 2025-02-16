@@ -28,6 +28,7 @@ import static org.springframework.pulsar.support.header.PulsarHeaderMapperTestUt
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.pulsar.client.api.Message;
@@ -206,6 +207,19 @@ abstract class AbstractPulsarHeaderMapperTests {
 			verify(spyTestMapper, times(springHeaders.size())).matchesForOutbound(anyString());
 		}
 
+		@Test
+		void neverMatchFiltersCanBeConfigured() {
+			var mapper = mapperWithOutboundPatterns(PulsarHeaders.KEY, PulsarHeaders.MESSAGE_ID,
+					PulsarHeaders.PRODUCER_NAME, "noSuchInternalHeader");
+			var springHeaders = new HashMap<String, Object>();
+			springHeaders.put(PulsarHeaders.KEY, "testKey");
+			springHeaders.put(PulsarHeaders.KEY_BYTES, "testKeyBytes");
+			springHeaders.put(PulsarHeaders.MESSAGE_ID, "testMsg");
+			springHeaders.put(PulsarHeaders.PRODUCER_NAME, "testProducer");
+			assertThat(mapper.toPulsarHeaders(new MessageHeaders(springHeaders))).containsOnlyKeys(PulsarHeaders.KEY,
+					PulsarHeaders.MESSAGE_ID, PulsarHeaders.PRODUCER_NAME);
+		}
+
 	}
 
 	@Nested
@@ -249,7 +263,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 		private String toPulsarHeadersContext;
 
 		TestPulsarHeaderMapper(String toSpringHeadersContext, String toPulsarHeadersContext) {
-			super(Collections.emptyList(), Collections.emptyList());
+			super(List.of(), List.of());
 			this.toSpringHeadersContext = toSpringHeadersContext;
 			this.toPulsarHeadersContext = toPulsarHeadersContext;
 		}
