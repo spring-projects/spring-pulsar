@@ -111,6 +111,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private final Condition pausedCondition = this.lockOnPause.newCondition();
 
+	private final LogAccessor listenerErrorLogger = new LogAccessor(
+			"%s-ListenerErrors".formatted(DefaultPulsarMessageListenerContainer.class.getName()));
+
 	public DefaultPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
 			PulsarContainerProperties pulsarContainerProperties) {
 		super(pulsarConsumerFactory, pulsarContainerProperties);
@@ -629,7 +632,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				inRetryMode.compareAndSet(true, false);
 			}
 			catch (RuntimeException e) {
-				DefaultPulsarMessageListenerContainer.this.logger.debug(e,
+				DefaultPulsarMessageListenerContainer.this.listenerErrorLogger.debug(e,
 						() -> "Error dispatching the message to the listener.");
 				if (this.pulsarConsumerErrorHandler != null) {
 					invokeRecordListenerErrorHandler(inRetryMode, message, e, txn);
@@ -642,9 +645,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 						this.nackableMessages.add(message.getMessageId());
 					}
 					else {
-						throw new IllegalStateException("Exception occurred and message %s was not auto-nacked; "
-								+ "switch to AckMode BATCH or RECORD to enable auto-nacks"
-									.formatted(message.getMessageId()),
+						throw new IllegalStateException(
+								"Exception occurred and message %".formatted(message.getMessageId())
+										+ "was not auto-nacked; switch to AckMode BATCH or RECORD to enable auto-nacks",
 								e);
 					}
 				}
@@ -713,6 +716,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				return Collections.emptyList();
 			}
 			catch (RuntimeException ex) {
+				DefaultPulsarMessageListenerContainer.this.listenerErrorLogger.debug(ex,
+						() -> "Error dispatching the messages to the batch listener.");
 				if (this.pulsarConsumerErrorHandler != null) {
 					return invokeBatchListenerErrorHandler(inRetryMode, messagesPendingInBatch, messageList, ex, txn);
 				}
