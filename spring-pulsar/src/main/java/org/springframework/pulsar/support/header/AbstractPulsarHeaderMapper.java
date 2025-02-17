@@ -55,6 +55,13 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 
 	private static final PatternMatch EXCLUDE_PATTERN_TIMESTAMP = PatternMatch.fromPatternString("!timestamp");
 
+	private static final List<String> NEVER_MATCH_OUTBOUND_INTERNAL_HEADERS = List.of(PulsarHeaders.KEY,
+			PulsarHeaders.KEY_BYTES, PulsarHeaders.ORDERING_KEY, PulsarHeaders.INDEX, PulsarHeaders.MESSAGE_ID,
+			PulsarHeaders.BROKER_PUBLISH_TIME, PulsarHeaders.EVENT_TIME, PulsarHeaders.MESSAGE_SIZE,
+			PulsarHeaders.PRODUCER_NAME, PulsarHeaders.RAW_DATA, PulsarHeaders.PUBLISH_TIME,
+			PulsarHeaders.REDELIVERY_COUNT, PulsarHeaders.REPLICATED_FROM, PulsarHeaders.SCHEMA_VERSION,
+			PulsarHeaders.SEQUENCE_ID, PulsarHeaders.TOPIC_NAME);
+
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
 
 	private final List<PulsarHeaderMatcher> inboundMatchers = new ArrayList<>();
@@ -64,10 +71,9 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 	/**
 	 * Construct a mapper that will match the supplied inbound and outbound patterns.
 	 * <p>
-	 * <strong>NOTE:</strong> Internal framework headers are <em>never</em> mapped
-	 * outbound. By default, the {@code "id"} and {@code "timestamp"} headers are also
-	 * excluded from outbound mapping but can be included by adding them to
-	 * {@code outboundPatterns}.
+	 * <strong>NOTE:</strong> By default, internal framework headers and the {@code "id"}
+	 * and {@code "timestamp"} headers are <em>not</em> mapped outbound but can be
+	 * included by adding them to {@code outboundPatterns}.
 	 * <p>
 	 * <strong>NOTE:</strong> The patterns are applied in order, stopping on the first
 	 * match (positive or negative). When no pattern is specified, the {@code "*"} pattern
@@ -84,23 +90,7 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 		Objects.requireNonNull(outboundPatterns, "outboundPatterns must be specified");
 		inboundPatterns.forEach((p) -> this.inboundMatchers.add(PatternMatch.fromPatternString(p)));
 		// @formatter:off
-		this.outboundMatchers.add(new NeverMatch(
-				PulsarHeaders.KEY,
-				PulsarHeaders.KEY_BYTES,
-				PulsarHeaders.ORDERING_KEY,
-				PulsarHeaders.INDEX,
-				PulsarHeaders.MESSAGE_ID,
-				PulsarHeaders.BROKER_PUBLISH_TIME,
-				PulsarHeaders.EVENT_TIME,
-				PulsarHeaders.MESSAGE_SIZE,
-				PulsarHeaders.PRODUCER_NAME,
-				PulsarHeaders.RAW_DATA,
-				PulsarHeaders.PUBLISH_TIME,
-				PulsarHeaders.REDELIVERY_COUNT,
-				PulsarHeaders.REPLICATED_FROM,
-				PulsarHeaders.SCHEMA_VERSION,
-				PulsarHeaders.SEQUENCE_ID,
-				PulsarHeaders.TOPIC_NAME));
+		this.outboundMatchers.add(getNeverMatch(outboundPatterns));
 		// @formatter:on
 		if (outboundPatterns.isEmpty()) {
 			this.outboundMatchers.add(EXCLUDE_PATTERN_ID);
@@ -112,6 +102,12 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 			this.outboundMatchers.add(EXCLUDE_PATTERN_ID);
 			this.outboundMatchers.add(EXCLUDE_PATTERN_TIMESTAMP);
 		}
+	}
+
+	private NeverMatch getNeverMatch(List<String> outboundPatterns) {
+		List<String> neverMatches = new ArrayList<>(NEVER_MATCH_OUTBOUND_INTERNAL_HEADERS);
+		neverMatches.removeAll(outboundPatterns);
+		return new NeverMatch(neverMatches.toArray(new String[0]));
 	}
 
 	@Override
