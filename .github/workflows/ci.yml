@@ -207,11 +207,11 @@ jobs:
           --generate-notes \
           --notes-file $RELEASE_NOTES_FILE
       - name: Announce Release in Chat
-        uses: julb/action-post-googlechat-message@v1
         if: env.GCHAT_WEBHOOK_URL
-        with:
-          message: "spring-pulsar-announcing `${{ env.VERSION }}`"
-          gchat_webhook_url: ${{ env.GCHAT_WEBHOOK_URL }}
+        run: |
+          curl -X POST '${{ env.GCHAT_WEBHOOK_URL }}' \
+              -H 'Content-Type: application/json' \
+              -d '{ text: "${{ github.event.repository.name }}-announcing `${{ env.VERSION }}`"}'
       - name: Update next snapshot version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
