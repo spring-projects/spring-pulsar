@@ -189,23 +189,30 @@ jobs:
           echo "Tagging $REPO@$VERSION release."
           git tag v$VERSION
           git push --tags origin
-      - name: Install tooling for Github release
+      - name: Changelog Config File
         run: |
-          curl -sSL -O https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.10/github-changelog-generator.jar
-      - name: Create Github release
-        env:
-          RELEASE_NOTES_FILE: ${{runner.temp}}/release_notes.md5
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+          repositoryTeam=$(gh api repos/$GITHUB_REPOSITORY/collaborators --jq 'map(select(.role_name == "admin") | .login) | tostring')
+          repositoryTeam=$(sed 's/"//g' <<< ${repositoryTeam:1:-1})
+          repositoryVisibility=$(gh repo view --json visibility --jq .[])
+          repositoryVisibility=$([[ $repositoryVisibility = 'PUBLIC' ]] && echo 'true' || echo 'false')
+          echo "changelog.contributors.exclude.names=$repositoryTeam" > changelog.properties
+          echo "changelog.issues.generate-links=$repositoryVisibility" >> changelog.properties
+      - name: Generate Changelog
+        uses: spring-io/github-changelog-generator@v0.0.11
+        with:
+          milestone: ${{ env.VERSION }}
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+          config-file: changelog.properties
+      - name: GitHub Release
         run: |
-          java -jar github-changelog-generator.jar \
-            --spring.config.location=.github/changelog-generator.yml \
-            $VERSION $RELEASE_NOTES_FILE
-          cat $RELEASE_NOTES_FILE
-          gh release create v$VERSION \
-          --draft \
-          --title "Spring Pulsar $VERSION" \
-          --generate-notes \
-          --notes-file $RELEASE_NOTES_FILE
+          RELEASE_URL=$(gh release create v${{ env.VERSION }} -F changelog.md ${{ (contains(env.VERSION, '-M') || contains(env.VERSION, '-RC')) && '--prerelease' || '' }})
+          echo "::notice title=Release Page::$RELEASE_URL"
+      - name: Close Milestone
+        run: |
+          MILESTONE_ID=$(gh api repos/$GITHUB_REPOSITORY/milestones --jq '.[] | select(.title == "${{ env.VERSION }}") | .number')
+          if [ $MILESTONE_ID ]; then
+            gh api -X PATCH repos/$GITHUB_REPOSITORY/milestones/$MILESTONE_ID -f state='closed' --silent
+          fi
       - name: Announce Release in Chat
         if: env.GCHAT_WEBHOOK_URL
         run: |
