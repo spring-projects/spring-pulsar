@@ -9,13 +9,10 @@ pluginManagement {
 }
 
 plugins {
-	id 'com.gradle.develocity' version '3.17.6'
-	id 'io.spring.ge.conventions' version '0.0.17' apply false
+	id "io.spring.develocity.conventions" version "0.0.22"
 }
 
 startParameter.noBuildScan = startParameter.taskNames.contains('format')
-
-apply plugin: 'io.spring.ge.conventions'
 
 include 'spring-pulsar'
 include 'spring-pulsar-bom'
@@ -38,14 +35,3 @@ rootProject.name = "spring-pulsar-dist"
 
 rootProject.children.findAll { !it.name.startsWith('sample-') }
 		.each {project -> project.buildFileName = "${project.name}.gradle" }
-
-settings.gradle.projectsLoaded {
-	develocity {
-		buildScan {
-			// only publish build scan if explicitly requested w/ --scan
-			publishing.onlyIf { false }
-			termsOfUseUrl = 'https://gradle.com/terms-of-service'
-			termsOfUseAgree = 'yes'
-		}
-	}
-}
