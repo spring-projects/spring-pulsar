@@ -1,4 +1,4 @@
-name: CI
+name: CI (Temp AdHoc)
 
 on:
   workflow_dispatch:
