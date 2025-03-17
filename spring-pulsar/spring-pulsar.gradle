@@ -9,7 +9,6 @@ dependencies {
 	api 'io.micrometer:micrometer-observation'
 	api (libs.pulsar.client.all) {
 		exclude group: 'org.apache.logging.log4j'
-		exclude group: 'com.sun.activation', module: 'javax.activation'
 		exclude group: 'javax.validation', module: 'validation-api'
 		exclude group: 'com.google.protobuf', module: 'protobuf-java'
 	}
