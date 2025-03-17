@@ -57,39 +57,11 @@ jobs:
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
-      - name: Changelog Config File
-        run: |
-          repositoryTeam=$(gh api repos/$GITHUB_REPOSITORY/collaborators --jq 'map(select(.role_name == "admin") | .login) | tostring')
-          repositoryTeam=$(sed 's/"//g' <<< ${repositoryTeam:1:-1})
-          repositoryVisibility=$(gh repo view --json visibility --jq .[])
-          repositoryVisibility=$([[ $repositoryVisibility = 'PUBLIC' ]] && echo 'true' || echo 'false')
-          echo "changelog.contributors.exclude.names=$repositoryTeam" > changelog.properties
-          echo "changelog.issues.generate-links=$repositoryVisibility" >> changelog.properties
-      - name: Generate Changelog
-        uses: spring-io/github-changelog-generator@v0.0.11
-        with:
-          milestone: ${{ env.VERSION }}
-          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
-          config-file: changelog.properties
-      - name: GitHub Release
-        run: |
-          RELEASE_URL=$(gh release create v${{ env.VERSION }} -F changelog.md ${{ (contains(env.VERSION, '-M') || contains(env.VERSION, '-RC')) && '--prerelease' || '' }})
-          echo "::notice title=Release Page::$RELEASE_URL"
-      - name: Close Milestone
-        run: |
-          MILESTONE_ID=$(gh api repos/$GITHUB_REPOSITORY/milestones --jq '.[] | select(.title == "${{ env.VERSION }}") | .number')
-          if [ $MILESTONE_ID ]; then
-            gh api -X PATCH repos/$GITHUB_REPOSITORY/milestones/$MILESTONE_ID -f state='closed' --silent
-          fi
-      - name: Announce Release in Chat
-        if: env.GCHAT_WEBHOOK_URL
-        run: |
-          curl -X POST '${{ env.GCHAT_WEBHOOK_URL }}' \
-              -H 'Content-Type: application/json' \
-              -d '{ text: "${{ github.event.repository.name }}-announcing `${{ env.VERSION }}`"}'
       - name: Update next snapshot version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
           ./gradlew :updateToSnapshotVersion
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'        
           git commit -am "[Release $VERSION] Next development version"
           git push
