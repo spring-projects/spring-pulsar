@@ -16,6 +16,7 @@ env:
   COMMIT_SHA: ${{ github.sha }}
   ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
   ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
 
 jobs:
   prerequisites:
@@ -57,8 +58,6 @@ jobs:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Changelog Config File
-        env:
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
           repositoryTeam=$(gh api repos/$GITHUB_REPOSITORY/collaborators --jq 'map(select(.role_name == "admin") | .login) | tostring')
           repositoryTeam=$(sed 's/"//g' <<< ${repositoryTeam:1:-1})

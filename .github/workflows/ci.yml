@@ -24,6 +24,7 @@ env:
   COMMIT_SHA: ${{ github.sha }}
   ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
   ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
 
 jobs:
   prerequisites:
@@ -189,8 +190,6 @@ jobs:
           git tag v$VERSION
           git push --tags origin
       - name: Changelog Config File
-        env:
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
         run: |
           repositoryTeam=$(gh api repos/$GITHUB_REPOSITORY/collaborators --jq 'map(select(.role_name == "admin") | .login) | tostring')
           repositoryTeam=$(sed 's/"//g' <<< ${repositoryTeam:1:-1})
