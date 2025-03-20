@@ -37,6 +37,7 @@ nohttp = "0.0.11"
 shadow = "8.1.1"
 versions = "0.52.0"
 version-catalog-update = "0.8.5"
+protobuf-plugin = "0.9.4"
 
 [libraries]
 # Product libs
@@ -48,6 +49,7 @@ micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micro
 micrometer-docs-gen = { module = "io.micrometer:micrometer-docs-generator", version.ref = "micrometer-docs-gen" }
 micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 pulsar-client-all = { module = "org.apache.pulsar:pulsar-client-all", version.ref = "pulsar" }
 pulsar-client-reactive-api = { module = "org.apache.pulsar:pulsar-client-reactive-api", version.ref = "pulsar-reactive" }
 pulsar-client-reactive-adapter = { module = "org.apache.pulsar:pulsar-client-reactive-adapter", version.ref = "pulsar-reactive" }
@@ -80,3 +82,4 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dep-mgmt = { id = "io.spring.dependency-management", version.ref = "spring-dep-mgmt" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
 version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
