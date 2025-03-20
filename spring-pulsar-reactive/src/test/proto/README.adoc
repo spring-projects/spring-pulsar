@@ -1,1 +1,0 @@
-include::../../../../spring-pulsar/src/test/proto/README.adoc[]
