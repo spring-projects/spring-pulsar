@@ -114,7 +114,10 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 
 	private void configureSpringJavaFormat(Project project) {
 		project.getPlugins().apply(SpringJavaFormatPlugin.class);
-		project.getTasks().withType(Format.class, (Format) -> Format.setEncoding("UTF-8"));
+		project.getTasks().withType(Format.class, (format) -> {
+			format.setEncoding("UTF-8");
+			project.getTasks().named("compileJava", JavaCompile.class, format::mustRunAfter);
+		});
 		project.getPlugins().apply(CheckstylePlugin.class);
 		CheckstyleExtension checkstyle = project.getExtensions().getByType(CheckstyleExtension.class);
 		checkstyle.setToolVersion("10.12.4");

@@ -1,5 +1,3 @@
-import io.spring.javaformat.gradle.tasks.CheckFormat
-
 plugins {
 	id 'org.springframework.pulsar.spring-module'
 	alias(libs.plugins.protobuf)
@@ -7,23 +5,7 @@ plugins {
 
 description = 'Spring Pulsar Reactive Support'
 
-tasks.named('extractIncludeProto') { enabled = false }
-tasks.named('extractIncludeTestProto') { enabled = false }
-
-tasks.withType(CheckFormat).configureEach { task ->
-	task.source = project.files(
-			task.source.filter { file ->
-				!file.path.contains('build/generated/source/proto')
-				task.enabled = false
-			}
-	)
-}
-
-protobuf {
-	protoc {
-		artifact = libs.protobuf.protoc.get()
-	}
-}
+apply from: '../gradle/proto-conventions.gradle'
 
 dependencies {
 	api project (':spring-pulsar')

@@ -1,5 +1,3 @@
-import io.spring.javaformat.gradle.tasks.CheckFormat
-
 plugins {
 	id 'org.springframework.pulsar.spring-module'
 	id 'java-test-fixtures'
@@ -8,24 +6,7 @@ plugins {
 
 description = 'Spring Pulsar Core'
 
-tasks.named('extractIncludeProto') { enabled = false }
-tasks.named('extractIncludeTestProto') { enabled = false }
-tasks.named('extractIncludeTestFixturesProto') { enabled = false }
-
-tasks.withType(CheckFormat).configureEach { task ->
-	task.source = project.files(
-			task.source.filter { file ->
-				!file.path.contains('build/generated/source/proto')
-				task.enabled = false
-			}
-	)
-}
-
-protobuf {
-	protoc {
-		artifact = libs.protobuf.protoc.get()
-	}
-}
+apply from: '../gradle/proto-conventions.gradle'
 
 dependencies {
 	api 'io.micrometer:micrometer-observation'
@@ -78,4 +59,3 @@ dependencies {
 	// Used by UserRecordDe/serializer in test fixtures
 	testFixturesApi 'com.fasterxml.jackson.core:jackson-databind'
 }
-
