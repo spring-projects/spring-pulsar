@@ -37,7 +37,7 @@ nohttp = "0.0.11"
 shadow = "8.1.1"
 versions = "0.52.0"
 version-catalog-update = "0.8.5"
-protobuf-plugin = "0.9.4"
+protobuf-plugin = "0.9.5"
 
 [libraries]
 # Product libs
