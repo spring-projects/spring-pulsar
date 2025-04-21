@@ -54,7 +54,7 @@ class PulsarTxnWithDbTxnTestsBase extends PulsarTxnTestsBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(PulsarTxnWithDbTxnTestsBase.class);
 
-	static MySQLContainer<?> MYSQL_CONTAINER = new MySQLContainer<>(DockerImageName.parse("mysql:latest"))
+	static MySQLContainer<?> MYSQL_CONTAINER = new MySQLContainer<>(DockerImageName.parse("mysql:9.2"))
 		.withInitScript("transaction/init.sql")
 		.withLogConsumer(new Slf4jLogConsumer(LOG));
 
