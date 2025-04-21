@@ -166,7 +166,7 @@ class DefaultTopicResolverTests {
 			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
 				.isEqualTo(bazTopic);
 			// verify added to custom mappings
-			assertThat(resolver.getCustomTopicMappings().get(Baz.class)).isEqualTo(bazTopic);
+			assertThat(resolver.getCustomTopicMapping(Baz.class)).hasValue(bazTopic);
 			// verify subsequent calls skip resolution again
 			assertThat(resolver.resolveTopic(null, Baz.class, () -> defaultTopic).value().orElse(null))
 				.isEqualTo(bazTopic);
@@ -242,6 +242,7 @@ class DefaultTopicResolverTests {
 			resolver = new DefaultTopicResolver();
 		}
 
+		@SuppressWarnings("removal")
 		@Test
 		void noMappingsByDefault() {
 			resolver = new DefaultTopicResolver();
@@ -254,14 +255,13 @@ class DefaultTopicResolverTests {
 			String topic2 = "bar-topic";
 			String previouslyMappedTopic = resolver.addCustomTopicMapping(Foo.class, topic1);
 			assertThat(previouslyMappedTopic).isNull();
-			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-				.containsEntry(Foo.class, topic1);
+			assertThat(resolver.getCustomTopicMapping(Foo.class)).hasValue(topic1);
 			previouslyMappedTopic = resolver.addCustomTopicMapping(Foo.class, topic2);
 			assertThat(previouslyMappedTopic).isEqualTo(topic1);
-			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-				.containsEntry(Foo.class, topic2);
+			assertThat(resolver.getCustomTopicMapping(Foo.class)).hasValue(topic2);
 		}
 
+		@SuppressWarnings("removal")
 		@Test
 		void removeMappings() {
 			String previouslyMappedTopic = resolver.removeCustomMapping(Foo.class);

@@ -16,9 +16,10 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.springframework.beans.BeansException;
@@ -45,7 +46,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private final Map<Class<?>, String> customTopicMappings = new LinkedHashMap<>();
+	private final Map<String, String> customTopicMappings = new LinkedHashMap<>();
 
 	private final PulsarMessageAnnotationRegistry pulsarMessageAnnotationRegistry = new PulsarMessageAnnotationRegistry();
 
@@ -86,7 +87,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 	 */
 	@Nullable
 	public String addCustomTopicMapping(Class<?> messageType, String topic) {
-		return this.customTopicMappings.put(messageType, topic);
+		return this.customTopicMappings.put(this.toMessageTypeMapKey(messageType), topic);
 	}
 
 	/**
@@ -97,15 +98,31 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 	 */
 	@Nullable
 	public String removeCustomMapping(Class<?> messageType) {
-		return this.customTopicMappings.remove(messageType);
+		return this.customTopicMappings.remove(this.toMessageTypeMapKey(messageType));
 	}
 
 	/**
-	 * Gets the currently registered custom mappings from message type to topic.
+	 * Gets the currently registered custom mappings from message type class name to
+	 * topic.
 	 * @return unmodifiable map of custom mappings
+	 * @deprecated deprecated in favor of {@link #getCustomTopicMapping(Class)}
 	 */
+	@Deprecated(since = "1.2.5", forRemoval = true)
 	public Map<Class<?>, String> getCustomTopicMappings() {
-		return Collections.unmodifiableMap(this.customTopicMappings);
+		Map<Class<?>, String> copyOfMappings = new HashMap<>();
+		this.customTopicMappings.entrySet()
+			.stream()
+			.map((e) -> copyOfMappings.put(this.fromMessageTypeMapKey(e.getKey()), e.getValue()));
+		return copyOfMappings;
+	}
+
+	/**
+	 * Gets the currently registered custom mapping for the specified message type.
+	 * @param messageType the message type
+	 * @return optional custom topic registered for the message type
+	 */
+	public Optional<String> getCustomTopicMapping(Class<?> messageType) {
+		return Optional.ofNullable(this.customTopicMappings.get(this.toMessageTypeMapKey(messageType)));
 	}
 
 	@Override
@@ -141,7 +158,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 			return Resolved.failed("Topic must be specified when the message is null");
 		}
 		// Check for custom topic mapping
-		String topic = this.customTopicMappings.get(messageType);
+		String topic = this.customTopicMappings.get(this.toMessageTypeMapKey(messageType));
 
 		// If no custom topic mapping found, look for @PulsarMessage (if enabled)
 		if (this.usePulsarMessageAnnotations && topic == null) {
@@ -172,6 +189,19 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 	private String resolveExpression(String v) {
 		return this.expressionResolver == null ? v : this.expressionResolver.resolveToString(v)
 			.orElseThrow(() -> "Failed to resolve topic expression: %s".formatted(v));
+	}
+
+	private Class<?> fromMessageTypeMapKey(String messageTypeKey) {
+		try {
+			return Class.forName(messageTypeKey);
+		}
+		catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private String toMessageTypeMapKey(Class<?> messageType) {
+		return messageType.getName();
 	}
 
 	@Override

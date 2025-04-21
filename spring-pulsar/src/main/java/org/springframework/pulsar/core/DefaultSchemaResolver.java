@@ -23,12 +23,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
@@ -92,7 +92,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 		BASE_SCHEMA_MAPPINGS.put(LocalTime.class, Schema.LOCAL_TIME);
 	}
 
-	private final Map<Class<?>, Schema<?>> customSchemaMappings = new LinkedHashMap<>();
+	private final Map<String, Schema<?>> customSchemaMappings = new LinkedHashMap<>();
 
 	private final PulsarMessageAnnotationRegistry pulsarMessageAnnotationRegistry = new PulsarMessageAnnotationRegistry();
 
@@ -122,7 +122,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	 */
 	@Nullable
 	public Schema<?> addCustomSchemaMapping(Class<?> messageType, Schema<?> schema) {
-		return this.customSchemaMappings.put(messageType, schema);
+		return this.customSchemaMappings.put(this.toMessageTypeMapKey(messageType), schema);
 	}
 
 	/**
@@ -133,15 +133,30 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	 */
 	@Nullable
 	public Schema<?> removeCustomMapping(Class<?> messageType) {
-		return this.customSchemaMappings.remove(messageType);
+		return this.customSchemaMappings.remove(this.toMessageTypeMapKey(messageType));
 	}
 
 	/**
-	 * Gets the currently registered custom mappings from message type to schema.
-	 * @return unmodifiable map of custom mappings
+	 * Gets the currently registered custom mapping for the specified message type.
+	 * @return optional custom topic registered for the message type
+	 * @deprecated deprecated in favor of {@link #getCustomSchemaMapping(Class)} (Class)}
 	 */
+	@Deprecated(since = "1.2.5", forRemoval = true)
 	public Map<Class<?>, Schema<?>> getCustomSchemaMappings() {
-		return Collections.unmodifiableMap(this.customSchemaMappings);
+		Map<Class<?>, Schema<?>> copyOfMappings = new HashMap<>();
+		this.customSchemaMappings.entrySet()
+			.stream()
+			.map((e) -> copyOfMappings.put(this.fromMessageTypeMapKey(e.getKey()), e.getValue()));
+		return copyOfMappings;
+	}
+
+	/**
+	 * Gets the currently registered custom mapping for the specified message type.
+	 * @param messageType the message type
+	 * @return optional custom topic registered for the message type
+	 */
+	public Optional<Schema<?>> getCustomSchemaMapping(Class<?> messageType) {
+		return Optional.ofNullable(this.customSchemaMappings.get(this.toMessageTypeMapKey(messageType)));
 	}
 
 	@Override
@@ -162,7 +177,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	@Nullable
 	protected Schema<?> getCustomSchemaOrMaybeDefault(@Nullable Class<?> messageClass, boolean returnDefault) {
 		// Check for custom schema mapping
-		Schema<?> schema = this.customSchemaMappings.get(messageClass);
+		var schema = this.getCustomSchemaMapping(messageClass).orElse(null);
 
 		// If no custom schema mapping found, look for @PulsarMessage (if enabled)
 		if (this.usePulsarMessageAnnotations && schema == null && messageClass != null) {
@@ -287,6 +302,19 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	@SuppressWarnings("unchecked")
 	private <X> Schema<X> castToType(Schema<?> rawSchema) {
 		return (Schema<X>) rawSchema;
+	}
+
+	private Class<?> fromMessageTypeMapKey(String messageTypeKey) {
+		try {
+			return Class.forName(messageTypeKey);
+		}
+		catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private String toMessageTypeMapKey(Class<?> messageType) {
+		return messageType.getName();
 	}
 
 }

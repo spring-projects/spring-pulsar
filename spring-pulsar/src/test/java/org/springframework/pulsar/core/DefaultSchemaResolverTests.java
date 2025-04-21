@@ -79,6 +79,7 @@ class DefaultSchemaResolverTests {
 	@Nested
 	class CustomSchemaMappingsAPI {
 
+		@SuppressWarnings("removal")
 		@Test
 		void noMappingsByDefault() {
 			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
@@ -88,14 +89,13 @@ class DefaultSchemaResolverTests {
 		void addMappings() {
 			Schema<?> previouslyMappedSchema = resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
 			assertThat(previouslyMappedSchema).isNull();
-			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-				.containsEntry(Foo.class, Schema.STRING);
+			assertThat(resolver.getCustomSchemaMapping(Foo.class)).hasValue(Schema.STRING);
 			previouslyMappedSchema = resolver.addCustomSchemaMapping(Foo.class, Schema.BOOL);
 			assertThat(previouslyMappedSchema).isEqualTo(Schema.STRING);
-			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
-				.containsEntry(Foo.class, Schema.BOOL);
+			assertThat(resolver.getCustomSchemaMapping(Foo.class)).hasValue(Schema.BOOL);
 		}
 
+		@SuppressWarnings("removal")
 		@Test
 		void removeMappings() {
 			Schema<?> previouslyMappedSchema = resolver.removeCustomMapping(Foo.class);
@@ -423,10 +423,11 @@ class DefaultSchemaResolverTests {
 				.endsWith(JsonMsgType.class.getSimpleName());
 
 			// verify added to custom mappings
-			assertThat(resolver.getCustomSchemaMappings().get(JsonMsgType.class)).isSameAs(resolvedSchema);
+			assertThat(resolver.getCustomSchemaMapping(JsonMsgType.class))
+				.hasValueSatisfying((v) -> assertThat(v).isSameAs(resolvedSchema));
 
 			// verify subsequent calls skip resolution again
-			assertThat(resolver.resolveSchema(JsonMsgType.class, false).orElseThrow()).isSameAs(resolvedSchema);
+			assertThat(resolver.resolveSchema(JsonMsgType.class, false).orElseThrow()).isEqualTo(resolvedSchema);
 			verify(resolver, times(1)).getAnnotatedSchemaType(JsonMsgType.class);
 		}
 
