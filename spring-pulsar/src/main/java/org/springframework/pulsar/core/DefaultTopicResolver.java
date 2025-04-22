@@ -16,19 +16,22 @@
 
 package org.springframework.pulsar.core;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -42,7 +45,7 @@ import org.springframework.util.StringUtils;
  * @author Aleksei Arsenev
  * @author Jonas Geiregat
  */
-public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
+public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware, BeanClassLoaderAware {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -54,6 +57,9 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 
 	@Nullable
 	private ExpressionResolver expressionResolver;
+
+	@Nullable
+	private ClassLoader classLoader;
 
 	/**
 	 * Constructs a new DefaultTopicResolver with the given expression resolver.
@@ -109,11 +115,9 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 	 */
 	@Deprecated(since = "1.2.5", forRemoval = true)
 	public Map<Class<?>, String> getCustomTopicMappings() {
-		Map<Class<?>, String> copyOfMappings = new HashMap<>();
-		this.customTopicMappings.entrySet()
+		return this.customTopicMappings.entrySet()
 			.stream()
-			.map((e) -> copyOfMappings.put(this.fromMessageTypeMapKey(e.getKey()), e.getValue()));
-		return copyOfMappings;
+			.collect(Collectors.toMap((e) -> this.fromMessageTypeMapKey(e.getKey()), Entry::getValue));
 	}
 
 	/**
@@ -193,7 +197,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 
 	private Class<?> fromMessageTypeMapKey(String messageTypeKey) {
 		try {
-			return Class.forName(messageTypeKey);
+			return ClassUtils.forName(messageTypeKey, this.classLoader);
 		}
 		catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
@@ -215,6 +219,11 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware {
 						.formatted(ConfigurableBeanFactory.class.getSimpleName(),
 								beanFactory.getClass().getSimpleName()));
 		}
+	}
+
+	@Override
+	public void setBeanClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
 	}
 
 }

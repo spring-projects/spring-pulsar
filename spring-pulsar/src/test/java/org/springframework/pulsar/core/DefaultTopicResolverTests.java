@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.core;
 
+import static java.util.Map.entry;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.spy;
@@ -270,6 +271,15 @@ class DefaultTopicResolverTests {
 			previouslyMappedTopic = resolver.removeCustomMapping(Foo.class);
 			assertThat(previouslyMappedTopic).isEqualTo(fooTopic);
 			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
+		}
+
+		@SuppressWarnings("removal")
+		@Test
+		void getCustomMappingsReturnsMapping() {
+			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
+			resolver.addCustomTopicMapping(Foo.class, "fooTopic");
+			assertThat(resolver.getCustomTopicMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
+				.containsExactly(entry(Foo.class, "fooTopic"));
 		}
 
 	}
