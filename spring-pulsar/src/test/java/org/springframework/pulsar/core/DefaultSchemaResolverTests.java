@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.core;
 
+import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -104,6 +105,15 @@ class DefaultSchemaResolverTests {
 			previouslyMappedSchema = resolver.removeCustomMapping(Foo.class);
 			assertThat(previouslyMappedSchema).isEqualTo(Schema.STRING);
 			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
+		}
+
+		@SuppressWarnings("removal")
+		@Test
+		void getCustomMappingsReturnsMapping() {
+			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP).isEmpty();
+			resolver.addCustomSchemaMapping(Foo.class, Schema.STRING);
+			assertThat(resolver.getCustomSchemaMappings()).asInstanceOf(InstanceOfAssertFactories.MAP)
+				.containsExactly(entry(Foo.class, Schema.STRING));
 		}
 
 	}

@@ -27,8 +27,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
@@ -38,11 +40,13 @@ import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 
+import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -58,7 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Chris Bono
  * @author Aleksei Arsenev
  */
-public class DefaultSchemaResolver implements SchemaResolver {
+public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAware {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
@@ -99,6 +103,9 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	private boolean usePulsarMessageAnnotations = true;
 
 	private ObjectMapper objectMapper;
+
+	@Nullable
+	private ClassLoader classLoader;
 
 	public void setObjectMapper(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
@@ -143,11 +150,9 @@ public class DefaultSchemaResolver implements SchemaResolver {
 	 */
 	@Deprecated(since = "1.2.5", forRemoval = true)
 	public Map<Class<?>, Schema<?>> getCustomSchemaMappings() {
-		Map<Class<?>, Schema<?>> copyOfMappings = new HashMap<>();
-		this.customSchemaMappings.entrySet()
+		return this.customSchemaMappings.entrySet()
 			.stream()
-			.map((e) -> copyOfMappings.put(this.fromMessageTypeMapKey(e.getKey()), e.getValue()));
-		return copyOfMappings;
+			.collect(Collectors.toMap((e) -> this.fromMessageTypeMapKey(e.getKey()), Entry::getValue));
 	}
 
 	/**
@@ -306,7 +311,7 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	private Class<?> fromMessageTypeMapKey(String messageTypeKey) {
 		try {
-			return Class.forName(messageTypeKey);
+			return ClassUtils.forName(messageTypeKey, this.classLoader);
 		}
 		catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
@@ -315,6 +320,11 @@ public class DefaultSchemaResolver implements SchemaResolver {
 
 	private String toMessageTypeMapKey(Class<?> messageType) {
 		return messageType.getName();
+	}
+
+	@Override
+	public void setBeanClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
 	}
 
 }
