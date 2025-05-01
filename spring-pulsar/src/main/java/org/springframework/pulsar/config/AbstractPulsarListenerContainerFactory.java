@@ -115,7 +115,6 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 
 		endpoint.setupListenerContainer(instance, this.messageConverter);
 		initializeContainer(instance, endpoint);
-		// customizeContainer(instance);
 		return instance;
 	}
 

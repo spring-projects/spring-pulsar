@@ -37,6 +37,7 @@ import org.springframework.util.StringUtils;
  * @author Chris Bono
  * @author Alexander Preuß
  * @author Vedran Pavic
+ * @author Daniel Szabo
  */
 public class ConcurrentPulsarListenerContainerFactory<T>
 		extends AbstractPulsarListenerContainerFactory<ConcurrentPulsarMessageListenerContainer<T>, T> {
@@ -80,6 +81,7 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		var containerProps = new PulsarContainerProperties();
 
 		// Map factory props (defaults) to the container props
+		containerProps.setConsumerTaskExecutor(factoryProps.getConsumerTaskExecutor());
 		containerProps.setSchemaResolver(factoryProps.getSchemaResolver());
 		containerProps.setTopicResolver(factoryProps.getTopicResolver());
 		containerProps.setSubscriptionType(factoryProps.getSubscriptionType());
