@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
  * @author Soby Chacko
  * @author Chris Bono
  * @author Alexander Preuß
+ * @author Daniel Szabo
  */
 public class ConcurrentPulsarListenerContainerFactory<T>
 		extends AbstractPulsarListenerContainerFactory<ConcurrentPulsarMessageListenerContainer<T>, T> {
@@ -74,6 +75,7 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		PulsarContainerProperties properties = new PulsarContainerProperties();
 		properties.setSchemaResolver(this.getContainerProperties().getSchemaResolver());
 		properties.setTopicResolver(this.getContainerProperties().getTopicResolver());
+		properties.setConsumerTaskExecutor(this.getContainerProperties().getConsumerTaskExecutor());
 
 		var parentTxnProps = this.getContainerProperties().transactions();
 		var childTxnProps = properties.transactions();
