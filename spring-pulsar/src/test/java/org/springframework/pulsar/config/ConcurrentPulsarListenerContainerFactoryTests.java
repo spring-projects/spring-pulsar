@@ -26,7 +26,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
 
@@ -144,23 +144,23 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 	}
 
 	@Nested
-	class ConsumerTaskExecutor {
+	class ConsumerTaskExecutorFrom {
 
 		@Test
 		@SuppressWarnings("unchecked")
-		void factoryValueCopiedWhenCreatingContainer() {
-			final var factoryProps = new PulsarContainerProperties();
-			factoryProps.setConsumerTaskExecutor(new SimpleAsyncTaskExecutor());
-			final var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
+		void factoryPropsUsedWhenSpecified() {
+			var factoryProps = new PulsarContainerProperties();
+			AsyncTaskExecutor executor = mock();
+			factoryProps.setConsumerTaskExecutor(executor);
+			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
 					mock(PulsarConsumerFactory.class), factoryProps);
-			final var endpoint = mock(PulsarListenerEndpoint.class);
-			// Mockito by default returns 0 for Integer
-			when(endpoint.getConcurrency()).thenReturn(null);
+			var endpoint = mock(PulsarListenerEndpoint.class);
+			when(endpoint.getConcurrency()).thenReturn(1);
 
-			final var createdContainer = containerFactory.createRegisteredContainer(endpoint);
-
-			final var containerProperties = createdContainer.getContainerProperties();
-			assertThat(containerProperties.getConsumerTaskExecutor()).isEqualTo(factoryProps.getConsumerTaskExecutor());
+			var container = containerFactory.createRegisteredContainer(endpoint);
+			assertThat(container.getContainerProperties())
+				.extracting(PulsarContainerProperties::getConsumerTaskExecutor)
+				.isSameAs(executor);
 		}
 
 	}
