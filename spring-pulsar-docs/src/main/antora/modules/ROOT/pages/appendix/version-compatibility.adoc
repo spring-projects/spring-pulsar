@@ -9,8 +9,8 @@ The following is the compatibility matrix:
 
 | 1.2.x
 | 3.3.x / 4.0.x^**(*)**^
-| 0.5.x
-| 3.4.x
+| 0.5.x - 0.7.x
+| 3.4.x / 3.5.x
 | 17+
 
 | 1.1.x
