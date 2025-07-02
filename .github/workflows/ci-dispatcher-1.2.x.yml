@@ -1,4 +1,4 @@
-name: CI Dispatcher (1.1.x)
+name: CI Dispatcher (1.2.x)
 
 on:
   schedule:
@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         # List of active maintenance branches.
-        branch: [ 1.1.x ]
+        branch: [ 1.2.x ]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout

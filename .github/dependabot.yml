@@ -39,7 +39,7 @@ updates:
           - org.ajoberstar.grgit
 
   - package-ecosystem: gradle
-    target-branch: 1.1.x
+    target-branch: 1.2.x
     directory: /
     schedule:
       interval: "daily"
@@ -84,7 +84,7 @@ updates:
           - '*'
 
   - package-ecosystem: github-actions
-    target-branch: 1.1.x
+    target-branch: 1.2.x
     directory: /
     schedule:
       interval: "weekly"
