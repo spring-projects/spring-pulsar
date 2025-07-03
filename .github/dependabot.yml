@@ -12,7 +12,7 @@ updates:
     schedule:
       interval: "daily"
       # 9am UTC-5
-      time: "04:00"
+      time: "14:00"
     ignore:
       - dependency-name: org.junit:junit-bom
         update-types:
@@ -44,7 +44,7 @@ updates:
     schedule:
       interval: "daily"
       # 10am UTC-5
-      time: "05:00"
+      time: "15:00"
     ignore:
       - dependency-name: org.junit:junit-bom
         update-types:
@@ -88,7 +88,7 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
-      day: "sunday"
+      day: "saturday"
     labels:
       - 'type: task'
     groups:
