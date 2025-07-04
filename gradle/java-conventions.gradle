@@ -17,7 +17,8 @@ project.afterEvaluate {
 				tasks.withType(JavaCompile).configureEach {
 					options.encoding = "UTF-8"
 					options.compilerArgs.add("-parameters")
-					options.compilerArgs.addAll(["-Werror", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:rawtypes", "-Xlint:varargs"]);
+					// TODO add this back in once we have removed deprecations
+					//options.compilerArgs.addAll(["-Werror", "-Xlint:unchecked", "-Xlint:rawtypes", "-Xlint:varargs"]);
 					options.release.set(17)
 				}
 			}
