@@ -103,7 +103,7 @@ class PulsarFunctionsTests {
 		@Test
 		void getIfExistsWithNonExistentFunction() throws PulsarAdminException {
 			when(pulsarAdmin.functions().getFunction(anyString(), anyString(), anyString()))
-					.thenThrow(new NotFoundException(null, "400", 400));
+				.thenThrow(new NotFoundException(null, "400", 400));
 			assertThat(function.getIfExists(pulsarAdmin)).isEmpty();
 			assertThat(function.functionExists(pulsarAdmin)).isFalse();
 		}
@@ -217,7 +217,7 @@ class PulsarFunctionsTests {
 		@Test
 		void getIfExistsWithNonExistentSink() throws PulsarAdminException {
 			when(pulsarAdmin.sinks().getSink(anyString(), anyString(), anyString()))
-					.thenThrow(new NotFoundException(null, "400", 400));
+				.thenThrow(new NotFoundException(null, "400", 400));
 			assertThat(sink.getIfExists(pulsarAdmin)).isEmpty();
 			assertThat(sink.functionExists(pulsarAdmin)).isFalse();
 		}
@@ -331,7 +331,7 @@ class PulsarFunctionsTests {
 		@Test
 		void getIfExistsWithNonExistentSource() throws PulsarAdminException {
 			when(pulsarAdmin.sources().getSource(anyString(), anyString(), anyString()))
-					.thenThrow(new NotFoundException(null, "400", 400));
+				.thenThrow(new NotFoundException(null, "400", 400));
 			assertThat(source.getIfExists(pulsarAdmin)).isEmpty();
 			assertThat(source.functionExists(pulsarAdmin)).isFalse();
 		}

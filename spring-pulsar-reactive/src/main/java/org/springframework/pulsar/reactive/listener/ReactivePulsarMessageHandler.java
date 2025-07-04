@@ -21,6 +21,7 @@ package org.springframework.pulsar.reactive.listener;
  *
  * @author Christophe Bornet
  */
-public sealed interface ReactivePulsarMessageHandler permits ReactivePulsarOneByOneMessageHandler, ReactivePulsarStreamingHandler {
+public sealed interface ReactivePulsarMessageHandler
+		permits ReactivePulsarOneByOneMessageHandler, ReactivePulsarStreamingHandler {
 
 }

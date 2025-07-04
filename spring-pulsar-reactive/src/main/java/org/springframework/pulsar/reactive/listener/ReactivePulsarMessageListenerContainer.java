@@ -26,8 +26,8 @@ import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCu
  * @param <T> message type.
  * @author Christophe Bornet
  */
-public sealed interface ReactivePulsarMessageListenerContainer<T>
-		extends MessageListenerContainer permits DefaultReactivePulsarMessageListenerContainer {
+public sealed interface ReactivePulsarMessageListenerContainer<T> extends MessageListenerContainer
+		permits DefaultReactivePulsarMessageListenerContainer {
 
 	void setupMessageHandler(ReactivePulsarMessageHandler messageListener);
 
