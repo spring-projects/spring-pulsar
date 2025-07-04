@@ -19,7 +19,7 @@ You can now configure the message listener container startup failure policy to `
 For more details see the corresponding section for one of the supported containers xref:./reference/pulsar/message-consumption.adoc#message-listener-startup-failure[@PulsarListener], xref:./reference/pulsar/message-consumption.adoc#message-reader-startup-failure[@PulsarReader], or xref:./reference/reactive-pulsar/reactive-message-consumption.adoc#message-listener-startup-failure[@ReactivePulsarListener]
 
 === Message Container Factory Customizers (Spring Boot)
-Spring Boot has introduced a generic message container factory customizer `org.springframework.boot.autoconfigure.pulsar.PulsarContainerFactoryCustomizer<T extends PulsarContainerFactory<?, ?>>` that can be used to further configure one or more of the auto-configured container factories that back the following listener annotations:
+Spring Boot has introduced a generic message container factory customizer `org.springframework.boot.pulsar.autoconfigure.PulsarContainerFactoryCustomizer<T extends PulsarContainerFactory<?, ?>>` that can be used to further configure one or more of the auto-configured container factories that back the following listener annotations:
 
 - For `@PulsarListener` register one or more PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactory<?>> beans.
 
@@ -50,9 +50,9 @@ As part of this, the following APIs were deprecated, copied, and renamed:
 
 ==== ConcurrentPulsarListenerContainerFactoryCustomizer
 The purpose of `ConcurrentPulsarListenerContainerFactoryCustomizer` was to customize the Spring Boot auto-configured message container factories.
-However, Spring Boot has introduced a generic message container factory customizer `org.springframework.boot.autoconfigure.pulsar.PulsarContainerFactoryCustomizer<T extends PulsarContainerFactory<?, ?>>` that removes the need for this customizer.
+However, Spring Boot has introduced a generic message container factory customizer `org.springframework.boot.pulsar.autoconfigure.PulsarContainerFactoryCustomizer<T extends PulsarContainerFactory<?, ?>>` that removes the need for this customizer.
 
-Replace all instances of `ConcurrentPulsarListenerContainerFactoryCustomizer` with `org.springframework.boot.autoconfigure.pulsar.PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactoryCustomizer<?>>`.
+Replace all instances of `ConcurrentPulsarListenerContainerFactoryCustomizer` with `org.springframework.boot.pulsar.autoconfigure.PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactoryCustomizer<?>>`.
 
 === Removals
 The following previously deprecated listener endpoint adapters have been removed in favor of default methods in the listener endpoint interfaces:
