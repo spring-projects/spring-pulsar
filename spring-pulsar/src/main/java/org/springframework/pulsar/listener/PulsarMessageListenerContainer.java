@@ -27,8 +27,8 @@ import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
  *
  * @author Soby Chacko
  */
-public sealed interface PulsarMessageListenerContainer
-		extends MessageListenerContainer permits AbstractPulsarMessageListenerContainer {
+public sealed interface PulsarMessageListenerContainer extends MessageListenerContainer
+		permits AbstractPulsarMessageListenerContainer {
 
 	void setupMessageListener(Object messageListener);
 

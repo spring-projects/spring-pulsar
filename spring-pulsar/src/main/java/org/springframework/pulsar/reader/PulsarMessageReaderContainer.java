@@ -26,8 +26,8 @@ import org.springframework.pulsar.core.ReaderBuilderCustomizer;
  *
  * @author Soby Chacko
  */
-public sealed interface PulsarMessageReaderContainer
-		extends SmartLifecycle, DisposableBean permits AbstractPulsarMessageReaderContainer {
+public sealed interface PulsarMessageReaderContainer extends SmartLifecycle, DisposableBean
+		permits AbstractPulsarMessageReaderContainer {
 
 	void setupReaderListener(Object messageListener);
 

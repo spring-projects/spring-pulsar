@@ -229,8 +229,8 @@ class PulsarFunctionAdministrationTests {
 		void createAdminClientFails() throws PulsarClientException {
 			when(springPulsarAdmin.createAdminClient()).thenThrow(new PulsarClientException("NOPE"));
 			assertThatThrownBy(() -> functionAdmin.createOrUpdateUserDefinedFunctions())
-					.isInstanceOf(PulsarException.class)
-					.hasMessageContaining("Unable to create/update functions - could not create PulsarAdmin: NOPE");
+				.isInstanceOf(PulsarException.class)
+				.hasMessageContaining("Unable to create/update functions - could not create PulsarAdmin: NOPE");
 		}
 
 		@Nested
@@ -472,8 +472,9 @@ class PulsarFunctionAdministrationTests {
 		void createAdminClientFails() throws PulsarClientException {
 			when(springPulsarAdmin.createAdminClient()).thenThrow(new PulsarClientException("NOPE"));
 			assertThatThrownBy(() -> functionAdmin.enforceStopPolicyOnUserDefinedFunctions())
-					.isInstanceOf(PulsarException.class).hasMessageContaining(
-							"Unable to enforce stop policy on functions - could not create PulsarAdmin: NOPE");
+				.isInstanceOf(PulsarException.class)
+				.hasMessageContaining(
+						"Unable to enforce stop policy on functions - could not create PulsarAdmin: NOPE");
 		}
 
 		@Test
