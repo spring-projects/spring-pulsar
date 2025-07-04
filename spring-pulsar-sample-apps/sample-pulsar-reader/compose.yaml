@@ -1,6 +1,6 @@
 services:
   pulsar:
-    image: 'apachepulsar/pulsar:3.3.6'
+    image: 'apachepulsar/pulsar:4.0.5'
     ports:
       - '6650'
       - '8080'
