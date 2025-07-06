@@ -58,9 +58,8 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 			.of(HashSet.class, LinkedHashMap.class, TreeMap.class, Authentication.class,
 					AuthenticationDataProvider.class, SecretsSerializer.class, PulsarAdminBuilderImpl.class,
 					OffloadProcessStatusImpl.class, Commands.class)
-			.forEach(type -> reflectionHints.registerType(type,
-					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS)));
+			.forEach(type -> reflectionHints.registerType(type, builder -> builder
+				.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS)));
 
 		// In addition to the above member category levels, these components need field
 		// and declared class level access.
@@ -69,8 +68,7 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 					ListTopicsOptions.class)
 			.forEach(type -> reflectionHints.registerType(type,
 					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
-							MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
+							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.ACCESS_DECLARED_FIELDS)));
 
 		// @formatter:off
 		// These are shaded classes and other inaccessible interfaces/classes (thus using
@@ -201,8 +199,7 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 			.forEach(type -> reflectionHints.registerTypeIfPresent(classLoader, type,
 					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 							MemberCategory.INVOKE_PUBLIC_METHODS, MemberCategory.INVOKE_DECLARED_METHODS,
-							MemberCategory.INTROSPECT_PUBLIC_METHODS, MemberCategory.DECLARED_CLASSES,
-							MemberCategory.DECLARED_FIELDS)));
+							MemberCategory.ACCESS_DECLARED_FIELDS)));
 		// @formatter:on
 
 		// Registering JDK dynamic proxies for these interfaces. Since the Connection

@@ -63,17 +63,15 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 					SecretsSerializer.class, NioSocketChannel.class, AbstractByteBufAllocator.class,
 					NioDatagramChannel.class, PulsarAdminBuilderImpl.class, OffloadProcessStatusImpl.class,
 					Commands.class, ReferenceCountUtil.class)
-			.forEach(type -> reflectionHints.registerType(type,
-					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS)));
+			.forEach(type -> reflectionHints.registerType(type, builder -> builder
+				.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS)));
 
 		// In addition to the above member category levels, these components need field
 		// and declared class level access.
 		Stream.of(ClientConfigurationData.class, ConsumerConfigurationData.class, ProducerConfigurationData.class)
 			.forEach(type -> reflectionHints.registerType(type,
 					builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INTROSPECT_PUBLIC_METHODS,
-							MemberCategory.DECLARED_CLASSES, MemberCategory.DECLARED_FIELDS)));
+							MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.ACCESS_DECLARED_FIELDS)));
 
 		// These are inaccessible interfaces/classes in a normal scenario, thus using the
 		// String version, and we need field level access in them.
@@ -88,7 +86,7 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.unpadded.MpscUnpaddedArrayQueueProducerIndexField",
 				"org.apache.pulsar.shade.io.netty.util.internal.shaded.org.jctools.queues.unpadded.MpscUnpaddedArrayQueueProducerLimitField")
 			.forEach(typeName -> reflectionHints.registerTypeIfPresent(classLoader, typeName,
-					MemberCategory.DECLARED_FIELDS));
+					MemberCategory.ACCESS_DECLARED_FIELDS));
 
 		// @formatter:off
 		Stream.of(
@@ -150,9 +148,7 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 							MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 							MemberCategory.INVOKE_PUBLIC_METHODS,
 							MemberCategory.INVOKE_DECLARED_METHODS,
-							MemberCategory.INTROSPECT_PUBLIC_METHODS,
-							MemberCategory.DECLARED_CLASSES,
-							MemberCategory.DECLARED_FIELDS)));
+							MemberCategory.ACCESS_DECLARED_FIELDS)));
 		reflectionHints.registerField(ReflectionUtils.findField(Thread.class, "threadLocalRandomProbe"));
 
 		// @formatter:on
