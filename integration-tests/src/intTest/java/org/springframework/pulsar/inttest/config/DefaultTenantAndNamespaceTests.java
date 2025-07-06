@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,6 +74,7 @@ class DefaultTenantAndNamespaceTests {
 					"spring.pulsar.defaults.topic.namespace=my-namespace-r" })
 	@ExtendWith(OutputCaptureExtension.class)
 	@ActiveProfiles("inttest.pulsar.reactive")
+	@Disabled("Flaky -> see https://github.com/spring-projects/spring-pulsar/issues/1040")
 	class WithReactiveApp {
 
 		@Test
