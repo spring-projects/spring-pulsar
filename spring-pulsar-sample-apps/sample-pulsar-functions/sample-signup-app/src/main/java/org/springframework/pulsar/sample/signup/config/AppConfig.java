@@ -34,6 +34,7 @@ import org.springframework.pulsar.function.PulsarSink;
 import org.springframework.pulsar.function.PulsarSource;
 import org.springframework.pulsar.sample.signup.model.SignupGenerator;
 
+@SuppressWarnings("removal")
 @Configuration(proxyBeanMethods = false)
 class AppConfig {
 
@@ -41,6 +42,7 @@ class AppConfig {
 	SignupGenerator signupGenerator() {
 		return new SignupGenerator();
 	}
+
 
 	@Bean
 	Jackson2JsonMessageConverter jackson2JsonMessageConverter() {

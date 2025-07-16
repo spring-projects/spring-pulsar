@@ -27,12 +27,10 @@
 		<module name="AnnotationUseStyle">
 			<property name="elementStyle" value="compact"/>
 		</module>
-		<module name="MissingOverride"/>
-		<module name="PackageAnnotation"/>
-		<module name="AnnotationLocation">
-			<property name="allowSamelineSingleParameterlessAnnotation"
-					  value="false"/>
-		</module>
+		<module name="MissingOverride" />
+		<module name="MissingDeprecated" />
+		<module name="PackageAnnotation" />
+		<module name="io.spring.javaformat.checkstyle.check.SpringAnnotationLocationCheck" />
 
 		<!-- Block Checks -->
 		<module name="EmptyBlock">
@@ -119,7 +117,7 @@
 		<module name="JavadocMethod">
 		</module>
 		<module name="JavadocVariable">
-			<property name="scope" value="public"/>
+			<property name="accessModifiers" value="public"/>
 		</module>
 		<module name="JavadocStyle">
 			<property name="checkEmptyJavadoc" value="true"/>

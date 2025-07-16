@@ -103,7 +103,7 @@ class SchemaResolverTests {
 
 	}
 
-	private static class TestSchemaResolver implements SchemaResolver {
+	private static final class TestSchemaResolver implements SchemaResolver {
 
 		private final SchemaResolver delegate = mock(SchemaResolver.class);
 
