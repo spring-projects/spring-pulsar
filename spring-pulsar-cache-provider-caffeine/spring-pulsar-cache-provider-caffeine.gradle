@@ -23,10 +23,9 @@ shadowJar {
 	}
 	relocate 'com.github.benmanes.caffeine', 'org.springframework.pulsar.shade.com.github.benmanes.caffeine'
 	relocate 'com.google', 'org.springframework.pulsar.shade.com.google'
-	relocate 'org.checkerframework', 'org.springframework.pulsar.shade.org.checkerframework'
 	dependencies {
 		exclude(dependency {
-			!['com.github.ben-manes.caffeine', 'org.checkerframework', 'com.google.errorprone'].contains(it.moduleGroup)
+			!['com.github.ben-manes.caffeine', 'com.google.errorprone'].contains(it.moduleGroup)
 		})
 	}
 }
