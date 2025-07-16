@@ -148,7 +148,7 @@ class PulsarTemplateLambdaWarnLoggerTests {
 
 	}
 
-	private static class TestUtils {
+	private static final class TestUtils {
 
 		private static void sendRequestsWithCustomizer(String testPrefix, int numberOfSends,
 				PulsarTemplate<String> template) {

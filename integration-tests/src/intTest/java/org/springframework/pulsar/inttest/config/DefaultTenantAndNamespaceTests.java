@@ -87,7 +87,7 @@ class DefaultTenantAndNamespaceTests {
 
 	}
 
-	private static class TestVerifyUtils {
+	private static final class TestVerifyUtils {
 
 		static void verifyProduceConsume(CapturedOutput output, int numExpectedMessages,
 				Function<Integer, Object> expectedMessageFactory) {
