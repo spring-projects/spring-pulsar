@@ -123,7 +123,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 	}
 
 	protected BeanExpressionContext requireNonNullExpressionContext() {
-		Assert.notNull(this.requireNonNullExpressionContext(), "expressionContext must not be null");
+		Assert.notNull(this.expressionContext, "expressionContext must not be null");
 		return this.requireNonNullExpressionContext();
 	}
 
