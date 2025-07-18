@@ -3,7 +3,6 @@
 *.iws
 .classpath
 .gradle
-.idea
 .project
 .settings
 .sts4-cache
