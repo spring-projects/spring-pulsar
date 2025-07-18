@@ -122,11 +122,6 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 				+ "' was found in the application context";
 	}
 
-	protected BeanExpressionContext requireNonNullExpressionContext() {
-		Assert.notNull(this.expressionContext, "expressionContext must not be null");
-		return this.requireNonNullExpressionContext();
-	}
-
 	protected @Nullable Boolean resolveExpressionAsBoolean(String value, String attribute) {
 		Object resolved = resolveExpression(value);
 		Boolean result = null;
@@ -146,7 +141,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 	protected @Nullable Object resolveExpression(String value) {
 		return requireNonNull(this.resolver, "resolver must be set prior to calling resolveExpression")
-			.evaluate(resolve(value), this.requireNonNullExpressionContext());
+			.evaluate(resolve(value), requireNonNull(this.expressionContext, "expressionContext must not be null"));
 	}
 
 	protected @Nullable String resolve(String value) {
