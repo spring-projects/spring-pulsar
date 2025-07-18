@@ -19,6 +19,7 @@ package org.springframework.pulsar.reader;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.pulsar.client.api.ReaderListener;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
 import org.springframework.pulsar.core.PulsarReaderFactory;
@@ -40,7 +41,7 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends
 
 	protected final ReentrantLock lifecycleLock = new ReentrantLock();
 
-	protected ReaderBuilderCustomizer<T> readerBuilderCustomizer;
+	@Nullable protected ReaderBuilderCustomizer<T> readerBuilderCustomizer;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageReaderContainer(PulsarReaderFactory<? super T> pulsarReaderFactory,
@@ -115,7 +116,7 @@ public non-sealed abstract class AbstractPulsarMessageReaderContainer<T> extends
 		this.readerBuilderCustomizer = (ReaderBuilderCustomizer<T>) readerBuilderCustomizer;
 	}
 
-	public ReaderBuilderCustomizer<T> getReaderBuilderCustomizer() {
+	@Nullable public ReaderBuilderCustomizer<T> getReaderBuilderCustomizer() {
 		return this.readerBuilderCustomizer;
 	}
 

@@ -18,6 +18,8 @@ package org.springframework.pulsar.annotation;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.MessageConverter;
@@ -39,7 +41,7 @@ public class PulsarNullAwarePayloadArgumentResolver extends PayloadMethodArgumen
 	}
 
 	@Override
-	public Object resolveArgument(MethodParameter parameter, Message<?> message) throws Exception {
+	public @Nullable Object resolveArgument(MethodParameter parameter, Message<?> message) throws Exception {
 		if (message == null) {
 			message = new GenericMessage<>(PulsarNull.INSTANCE);
 		}
@@ -56,7 +58,7 @@ public class PulsarNullAwarePayloadArgumentResolver extends PayloadMethodArgumen
 	}
 
 	@Override
-	protected boolean isEmptyPayload(Object payload) {
+	protected boolean isEmptyPayload(@Nullable Object payload) {
 		return payload == null || payload instanceof PulsarNull;
 	}
 

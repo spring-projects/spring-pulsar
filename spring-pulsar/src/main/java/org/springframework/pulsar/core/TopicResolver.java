@@ -18,7 +18,7 @@ package org.springframework.pulsar.core;
 
 import java.util.function.Supplier;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Resolves topics to use when producing or consuming.

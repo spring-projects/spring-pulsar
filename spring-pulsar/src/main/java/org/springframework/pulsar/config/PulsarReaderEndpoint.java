@@ -20,8 +20,8 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.support.MessageConverter;
 
@@ -41,8 +41,7 @@ public interface PulsarReaderEndpoint<C extends PulsarMessageReaderContainer> {
 	 * is resolved against its actual listener container.
 	 * @see ListenerContainerFactory#createRegisteredContainer
 	 */
-	@Nullable
-	String getId();
+	@Nullable String getId();
 
 	/**
 	 * Return the topics for this endpoint's container.
@@ -57,7 +56,7 @@ public interface PulsarReaderEndpoint<C extends PulsarMessageReaderContainer> {
 	SchemaType getSchemaType();
 
 	/**
-	 * Setup the specified message listener container with the model defined by this
+	 * Sets up the specified message listener container with the model defined by this
 	 * endpoint.
 	 * <p>
 	 * This endpoint must provide the requested missing option(s) of the specified
@@ -69,9 +68,8 @@ public interface PulsarReaderEndpoint<C extends PulsarMessageReaderContainer> {
 	 */
 	void setupListenerContainer(C listenerContainer, @Nullable MessageConverter messageConverter);
 
-	@Nullable
-	Boolean getAutoStartup();
+	@Nullable Boolean getAutoStartup();
 
-	MessageId getStartMessageId();
+	@Nullable MessageId getStartMessageId();
 
 }

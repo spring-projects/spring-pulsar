@@ -121,53 +121,53 @@ final class PulsarClientProxy extends RestartableSingletonFactory<PulsarClient> 
 
 	@Override
 	public ProducerBuilder<byte[]> newProducer() {
-		return this.getInstance().newProducer();
+		return this.getRequiredInstance().newProducer();
 	}
 
 	@Override
 	public <T> ProducerBuilder<T> newProducer(Schema<T> schema) {
-		return this.getInstance().newProducer(schema);
+		return this.getRequiredInstance().newProducer(schema);
 	}
 
 	@Override
 	public ConsumerBuilder<byte[]> newConsumer() {
-		return this.getInstance().newConsumer();
+		return this.getRequiredInstance().newConsumer();
 	}
 
 	@Override
 	public <T> ConsumerBuilder<T> newConsumer(Schema<T> schema) {
-		return this.getInstance().newConsumer(schema);
+		return this.getRequiredInstance().newConsumer(schema);
 	}
 
 	@Override
 	public ReaderBuilder<byte[]> newReader() {
-		return this.getInstance().newReader();
+		return this.getRequiredInstance().newReader();
 	}
 
 	@Override
 	public <T> ReaderBuilder<T> newReader(Schema<T> schema) {
-		return this.getInstance().newReader(schema);
+		return this.getRequiredInstance().newReader(schema);
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public <T> TableViewBuilder<T> newTableViewBuilder(Schema<T> schema) {
-		return this.getInstance().newTableViewBuilder(schema);
+		return this.getRequiredInstance().newTableViewBuilder(schema);
 	}
 
 	@Override
 	public TableViewBuilder<byte[]> newTableView() {
-		return this.getInstance().newTableView();
+		return this.getRequiredInstance().newTableView();
 	}
 
 	@Override
 	public <T> TableViewBuilder<T> newTableView(Schema<T> schema) {
-		return this.getInstance().newTableView(schema);
+		return this.getRequiredInstance().newTableView(schema);
 	}
 
 	@Override
 	public void updateServiceUrl(String serviceUrl) throws PulsarClientException {
-		this.getInstance().updateServiceUrl(serviceUrl);
+		this.getRequiredInstance().updateServiceUrl(serviceUrl);
 	}
 
 	/**
@@ -180,37 +180,37 @@ final class PulsarClientProxy extends RestartableSingletonFactory<PulsarClient> 
 	@Override
 	@Deprecated(since = "1.2.0", forRemoval = true)
 	public CompletableFuture<List<String>> getPartitionsForTopic(String topic) {
-		return this.getInstance().getPartitionsForTopic(topic);
+		return this.getRequiredInstance().getPartitionsForTopic(topic);
 	}
 
 	@Override
 	public CompletableFuture<List<String>> getPartitionsForTopic(String topic, boolean metadataAutoCreationEnabled) {
-		return this.getInstance().getPartitionsForTopic(topic, metadataAutoCreationEnabled);
+		return this.getRequiredInstance().getPartitionsForTopic(topic, metadataAutoCreationEnabled);
 	}
 
 	@Override
 	public void close() throws PulsarClientException {
-		this.getInstance().close();
+		this.getRequiredInstance().close();
 	}
 
 	@Override
 	public CompletableFuture<Void> closeAsync() {
-		return this.getInstance().closeAsync();
+		return this.getRequiredInstance().closeAsync();
 	}
 
 	@Override
 	public void shutdown() throws PulsarClientException {
-		this.getInstance().shutdown();
+		this.getRequiredInstance().shutdown();
 	}
 
 	@Override
 	public boolean isClosed() {
-		return this.getInstance().isClosed();
+		return this.getRequiredInstance().isClosed();
 	}
 
 	@Override
 	public TransactionBuilder newTransaction() {
-		return this.getInstance().newTransaction();
+		return this.getRequiredInstance().newTransaction();
 	}
 
 }

@@ -19,7 +19,7 @@ package org.springframework.pulsar.reader;
 import java.util.Collection;
 import java.util.Set;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Reader container registry.
@@ -28,8 +28,7 @@ import org.springframework.lang.Nullable;
  */
 public interface PulsarReaderContainerRegistry {
 
-	@Nullable
-	PulsarMessageReaderContainer getReaderContainer(String id);
+	@Nullable PulsarMessageReaderContainer getReaderContainer(String id);
 
 	Set<String> getReaderContainerIds();
 

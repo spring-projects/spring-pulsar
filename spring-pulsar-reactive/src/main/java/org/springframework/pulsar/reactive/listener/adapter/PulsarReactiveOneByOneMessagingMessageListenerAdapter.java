@@ -36,6 +36,7 @@ import reactor.core.publisher.Mono;
  * @author Christophe Bornet
  * @author Soby Chacko
  */
+@SuppressWarnings("NullAway")
 public class PulsarReactiveOneByOneMessagingMessageListenerAdapter<V>
 		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarOneByOneMessageHandler<V> {
 

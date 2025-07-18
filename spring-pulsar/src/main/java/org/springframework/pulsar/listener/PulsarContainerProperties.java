@@ -25,9 +25,9 @@ import java.util.function.Consumer;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
@@ -59,27 +59,27 @@ public class PulsarContainerProperties {
 
 	private static final String SUBSCRIPTION_TYPE = "subscriptionType";
 
-	private Duration consumerStartTimeout = DEFAULT_CONSUMER_START_TIMEOUT;
+	private @Nullable Duration consumerStartTimeout = DEFAULT_CONSUMER_START_TIMEOUT;
 
-	private Set<String> topics;
+	private @Nullable Set<String> topics;
 
-	private String topicsPattern;
+	private @Nullable String topicsPattern;
 
-	private String subscriptionName;
+	private @Nullable String subscriptionName;
 
-	private SubscriptionType subscriptionType;
+	private @Nullable SubscriptionType subscriptionType;
 
-	private Schema<?> schema;
+	private @Nullable Schema<?> schema;
 
-	private SchemaType schemaType;
+	private @Nullable SchemaType schemaType;
 
-	private SchemaResolver schemaResolver;
+	private @Nullable SchemaResolver schemaResolver;
 
-	private TopicResolver topicResolver;
+	private @Nullable TopicResolver topicResolver;
 
-	private Object messageListener;
+	private @Nullable Object messageListener;
 
-	private AsyncTaskExecutor consumerTaskExecutor;
+	private @Nullable AsyncTaskExecutor consumerTaskExecutor;
 
 	private int concurrency = 1;
 
@@ -91,20 +91,19 @@ public class PulsarContainerProperties {
 
 	private boolean batchListener;
 
-	private AckMode ackMode = AckMode.BATCH;
+	private @Nullable AckMode ackMode = AckMode.BATCH;
 
 	private boolean observationEnabled;
 
-	private ObservationRegistry observationRegistry;
+	private @Nullable ObservationRegistry observationRegistry;
 
-	private PulsarListenerObservationConvention observationConvention;
+	private @Nullable PulsarListenerObservationConvention observationConvention;
 
 	private Properties pulsarConsumerProperties = new Properties();
 
 	private final TransactionSettings transactions = new TransactionSettings();
 
-	@Nullable
-	private RetryTemplate startupFailureRetryTemplate;
+	private @Nullable RetryTemplate startupFailureRetryTemplate;
 
 	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
 		.maxAttempts(3)
@@ -127,19 +126,19 @@ public class PulsarContainerProperties {
 		this.topicResolver = new DefaultTopicResolver();
 	}
 
-	public Object getMessageListener() {
+	public @Nullable Object getMessageListener() {
 		return this.messageListener;
 	}
 
-	public void setMessageListener(Object messageListener) {
+	public void setMessageListener(@Nullable Object messageListener) {
 		this.messageListener = messageListener;
 	}
 
-	public AsyncTaskExecutor getConsumerTaskExecutor() {
+	public @Nullable AsyncTaskExecutor getConsumerTaskExecutor() {
 		return this.consumerTaskExecutor;
 	}
 
-	public void setConsumerTaskExecutor(AsyncTaskExecutor consumerExecutor) {
+	public void setConsumerTaskExecutor(@Nullable AsyncTaskExecutor consumerExecutor) {
 		this.consumerTaskExecutor = consumerExecutor;
 	}
 
@@ -151,11 +150,11 @@ public class PulsarContainerProperties {
 		this.concurrency = concurrency;
 	}
 
-	public SubscriptionType getSubscriptionType() {
+	public @Nullable SubscriptionType getSubscriptionType() {
 		return this.subscriptionType;
 	}
 
-	public void setSubscriptionType(SubscriptionType subscriptionType) {
+	public void setSubscriptionType(@Nullable SubscriptionType subscriptionType) {
 		this.subscriptionType = subscriptionType;
 	}
 
@@ -191,11 +190,11 @@ public class PulsarContainerProperties {
 		this.batchListener = batchListener;
 	}
 
-	public AckMode getAckMode() {
+	public @Nullable AckMode getAckMode() {
 		return this.ackMode;
 	}
 
-	public void setAckMode(AckMode ackMode) {
+	public void setAckMode(@Nullable AckMode ackMode) {
 		this.ackMode = ackMode;
 	}
 
@@ -207,15 +206,15 @@ public class PulsarContainerProperties {
 		this.observationEnabled = observationEnabled;
 	}
 
-	public ObservationRegistry getObservationRegistry() {
+	public @Nullable ObservationRegistry getObservationRegistry() {
 		return this.observationRegistry;
 	}
 
-	void setObservationRegistry(ObservationRegistry observationRegistry) {
+	void setObservationRegistry(@Nullable ObservationRegistry observationRegistry) {
 		this.observationRegistry = observationRegistry;
 	}
 
-	public PulsarListenerObservationConvention getObservationConvention() {
+	public @Nullable PulsarListenerObservationConvention getObservationConvention() {
 		return this.observationConvention;
 	}
 
@@ -223,12 +222,16 @@ public class PulsarContainerProperties {
 	 * Set a custom observation convention.
 	 * @param observationConvention the convention.
 	 */
-	void setObservationConvention(PulsarListenerObservationConvention observationConvention) {
+	void setObservationConvention(@Nullable PulsarListenerObservationConvention observationConvention) {
 		this.observationConvention = observationConvention;
 	}
 
-	public Duration getConsumerStartTimeout() {
+	public @Nullable Duration getConsumerStartTimeout() {
 		return this.consumerStartTimeout;
+	}
+
+	public Duration determineConsumerStartTimeout() {
+		return this.consumerStartTimeout != null ? this.consumerStartTimeout : DEFAULT_CONSUMER_START_TIMEOUT;
 	}
 
 	/**
@@ -236,64 +239,63 @@ public class PulsarContainerProperties {
 	 * error. The default is 30 seconds.
 	 * @param consumerStartTimeout the consumer start timeout
 	 */
-	public void setConsumerStartTimeout(Duration consumerStartTimeout) {
-		Assert.notNull(consumerStartTimeout, "'consumerStartTimeout' cannot be null");
+	public void setConsumerStartTimeout(@Nullable Duration consumerStartTimeout) {
 		this.consumerStartTimeout = consumerStartTimeout;
 	}
 
-	public Set<String> getTopics() {
+	public @Nullable Set<String> getTopics() {
 		return this.topics;
 	}
 
-	public void setTopics(Set<String> topics) {
+	public void setTopics(@Nullable Set<String> topics) {
 		this.topics = topics;
 	}
 
-	public String getTopicsPattern() {
+	public @Nullable String getTopicsPattern() {
 		return this.topicsPattern;
 	}
 
-	public void setTopicsPattern(String topicsPattern) {
+	public void setTopicsPattern(@Nullable String topicsPattern) {
 		this.topicsPattern = topicsPattern;
 	}
 
-	public String getSubscriptionName() {
+	public @Nullable String getSubscriptionName() {
 		return this.subscriptionName;
 	}
 
-	public void setSubscriptionName(String subscriptionName) {
+	public void setSubscriptionName(@Nullable String subscriptionName) {
 		this.subscriptionName = subscriptionName;
 	}
 
-	public Schema<?> getSchema() {
+	public @Nullable Schema<?> getSchema() {
 		return this.schema;
 	}
 
-	public void setSchema(Schema<?> schema) {
+	public void setSchema(@Nullable Schema<?> schema) {
 		this.schema = schema;
 	}
 
-	public SchemaType getSchemaType() {
+	public @Nullable SchemaType getSchemaType() {
 		return this.schemaType;
 	}
 
-	public void setSchemaType(SchemaType schemaType) {
+	public void setSchemaType(@Nullable SchemaType schemaType) {
 		this.schemaType = schemaType;
 	}
 
-	public SchemaResolver getSchemaResolver() {
+	public @Nullable SchemaResolver getSchemaResolver() {
 		return this.schemaResolver;
 	}
 
-	public void setSchemaResolver(SchemaResolver schemaResolver) {
+	public void setSchemaResolver(@Nullable SchemaResolver schemaResolver) {
 		this.schemaResolver = schemaResolver;
 	}
 
-	public TopicResolver getTopicResolver() {
+	public @Nullable TopicResolver getTopicResolver() {
 		return this.topicResolver;
 	}
 
-	public void setTopicResolver(TopicResolver topicResolver) {
+	public void setTopicResolver(@Nullable TopicResolver topicResolver) {
 		this.topicResolver = topicResolver;
 	}
 
@@ -302,6 +304,7 @@ public class PulsarContainerProperties {
 	}
 
 	public void setPulsarConsumerProperties(Properties pulsarConsumerProperties) {
+		Assert.notNull(pulsarConsumerProperties, "pulsarConsumerProperties must not be null");
 		this.pulsarConsumerProperties = pulsarConsumerProperties;
 	}
 
@@ -314,8 +317,7 @@ public class PulsarContainerProperties {
 		return this.transactions;
 	}
 
-	@Nullable
-	public RetryTemplate getStartupFailureRetryTemplate() {
+	public @Nullable RetryTemplate getStartupFailureRetryTemplate() {
 		return this.startupFailureRetryTemplate;
 	}
 
@@ -335,14 +337,14 @@ public class PulsarContainerProperties {
 	 * @param startupFailureRetryTemplate the retry template to use
 	 * @since 1.2.0
 	 */
-	public void setStartupFailureRetryTemplate(RetryTemplate startupFailureRetryTemplate) {
+	public void setStartupFailureRetryTemplate(@Nullable RetryTemplate startupFailureRetryTemplate) {
 		this.startupFailureRetryTemplate = startupFailureRetryTemplate;
 		if (this.startupFailureRetryTemplate != null) {
 			setStartupFailurePolicy(StartupFailurePolicy.RETRY);
 		}
 	}
 
-	public StartupFailurePolicy getStartupFailurePolicy() {
+	public @Nullable StartupFailurePolicy getStartupFailurePolicy() {
 		return this.startupFailurePolicy;
 	}
 
@@ -351,7 +353,7 @@ public class PulsarContainerProperties {
 	 * @param startupFailurePolicy action to take when a failure occurs during startup
 	 * @since 1.2.0
 	 */
-	public void setStartupFailurePolicy(StartupFailurePolicy startupFailurePolicy) {
+	public void setStartupFailurePolicy(@Nullable StartupFailurePolicy startupFailurePolicy) {
 		this.startupFailurePolicy = Objects.requireNonNull(startupFailurePolicy,
 				"startupFailurePolicy must not be null");
 	}
@@ -376,18 +378,15 @@ public class PulsarContainerProperties {
 	 */
 	public static class TransactionSettings extends TransactionProperties {
 
-		@Nullable
-		private TransactionDefinition transactionDefinition;
+		private @Nullable TransactionDefinition transactionDefinition;
 
-		@Nullable
-		private PulsarAwareTransactionManager transactionManager;
+		private @Nullable PulsarAwareTransactionManager transactionManager;
 
 		/**
 		 * Get the transaction definition.
 		 * @return the definition
 		 */
-		@Nullable
-		public TransactionDefinition getTransactionDefinition() {
+		public @Nullable TransactionDefinition getTransactionDefinition() {
 			return this.transactionDefinition;
 		}
 
@@ -406,7 +405,7 @@ public class PulsarContainerProperties {
 		 * @return the transaction definition to use including any user specified timeout
 		 * setting
 		 */
-		public TransactionDefinition determineTransactionDefinition() {
+		public @Nullable TransactionDefinition determineTransactionDefinition() {
 			var timeout = this.getTimeout();
 			if (timeout == null) {
 				return this.transactionDefinition;
@@ -421,8 +420,7 @@ public class PulsarContainerProperties {
 		 * Gets the transaction manager used to start transactions.
 		 * @return the transaction manager
 		 */
-		@Nullable
-		public PulsarAwareTransactionManager getTransactionManager() {
+		@Nullable public PulsarAwareTransactionManager getTransactionManager() {
 			return this.transactionManager;
 		}
 

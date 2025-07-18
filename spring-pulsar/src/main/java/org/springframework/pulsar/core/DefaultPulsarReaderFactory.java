@@ -28,8 +28,8 @@ import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.ReaderBuilderImpl;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
@@ -43,11 +43,9 @@ public class DefaultPulsarReaderFactory<T> implements PulsarReaderFactory<T> {
 
 	private final PulsarClient pulsarClient;
 
-	@Nullable
-	private final List<ReaderBuilderCustomizer<T>> defaultConfigCustomizers;
+	private @Nullable final List<ReaderBuilderCustomizer<T>> defaultConfigCustomizers;
 
-	@Nullable
-	private PulsarTopicBuilder topicBuilder;
+	private @Nullable PulsarTopicBuilder topicBuilder;
 
 	/**
 	 * Construct a reader factory instance with no default configuration.

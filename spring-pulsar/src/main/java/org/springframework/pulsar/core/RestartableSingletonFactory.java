@@ -18,10 +18,11 @@ package org.springframework.pulsar.core;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -43,7 +44,7 @@ abstract class RestartableSingletonFactory<T> extends RestartableComponentBase i
 
 	private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-	private T instance;
+	private @Nullable T instance;
 
 	protected RestartableSingletonFactory() {
 		super();
@@ -96,7 +97,17 @@ abstract class RestartableSingletonFactory<T> extends RestartableComponentBase i
 	 * Gets the singleton instance.
 	 * @return the singleton instance
 	 */
-	public final T getInstance() {
+	@Nullable public final T getInstance() {
+		return this.instance;
+	}
+
+	/**
+	 * Gets the singleton instance.
+	 * @return the non-null singleton instance
+	 * @throws IllegalArgumentException if the instance is null
+	 */
+	public final T getRequiredInstance() {
+		Assert.notNull(this.instance, "The instance must be set prior to calling this method");
 		return this.instance;
 	}
 
@@ -124,7 +135,7 @@ abstract class RestartableSingletonFactory<T> extends RestartableComponentBase i
 	 * The default implementation is empty.
 	 * @param instance the singleton instance, as returned by {@link #createInstance()}
 	 */
-	protected void stopInstance(@Nullable T instance) {
+	protected void stopInstance(T instance) {
 	}
 
 	/**

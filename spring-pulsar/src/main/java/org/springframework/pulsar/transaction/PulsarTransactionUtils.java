@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.transaction.Transaction;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
@@ -77,8 +77,7 @@ public final class PulsarTransactionUtils {
 	 * @param pulsarClient the client used to obtain the transaction resource
 	 * @return the resource holder
 	 */
-	@Nullable
-	public static PulsarResourceHolder getResourceHolder(PulsarClient pulsarClient) {
+	public static @Nullable PulsarResourceHolder getResourceHolder(PulsarClient pulsarClient) {
 		return (PulsarResourceHolder) TransactionSynchronizationManager.getResource(pulsarClient);
 	}
 

@@ -32,10 +32,10 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.pulsar.client.api.Message;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.pulsar.support.PulsarHeaders;
 

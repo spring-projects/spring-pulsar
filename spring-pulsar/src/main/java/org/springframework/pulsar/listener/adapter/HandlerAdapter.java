@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 the original author or authors.
+ * Copyright 2022-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package org.springframework.pulsar.listener.adapter;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
+import org.springframework.util.Assert;
 
 /**
  * A wrapper for either an {@link InvocableHandlerMethod} or
@@ -27,9 +30,9 @@ import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
  */
 public class HandlerAdapter {
 
-	private final InvocableHandlerMethod invokerHandlerMethod;
+	private final @Nullable InvocableHandlerMethod invokerHandlerMethod;
 
-	private final DelegatingInvocableHandler delegatingHandler;
+	private final @Nullable DelegatingInvocableHandler delegatingHandler;
 
 	/**
 	 * Construct an instance with the provided method.
@@ -49,41 +52,52 @@ public class HandlerAdapter {
 		this.delegatingHandler = delegatingHandler;
 	}
 
-	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { // NOSONAR
+	public @Nullable Object invoke(Message<?> message, @Nullable Object... providedArgs) throws Exception {
 		if (this.invokerHandlerMethod != null) {
-			return this.invokerHandlerMethod.invoke(message, providedArgs); // NOSONAR
+			return this.invokerHandlerMethod.invoke(message, providedArgs);
 		}
-		else if (this.delegatingHandler.hasDefaultHandler()) {
+		Assert.notNull(this.delegatingHandler,
+				() -> "invokerHandlerMethod and delegatingHandler are null - one must be specified");
+		var delegateHandler = this.delegatingHandler;
+		if (delegateHandler.hasDefaultHandler()) {
 			// Needed to avoid returning raw Message which matches Object
 			Object[] args = new Object[providedArgs.length + 1];
 			args[0] = message.getPayload();
 			System.arraycopy(providedArgs, 0, args, 1, providedArgs.length);
 			return this.delegatingHandler.invoke(message, args);
 		}
-		else {
-			return this.delegatingHandler.invoke(message, providedArgs);
-		}
+		return delegateHandler.invoke(message, providedArgs);
 	}
 
 	public String getMethodAsString(Object payload) {
 		if (this.invokerHandlerMethod != null) {
 			return this.invokerHandlerMethod.getMethod().toGenericString();
 		}
-		else {
-			return this.delegatingHandler.getMethodNameFor(payload);
-		}
+		Assert.notNull(this.delegatingHandler,
+				() -> "invokerHandlerMethod and delegatingHandler are null - one must be specified");
+		return this.delegatingHandler.getMethodNameFor(payload);
 	}
 
 	public Object getBean() {
 		if (this.invokerHandlerMethod != null) {
 			return this.invokerHandlerMethod.getBean();
 		}
-		else {
-			return this.delegatingHandler.getBean();
-		}
+		Assert.notNull(this.delegatingHandler,
+				() -> "invokerHandlerMethod and delegatingHandler are null - one must be specified");
+		return this.delegatingHandler.getBean();
 	}
 
-	public InvocableHandlerMethod getInvokerHandlerMethod() {
+	private DelegatingInvocableHandler getRequiredDelegatingHandler() {
+		Assert.notNull(this.delegatingHandler, () -> "delegatingHandler must not be null");
+		return this.delegatingHandler;
+	}
+
+	public @Nullable InvocableHandlerMethod getInvokerHandlerMethod() {
+		return this.invokerHandlerMethod;
+	}
+
+	public InvocableHandlerMethod requireNonNullInvokerHandlerMethod() {
+		Assert.notNull(this.invokerHandlerMethod, () -> "invokerHandlerMethod must not be null");
 		return this.invokerHandlerMethod;
 	}
 

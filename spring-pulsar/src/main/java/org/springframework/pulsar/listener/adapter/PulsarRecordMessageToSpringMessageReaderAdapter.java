@@ -38,6 +38,7 @@ public class PulsarRecordMessageToSpringMessageReaderAdapter<V> extends Abstract
 		super(bean, method);
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public void received(Reader<V> reader, Message<V> record) {
 		org.springframework.messaging.Message<?> message = null;

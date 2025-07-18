@@ -1,9 +1,5 @@
 /**
  * Package containing general support components.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.support;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

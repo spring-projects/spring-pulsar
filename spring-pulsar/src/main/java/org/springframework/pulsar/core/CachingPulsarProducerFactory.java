@@ -37,10 +37,10 @@ import org.apache.pulsar.client.api.transaction.Transaction;
 import org.apache.pulsar.client.impl.schema.AutoProduceBytesSchema;
 import org.apache.pulsar.common.protocol.schema.SchemaHash;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.cache.provider.CacheProvider;
 import org.springframework.pulsar.cache.provider.CacheProviderFactory;
 import org.springframework.util.Assert;
@@ -178,11 +178,9 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 
 		private final String topic;
 
-		@Nullable
-		private final Set<String> encryptionKeys;
+		private @Nullable final Set<String> encryptionKeys;
 
-		@Nullable
-		private final List<ProducerBuilderCustomizer<T>> customizers;
+		private @Nullable final List<ProducerBuilderCustomizer<T>> customizers;
 
 		/**
 		 * Constructs an instance.

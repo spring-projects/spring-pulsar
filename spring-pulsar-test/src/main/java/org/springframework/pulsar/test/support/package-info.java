@@ -3,9 +3,5 @@
  * applications.
  * @since 1.1.0
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.test.support;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

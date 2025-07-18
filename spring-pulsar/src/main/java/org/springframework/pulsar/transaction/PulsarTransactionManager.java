@@ -20,6 +20,7 @@ import java.time.Duration;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.transaction.Transaction;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.PulsarTemplate;
@@ -115,34 +116,35 @@ public class PulsarTransactionManager extends AbstractPlatformTransactionManager
 	}
 
 	@Override
-	protected void doResume(Object transaction, Object suspendedResources) {
+	protected void doResume(@Nullable Object transaction, Object suspendedResources) {
 		TransactionSynchronizationManager.bindResource(this.pulsarClient, suspendedResources);
 	}
 
 	@Override
 	protected void doCommit(DefaultTransactionStatus status) {
-		asPulsarTxObject(status.getTransaction()).getResourceHolder().commit();
+		asPulsarTxObject(status.getTransaction()).getRequiredResourceHolder().commit();
 	}
 
 	@Override
 	protected void doRollback(DefaultTransactionStatus status) {
-		asPulsarTxObject(status.getTransaction()).getResourceHolder().rollback();
+		asPulsarTxObject(status.getTransaction()).getRequiredResourceHolder().rollback();
 	}
 
 	@Override
 	protected void doSetRollbackOnly(DefaultTransactionStatus status) {
-		asPulsarTxObject(status.getTransaction()).getResourceHolder().setRollbackOnly();
+		asPulsarTxObject(status.getTransaction()).getRequiredResourceHolder().setRollbackOnly();
 	}
 
 	@Override
 	protected void doCleanupAfterCompletion(Object transaction) {
 		var txObject = asPulsarTxObject(transaction);
 		TransactionSynchronizationManager.unbindResource(this.pulsarClient);
-		txObject.getResourceHolder().clear();
+		txObject.getRequiredResourceHolder().clear();
 	}
 
+	@Nullable
 	@SuppressWarnings("unchecked")
-	private <X> X cast(Object raw) {
+	private <X> X cast(@Nullable Object raw) {
 		return (X) raw;
 	}
 
