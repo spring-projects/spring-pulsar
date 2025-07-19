@@ -166,6 +166,7 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 		}
 	}
 
+	@SuppressWarnings("NullAway")
 	protected Type determineInferredType(Method method) {
 		Type genericParameterType = null;
 		boolean pulsarMessageFound = false;
@@ -216,7 +217,6 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 				}
 			}
 		}
-		Assert.notNull(genericParameterType, "unable to determine inferrred type from " + method);
 		return genericParameterType;
 	}
 
