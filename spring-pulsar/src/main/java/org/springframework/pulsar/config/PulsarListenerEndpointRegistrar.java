@@ -20,10 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -42,13 +43,13 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 	private final ReentrantLock endpointDescriptorsLock = new ReentrantLock();
 
-	private GenericListenerEndpointRegistry endpointRegistry;
+	private @Nullable GenericListenerEndpointRegistry endpointRegistry;
 
-	private ListenerContainerFactory<?, ?> containerFactory;
+	private @Nullable ListenerContainerFactory<?, ?> containerFactory;
 
-	private String containerFactoryBeanName;
+	private @Nullable String containerFactoryBeanName;
 
-	private BeanFactory beanFactory;
+	private @Nullable BeanFactory beanFactory;
 
 	private boolean startImmediately;
 
@@ -60,8 +61,12 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		this.endpointRegistry = endpointRegistry;
 	}
 
-	@Nullable
-	public GenericListenerEndpointRegistry getEndpointRegistry() {
+	@Nullable public GenericListenerEndpointRegistry getEndpointRegistry() {
+		return this.endpointRegistry;
+	}
+
+	protected GenericListenerEndpointRegistry requireNonNullEndpointRegistry() {
+		Assert.notNull(this.endpointRegistry, "endpointRegistry must not be null");
 		return this.endpointRegistry;
 	}
 
@@ -88,7 +93,7 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		try {
 			for (PulsarListenerEndpointDescriptor descriptor : this.endpointDescriptors) {
 				ListenerContainerFactory<?, ?> factory = resolveContainerFactory(descriptor);
-				this.endpointRegistry.registerListenerContainer(descriptor.endpoint, factory);
+				this.requireNonNullEndpointRegistry().registerListenerContainer(descriptor.endpoint, factory);
 			}
 			this.startImmediately = true; // trigger immediate startup
 		}
@@ -125,8 +130,8 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 		this.endpointDescriptorsLock.lock();
 		try {
 			if (this.startImmediately) { // Register and start immediately
-				this.endpointRegistry.registerListenerContainer(descriptor.endpoint,
-						resolveContainerFactory(descriptor), true);
+				this.requireNonNullEndpointRegistry()
+					.registerListenerContainer(descriptor.endpoint, resolveContainerFactory(descriptor), true);
 			}
 			else {
 				this.endpointDescriptors.add(descriptor);
@@ -141,7 +146,7 @@ public class PulsarListenerEndpointRegistrar implements BeanFactoryAware, Initia
 
 		private final ListenerEndpoint endpoint;
 
-		private final ListenerContainerFactory<?, ?> containerFactory;
+		private final @Nullable ListenerContainerFactory<?, ?> containerFactory;
 
 		private PulsarListenerEndpointDescriptor(ListenerEndpoint endpoint,
 				@Nullable ListenerContainerFactory<?, ?> containerFactory) {

@@ -1,0 +1,12 @@
+def javaProjects = [ 'spring-pulsar',
+					 'spring-pulsar-cache-provider',
+					 'spring-pulsar-cache-provider-caffeine',
+					 'spring-pulsar-reactive',
+					 'spring-pulsar-test' ]
+
+allprojects {
+	if (!javaProjects.contains(project.name)) {
+		return
+	}
+	apply plugin: 'io.spring.nullability'
+}

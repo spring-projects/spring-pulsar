@@ -28,9 +28,9 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.ProducerBuilderImpl;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
@@ -49,16 +49,13 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 
 	private final PulsarClient pulsarClient;
 
-	@Nullable
-	private final String defaultTopic;
+	private @Nullable final String defaultTopic;
 
-	@Nullable
-	private final List<ProducerBuilderCustomizer<T>> defaultConfigCustomizers;
+	private @Nullable final List<ProducerBuilderCustomizer<T>> defaultConfigCustomizers;
 
 	private final TopicResolver topicResolver;
 
-	@Nullable
-	private PulsarTopicBuilder topicBuilder;
+	private @Nullable PulsarTopicBuilder topicBuilder;
 
 	/**
 	 * Construct a producer factory that uses a default topic resolver.
@@ -183,14 +180,19 @@ public class DefaultPulsarProducerFactory<T> implements PulsarProducerFactory<T>
 		}
 	}
 
-	protected String resolveTopicName(String userSpecifiedTopic) {
+	protected String resolveTopicName(@Nullable String userSpecifiedTopic) {
 		var resolvedTopic = this.topicResolver.resolveTopic(userSpecifiedTopic, this::getDefaultTopic).orElseThrow();
+		// TODO add Resolved.orElseThrowIfNull as we know topic resolver either finds a
+		// value or an exception
+		if (resolvedTopic == null) {
+			throw new IllegalArgumentException("Topic could not be resolved");
+		}
 		return this.topicBuilder != null ? this.topicBuilder.getFullyQualifiedNameForTopic(resolvedTopic)
 				: resolvedTopic;
 	}
 
 	@Override
-	public String getDefaultTopic() {
+	@Nullable public String getDefaultTopic() {
 		return this.defaultTopic;
 	}
 

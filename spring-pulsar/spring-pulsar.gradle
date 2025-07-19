@@ -26,7 +26,7 @@ dependencies {
 	implementation project(path: ':spring-pulsar-cache-provider-caffeine', configuration: 'shadow')
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation libs.jsr305
+	implementation libs.jspecify
 	optional libs.protobuf.java
 	optional libs.json.path
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'

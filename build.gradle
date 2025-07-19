@@ -5,6 +5,7 @@ plugins {
 	alias(libs.plugins.grgit) apply false
 	alias(libs.plugins.versions)
 	alias(libs.plugins.version.catalog.update)
+	id 'io.spring.nullability' version '0.0.1' apply false
 }
 
 description = 'Spring for Apache Pulsar'
@@ -14,6 +15,7 @@ apply from: 'gradle/aggregate-jacoco-report.gradle'
 apply from: 'gradle/update-copyrights.gradle'
 apply from: 'gradle/version-catalog-update.gradle'
 apply from: 'gradle/java-conventions.gradle'
+apply from: 'gradle/nullability-conventions.gradle'
 
 allprojects {
 	group = 'org.springframework.pulsar'

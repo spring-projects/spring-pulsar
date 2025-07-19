@@ -1,9 +1,5 @@
 /**
  * Package containing Spring configuration classes for the framework.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.reactive.config;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

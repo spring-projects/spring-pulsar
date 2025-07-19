@@ -20,9 +20,8 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.MessageSendResult;
 import org.apache.pulsar.reactive.client.api.MessageSpec;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
-
-import org.springframework.lang.Nullable;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

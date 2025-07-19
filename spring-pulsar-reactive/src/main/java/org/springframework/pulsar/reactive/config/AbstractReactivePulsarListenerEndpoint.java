@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -33,7 +34,6 @@ import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageHandler;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListenerContainer;
@@ -50,33 +50,33 @@ import org.springframework.util.StringUtils;
 public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		implements ReactivePulsarListenerEndpoint<T>, BeanFactoryAware, InitializingBean {
 
-	private String subscriptionName;
+	private @Nullable String subscriptionName;
 
-	private SubscriptionType subscriptionType;
+	private @Nullable SubscriptionType subscriptionType;
 
-	private SchemaType schemaType;
+	private @Nullable SchemaType schemaType;
 
-	private String id;
+	private @Nullable String id;
 
 	private Collection<String> topics = new ArrayList<>();
 
-	private String topicPattern;
+	private @Nullable String topicPattern;
 
-	private BeanFactory beanFactory;
+	private @Nullable BeanFactory beanFactory;
 
-	private BeanExpressionResolver resolver;
+	private @Nullable BeanExpressionResolver resolver;
 
-	private BeanExpressionContext expressionContext;
+	private @Nullable BeanExpressionContext expressionContext;
 
-	private BeanResolver beanResolver;
+	private @Nullable BeanResolver beanResolver;
 
-	private Boolean autoStartup;
+	private @Nullable Boolean autoStartup;
 
-	private Boolean fluxListener;
+	private @Nullable Boolean fluxListener;
 
-	private Integer concurrency;
+	private @Nullable Integer concurrency;
 
-	private Boolean useKeyOrderedProcessing;
+	private @Nullable Boolean useKeyOrderedProcessing;
 
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -88,8 +88,7 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		this.beanResolver = new BeanFactoryResolver(beanFactory);
 	}
 
-	@Nullable
-	protected BeanFactory getBeanFactory() {
+	protected @Nullable BeanFactory getBeanFactory() {
 		return this.beanFactory;
 	}
 
@@ -101,23 +100,19 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		}
 	}
 
-	@Nullable
-	protected BeanExpressionResolver getResolver() {
+	protected @Nullable BeanExpressionResolver getResolver() {
 		return this.resolver;
 	}
 
-	@Nullable
-	protected BeanExpressionContext getBeanExpressionContext() {
+	protected @Nullable BeanExpressionContext getBeanExpressionContext() {
 		return this.expressionContext;
 	}
 
-	@Nullable
-	protected BeanResolver getBeanResolver() {
+	protected @Nullable BeanResolver getBeanResolver() {
 		return this.beanResolver;
 	}
 
-	public void setSubscriptionName(String subscriptionName) {
-
+	public void setSubscriptionName(@Nullable String subscriptionName) {
 		this.subscriptionName = subscriptionName;
 	}
 
@@ -127,12 +122,12 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		return this.subscriptionName;
 	}
 
-	public void setId(String id) {
+	public void setId(@Nullable String id) {
 		this.id = id;
 	}
 
 	@Override
-	public String getId() {
+	public @Nullable String getId() {
 		return this.id;
 	}
 
@@ -146,37 +141,33 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		return new ArrayList<>(this.topics);
 	}
 
-	public void setTopicPattern(String topicPattern) {
-		Assert.notNull(topicPattern, "'topicPattern' must not be null");
+	public void setTopicPattern(@Nullable String topicPattern) {
 		this.topicPattern = topicPattern;
 	}
 
 	@Override
-	public String getTopicPattern() {
+	public @Nullable String getTopicPattern() {
 		return this.topicPattern;
 	}
 
 	@Override
-	@Nullable
-	public Boolean getAutoStartup() {
+	public @Nullable Boolean getAutoStartup() {
 		return this.autoStartup;
 	}
 
-	public void setAutoStartup(Boolean autoStartup) {
+	public void setAutoStartup(@Nullable Boolean autoStartup) {
 		this.autoStartup = autoStartup;
 	}
 
 	@Override
 	public void setupListenerContainer(ReactivePulsarMessageListenerContainer<T> listenerContainer,
 			@Nullable MessageConverter messageConverter) {
-
 		setupMessageListener(listenerContainer, messageConverter);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void setupMessageListener(ReactivePulsarMessageListenerContainer<T> container,
 			@Nullable MessageConverter messageConverter) {
-
 		AbstractPulsarMessageToSpringMessageAdapter<T> adapter = createMessageHandler(container, messageConverter);
 		Assert.state(adapter != null, () -> "Endpoint [" + this + "] must provide a non null message handler");
 		container.setupMessageHandler((ReactivePulsarMessageHandler) adapter);
@@ -185,8 +176,7 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 	protected abstract AbstractPulsarMessageToSpringMessageAdapter<T> createMessageHandler(
 			ReactivePulsarMessageListenerContainer<T> container, @Nullable MessageConverter messageConverter);
 
-	@Nullable
-	public Boolean getFluxListener() {
+	public @Nullable Boolean getFluxListener() {
 		return this.fluxListener;
 	}
 
@@ -199,25 +189,24 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 		return this.fluxListener != null && this.fluxListener;
 	}
 
-	public SubscriptionType getSubscriptionType() {
+	public @Nullable SubscriptionType getSubscriptionType() {
 		return this.subscriptionType;
 	}
 
-	public void setSubscriptionType(SubscriptionType subscriptionType) {
+	public void setSubscriptionType(@Nullable SubscriptionType subscriptionType) {
 		this.subscriptionType = subscriptionType;
 	}
 
-	public SchemaType getSchemaType() {
+	public @Nullable SchemaType getSchemaType() {
 		return this.schemaType;
 	}
 
-	public void setSchemaType(SchemaType schemaType) {
+	public void setSchemaType(@Nullable SchemaType schemaType) {
 		this.schemaType = schemaType;
 	}
 
 	@Override
-	@Nullable
-	public Integer getConcurrency() {
+	public @Nullable Integer getConcurrency() {
 		return this.concurrency;
 	}
 
@@ -225,16 +214,16 @@ public abstract class AbstractReactivePulsarListenerEndpoint<T>
 	 * Set the concurrency for this endpoint's container.
 	 * @param concurrency the concurrency.
 	 */
-	public void setConcurrency(Integer concurrency) {
+	public void setConcurrency(@Nullable Integer concurrency) {
 		this.concurrency = concurrency;
 	}
 
 	@Override
-	public Boolean getUseKeyOrderedProcessing() {
+	public @Nullable Boolean getUseKeyOrderedProcessing() {
 		return this.useKeyOrderedProcessing;
 	}
 
-	public void setUseKeyOrderedProcessing(Boolean useKeyOrderedProcessing) {
+	public void setUseKeyOrderedProcessing(@Nullable Boolean useKeyOrderedProcessing) {
 		this.useKeyOrderedProcessing = useKeyOrderedProcessing;
 	}
 

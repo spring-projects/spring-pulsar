@@ -16,6 +16,10 @@
 
 package org.springframework.pulsar.annotation;
 
+import static java.util.Objects.requireNonNull;
+
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
@@ -37,7 +41,7 @@ class PulsarTemplateBeanCustomizerPostProcessor implements BeanPostProcessor, Ap
 
 	private final LogAccessor logger = new LogAccessor(getClass());
 
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -48,7 +52,8 @@ class PulsarTemplateBeanCustomizerPostProcessor implements BeanPostProcessor, Ap
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (bean instanceof PulsarTemplate<?> template) {
-			var customizers = this.applicationContext.getBeansOfType(PulsarTemplateCustomizer.class);
+			var customizers = requireNonNull(this.applicationContext, "applicationContext must not be null")
+				.getBeansOfType(PulsarTemplateCustomizer.class);
 			if (CollectionUtils.isEmpty(customizers)) {
 				return bean;
 			}

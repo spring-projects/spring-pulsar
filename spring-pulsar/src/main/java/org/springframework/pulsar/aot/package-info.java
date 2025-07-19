@@ -1,9 +1,5 @@
 /**
  * Package containing AOT runtime hints used by the framework.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.aot;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

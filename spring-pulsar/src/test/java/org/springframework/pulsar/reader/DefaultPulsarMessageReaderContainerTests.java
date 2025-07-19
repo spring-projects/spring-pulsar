@@ -40,6 +40,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.ReaderListener;
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -47,7 +48,6 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
@@ -70,8 +70,7 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	@Nullable
-	private PulsarClient pulsarClient;
+	private @Nullable PulsarClient pulsarClient;
 
 	@BeforeEach
 	void createPulsarClient() throws PulsarClientException {

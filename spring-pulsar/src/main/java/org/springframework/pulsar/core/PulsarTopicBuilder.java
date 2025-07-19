@@ -17,8 +17,8 @@
 package org.springframework.pulsar.core;
 
 import org.apache.pulsar.common.naming.TopicDomain;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -42,10 +42,8 @@ public class PulsarTopicBuilder {
 
 	private final String defaultNamespace;
 
-	@Nullable
-	private String name;
+	private @Nullable String name;
 
-	@Nullable
 	private int numberOfPartitions;
 
 	/**
@@ -135,6 +133,7 @@ public class PulsarTopicBuilder {
 	 * @return {@link PulsarTopic}
 	 */
 	public PulsarTopic build() {
+		Assert.notNull(this.name, "name must be specified");
 		return new PulsarTopic(this.name, this.numberOfPartitions);
 	}
 

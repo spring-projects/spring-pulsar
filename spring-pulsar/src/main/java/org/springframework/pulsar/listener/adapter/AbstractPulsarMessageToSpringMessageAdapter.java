@@ -26,6 +26,7 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.Reader;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.core.MethodParameter;
@@ -65,7 +66,7 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 
 	private final StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
 
-	private HandlerAdapter handlerMethod;
+	private @Nullable HandlerAdapter handlerMethod;
 
 	private boolean headerFound = false;
 
@@ -154,8 +155,10 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 		return getMessageConverter().toMessageFromReader(record, reader, getType());
 	}
 
-	protected final Object invokeHandler(org.springframework.messaging.Message<?> message, Object... providedArgs) {
+	protected final @Nullable Object invokeHandler(org.springframework.messaging.Message<?> message,
+			Object... providedArgs) {
 		try {
+			Assert.notNull(this.handlerMethod, "handlerMethod must not be null");
 			return this.handlerMethod.invoke(message, providedArgs);
 		}
 		catch (Exception ex) {
@@ -163,12 +166,9 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 		}
 	}
 
-	protected Type determineInferredType(Method method) { // NOSONAR complexity
-		if (method == null) {
-			return null;
-		}
+	@SuppressWarnings("NullAway")
+	protected Type determineInferredType(Method method) {
 		Type genericParameterType = null;
-
 		boolean pulsarMessageFound = false;
 		boolean collectionFound = false;
 

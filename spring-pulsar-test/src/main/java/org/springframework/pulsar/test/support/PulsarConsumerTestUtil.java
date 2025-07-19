@@ -28,9 +28,9 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
@@ -51,17 +51,17 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 
 	private static final LogAccessor LOG = new LogAccessor(PulsarConsumerTestUtil.class);
 
-	private final PulsarClient locallyCreatedPulsarClient;
+	private final @Nullable PulsarClient locallyCreatedPulsarClient;
 
 	private final PulsarConsumerFactory<T> consumerFactory;
 
-	private ConsumedMessagesCondition<T> condition;
+	private @Nullable ConsumedMessagesCondition<T> condition;
 
-	private Schema<T> schema;
+	private @Nullable Schema<T> schema;
 
 	private Duration timeout = Duration.ofSeconds(30);
 
-	private List<String> topics;
+	private @Nullable List<String> topics;
 
 	private boolean untilMethodAlreadyCalled = false;
 
@@ -119,7 +119,7 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 		return PulsarConsumerTestUtil.consumeMessagesInternal(null, pulsarConsumerFactory);
 	}
 
-	private static <T> TopicSpec<T> consumeMessagesInternal(PulsarClient locallyCreatedPulsarClient,
+	private static <T> TopicSpec<T> consumeMessagesInternal(@Nullable PulsarClient locallyCreatedPulsarClient,
 			PulsarConsumerFactory<T> pulsarConsumerFactory) {
 		return new PulsarConsumerTestUtil<>(locallyCreatedPulsarClient, pulsarConsumerFactory);
 	}
@@ -167,6 +167,7 @@ public final class PulsarConsumerTestUtil<T> implements TopicSpec<T>, SchemaSpec
 	public List<Message<T>> get() {
 		var messages = new ArrayList<Message<T>>();
 		try {
+			Assert.notNull(this.schema, "Schema must not be null");
 			var subscriptionName = "test-consumer-%s".formatted(UUID.randomUUID());
 			try (Consumer<T> consumer = consumerFactory.createConsumer(this.schema, this.topics, subscriptionName,
 					c -> c.subscriptionInitialPosition(SubscriptionInitialPosition.Earliest))) {

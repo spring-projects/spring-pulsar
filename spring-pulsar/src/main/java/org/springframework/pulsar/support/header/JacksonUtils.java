@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.support.header;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.util.ClassUtils;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -31,7 +33,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
  */
 public final class JacksonUtils {
 
-	private static final ClassLoader classLoader = ClassUtils.getDefaultClassLoader();
+	private static final @Nullable ClassLoader classLoader = ClassUtils.getDefaultClassLoader();
 
 	private static final boolean JACKSON_PRESENT = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper",
 			classLoader) && ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);

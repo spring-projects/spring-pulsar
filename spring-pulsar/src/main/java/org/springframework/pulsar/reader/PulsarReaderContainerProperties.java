@@ -24,9 +24,10 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver;
@@ -38,28 +39,28 @@ import org.springframework.util.Assert;
  *
  * @author Soby Chacko
  */
+@NullUnmarked
 public class PulsarReaderContainerProperties {
 
 	private static final Duration DEFAULT_READER_START_TIMEOUT = Duration.ofSeconds(30);
 
 	private Duration readerStartTimeout = DEFAULT_READER_START_TIMEOUT;
 
-	private Object readerListener;
+	private @Nullable Object readerListener;
 
-	private AsyncTaskExecutor readerTaskExecutor;
+	private @Nullable AsyncTaskExecutor readerTaskExecutor;
 
-	private List<String> topics;
+	private @Nullable List<String> topics;
 
-	private MessageId startMessageId;
+	private @Nullable MessageId startMessageId;
 
-	private Schema<?> schema;
+	private @Nullable Schema<?> schema;
 
-	private SchemaType schemaType;
+	private @Nullable SchemaType schemaType;
 
 	private SchemaResolver schemaResolver;
 
-	@Nullable
-	private RetryTemplate startupFailureRetryTemplate;
+	private @Nullable RetryTemplate startupFailureRetryTemplate;
 
 	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
 		.maxAttempts(3)
@@ -68,7 +69,7 @@ public class PulsarReaderContainerProperties {
 
 	private StartupFailurePolicy startupFailurePolicy = StartupFailurePolicy.STOP;
 
-	public Object getReaderListener() {
+	public @Nullable Object getReaderListener() {
 		return this.readerListener;
 	}
 
@@ -80,7 +81,7 @@ public class PulsarReaderContainerProperties {
 		this.readerListener = readerListener;
 	}
 
-	public AsyncTaskExecutor getReaderTaskExecutor() {
+	public @Nullable AsyncTaskExecutor getReaderTaskExecutor() {
 		return this.readerTaskExecutor;
 	}
 
@@ -102,7 +103,7 @@ public class PulsarReaderContainerProperties {
 		this.readerStartTimeout = readerStartTimeout;
 	}
 
-	public List<String> getTopics() {
+	public @Nullable List<String> getTopics() {
 		return this.topics;
 	}
 
@@ -110,7 +111,7 @@ public class PulsarReaderContainerProperties {
 		this.topics = topics;
 	}
 
-	public MessageId getStartMessageId() {
+	public @Nullable MessageId getStartMessageId() {
 		return this.startMessageId;
 	}
 
@@ -118,19 +119,19 @@ public class PulsarReaderContainerProperties {
 		this.startMessageId = startMessageId;
 	}
 
-	public Schema<?> getSchema() {
+	public @Nullable Schema<?> getSchema() {
 		return this.schema;
 	}
 
-	public void setSchema(Schema<?> schema) {
+	public void setSchema(@Nullable Schema<?> schema) {
 		this.schema = schema;
 	}
 
-	public SchemaType getSchemaType() {
+	public @Nullable SchemaType getSchemaType() {
 		return this.schemaType;
 	}
 
-	public void setSchemaType(SchemaType schemaType) {
+	public void setSchemaType(@Nullable SchemaType schemaType) {
 		this.schemaType = schemaType;
 	}
 
@@ -142,8 +143,7 @@ public class PulsarReaderContainerProperties {
 		this.schemaResolver = schemaResolver;
 	}
 
-	@Nullable
-	public RetryTemplate getStartupFailureRetryTemplate() {
+	public @Nullable RetryTemplate getStartupFailureRetryTemplate() {
 		return this.startupFailureRetryTemplate;
 	}
 

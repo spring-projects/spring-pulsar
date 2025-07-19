@@ -1,9 +1,5 @@
 /**
  * Package containing message converters.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.support.converter;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

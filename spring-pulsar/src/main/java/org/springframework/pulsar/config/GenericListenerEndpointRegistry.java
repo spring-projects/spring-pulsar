@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.DisposableBean;
@@ -36,7 +38,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.MessageListenerContainer;
 import org.springframework.pulsar.listener.PulsarListenerContainerRegistry;
 import org.springframework.util.Assert;
@@ -70,7 +71,7 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 
 	private final ReentrantLock containersLock = new ReentrantLock();
 
-	private ConfigurableApplicationContext applicationContext;
+	private @Nullable ConfigurableApplicationContext applicationContext;
 
 	private int phase = C.DEFAULT_PHASE;
 
@@ -90,9 +91,13 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 		}
 	}
 
+	protected ApplicationContext getRequiredApplicationContext() {
+		Assert.notNull(this.applicationContext, "ApplicationContext must be set");
+		return this.applicationContext;
+	}
+
 	@Override
-	@Nullable
-	public C getListenerContainer(String id) {
+	@Nullable public C getListenerContainer(String id) {
 		Assert.hasText(id, "Container identifier must not be empty");
 		return this.listenerContainers.get(id);
 	}
@@ -110,7 +115,7 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 	@Override
 	public Collection<C> getAllListenerContainers() {
 		List<C> containers = new ArrayList<>(getListenerContainers());
-		containers.addAll(this.applicationContext.getBeansOfType(this.type, true, false).values());
+		containers.addAll(this.getRequiredApplicationContext().getBeansOfType(this.type, true, false).values());
 		return containers;
 	}
 
@@ -224,7 +229,7 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
-		if (event.getApplicationContext().equals(this.applicationContext)) {
+		if (event.getApplicationContext().equals(this.getRequiredApplicationContext())) {
 			this.contextRefreshed = true;
 		}
 	}

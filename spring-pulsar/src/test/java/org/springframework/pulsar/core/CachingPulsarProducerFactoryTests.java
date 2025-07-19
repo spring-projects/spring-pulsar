@@ -36,6 +36,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.schema.StringSchema;
 import org.awaitility.Awaitility;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
@@ -45,7 +46,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.cache.provider.CacheProvider;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerCacheKey;
 import org.springframework.pulsar.core.CachingPulsarProducerFactory.ProducerWithCloseCallback;

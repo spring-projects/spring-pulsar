@@ -22,7 +22,7 @@ dependencies {
 	constraints {
 		api libs.logback.classic
 		api libs.caffeine
-		api libs.jsr305
+		api libs.jspecify
 		api libs.protobuf.java
 		api libs.json.path
 		api libs.micrometer.docs.gen

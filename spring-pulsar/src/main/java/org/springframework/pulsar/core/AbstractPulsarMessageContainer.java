@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.core;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
@@ -25,7 +27,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Base class for the various container implementations.
@@ -37,11 +39,11 @@ public abstract class AbstractPulsarMessageContainer implements ApplicationEvent
 
 	protected final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private ApplicationEventPublisher applicationEventPublisher;
+	private @Nullable ApplicationEventPublisher applicationEventPublisher;
 
-	private String beanName;
+	private @Nullable String beanName;
 
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
 	private int phase;
 
@@ -58,8 +60,7 @@ public abstract class AbstractPulsarMessageContainer implements ApplicationEvent
 	 * Get the event publisher.
 	 * @return the publisher
 	 */
-	@Nullable
-	public ApplicationEventPublisher getApplicationEventPublisher() {
+	public @Nullable ApplicationEventPublisher getApplicationEventPublisher() {
 		return this.applicationEventPublisher;
 	}
 
@@ -72,9 +73,13 @@ public abstract class AbstractPulsarMessageContainer implements ApplicationEvent
 	 * Return the bean name.
 	 * @return the bean name.
 	 */
-	@Nullable
-	public String getBeanName() {
+	public @Nullable String getBeanName() {
 		return this.beanName; // the container factory sets this to the listener id
+	}
+
+	protected String requireNonNullBeanName() {
+		Assert.notNull(this.beanName, "beanName must not be null");
+		return this.beanName;
 	}
 
 	@Override
@@ -82,8 +87,7 @@ public abstract class AbstractPulsarMessageContainer implements ApplicationEvent
 		this.applicationContext = applicationContext;
 	}
 
-	@Nullable
-	protected ApplicationContext getApplicationContext() {
+	protected @Nullable ApplicationContext getApplicationContext() {
 		return this.applicationContext;
 	}
 

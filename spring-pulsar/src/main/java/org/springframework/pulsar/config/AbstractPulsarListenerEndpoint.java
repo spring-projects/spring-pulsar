@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -34,7 +35,6 @@ import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
@@ -52,35 +52,35 @@ import org.springframework.util.StringUtils;
 public abstract class AbstractPulsarListenerEndpoint<K>
 		implements PulsarListenerEndpoint, BeanFactoryAware, InitializingBean {
 
-	private String subscriptionName;
+	private @Nullable String subscriptionName;
 
-	private SubscriptionType subscriptionType;
+	private @Nullable SubscriptionType subscriptionType;
 
-	private SchemaType schemaType;
+	private @Nullable SchemaType schemaType;
 
-	private String id;
+	private @Nullable String id;
 
 	private final Collection<String> topics = new ArrayList<>();
 
-	private String topicPattern;
+	private @Nullable String topicPattern;
 
-	private BeanFactory beanFactory;
+	private @Nullable BeanFactory beanFactory;
 
-	private BeanExpressionResolver resolver;
+	private @Nullable BeanExpressionResolver resolver;
 
-	private BeanExpressionContext expressionContext;
+	private @Nullable BeanExpressionContext expressionContext;
 
-	private BeanResolver beanResolver;
+	private @Nullable BeanResolver beanResolver;
 
-	private Boolean autoStartup;
+	private @Nullable Boolean autoStartup;
 
-	private Properties consumerProperties;
+	private @Nullable Properties consumerProperties;
 
-	private Boolean batchListener;
+	private @Nullable Boolean batchListener;
 
-	private Integer concurrency;
+	private @Nullable Integer concurrency;
 
-	private AckMode ackMode;
+	private @Nullable AckMode ackMode;
 
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -92,8 +92,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		this.beanResolver = new BeanFactoryResolver(beanFactory);
 	}
 
-	@Nullable
-	protected BeanFactory getBeanFactory() {
+	protected @Nullable BeanFactory getBeanFactory() {
 		return this.beanFactory;
 	}
 
@@ -105,29 +104,24 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		}
 	}
 
-	@Nullable
-	protected BeanExpressionResolver getResolver() {
+	protected @Nullable BeanExpressionResolver getResolver() {
 		return this.resolver;
 	}
 
-	@Nullable
-	protected BeanExpressionContext getBeanExpressionContext() {
+	protected @Nullable BeanExpressionContext getBeanExpressionContext() {
 		return this.expressionContext;
 	}
 
-	@Nullable
-	protected BeanResolver getBeanResolver() {
+	protected @Nullable BeanResolver getBeanResolver() {
 		return this.beanResolver;
 	}
 
-	public void setSubscriptionName(String subscriptionName) {
-
+	public void setSubscriptionName(@Nullable String subscriptionName) {
 		this.subscriptionName = subscriptionName;
 	}
 
-	@Nullable
 	@Override
-	public String getSubscriptionName() {
+	public @Nullable String getSubscriptionName() {
 		return this.subscriptionName;
 	}
 
@@ -136,7 +130,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	}
 
 	@Override
-	public String getId() {
+	public @Nullable String getId() {
 		return this.id;
 	}
 
@@ -151,40 +145,35 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		return Collections.unmodifiableCollection(this.topics);
 	}
 
-	public void setTopicPattern(String topicPattern) {
-		Assert.notNull(topicPattern, "'topicPattern' must not be null");
+	public void setTopicPattern(@Nullable String topicPattern) {
 		this.topicPattern = topicPattern;
 	}
 
 	@Override
-	public String getTopicPattern() {
+	public @Nullable String getTopicPattern() {
 		return this.topicPattern;
 	}
 
 	@Override
-	@Nullable
-	public Boolean getAutoStartup() {
+	public @Nullable Boolean getAutoStartup() {
 		return this.autoStartup;
 	}
 
-	public void setAutoStartup(Boolean autoStartup) {
+	public void setAutoStartup(@Nullable Boolean autoStartup) {
 		this.autoStartup = autoStartup;
 	}
 
 	@Override
 	public void setupListenerContainer(PulsarMessageListenerContainer listenerContainer,
 			@Nullable MessageConverter messageConverter) {
-
 		setupMessageListener(listenerContainer, messageConverter);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void setupMessageListener(PulsarMessageListenerContainer container,
 			@Nullable MessageConverter messageConverter) {
-
-		AbstractPulsarMessageToSpringMessageAdapter<K> adapter = createMessageListener(container, messageConverter);
-		Object messageListener = adapter;
-		boolean isBatchListener = isBatchListener();
+		AbstractPulsarMessageToSpringMessageAdapter<K> messageListener = createMessageListener(container,
+				messageConverter);
 		Assert.state(messageListener != null, () -> "Endpoint [" + this + "] must provide a non null message listener");
 		container.setupMessageListener(messageListener);
 	}
@@ -192,16 +181,15 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	protected abstract AbstractPulsarMessageToSpringMessageAdapter<K> createMessageListener(
 			PulsarMessageListenerContainer container, @Nullable MessageConverter messageConverter);
 
-	public void setConsumerProperties(Properties consumerProperties) {
+	public void setConsumerProperties(@Nullable Properties consumerProperties) {
 		this.consumerProperties = consumerProperties;
 	}
 
-	public Properties getConsumerProperties() {
+	public @Nullable Properties getConsumerProperties() {
 		return this.consumerProperties;
 	}
 
-	@Nullable
-	public Boolean getBatchListener() {
+	public @Nullable Boolean getBatchListener() {
 		return this.batchListener;
 	}
 
@@ -213,7 +201,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		return this.batchListener == null ? false : this.batchListener;
 	}
 
-	public SubscriptionType getSubscriptionType() {
+	public @Nullable SubscriptionType getSubscriptionType() {
 		return this.subscriptionType;
 	}
 
@@ -221,7 +209,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		this.subscriptionType = subscriptionType;
 	}
 
-	public SchemaType getSchemaType() {
+	public @Nullable SchemaType getSchemaType() {
 		return this.schemaType;
 	}
 
@@ -230,8 +218,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 	}
 
 	@Override
-	@Nullable
-	public Integer getConcurrency() {
+	public @Nullable Integer getConcurrency() {
 		return this.concurrency;
 	}
 
@@ -243,7 +230,7 @@ public abstract class AbstractPulsarListenerEndpoint<K>
 		this.concurrency = concurrency;
 	}
 
-	public AckMode getAckMode() {
+	public @Nullable AckMode getAckMode() {
 		return this.ackMode;
 	}
 

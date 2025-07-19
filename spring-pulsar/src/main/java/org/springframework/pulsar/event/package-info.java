@@ -1,9 +1,5 @@
 /**
  * Package containing events produced by the framework.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.event;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

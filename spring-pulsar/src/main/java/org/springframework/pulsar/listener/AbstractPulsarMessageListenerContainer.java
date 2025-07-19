@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.core.AbstractPulsarMessageContainer;
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
@@ -44,15 +45,15 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 
 	private volatile boolean paused;
 
-	protected RedeliveryBackoff negativeAckRedeliveryBackoff;
+	protected @Nullable RedeliveryBackoff negativeAckRedeliveryBackoff;
 
-	protected RedeliveryBackoff ackTimeoutRedeliveryBackoff;
+	protected @Nullable RedeliveryBackoff ackTimeoutRedeliveryBackoff;
 
-	protected DeadLetterPolicy deadLetterPolicy;
+	protected @Nullable DeadLetterPolicy deadLetterPolicy;
 
-	protected PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
+	protected @Nullable PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
 
-	protected ConsumerBuilderCustomizer<T> consumerBuilderCustomizer;
+	protected @Nullable ConsumerBuilderCustomizer<T> consumerBuilderCustomizer;
 
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageListenerContainer(PulsarConsumerFactory<? super T> pulsarConsumerFactory,
@@ -122,48 +123,48 @@ public non-sealed abstract class AbstractPulsarMessageListenerContainer<T> exten
 	}
 
 	@Override
-	public void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff) {
+	public void setNegativeAckRedeliveryBackoff(@Nullable RedeliveryBackoff redeliveryBackoff) {
 		this.negativeAckRedeliveryBackoff = redeliveryBackoff;
 	}
 
 	@Override
-	public void setAckTimeoutRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff) {
+	public void setAckTimeoutRedeliveryBackoff(@Nullable RedeliveryBackoff redeliveryBackoff) {
 		this.ackTimeoutRedeliveryBackoff = redeliveryBackoff;
 	}
 
-	public RedeliveryBackoff getNegativeAckRedeliveryBackoff() {
+	public @Nullable RedeliveryBackoff getNegativeAckRedeliveryBackoff() {
 		return this.negativeAckRedeliveryBackoff;
 	}
 
-	public RedeliveryBackoff getAckTimeoutkRedeliveryBackoff() {
+	public @Nullable RedeliveryBackoff getAckTimeoutkRedeliveryBackoff() {
 		return this.ackTimeoutRedeliveryBackoff;
 	}
 
 	@Override
-	public void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy) {
+	public void setDeadLetterPolicy(@Nullable DeadLetterPolicy deadLetterPolicy) {
 		this.deadLetterPolicy = deadLetterPolicy;
 	}
 
-	public DeadLetterPolicy getDeadLetterPolicy() {
+	public @Nullable DeadLetterPolicy getDeadLetterPolicy() {
 		return this.deadLetterPolicy;
 	}
 
-	public PulsarConsumerErrorHandler<T> getPulsarConsumerErrorHandler() {
+	public @Nullable PulsarConsumerErrorHandler<T> getPulsarConsumerErrorHandler() {
 		return this.pulsarConsumerErrorHandler;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
+	public void setPulsarConsumerErrorHandler(@Nullable PulsarConsumerErrorHandler pulsarConsumerErrorHandler) {
 		this.pulsarConsumerErrorHandler = pulsarConsumerErrorHandler;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void setConsumerCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer) {
+	public void setConsumerCustomizer(@Nullable ConsumerBuilderCustomizer<?> consumerBuilderCustomizer) {
 		this.consumerBuilderCustomizer = (ConsumerBuilderCustomizer<T>) consumerBuilderCustomizer;
 	}
 
-	public ConsumerBuilderCustomizer<T> getConsumerBuilderCustomizer() {
+	public @Nullable ConsumerBuilderCustomizer<T> getConsumerBuilderCustomizer() {
 		return this.consumerBuilderCustomizer;
 	}
 

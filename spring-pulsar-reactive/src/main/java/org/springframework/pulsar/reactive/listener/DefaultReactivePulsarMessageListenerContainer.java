@@ -29,6 +29,7 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessagePipeline;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipelineBuilder.ConcurrentOneByOneMessagePipelineBuilder;
 import org.apache.pulsar.reactive.client.internal.api.ApiImplementationFactory;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.PulsarException;
@@ -59,9 +60,9 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 
 	private final AtomicBoolean running = new AtomicBoolean(false);
 
-	private ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer;
+	private @Nullable ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer;
 
-	private ReactiveMessagePipeline pipeline;
+	private @Nullable ReactiveMessagePipeline pipeline;
 
 	public DefaultReactivePulsarMessageListenerContainer(ReactivePulsarConsumerFactory<T> pulsarConsumerFactory,
 			ReactivePulsarContainerProperties<T> pulsarContainerProperties) {
@@ -101,12 +102,12 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 		this.autoStartup = autoStartup;
 	}
 
-	public ReactiveMessageConsumerBuilderCustomizer<T> getConsumerCustomizer() {
+	public @Nullable ReactiveMessageConsumerBuilderCustomizer<T> getConsumerCustomizer() {
 		return this.consumerCustomizer;
 	}
 
 	@Override
-	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer) {
+	public void setConsumerCustomizer(@Nullable ReactiveMessageConsumerBuilderCustomizer<T> consumerCustomizer) {
 		this.consumerCustomizer = consumerCustomizer;
 	}
 
