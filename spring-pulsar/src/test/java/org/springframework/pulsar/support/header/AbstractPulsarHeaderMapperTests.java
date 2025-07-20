@@ -32,10 +32,10 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.pulsar.client.api.Message;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.pulsar.support.PulsarHeaders;
 
@@ -275,7 +275,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 		}
 
 		@Override
-		protected Object toSpringHeaderValue(String name, String value, @Nullable String context) {
+		protected Object toSpringHeaderValue(String name, @Nullable String value, @Nullable String context) {
 			return value;
 		}
 
@@ -286,7 +286,7 @@ abstract class AbstractPulsarHeaderMapperTests {
 		}
 
 		@Override
-		protected String toPulsarHeaderValue(String name, Object value, @Nullable String context) {
+		protected @Nullable String toPulsarHeaderValue(String name, Object value, @Nullable String context) {
 			return Objects.toString(value, null);
 		}
 

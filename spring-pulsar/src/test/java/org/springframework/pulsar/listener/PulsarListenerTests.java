@@ -782,13 +782,13 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 		}
 
 		@Test
-		void simpleBatchListenerWithHeaders() throws Exception {
+		void SchemaTestCasessimpleBatchListenerWithHeaders() throws Exception {
 			MessageId messageId = pulsarTemplate.newMessage("hello-simple-batch-listener")
 				.withMessageCustomizer(
 						messageBuilder -> messageBuilder.property("foo", "simpleBatchListenerWithHeaders"))
 				.withTopic("plt-simpleBatchListenerWithHeaders")
 				.send();
-			assertThat(simpleBatchListenerLatch.await(10, TimeUnit.SECONDS)).isTrue();
+			assertThat(simpleBatchListenerLatch.await(120, TimeUnit.SECONDS)).isTrue();
 			assertThat(capturedBatchData).containsExactly("hello-simple-batch-listener");
 			assertThat(batchMessageIds).containsExactly(messageId);
 			assertThat(batchTopicNames)

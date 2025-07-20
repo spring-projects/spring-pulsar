@@ -36,6 +36,7 @@ import reactor.core.publisher.Flux;
  * @author Christophe Bornet
  * @author Soby Chacko
  */
+@SuppressWarnings("NullAway")
 public class PulsarReactiveStreamingMessagingMessageListenerAdapter<V>
 		extends PulsarReactiveMessagingMessageListenerAdapter<V> implements ReactivePulsarStreamingHandler<V> {
 

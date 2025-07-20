@@ -22,8 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 
 /**

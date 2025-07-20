@@ -33,13 +33,14 @@ import org.apache.pulsar.shade.io.netty.buffer.AbstractByteBufAllocator;
 import org.apache.pulsar.shade.io.netty.channel.socket.nio.NioDatagramChannel;
 import org.apache.pulsar.shade.io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.pulsar.shade.io.netty.util.ReferenceCountUtil;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.ReflectionHints;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
-import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -149,7 +150,9 @@ public class ReactivePulsarRuntimeHints implements RuntimeHintsRegistrar {
 							MemberCategory.INVOKE_PUBLIC_METHODS,
 							MemberCategory.INVOKE_DECLARED_METHODS,
 							MemberCategory.ACCESS_DECLARED_FIELDS)));
-		reflectionHints.registerField(ReflectionUtils.findField(Thread.class, "threadLocalRandomProbe"));
+		var threadLocalRandomProbeField = ReflectionUtils.findField(Thread.class, "threadLocalRandomProbe");
+		Assert.notNull(threadLocalRandomProbeField, "threadLocalRandomProbe not found on Thread.class");
+		reflectionHints.registerField(threadLocalRandomProbeField);
 
 		// @formatter:on
 

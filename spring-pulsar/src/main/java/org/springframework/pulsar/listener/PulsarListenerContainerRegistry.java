@@ -19,7 +19,8 @@ package org.springframework.pulsar.listener;
 import java.util.Collection;
 import java.util.Set;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.pulsar.config.ListenerEndpoint;
 
 /**
@@ -38,8 +39,7 @@ public interface PulsarListenerContainerRegistry {
 	 * @see ListenerEndpoint#getId()
 	 * @see #getListenerContainerIds()
 	 */
-	@Nullable
-	MessageListenerContainer getListenerContainer(String id);
+	@Nullable MessageListenerContainer getListenerContainer(String id);
 
 	/**
 	 * Return the ids of the managed listener container instance(s).

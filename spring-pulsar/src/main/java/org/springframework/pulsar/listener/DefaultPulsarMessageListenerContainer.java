@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.listener;
 
+import static java.util.Objects.requireNonNull;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,12 +54,12 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.transaction.Transaction;
 import org.apache.pulsar.client.impl.ConsumerImpl;
 import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.ConsumerBuilderConfigurationUtil;
@@ -95,9 +97,9 @@ import io.micrometer.observation.Observation;
  */
 public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMessageListenerContainer<T> {
 
-	private volatile CompletableFuture<?> listenerConsumerFuture;
+	private volatile @Nullable CompletableFuture<?> listenerConsumerFuture;
 
-	private volatile Listener listenerConsumer;
+	private volatile @Nullable Listener listenerConsumer;
 
 	private final AbstractPulsarMessageListenerContainer<?> thisOrParentContainer;
 
@@ -148,7 +150,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		if (this.listenerConsumer != null) {
 			this.logger.debug(() -> "Successfully created completable - submitting to executor");
 			this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
-			waitForStartup(containerProperties.getConsumerStartTimeout());
+			waitForStartup(containerProperties.determineConsumerStartTimeout());
 		}
 		else if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
 			this.logger.info(() -> "Configured to retry on startup failure - retrying asynchronously");
@@ -268,9 +270,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 	private final class Listener implements SchedulingAwareRunnable {
 
-		private final PulsarRecordMessageListener<T> listener;
+		private final @Nullable PulsarRecordMessageListener<T> listener;
 
-		private final PulsarBatchMessageListener<T> batchMessageListener;
+		private final @Nullable PulsarBatchMessageListener<T> batchMessageListener;
 
 		private final PulsarContainerProperties containerProperties;
 
@@ -278,26 +280,25 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		private final Set<MessageId> nackableMessages = new HashSet<>();
 
-		private final PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
+		private final @Nullable PulsarConsumerErrorHandler<T> pulsarConsumerErrorHandler;
 
-		private final ConsumerBuilderCustomizer<T> consumerBuilderCustomizer;
+		private final @Nullable ConsumerBuilderCustomizer<T> consumerBuilderCustomizer;
 
 		private final boolean isBatchListener;
 
 		private final AckMode ackMode;
 
-		private SubscriptionType subscriptionType;
+		private @Nullable SubscriptionType subscriptionType;
 
-		@Nullable
-		private PulsarAwareTransactionManager transactionManager;
+		private @Nullable PulsarAwareTransactionManager transactionManager;
 
-		@Nullable
-		private TransactionTemplate transactionTemplate;
+		private @Nullable TransactionTemplate transactionTemplate;
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		Listener(MessageListener<?> messageListener, PulsarContainerProperties containerProperties) {
+		Listener(@Nullable MessageListener<?> messageListener, PulsarContainerProperties containerProperties) {
 			this.containerProperties = containerProperties;
 			this.isBatchListener = this.containerProperties.isBatchListener();
+			Assert.notNull(this.containerProperties.getAckMode(), "containerProperties.ackMode must not be null");
 			this.ackMode = this.containerProperties.getAckMode();
 			this.subscriptionType = this.containerProperties.getSubscriptionType();
 			this.pulsarConsumerErrorHandler = getPulsarConsumerErrorHandler();
@@ -342,7 +343,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			if (this.consumerBuilderCustomizer != null) {
 				customizers.add(this.consumerBuilderCustomizer);
 			}
-
+			Assert.notNull(containerProperties.getSchema(), "containerProperties.schema must not be null");
 			this.consumer = getPulsarConsumerFactory().createConsumer((Schema) containerProperties.getSchema(),
 					topicNames, this.containerProperties.getSubscriptionName(), properties, customizers);
 			Assert.state(this.consumer != null, "Unable to create a consumer");
@@ -371,8 +372,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					"Transactional batch listeners do not support custom error handlers");
 		}
 
-		@Nullable
-		private TransactionTemplate determineTransactionTemplate() {
+		private @Nullable TransactionTemplate determineTransactionTemplate() {
 			if (this.transactionManager == null) {
 				return null;
 			}
@@ -392,6 +392,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		private void updateSubscriptionTypeFromConsumer(Consumer<T> consumer) {
 			try {
 				var confField = ReflectionUtils.findField(ConsumerImpl.class, "conf");
+				Assert.notNull(confField, "Could not find field 'conf' on ConsumerImpl.class");
 				ReflectionUtils.makeAccessible(confField);
 				var conf = ReflectionUtils.getField(confField, consumer);
 				if (conf instanceof ConsumerConfigurationData<?> confData) {
@@ -429,7 +430,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 			if (!currentProperties.containsKey("topicNames")) {
 				Set<String> listenerDefinedTopics = this.containerProperties.getTopics();
-				if (!this.containerProperties.getTopics().isEmpty()) {
+				if (!CollectionUtils.isEmpty(listenerDefinedTopics)) {
 					currentProperties.put("topicNames", listenerDefinedTopics);
 				}
 			}
@@ -471,7 +472,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			AtomicBoolean inRetryMode = new AtomicBoolean(false);
 			AtomicBoolean messagesPendingInBatch = new AtomicBoolean(false);
 			Messages<T> messages = null;
-			List<Message<T>> messageList = null;
+			List<Message<T>> messageList = new ArrayList<>();
 			while (isRunning()) {
 				checkIfPausedAndHandleAccordingly();
 				// Always receive messages in batch mode.
@@ -556,7 +557,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
-		@Nullable
 		private void doInvokeRecordListener(Messages<T> messages, AtomicBoolean inRetryMode) {
 			for (Message<T> message : messages) {
 				do {
@@ -586,37 +586,39 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			return PulsarListenerObservation.LISTENER_OBSERVATION.observation(
 					this.containerProperties.getObservationConvention(),
 					DefaultPulsarListenerObservationConvention.INSTANCE,
-					() -> new PulsarMessageReceiverContext(message, getBeanName()),
+					() -> new PulsarMessageReceiverContext(message, requireNonNullBeanName()),
 					this.containerProperties.getObservationRegistry());
 		}
 
 		private void dispatchMessageToListenerInTxn(Message<T> message, AtomicBoolean inRetryMode) {
 			try {
-				this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
-					@Override
-					protected void doInTransactionWithoutResult(TransactionStatus status) {
-						RuntimeException aborted = dispatchMessageToListener(message, inRetryMode, getTransaction());
-						if (aborted != null) {
-							throw aborted;
+				requireNonNull(this.transactionTemplate, "transactionTemplate must not be null")
+					.execute(new TransactionCallbackWithoutResult() {
+						@Override
+						protected void doInTransactionWithoutResult(TransactionStatus status) {
+							RuntimeException aborted = dispatchMessageToListener(message, inRetryMode,
+									getTransaction());
+							if (aborted != null) {
+								throw aborted;
+							}
 						}
-					}
-				});
+					});
 			}
 			catch (Throwable ex) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(ex, "Transaction rolled back");
 			}
 		}
 
-		@Nullable
-		private Transaction getTransaction() {
+		private @Nullable Transaction getTransaction() {
 			if (this.transactionManager == null) {
 				return null;
 			}
 			var resourceHolder = PulsarTransactionUtils.getResourceHolder(this.transactionManager.getPulsarClient());
-			return resourceHolder.getTransaction();
+			return resourceHolder != null ? resourceHolder.getTransaction() : null;
 		}
 
-		private RuntimeException dispatchMessageToListener(Message<T> message, AtomicBoolean inRetryMode,
+		@SuppressWarnings("NullAway")
+		private @Nullable RuntimeException dispatchMessageToListener(Message<T> message, AtomicBoolean inRetryMode,
 				@Nullable Transaction txn) {
 			try {
 				if (this.listener instanceof PulsarAcknowledgingMessageListener) {
@@ -635,7 +637,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				DefaultPulsarMessageListenerContainer.this.listenerErrorLogger.debug(e,
 						() -> "Error dispatching the message to the listener.");
 				if (this.pulsarConsumerErrorHandler != null) {
-					invokeRecordListenerErrorHandler(inRetryMode, message, e, txn);
+					invokeRecordListenerErrorHandler(this.pulsarConsumerErrorHandler, inRetryMode, message, e, txn);
 				}
 				else {
 					if (this.ackMode.equals(AckMode.RECORD)) {
@@ -656,16 +658,16 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			return null;
 		}
 
-		private void invokeRecordListenerErrorHandler(AtomicBoolean inRetryMode, Message<T> message, Exception e,
-				@Nullable Transaction txn) {
-			boolean toBeRetried = this.pulsarConsumerErrorHandler.shouldRetryMessage(e, message);
+		private void invokeRecordListenerErrorHandler(PulsarConsumerErrorHandler<T> consumerErrorHandler,
+				AtomicBoolean inRetryMode, Message<T> message, Exception e, @Nullable Transaction txn) {
+			boolean toBeRetried = consumerErrorHandler.shouldRetryMessage(e, message);
 			if (toBeRetried) {
 				inRetryMode.set(true);
 			}
 			else {
 				inRetryMode.compareAndSet(true, false);
 				// retries exhausted - recover the message
-				this.pulsarConsumerErrorHandler.recoverMessage(this.consumer, message, e);
+				consumerErrorHandler.recoverMessage(this.consumer, message, e);
 				// retries exhausted - if record ackmode, acknowledge, otherwise normal
 				// batch ack at the end
 				if (this.ackMode.equals(AckMode.RECORD)) {
@@ -682,11 +684,13 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			return invokeBatchListenerInTxn(messages, messageList, inRetryMode, messagesPendingInBatch);
 		}
 
+		@SuppressWarnings("NullAway")
 		private List<Message<T>> invokeBatchListenerInTxn(Messages<T> messages, List<Message<T>> messageList,
 				AtomicBoolean inRetryMode, AtomicBoolean messagesPendingInBatch) {
 			try {
-				return this.transactionTemplate.execute(status -> doInvokeBatchListener(messages, messageList,
-						inRetryMode, messagesPendingInBatch, getTransaction()));
+				return requireNonNull(this.transactionTemplate, "transactionTemplate must not be null")
+					.execute(status -> doInvokeBatchListener(messages, messageList, inRetryMode, messagesPendingInBatch,
+							getTransaction()));
 			}
 			catch (Throwable e) {
 				DefaultPulsarMessageListenerContainer.this.logger.error(e, "Transaction rolled back");
@@ -694,6 +698,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			}
 		}
 
+		@SuppressWarnings("NullAway")
 		private List<Message<T>> doInvokeBatchListener(Messages<T> messages, List<Message<T>> messageList,
 				AtomicBoolean inRetryMode, AtomicBoolean messagesPendingInBatch, @Nullable Transaction txn) {
 			try {
@@ -703,14 +708,15 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 								this.ackMode.equals(AckMode.MANUAL) ? new ConsumerBatchAcknowledgment(this.consumer)
 										: null);
 					}
-					else {
+					else if (this.batchMessageListener != null) {
 						this.batchMessageListener.received(this.consumer, messageList);
 					}
 					if (this.ackMode.equals(AckMode.BATCH)) {
 						handleBatchAcks(messages, txn);
 					}
 					if (this.pulsarConsumerErrorHandler != null) {
-						pendingMessagesHandledSuccessfully(inRetryMode, messagesPendingInBatch);
+						pendingMessagesHandledSuccessfully(this.pulsarConsumerErrorHandler, inRetryMode,
+								messagesPendingInBatch);
 					}
 				}
 				return Collections.emptyList();
@@ -719,7 +725,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				DefaultPulsarMessageListenerContainer.this.listenerErrorLogger.debug(ex,
 						() -> "Error dispatching the messages to the batch listener.");
 				if (this.pulsarConsumerErrorHandler != null) {
-					return invokeBatchListenerErrorHandler(inRetryMode, messagesPendingInBatch, messageList, ex, txn);
+					return invokeBatchListenerErrorHandler(this.pulsarConsumerErrorHandler, inRetryMode,
+							messagesPendingInBatch, messageList, ex, txn);
 				}
 				// when no error handler nack the whole batch
 				this.consumer.negativeAcknowledge(messages);
@@ -740,6 +747,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		 * messages are handled successfully then the normal flow will clear the handler
 		 * state out. However, if the handler throws an error again it will be one of 2
 		 * things... m3 or a subsequent message m4-m10.
+		 * @param consumerErrorHandler the error handler
 		 * @param inRetryMode is the message in retry mode
 		 * @param messagesPendingInBatch whether there pending messages from the batch
 		 * @param messageList message list to process
@@ -749,9 +757,9 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		 * @return a list of messages to be processed next
 		 */
 		// @formatter:on
-		private List<Message<T>> invokeBatchListenerErrorHandler(AtomicBoolean inRetryMode,
-				AtomicBoolean messagesPendingInBatch, List<Message<T>> messageList, Throwable exception,
-				@Nullable Transaction txn) {
+		private List<Message<T>> invokeBatchListenerErrorHandler(PulsarConsumerErrorHandler<T> consumerErrorHandler,
+				AtomicBoolean inRetryMode, AtomicBoolean messagesPendingInBatch, List<Message<T>> messageList,
+				Throwable exception, @Nullable Transaction txn) {
 
 			// Make sure either the exception or the exception cause is batch exception
 			if (!(exception instanceof PulsarBatchListenerFailedException)) {
@@ -762,11 +770,11 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 			PulsarBatchListenerFailedException pulsarBatchListenerFailedException = (PulsarBatchListenerFailedException) exception;
 			Message<T> pulsarMessage = getPulsarMessageCausedTheException(pulsarBatchListenerFailedException);
-			Message<T> theCurrentPulsarMessageTracked = this.pulsarConsumerErrorHandler.currentMessage();
+			Message<T> theCurrentPulsarMessageTracked = consumerErrorHandler.currentMessage();
 			// Previous message in error handled during retry but another msg in sublist
 			// caused error; resetting state in order to track it
 			if (theCurrentPulsarMessageTracked != null && !theCurrentPulsarMessageTracked.equals(pulsarMessage)) {
-				pendingMessagesHandledSuccessfully(inRetryMode, messagesPendingInBatch);
+				pendingMessagesHandledSuccessfully(consumerErrorHandler, inRetryMode, messagesPendingInBatch);
 			}
 			// this is key to understanding how the message gets retried, it gets put into
 			// the new sublist at position 0 (aka it will be the 1st one re-sent to the
@@ -775,7 +783,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			// instead gets recovered).
 			int indexOfFailedMessage = messageList.indexOf(pulsarMessage);
 			messageList = messageList.subList(indexOfFailedMessage, messageList.size());
-			boolean toBeRetried = this.pulsarConsumerErrorHandler.shouldRetryMessage(pulsarBatchListenerFailedException,
+			boolean toBeRetried = consumerErrorHandler.shouldRetryMessage(pulsarBatchListenerFailedException,
 					pulsarMessage);
 			if (toBeRetried) {
 				inRetryMode.set(true);
@@ -783,8 +791,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			else {
 				inRetryMode.compareAndSet(true, false);
 				// retries exhausted - recover the message
-				this.pulsarConsumerErrorHandler.recoverMessage(this.consumer, pulsarMessage,
-						pulsarBatchListenerFailedException);
+				consumerErrorHandler.recoverMessage(this.consumer, pulsarMessage, pulsarBatchListenerFailedException);
 				handleAck(pulsarMessage, txn);
 				if (messageList.size() == 1) {
 					messageList.remove(0);
@@ -794,16 +801,16 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 					messageList = messageList.subList(1, messageList.size());
 					messagesPendingInBatch.set(true);
 				}
-				this.pulsarConsumerErrorHandler.clearMessage();
+				consumerErrorHandler.clearMessage();
 			}
 			return messageList;
 		}
 
-		private void pendingMessagesHandledSuccessfully(AtomicBoolean inRetryMode,
-				AtomicBoolean messagesPendingInBatch) {
+		private void pendingMessagesHandledSuccessfully(PulsarConsumerErrorHandler<T> consumerErrorHandler,
+				AtomicBoolean inRetryMode, AtomicBoolean messagesPendingInBatch) {
 			inRetryMode.compareAndSet(true, false);
 			messagesPendingInBatch.compareAndSet(true, false);
-			this.pulsarConsumerErrorHandler.clearMessage();
+			consumerErrorHandler.clearMessage();
 		}
 
 		@SuppressWarnings("unchecked")
@@ -843,7 +850,8 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				}
 				else {
 					Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
-					Message<T> last = stream.reduce((a, b) -> b).orElse(null);
+					Message<T> last = stream.reduce((a, b) -> b)
+						.orElseThrow(() -> new RuntimeException("Failed to determine last message"));
 					AckUtils.handleAckCumulative(this.consumer, last, txn);
 				}
 			}
@@ -864,8 +872,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 
 		protected final Consumer<?> consumer;
 
-		@Nullable
-		private final Transaction txn;
+		private @Nullable final Transaction txn;
 
 		AbstractAcknowledgement(Consumer<?> consumer) {
 			this(consumer, null);
@@ -876,8 +883,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			this.txn = txn;
 		}
 
-		@Nullable
-		protected Transaction getTransaction() {
+		@Nullable protected Transaction getTransaction() {
 			return this.txn;
 		}
 

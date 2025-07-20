@@ -24,8 +24,7 @@ import java.util.regex.Pattern;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.VersionCatalogsExtension;
-
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public abstract class UpdateProjectVersionTask extends DefaultTask {
 

@@ -16,8 +16,9 @@
 
 package org.springframework.pulsar.listener.adapter;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.expression.Expression;
-import org.springframework.lang.Nullable;
 
 /**
  * The result of a method invocation.
@@ -26,11 +27,9 @@ import org.springframework.lang.Nullable;
  */
 public final class InvocationResult {
 
-	@Nullable
-	private final Object result;
+	private @Nullable final Object result;
 
-	@Nullable
-	private final Expression sendTo;
+	private @Nullable final Expression sendTo;
 
 	private final boolean messageReturnType;
 
@@ -40,13 +39,11 @@ public final class InvocationResult {
 		this.messageReturnType = messageReturnType;
 	}
 
-	@Nullable
-	public Object getResult() {
+	@Nullable public Object getResult() {
 		return this.result;
 	}
 
-	@Nullable
-	public Expression getSendTo() {
+	@Nullable public Expression getSendTo() {
 		return this.sendTo;
 	}
 

@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 
 import org.apache.pulsar.common.schema.SchemaType;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.pulsar.core.DefaultTopicResolverTests.TopicByAnnotatedMessageType.WithTopicExpression.WithTopicExpressionConfig;
 import org.springframework.test.annotation.DirtiesContext;

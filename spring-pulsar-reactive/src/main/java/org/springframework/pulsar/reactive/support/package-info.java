@@ -1,9 +1,5 @@
 /**
  * Package containing support classes for processing Pulsar messages.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.reactive.support;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

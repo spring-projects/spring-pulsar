@@ -1,9 +1,5 @@
 /**
  * Package containing the core components of the framework.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar.core;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

@@ -28,9 +28,9 @@ import org.apache.pulsar.reactive.client.api.ReactiveMessageSender;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderBuilder;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageSenderCache;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.core.TopicResolver;
@@ -57,17 +57,13 @@ public final class DefaultReactivePulsarSenderFactory<T>
 
 	private final TopicResolver topicResolver;
 
-	@Nullable
-	private final ReactiveMessageSenderCache reactiveMessageSenderCache;
+	private @Nullable final ReactiveMessageSenderCache reactiveMessageSenderCache;
 
-	@Nullable
-	private String defaultTopic;
+	private @Nullable String defaultTopic;
 
-	@Nullable
-	private final List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
+	private @Nullable final List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
 
-	@Nullable
-	private final PulsarTopicBuilder topicBuilder;
+	private @Nullable final PulsarTopicBuilder topicBuilder;
 
 	private DefaultReactivePulsarSenderFactory(ReactivePulsarClient reactivePulsarClient, TopicResolver topicResolver,
 			@Nullable ReactiveMessageSenderCache reactiveMessageSenderCache, @Nullable String defaultTopic,
@@ -146,14 +142,15 @@ public final class DefaultReactivePulsarSenderFactory<T>
 		return sender.build();
 	}
 
-	protected String resolveTopicName(String userSpecifiedTopic) {
+	protected String resolveTopicName(@Nullable String userSpecifiedTopic) {
 		var resolvedTopic = this.topicResolver.resolveTopic(userSpecifiedTopic, this::getDefaultTopic).orElseThrow();
+		Assert.notNull(resolvedTopic, "The resolvedTopic must not be null");
 		return this.topicBuilder != null ? this.topicBuilder.getFullyQualifiedNameForTopic(resolvedTopic)
 				: resolvedTopic;
 	}
 
 	@Override
-	public String getDefaultTopic() {
+	public @Nullable String getDefaultTopic() {
 		return this.defaultTopic;
 	}
 
@@ -204,17 +201,13 @@ public final class DefaultReactivePulsarSenderFactory<T>
 
 		private TopicResolver topicResolver = new DefaultTopicResolver();
 
-		@Nullable
-		private PulsarTopicBuilder topicBuilder;
+		private @Nullable PulsarTopicBuilder topicBuilder;
 
-		@Nullable
-		private ReactiveMessageSenderCache messageSenderCache;
+		private @Nullable ReactiveMessageSenderCache messageSenderCache;
 
-		@Nullable
-		private String defaultTopic;
+		private @Nullable String defaultTopic;
 
-		@Nullable
-		private List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
+		private @Nullable List<ReactiveMessageSenderBuilderCustomizer<T>> defaultConfigCustomizers;
 
 		private Builder(ReactivePulsarClient reactivePulsarClient) {
 			Assert.notNull(reactivePulsarClient, "Reactive client is required");

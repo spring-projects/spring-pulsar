@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.BackOffExecution;
@@ -83,7 +84,7 @@ public class DefaultPulsarConsumerErrorHandler<T> implements PulsarConsumerError
 	}
 
 	@SuppressWarnings("unchecked")
-	public Message<T> currentMessage() {
+	public @Nullable Message<T> currentMessage() {
 		// there is only one message tracked at any time.
 		Pair pair = this.backOffExecutionThreadLocal.get();
 		if (pair == null) {

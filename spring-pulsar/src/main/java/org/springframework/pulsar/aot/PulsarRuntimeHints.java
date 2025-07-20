@@ -31,13 +31,13 @@ import org.apache.pulsar.client.impl.conf.ConsumerConfigurationData;
 import org.apache.pulsar.client.impl.conf.ProducerConfigurationData;
 import org.apache.pulsar.client.util.SecretsSerializer;
 import org.apache.pulsar.common.protocol.Commands;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.ReflectionHints;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link RuntimeHintsRegistrar} for Spring for Apache Pulsar.

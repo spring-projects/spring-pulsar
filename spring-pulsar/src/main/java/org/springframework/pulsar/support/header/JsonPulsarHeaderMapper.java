@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.support.header;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,13 +27,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.apache.pulsar.client.api.Message;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper.ToPulsarHeadersContext;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper.ToSpringHeadersContext;
@@ -93,9 +93,9 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 	JsonPulsarHeaderMapper(ObjectMapper objectMapper, List<String> inboundPatterns, List<String> outboundPatterns,
 			Set<String> trustedPackages, Set<String> toStringClasses) {
 		super(inboundPatterns, outboundPatterns);
-		this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
-		Objects.requireNonNull(trustedPackages, "trustedPackages must not be null");
-		Objects.requireNonNull(toStringClasses, "toStringClasses must not be null");
+		this.objectMapper = requireNonNull(objectMapper, "objectMapper must not be null");
+		requireNonNull(trustedPackages, "trustedPackages must not be null");
+		requireNonNull(toStringClasses, "toStringClasses must not be null");
 		for (var trusted : trustedPackages) {
 			if ("*".equals(trusted)) {
 				this.trustedPackages.clear();
@@ -136,7 +136,8 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 	}
 
 	@Override
-	protected String toPulsarHeaderValue(String name, Object rawValue, ToPulsarHeadersContext context) {
+	protected @Nullable String toPulsarHeaderValue(String name, @Nullable Object rawValue,
+			@Nullable ToPulsarHeadersContext context) {
 		if (rawValue == null) {
 			return null;
 		}
@@ -149,7 +150,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		}
 		try {
 			var valueToAdd = getObjectMapper().writeValueAsString(rawValue);
-			context.jsonTypes().put(name, className);
+			requireNonNull(context, "context must not be null to resolve jsonTypes()").jsonTypes().put(name, className);
 			return valueToAdd;
 		}
 		catch (Exception e) {
@@ -161,7 +162,10 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 
 	@Override
 	protected void toPulsarHeadersOnCompleted(MessageHeaders springHeaders, Map<String, String> pulsarHeaders,
-			ToPulsarHeadersContext context) {
+			@Nullable ToPulsarHeadersContext context) {
+		if (context == null) {
+			return;
+		}
 		var jsonHeaders = context.jsonTypes();
 		if (jsonHeaders.size() > 0) {
 			try {
@@ -180,7 +184,6 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		return !header.equals(JSON_TYPES) && super.matchesForInbound(header);
 	}
 
-	@NonNull
 	@Override
 	protected ToSpringHeadersContext toSpringHeadersOnStarted(Message<?> pulsarMessage) {
 		Map<String, String> types = new HashMap<>();
@@ -199,7 +202,10 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 	}
 
 	@Override
-	protected Object toSpringHeaderValue(String name, String value, ToSpringHeadersContext context) {
+	protected Object toSpringHeaderValue(String name, String value, @Nullable ToSpringHeadersContext context) {
+		if (context == null) {
+			return value;
+		}
 		var jsonTypes = context.jsonTypes();
 		if (jsonTypes != null && jsonTypes.containsKey(name)) {
 			String requestedType = jsonTypes.get(name);
@@ -316,7 +322,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 
 	public static class JsonPulsarHeaderMapperBuilder {
 
-		private ObjectMapper objectMapper;
+		private @Nullable ObjectMapper objectMapper;
 
 		private final Set<String> trustedPackages = new HashSet<>();
 

@@ -56,8 +56,8 @@ public class DefaultPulsarReaderContainerFactory<T>
 	}
 
 	@Override
+	@SuppressWarnings("NullAway")
 	public DefaultPulsarMessageReaderContainer<T> createContainer(String... topics) {
-		// TODO
 		return null;
 	}
 

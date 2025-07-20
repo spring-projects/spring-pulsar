@@ -23,13 +23,14 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
@@ -55,11 +56,9 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware, Be
 
 	private boolean usePulsarMessageAnnotations = true;
 
-	@Nullable
-	private ExpressionResolver expressionResolver;
+	private @Nullable ExpressionResolver expressionResolver;
 
-	@Nullable
-	private ClassLoader classLoader;
+	private @Nullable ClassLoader classLoader;
 
 	/**
 	 * Constructs a new DefaultTopicResolver with the given expression resolver.
@@ -91,8 +90,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware, Be
 	 * @return the previously mapped topic or {@code null} if there was no mapping for
 	 * {@code messageType}.
 	 */
-	@Nullable
-	public String addCustomTopicMapping(Class<?> messageType, String topic) {
+	@Nullable public String addCustomTopicMapping(Class<?> messageType, String topic) {
 		return this.customTopicMappings.put(this.toMessageTypeMapKey(messageType), topic);
 	}
 
@@ -102,8 +100,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware, Be
 	 * @return the previously mapped topic or {@code null} if there was no mapping for
 	 * {@code messageType}.
 	 */
-	@Nullable
-	public String removeCustomMapping(Class<?> messageType) {
+	@Nullable public String removeCustomMapping(Class<?> messageType) {
 		return this.customTopicMappings.remove(this.toMessageTypeMapKey(messageType));
 	}
 
@@ -181,8 +178,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware, Be
 	}
 
 	// VisibleForTesting
-	@Nullable
-	String getAnnotatedTopicInfo(Class<?> messageType) {
+	@Nullable String getAnnotatedTopicInfo(Class<?> messageType) {
 		return this.pulsarMessageAnnotationRegistry.getAnnotationFor(messageType)
 			.map(PulsarMessage::topic)
 			.filter(StringUtils::hasText)
@@ -190,7 +186,7 @@ public class DefaultTopicResolver implements TopicResolver, BeanFactoryAware, Be
 			.orElse(null);
 	}
 
-	private String resolveExpression(String v) {
+	private @Nullable String resolveExpression(String v) {
 		return this.expressionResolver == null ? v : this.expressionResolver.resolveToString(v)
 			.orElseThrow(() -> "Failed to resolve topic expression: %s".formatted(v));
 	}

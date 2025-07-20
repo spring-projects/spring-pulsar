@@ -49,15 +49,6 @@ public class PulsarAdministrationTests {
 		}
 
 		@Test
-		void createdWithNullCustomizer() throws PulsarClientException {
-			PulsarAdminBuilderCustomizer customizer = null;
-			var admin = new PulsarAdministration(customizer);
-			admin.setAdminBuilder(adminBuilder);
-			admin.createAdminClient();
-			verify(adminBuilder).build();
-		}
-
-		@Test
 		void createdWithSingleCustomizer() throws PulsarClientException {
 			var customizer = mock(PulsarAdminBuilderCustomizer.class);
 			var admin = new PulsarAdministration(customizer);

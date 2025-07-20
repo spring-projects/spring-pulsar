@@ -16,9 +16,9 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +30,13 @@ import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -52,14 +52,11 @@ public class PulsarAdministration
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	@Nullable
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
-	@Nullable
-	private final List<PulsarAdminBuilderCustomizer> adminCustomizers;
+	private final List<PulsarAdminBuilderCustomizer> adminCustomizers = new ArrayList<>();
 
-	@Nullable
-	private PulsarAdminBuilder adminBuilder;
+	private @Nullable PulsarAdminBuilder adminBuilder;
 
 	/**
 	 * Construct a default instance using the specified service url.
@@ -74,17 +71,16 @@ public class PulsarAdministration
 	 * @param adminCustomizer the customizer to apply to the builder or null to use the
 	 * default admin builder without modifications
 	 */
-	public PulsarAdministration(@Nullable PulsarAdminBuilderCustomizer adminCustomizer) {
-		this(adminCustomizer != null ? List.of(adminCustomizer) : Collections.emptyList());
+	public PulsarAdministration(PulsarAdminBuilderCustomizer adminCustomizer) {
+		this(List.of(adminCustomizer));
 	}
 
 	/**
-	 * Construct an instance with the specified customizations.
-	 * @param adminCustomizers the customizers to apply to the builder or null to use the
-	 * default admin builder without modifications
+	 * Construct an instance with the list of specified customizations.
+	 * @param adminCustomizers the customizers to apply to the builder
 	 */
 	public PulsarAdministration(List<PulsarAdminBuilderCustomizer> adminCustomizers) {
-		this.adminCustomizers = adminCustomizers;
+		this.adminCustomizers.addAll(adminCustomizers);
 	}
 
 	@Override

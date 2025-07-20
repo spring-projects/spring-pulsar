@@ -30,8 +30,8 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.impl.ConsumerBuilderImpl;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
 
@@ -49,11 +49,9 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 
 	private final PulsarClient pulsarClient;
 
-	@Nullable
-	private final List<ConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
+	private @Nullable final List<ConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
 
-	@Nullable
-	private PulsarTopicBuilder topicBuilder;
+	private @Nullable PulsarTopicBuilder topicBuilder;
 
 	/**
 	 * Construct a consumer factory instance.
@@ -118,9 +116,7 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
-		if (this.topicBuilder != null) {
-			this.ensureTopicNamesFullyQualified(consumerBuilder);
-		}
+		this.ensureTopicNamesFullyQualified(consumerBuilder);
 		try {
 			return consumerBuilder.subscribe();
 		}
@@ -141,6 +137,9 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 	}
 
 	protected void ensureTopicNamesFullyQualified(ConsumerBuilder<T> builder) {
+		if (this.topicBuilder == null) {
+			return;
+		}
 		var builderImpl = (ConsumerBuilderImpl<T>) builder;
 		var topics = builderImpl.getConf().getTopicNames();
 		if (!CollectionUtils.isEmpty(topics)) {

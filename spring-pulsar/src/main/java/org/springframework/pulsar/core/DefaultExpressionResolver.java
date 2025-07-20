@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.core;
 
+import java.util.Objects;
+
 import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -36,7 +38,8 @@ public class DefaultExpressionResolver implements ExpressionResolver {
 	private final ConfigurableBeanFactory configurableBeanFactory;
 
 	public DefaultExpressionResolver(ConfigurableBeanFactory configurableBeanFactory) {
-		this.beanExpressionResolver = configurableBeanFactory.getBeanExpressionResolver();
+		this.beanExpressionResolver = Objects.requireNonNull(configurableBeanFactory.getBeanExpressionResolver(),
+				"The beanExpressionResolver must not be null");
 		this.beanExpressionContext = new BeanExpressionContext(configurableBeanFactory, null);
 		this.configurableBeanFactory = configurableBeanFactory;
 	}

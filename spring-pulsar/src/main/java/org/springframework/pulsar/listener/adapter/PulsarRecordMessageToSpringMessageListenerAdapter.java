@@ -21,8 +21,8 @@ import java.lang.reflect.Method;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageListener;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.Acknowledgement;
 import org.springframework.pulsar.listener.PulsarAcknowledgingMessageListener;
 
@@ -41,6 +41,7 @@ public class PulsarRecordMessageToSpringMessageListenerAdapter<V> extends Abstra
 		super(bean, method);
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public void received(Consumer<V> consumer, Message<V> record, @Nullable Acknowledgement acknowledgement) {
 		org.springframework.messaging.Message<?> message = null;

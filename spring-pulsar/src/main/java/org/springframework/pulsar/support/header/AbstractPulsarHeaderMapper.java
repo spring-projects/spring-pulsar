@@ -25,9 +25,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.apache.pulsar.client.api.Message;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.pulsar.support.PulsarHeaders;
 import org.springframework.pulsar.support.header.PulsarHeaderMatcher.NeverMatch;
@@ -134,19 +134,18 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 	 * @param springHeaders the Spring Messaging headers that are being converted
 	 * @return optional context to pass through the mapping invocation
 	 */
-	@Nullable
-	protected ToPulsarHeadersContextType toPulsarHeadersOnStarted(MessageHeaders springHeaders) {
+	@Nullable protected ToPulsarHeadersContextType toPulsarHeadersOnStarted(MessageHeaders springHeaders) {
 		return null;
 	}
 
 	/**
 	 * Determine the Pulsar header value to use for a Spring Messaging header.
 	 * @param name the Spring Messaging header name
-	 * @param value the Spring Messaging header value
+	 * @param value the Spring Messaging header value, possibly null
 	 * @param context the optional context used for the mapping invocation
 	 * @return the Pulsar header value to use
 	 */
-	protected abstract String toPulsarHeaderValue(String name, Object value,
+	protected abstract @Nullable String toPulsarHeaderValue(String name, @Nullable Object value,
 			@Nullable ToPulsarHeadersContextType context);
 
 	/**
@@ -212,8 +211,7 @@ public abstract class AbstractPulsarHeaderMapper<ToPulsarHeadersContextType, ToS
 	 * @param pulsarMessage the Pulsar message whose headers are being mapped
 	 * @return optional context to pass through the mapping invocation
 	 */
-	@Nullable
-	protected ToSpringHeadersContextType toSpringHeadersOnStarted(Message<?> pulsarMessage) {
+	@Nullable protected ToSpringHeadersContextType toSpringHeadersOnStarted(Message<?> pulsarMessage) {
 		return null;
 	}
 
