@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import com.example.SpringPulsarBinderSampleApp.Bar;
 import com.example.SpringPulsarBinderSampleApp.Foo;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -35,6 +36,7 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled("Remove once spring-cloud/spring-cloud-stream/issues/3134 is fixed")
 @SpringBootTest
 @ExtendWith(OutputCaptureExtension.class)
 class SpringPulsarBinderSampleAppTests implements PulsarTestContainerSupport {
