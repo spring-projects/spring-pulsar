@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener;
 
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.RedeliveryBackoff;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 
@@ -36,14 +37,14 @@ public sealed interface PulsarMessageListenerContainer extends MessageListenerCo
 		throw new UnsupportedOperationException("This container doesn't support retrieving its properties");
 	}
 
-	void setNegativeAckRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff);
+	void setNegativeAckRedeliveryBackoff(@Nullable RedeliveryBackoff redeliveryBackoff);
 
-	void setAckTimeoutRedeliveryBackoff(RedeliveryBackoff redeliveryBackoff);
+	void setAckTimeoutRedeliveryBackoff(@Nullable RedeliveryBackoff redeliveryBackoff);
 
-	void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy);
+	void setDeadLetterPolicy(@Nullable DeadLetterPolicy deadLetterPolicy);
 
 	@SuppressWarnings("rawtypes")
-	void setPulsarConsumerErrorHandler(PulsarConsumerErrorHandler pulsarConsumerErrorHandler);
+	void setPulsarConsumerErrorHandler(@Nullable PulsarConsumerErrorHandler pulsarConsumerErrorHandler);
 
 	/**
 	 * Pause this container before the next poll(). The next poll by the container will be
@@ -64,6 +65,6 @@ public sealed interface PulsarMessageListenerContainer extends MessageListenerCo
 	 * Set a consumer customizer on this container.
 	 * @param consumerBuilderCustomizer {@link ConsumerBuilderCustomizer}
 	 */
-	void setConsumerCustomizer(ConsumerBuilderCustomizer<?> consumerBuilderCustomizer);
+	void setConsumerCustomizer(@Nullable ConsumerBuilderCustomizer<?> consumerBuilderCustomizer);
 
 }

@@ -16,6 +16,8 @@
 
 package org.springframework.pulsar.annotation;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
@@ -28,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
@@ -50,7 +54,6 @@ import org.springframework.core.convert.converter.ConditionalGenericConverter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.format.support.DefaultFormattingConversionService;
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.GenericMessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
@@ -74,13 +77,13 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 	private static final String RIGHT_FOR_LEFT = "] for [";
 
-	protected BeanFactory beanFactory;
+	protected @Nullable BeanFactory beanFactory;
 
-	protected ApplicationContext applicationContext;
+	protected @Nullable ApplicationContext applicationContext;
 
-	protected BeanExpressionResolver resolver;
+	protected @Nullable BeanExpressionResolver resolver;
 
-	protected BeanExpressionContext expressionContext;
+	protected @Nullable BeanExpressionContext expressionContext;
 
 	protected final ListenerScope listenerScope = new ListenerScope();
 
@@ -97,6 +100,11 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		Assert.state(this.beanFactory != null, "BeanFactory must be set to obtain container factory by bean name");
 	}
 
+	protected BeanFactory requireNonNullBeanFactory() {
+		Assert.notNull(this.beanFactory, "beanFactory must not be null");
+		return this.beanFactory;
+	}
+
 	public void setBeanFactory(BeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
 		if (beanFactory instanceof ConfigurableListableBeanFactory) {
@@ -106,7 +114,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		}
 	}
 
-	protected String noBeanFoundMessage(Object target, String listenerBeanName, String requestedBeanName,
+	protected String noBeanFoundMessage(@Nullable Object target, String listenerBeanName, String requestedBeanName,
 			Class<?> expectedClass) {
 
 		return "Could not register Pulsar listener endpoint on [" + target + "] for bean " + listenerBeanName + ", no '"
@@ -114,7 +122,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 				+ "' was found in the application context";
 	}
 
-	protected Boolean resolveExpressionAsBoolean(String value, String attribute) {
+	protected @Nullable Boolean resolveExpressionAsBoolean(String value, String attribute) {
 		Object resolved = resolveExpression(value);
 		Boolean result = null;
 		if (resolved instanceof Boolean) {
@@ -131,18 +139,19 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		return result;
 	}
 
-	protected Object resolveExpression(String value) {
-		return this.resolver.evaluate(resolve(value), this.expressionContext);
+	protected @Nullable Object resolveExpression(String value) {
+		return requireNonNull(this.resolver, "resolver must be set prior to calling resolveExpression")
+			.evaluate(resolve(value), requireNonNull(this.expressionContext, "expressionContext must not be null"));
 	}
 
-	protected String resolve(String value) {
+	protected @Nullable String resolve(String value) {
 		if (this.beanFactory != null && this.beanFactory instanceof ConfigurableBeanFactory) {
 			return ((ConfigurableBeanFactory) this.beanFactory).resolveEmbeddedValue(value);
 		}
 		return value;
 	}
 
-	protected String resolveExpressionAsString(String value, String attribute) {
+	protected @Nullable String resolveExpressionAsString(String value, String attribute) {
 		Object resolved = resolveExpression(value);
 		if (resolved instanceof String) {
 			return (String) resolved;
@@ -239,6 +248,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		}
 	}
 
+	@SuppressWarnings("NullAway")
 	protected Integer resolveExpressionAsInteger(String value, String attribute) {
 		Object resolved = resolveExpression(value);
 		Integer result = null;
@@ -270,11 +280,11 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 		@Override
 		public Object get(String name, ObjectFactory<?> objectFactory) {
-			return this.listeners.get(name);
+			return requireNonNull(this.listeners.get(name), "Unable to get or create object with name " + name);
 		}
 
 		@Override
-		public Object remove(String name) {
+		public @Nullable Object remove(String name) {
 			return null;
 		}
 
@@ -283,13 +293,8 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		}
 
 		@Override
-		public Object resolveContextualObject(String key) {
+		public @Nullable Object resolveContextualObject(String key) {
 			return this.listeners.get(key);
-		}
-
-		@Override
-		public String getConversationId() {
-			return null;
 		}
 
 	}
@@ -298,7 +303,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 		protected final DefaultFormattingConversionService defaultFormattingConversionService = new DefaultFormattingConversionService();
 
-		private MessageHandlerMethodFactory handlerMethodFactory;
+		private @Nullable MessageHandlerMethodFactory handlerMethodFactory;
 
 		public void setHandlerMethodFactory(MessageHandlerMethodFactory pulsarHandlerMethodFactory1) {
 			this.handlerMethodFactory = pulsarHandlerMethodFactory1;
@@ -318,7 +323,8 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 
 		private MessageHandlerMethodFactory createDefaultMessageHandlerMethodFactory() {
 			DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
-			defaultFactory.setBeanFactory(AbstractPulsarAnnotationsBeanPostProcessor.this.beanFactory);
+
+			defaultFactory.setBeanFactory(AbstractPulsarAnnotationsBeanPostProcessor.this.requireNonNullBeanFactory());
 			this.defaultFormattingConversionService
 				.addConverter(new BytesToStringConverter(AbstractPulsarAnnotationsBeanPostProcessor.this.charset));
 			this.defaultFormattingConversionService.addConverter(new BytesToNumberConverter());
@@ -359,8 +365,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		}
 
 		@Override
-		@Nullable
-		public Set<ConvertiblePair> getConvertibleTypes() {
+		@Nullable public Set<ConvertiblePair> getConvertibleTypes() {
 			HashSet<ConvertiblePair> pairs = new HashSet<>();
 			pairs.add(new ConvertiblePair(byte[].class, long.class));
 			pairs.add(new ConvertiblePair(byte[].class, int.class));
@@ -374,15 +379,17 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		}
 
 		@Override
-		@Nullable
-		public Object convert(@Nullable Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+		@Nullable public Object convert(@Nullable Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+			if (source == null) {
+				return null;
+			}
 			byte[] bytes = (byte[]) source;
 			if (targetType.getType().equals(long.class) || targetType.getType().equals(Long.class)) {
-				Assert.state(bytes.length >= 8, "At least 8 bytes needed to convert a byte[] to a long"); // NOSONAR
+				Assert.state(bytes.length >= 8, "At least 8 bytes needed to convert a byte[] to a long");
 				return ByteBuffer.wrap(bytes).getLong();
 			}
 			else if (targetType.getType().equals(int.class) || targetType.getType().equals(Integer.class)) {
-				Assert.state(bytes.length >= 4, "At least 4 bytes needed to convert a byte[] to an integer"); // NOSONAR
+				Assert.state(bytes.length >= 4, "At least 4 bytes needed to convert a byte[] to an integer");
 				return ByteBuffer.wrap(bytes).getInt();
 			}
 			else if (targetType.getType().equals(short.class) || targetType.getType().equals(Short.class)) {
@@ -400,7 +407,7 @@ public class AbstractPulsarAnnotationsBeanPostProcessor
 		public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
 			if (sourceType.getType().equals(byte[].class)) {
 				Class<?> target = targetType.getType();
-				return target.equals(long.class) || target.equals(int.class) || target.equals(short.class) // NOSONAR
+				return target.equals(long.class) || target.equals(int.class) || target.equals(short.class)
 						|| target.equals(byte.class) || target.equals(Long.class) || target.equals(Integer.class)
 						|| target.equals(Short.class) || target.equals(Byte.class);
 			}

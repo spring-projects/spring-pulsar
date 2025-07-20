@@ -1,9 +1,5 @@
 /**
  * Package containing the Spring for Apache Pulsar framework classes.
  */
-@NonNullApi
-@NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.pulsar;
-
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;

@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.config.BeanExpressionResolver;
@@ -32,7 +34,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.converter.MessageConverter;
@@ -61,7 +62,7 @@ public class DelegatingInvocableHandler {
 
 	private final ConcurrentMap<InvocableHandlerMethod, MethodParameter> payloadMethodParameters = new ConcurrentHashMap<>();
 
-	private final InvocableHandlerMethod defaultHandler;
+	private final @Nullable InvocableHandlerMethod defaultHandler;
 
 	private final Map<InvocableHandlerMethod, Expression> handlerSendTo = new ConcurrentHashMap<>();
 
@@ -69,13 +70,13 @@ public class DelegatingInvocableHandler {
 
 	private final Object bean;
 
-	private final BeanExpressionResolver resolver;
+	private final @Nullable BeanExpressionResolver resolver;
 
-	private final BeanExpressionContext beanExpressionContext;
+	private final @Nullable BeanExpressionContext beanExpressionContext;
 
-	private final ConfigurableListableBeanFactory beanFactory;
+	private final @Nullable ConfigurableListableBeanFactory beanFactory;
 
-	private final PayloadValidator validator;
+	private final @Nullable PayloadValidator validator;
 
 	public DelegatingInvocableHandler(List<InvocableHandlerMethod> handlers,
 			@Nullable InvocableHandlerMethod defaultHandler, Object bean,
@@ -95,8 +96,7 @@ public class DelegatingInvocableHandler {
 		this.validator = validator == null ? null : new PayloadValidator(validator);
 	}
 
-	@Nullable
-	private InvocableHandlerMethod wrapIfNecessary(@Nullable InvocableHandlerMethod handler) {
+	private @Nullable InvocableHandlerMethod wrapIfNecessary(@Nullable InvocableHandlerMethod handler) {
 		if (handler == null) {
 			return null;
 		}
@@ -126,6 +126,7 @@ public class DelegatingInvocableHandler {
 	 * @throws Exception raised if no suitable argument resolver can be found, or the
 	 * method raised an exception.
 	 */
+	@SuppressWarnings("NullAway")
 	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { // NOSONAR
 		Class<? extends Object> payloadClass = message.getPayload().getClass();
 		InvocableHandlerMethod handler = getHandlerForPayload(payloadClass);
@@ -167,8 +168,7 @@ public class DelegatingInvocableHandler {
 		return handler;
 	}
 
-	@Nullable
-	protected InvocableHandlerMethod findHandlerForPayload(Class<? extends Object> payloadClass) {
+	@Nullable protected InvocableHandlerMethod findHandlerForPayload(Class<? extends Object> payloadClass) {
 		InvocableHandlerMethod result = null;
 		for (InvocableHandlerMethod handler : this.handlers) {
 			if (matchHandlerMethod(payloadClass, handler)) {
@@ -211,7 +211,7 @@ public class DelegatingInvocableHandler {
 		return foundCandidate != null;
 	}
 
-	private MethodParameter findCandidate(Class<? extends Object> payloadClass, Method method,
+	private @Nullable MethodParameter findCandidate(Class<? extends Object> payloadClass, Method method,
 			Annotation[][] parameterAnnotations) {
 		MethodParameter foundCandidate = null;
 		for (int i = 0; i < parameterAnnotations.length; i++) {
@@ -261,14 +261,12 @@ public class DelegatingInvocableHandler {
 			super(new MessageConverter() { // Required but never used
 
 				@Override
-				@Nullable
-				public Message<?> toMessage(Object payload, @Nullable MessageHeaders headers) {
+				@Nullable public Message<?> toMessage(Object payload, @Nullable MessageHeaders headers) {
 					return null;
 				}
 
 				@Override
-				@Nullable
-				public Object fromMessage(Message<?> message, Class<?> targetClass) {
+				@Nullable public Object fromMessage(Message<?> message, Class<?> targetClass) {
 					return null;
 				}
 

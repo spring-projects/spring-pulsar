@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -33,7 +34,6 @@ import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.BeanResolver;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.listener.adapter.AbstractPulsarMessageToSpringMessageAdapter;
 import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 import org.springframework.pulsar.support.MessageConverter;
@@ -48,25 +48,25 @@ import org.springframework.util.Assert;
 public abstract class AbstractPulsarReaderEndpoint<K>
 		implements PulsarReaderEndpoint<PulsarMessageReaderContainer>, BeanFactoryAware, InitializingBean {
 
-	private String subscriptionName;
+	private @Nullable String subscriptionName;
 
-	private SchemaType schemaType;
+	private SchemaType schemaType = SchemaType.NONE;
 
-	private String id;
+	private @Nullable String id;
 
 	private final List<String> topics = new ArrayList<>();
 
-	private MessageId startMessageId;
+	private @Nullable MessageId startMessageId;
 
-	private BeanFactory beanFactory;
+	private @Nullable BeanFactory beanFactory;
 
-	private BeanExpressionResolver resolver;
+	private @Nullable BeanExpressionResolver resolver;
 
-	private BeanExpressionContext expressionContext;
+	private @Nullable BeanExpressionContext expressionContext;
 
-	private BeanResolver beanResolver;
+	private @Nullable BeanResolver beanResolver;
 
-	private Boolean autoStartup;
+	private @Nullable Boolean autoStartup;
 
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -78,8 +78,7 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 		this.beanResolver = new BeanFactoryResolver(beanFactory);
 	}
 
-	@Nullable
-	protected BeanFactory getBeanFactory() {
+	protected @Nullable BeanFactory getBeanFactory() {
 		return this.beanFactory;
 	}
 
@@ -90,18 +89,15 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 		}
 	}
 
-	@Nullable
-	protected BeanExpressionResolver getResolver() {
+	protected @Nullable BeanExpressionResolver getResolver() {
 		return this.resolver;
 	}
 
-	@Nullable
-	protected BeanExpressionContext getBeanExpressionContext() {
+	protected @Nullable BeanExpressionContext getBeanExpressionContext() {
 		return this.expressionContext;
 	}
 
-	@Nullable
-	protected BeanResolver getBeanResolver() {
+	protected @Nullable BeanResolver getBeanResolver() {
 		return this.beanResolver;
 	}
 
@@ -114,7 +110,7 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 	}
 
 	@Override
-	public String getId() {
+	public @Nullable String getId() {
 		return this.id;
 	}
 
@@ -130,12 +126,11 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 	}
 
 	@Override
-	@Nullable
-	public Boolean getAutoStartup() {
+	public @Nullable Boolean getAutoStartup() {
 		return this.autoStartup;
 	}
 
-	public void setAutoStartup(Boolean autoStartup) {
+	public void setAutoStartup(@Nullable Boolean autoStartup) {
 		this.autoStartup = autoStartup;
 	}
 
@@ -167,11 +162,11 @@ public abstract class AbstractPulsarReaderEndpoint<K>
 		this.schemaType = schemaType;
 	}
 
-	public MessageId getStartMessageId() {
+	public @Nullable MessageId getStartMessageId() {
 		return this.startMessageId;
 	}
 
-	public void setStartMessageId(MessageId startMessageId) {
+	public void setStartMessageId(@Nullable MessageId startMessageId) {
 		this.startMessageId = startMessageId;
 	}
 

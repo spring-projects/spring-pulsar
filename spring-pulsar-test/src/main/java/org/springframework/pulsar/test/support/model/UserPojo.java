@@ -27,6 +27,7 @@ import java.util.Objects;
  * @deprecated this class is replaced with Gradle test fixtures and is only meant to be
  * used internally.
  */
+@SuppressWarnings("NullAway")
 @Deprecated(since = "1.2.0", forRemoval = true)
 public class UserPojo {
 

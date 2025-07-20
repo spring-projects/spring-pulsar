@@ -39,11 +39,11 @@ import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.annotation.PulsarMessage;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -102,10 +102,9 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 
 	private boolean usePulsarMessageAnnotations = true;
 
-	private ObjectMapper objectMapper;
+	private @Nullable ObjectMapper objectMapper;
 
-	@Nullable
-	private ClassLoader classLoader;
+	private @Nullable ClassLoader classLoader;
 
 	public void setObjectMapper(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
@@ -127,8 +126,7 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 	 * @return the previously mapped schema or {@code null} if there was no mapping for
 	 * {@code messageType}.
 	 */
-	@Nullable
-	public Schema<?> addCustomSchemaMapping(Class<?> messageType, Schema<?> schema) {
+	@Nullable public Schema<?> addCustomSchemaMapping(Class<?> messageType, Schema<?> schema) {
 		return this.customSchemaMappings.put(this.toMessageTypeMapKey(messageType), schema);
 	}
 
@@ -138,8 +136,7 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 	 * @return the previously mapped schema or {@code null} if there was no mapping for
 	 * {@code messageType}.
 	 */
-	@Nullable
-	public Schema<?> removeCustomMapping(Class<?> messageType) {
+	@Nullable public Schema<?> removeCustomMapping(Class<?> messageType) {
 		return this.customSchemaMappings.remove(this.toMessageTypeMapKey(messageType));
 	}
 
@@ -179,8 +176,7 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 		return Resolved.of(castToType(schema));
 	}
 
-	@Nullable
-	protected Schema<?> getCustomSchemaOrMaybeDefault(@Nullable Class<?> messageClass, boolean returnDefault) {
+	@Nullable protected Schema<?> getCustomSchemaOrMaybeDefault(Class<?> messageClass, boolean returnDefault) {
 		// Check for custom schema mapping
 		var schema = this.getCustomSchemaMapping(messageClass).orElse(null);
 
@@ -207,6 +203,7 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 		return schema;
 	}
 
+	@Nullable
 	// VisibleForTesting
 	Schema<?> getAnnotatedSchemaType(Class<?> messageClass) {
 		PulsarMessage annotation = this.pulsarMessageAnnotationRegistry.getAnnotationFor(messageClass).orElse(null);
@@ -252,17 +249,16 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 				case LOCAL_DATE -> Schema.LOCAL_DATE;
 				case LOCAL_TIME -> Schema.LOCAL_TIME;
 				case LOCAL_DATE_TIME -> Schema.LOCAL_DATE_TIME;
-				case JSON -> jsonSchemaForMessageType(requireNonNullMessageType(schemaType, messageType));
-				case AVRO -> AvroSchema.of(requireNonNullMessageType(schemaType, messageType));
+				case JSON -> jsonSchemaForMessageType(requireNonNullMessageClass(schemaType, messageType));
+				case AVRO -> AvroSchema.of(requireNonNullMessageClass(schemaType, messageType));
 				case PROTOBUF -> {
 					// WARN! Leave GeneratedMessageV3 fully-qualified as the dependency is
 					// optional
-					Class<?> messageClass = requireNonNullMessageType(schemaType, messageType);
+					Class<?> messageClass = requireNonNullMessageClass(schemaType, messageType);
 					yield ProtobufSchema.of((Class<? extends com.google.protobuf.GeneratedMessageV3>) messageClass);
 				}
 				case KEY_VALUE -> {
-					requireNonNullMessageType(schemaType, messageType);
-					yield getMessageKeyValueSchema(messageType);
+					yield getMessageKeyValueSchema(requireNonNullMessageType(schemaType, messageType));
 				}
 				case AUTO_CONSUME -> Schema.AUTO_CONSUME();
 				case NONE -> {
@@ -276,6 +272,7 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 				}
 				default -> throw new IllegalArgumentException("Unsupported schema type: " + schemaType.name());
 			};
+			Assert.notNull(schema, "Unable to resolve schema type: " + schemaType.name());
 			return Resolved.of(castToType(schema));
 		}
 		catch (RuntimeException e) {
@@ -290,10 +287,14 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 		return JSONSchema.of(messageType);
 	}
 
-	@Nullable
-	private Class<?> requireNonNullMessageType(SchemaType schemaType, @Nullable ResolvableType messageType) {
-		return Objects.requireNonNull(messageType, "messageType must be specified for " + schemaType.name())
-			.getRawClass();
+	private Class<?> requireNonNullMessageClass(SchemaType schemaType, @Nullable ResolvableType messageType) {
+		var nonNullMessageType = requireNonNullMessageType(schemaType, messageType);
+		return Objects.requireNonNull(nonNullMessageType.getRawClass(),
+				"Unable to determine raw class for " + nonNullMessageType);
+	}
+
+	private ResolvableType requireNonNullMessageType(SchemaType schemaType, @Nullable ResolvableType messageType) {
+		return Objects.requireNonNull(messageType, "messageType must be specified for " + schemaType.name());
 	}
 
 	private Schema<?> getMessageKeyValueSchema(ResolvableType messageType) {

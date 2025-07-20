@@ -17,6 +17,7 @@
 package org.springframework.pulsar.config;
 
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -48,17 +49,17 @@ public abstract class AbstractPulsarListenerContainerFactory<C extends AbstractP
 
 	private final PulsarContainerProperties containerProperties;
 
-	private Boolean autoStartup;
+	private @Nullable Boolean autoStartup;
 
-	private Integer phase;
+	private @Nullable Integer phase;
 
-	private MessageConverter messageConverter;
+	private @Nullable MessageConverter messageConverter;
 
-	private Boolean batchListener;
+	private @Nullable Boolean batchListener;
 
-	private ApplicationEventPublisher applicationEventPublisher;
+	private @Nullable ApplicationEventPublisher applicationEventPublisher;
 
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
 	protected AbstractPulsarListenerContainerFactory(PulsarConsumerFactory<? super T> consumerFactory,
 			PulsarContainerProperties containerProperties) {

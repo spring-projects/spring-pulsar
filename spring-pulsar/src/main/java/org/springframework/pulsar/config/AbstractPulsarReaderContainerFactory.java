@@ -17,6 +17,7 @@
 package org.springframework.pulsar.config;
 
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -47,15 +48,15 @@ public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPul
 
 	private final PulsarReaderContainerProperties containerProperties;
 
-	private Boolean autoStartup;
+	private @Nullable Boolean autoStartup;
 
-	private Integer phase;
+	private @Nullable Integer phase;
 
-	private MessageConverter messageConverter;
+	private @Nullable MessageConverter messageConverter;
 
-	private ApplicationEventPublisher applicationEventPublisher;
+	private @Nullable ApplicationEventPublisher applicationEventPublisher;
 
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
 	protected AbstractPulsarReaderContainerFactory(PulsarReaderFactory<? super T> readerFactory,
 			PulsarReaderContainerProperties containerProperties) {
@@ -118,6 +119,7 @@ public abstract class AbstractPulsarReaderContainerFactory<C extends AbstractPul
 
 	}
 
+	@SuppressWarnings("NullAway")
 	protected void initializeContainer(C instance, PulsarReaderEndpoint<PulsarMessageReaderContainer> endpoint) {
 		PulsarReaderContainerProperties instanceProperties = instance.getContainerProperties();
 

@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,6 +30,8 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.ReaderListener;
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -42,6 +43,7 @@ import org.springframework.pulsar.event.ReaderFailedToStartEvent;
 import org.springframework.pulsar.event.ReaderStartedEvent;
 import org.springframework.pulsar.event.ReaderStartingEvent;
 import org.springframework.scheduling.SchedulingAwareRunnable;
+import org.springframework.util.Assert;
 
 /**
  * Default implementation for the Pulsar reader container.
@@ -55,9 +57,7 @@ import org.springframework.scheduling.SchedulingAwareRunnable;
  */
 public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessageReaderContainer<T> {
 
-	private final AtomicReference<InternalAsyncReader> internalAsyncReader = new AtomicReference<>();
-
-	private volatile CompletableFuture<?> readerFuture;
+	private final AtomicReference<@NonNull InternalAsyncReader> internalAsyncReader = new AtomicReference<>();
 
 	private final AbstractPulsarMessageReaderContainer<?> thisOrParentContainer;
 
@@ -71,6 +71,9 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 		this.thisOrParentContainer = this;
 	}
 
+	// We know delegate.get() cannot be null but NullAway does not.
+	// see https://github.com/uber/NullAway/issues/681
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void doStart() {
 		var containerProperties = getContainerProperties();
@@ -98,12 +101,12 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 
 		if (this.internalAsyncReader.get() != null) {
 			this.logger.debug(() -> "Successfully created completable - submitting to executor");
-			this.readerFuture = readerExecutor.submitCompletable(this.internalAsyncReader.get());
+			readerExecutor.submitCompletable(this.internalAsyncReader.get());
 			waitForStartup(containerProperties.getReaderStartTimeout());
 		}
 		else if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
 			this.logger.info(() -> "Configured to retry on startup failures - retrying asynchronously");
-			this.readerFuture = readerExecutor.submitCompletable(() -> {
+			readerExecutor.submitCompletable(() -> {
 				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
 					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
 				this.internalAsyncReader.set(retryTemplate.<InternalAsyncReader, PulsarException>execute(
@@ -182,7 +185,7 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 
 		private Reader<T> reader;
 
-		private final ReaderBuilderCustomizer<T> readerBuilderCustomizer;
+		private @Nullable final ReaderBuilderCustomizer<T> readerBuilderCustomizer;
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		InternalAsyncReader(ReaderListener<T> readerListener,
@@ -192,9 +195,10 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 			this.readerBuilderCustomizer = getReaderBuilderCustomizer();
 			List<ReaderBuilderCustomizer<T>> customizers = this.readerBuilderCustomizer != null
 					? List.of(this.readerBuilderCustomizer) : Collections.emptyList();
+			Schema schema = readerContainerProperties.getSchema();
+			Assert.notNull(schema, () -> "schema must be non-null (set readerContainerProperties.schema)");
 			this.reader = getPulsarReaderFactory().createReader(readerContainerProperties.getTopics(),
-					readerContainerProperties.getStartMessageId(), (Schema) readerContainerProperties.getSchema(),
-					customizers);
+					readerContainerProperties.getStartMessageId(), schema, customizers);
 		}
 
 		@Override

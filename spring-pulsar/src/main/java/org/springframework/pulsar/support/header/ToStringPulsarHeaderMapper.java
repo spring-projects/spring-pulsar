@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A {@link PulsarHeaderMapper} that converts header values using simple 'toString'.
  *
@@ -47,12 +49,12 @@ public class ToStringPulsarHeaderMapper extends AbstractPulsarHeaderMapper<Objec
 	}
 
 	@Override
-	protected String toPulsarHeaderValue(String name, Object value, Object context) {
+	protected @Nullable String toPulsarHeaderValue(String name, @Nullable Object value, @Nullable Object context) {
 		return Objects.toString(value, null);
 	}
 
 	@Override
-	protected Object toSpringHeaderValue(String headerName, String rawHeader, Object context) {
+	protected Object toSpringHeaderValue(String headerName, String rawHeader, @Nullable Object context) {
 		return rawHeader;
 	}
 

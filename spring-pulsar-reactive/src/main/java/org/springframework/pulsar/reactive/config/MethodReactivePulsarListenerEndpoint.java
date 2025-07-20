@@ -20,18 +20,17 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
@@ -68,25 +67,30 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
-	private Object bean;
+	private @Nullable Object bean;
 
-	private Method method;
+	private @Nullable Method method;
 
-	private ObjectMapper objectMapper;
+	private @Nullable ObjectMapper objectMapper;
 
-	private MessageHandlerMethodFactory messageHandlerMethodFactory;
+	private @Nullable MessageHandlerMethodFactory messageHandlerMethodFactory;
 
-	private SmartMessageConverter messagingConverter;
+	private @Nullable SmartMessageConverter messagingConverter;
 
-	private ReactiveMessageConsumerBuilderCustomizer<V> consumerCustomizer;
+	private @Nullable ReactiveMessageConsumerBuilderCustomizer<V> consumerCustomizer;
 
-	private DeadLetterPolicy deadLetterPolicy;
+	private @Nullable DeadLetterPolicy deadLetterPolicy;
 
 	public void setBean(Object bean) {
 		this.bean = bean;
 	}
 
-	public Object getBean() {
+	public @Nullable Object getBean() {
+		return this.bean;
+	}
+
+	protected Object requireNonNullBean() {
+		Assert.notNull(this.bean, "Bean must not be null");
 		return this.bean;
 	}
 
@@ -98,46 +102,45 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		this.method = method;
 	}
 
-	public Method getMethod() {
+	public @Nullable Method getMethod() {
 		return this.method;
 	}
 
-	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory messageHandlerMethodFactory) {
+	protected Method requireNonNullMethod() {
+		Assert.notNull(this.method, "Method must not be null");
+		return this.method;
+	}
+
+	public void setMessageHandlerMethodFactory(@Nullable MessageHandlerMethodFactory messageHandlerMethodFactory) {
 		this.messageHandlerMethodFactory = messageHandlerMethodFactory;
+	}
+
+	protected MessageHandlerMethodFactory requireNonNullMessageHandlerMethodFactory() {
+		Assert.notNull(this.messageHandlerMethodFactory, "The messageHandlerMethodFactory must not be null");
+		return this.messageHandlerMethodFactory;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected AbstractPulsarMessageToSpringMessageAdapter<V> createMessageHandler(
 			ReactivePulsarMessageListenerContainer<V> container, @Nullable MessageConverter messageConverter) {
-		Assert.state(this.messageHandlerMethodFactory != null,
-				"Could not create message listener - MessageHandlerMethodFactory not set");
+		var messageHandlerMethodFactory = requireNonNullMessageHandlerMethodFactory();
 		AbstractPulsarMessageToSpringMessageAdapter<V> messageListener = createMessageListenerInstance(
 				messageConverter);
-		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener);
+		HandlerAdapter handlerMethod = configureListenerAdapter(messageListener, messageHandlerMethodFactory);
 		messageListener.setHandlerMethod(handlerMethod);
 
-		// Since we have access to the handler method here, check if we can type infer the
-		// Schema used.
-
-		// TODO: filter out the payload type by excluding Consumer, Message, Messages etc.
-
-		MethodParameter[] methodParameters = handlerMethod.getInvokerHandlerMethod().getMethodParameters();
-		MethodParameter messageParameter = null;
-		Optional<MethodParameter> parameter = Arrays.stream(methodParameters)
-			.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-					|| !methodParameter1.getParameterType().equals(Acknowledgement.class)
-					|| !methodParameter1.hasParameterAnnotation(Header.class))
-			.findFirst();
-		long count = Arrays.stream(methodParameters)
-			.filter(methodParameter1 -> !methodParameter1.getParameterType().equals(Consumer.class)
-					&& !methodParameter1.getParameterType().equals(Acknowledgement.class)
-					&& !methodParameter1.hasParameterAnnotation(Header.class))
-			.count();
-		Assert.isTrue(count == 1, "More than 1 expected payload types found");
-		if (parameter.isPresent()) {
-			messageParameter = parameter.get();
-		}
+		// Determine the single payload param to use
+		var methodParameters = handlerMethod.requireNonNullInvokerHandlerMethod().getMethodParameters();
+		var allPayloadParams = Arrays.stream(methodParameters)
+			.filter(param -> !param.getParameterType().equals(Consumer.class)
+					&& !param.getParameterType().equals(Acknowledgement.class)
+					&& !param.hasParameterAnnotation(Header.class))
+			.toList();
+		Assert.isTrue(allPayloadParams.size() == 1, "Expected 1 payload types but found " + allPayloadParams);
+		var messageParameter = allPayloadParams.stream()
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("Unable to determine message parameter"));
 
 		DefaultReactivePulsarMessageListenerContainer<Object> containerInstance = (DefaultReactivePulsarMessageListenerContainer<Object>) container;
 		ReactivePulsarContainerProperties<Object> pulsarContainerProperties = containerInstance
@@ -203,9 +206,10 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 				|| rawClass.isAssignableFrom(org.springframework.messaging.Message.class);
 	}
 
-	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener) {
-		InvocableHandlerMethod invocableHandlerMethod = this.messageHandlerMethodFactory
-			.createInvocableHandlerMethod(getBean(), getMethod());
+	protected HandlerAdapter configureListenerAdapter(AbstractPulsarMessageToSpringMessageAdapter<V> messageListener,
+			MessageHandlerMethodFactory messageHandlerMethodFactory) {
+		InvocableHandlerMethod invocableHandlerMethod = messageHandlerMethodFactory
+			.createInvocableHandlerMethod(requireNonNullBean(), requireNonNullMethod());
 		return new HandlerAdapter(invocableHandlerMethod);
 	}
 
@@ -214,10 +218,12 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 			@Nullable MessageConverter messageConverter) {
 		AbstractPulsarMessageToSpringMessageAdapter<V> listener;
 		if (isFluxListener()) {
-			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(this.bean, this.method);
+			listener = new PulsarReactiveStreamingMessagingMessageListenerAdapter<>(requireNonNullBean(),
+					requireNonNullMethod());
 		}
 		else {
-			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(this.bean, this.method);
+			listener = new PulsarReactiveOneByOneMessagingMessageListenerAdapter<>(requireNonNullBean(),
+					requireNonNullMethod());
 		}
 		if (messageConverter instanceof PulsarMessageConverter pulsarMessageConverter) {
 			listener.setMessageConverter(pulsarMessageConverter);
@@ -235,23 +241,23 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		return listener;
 	}
 
-	public void setObjectMapper(ObjectMapper objectMapper) {
+	public void setObjectMapper(@Nullable ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 
-	public void setMessagingConverter(SmartMessageConverter messagingConverter) {
+	public void setMessagingConverter(@Nullable SmartMessageConverter messagingConverter) {
 		this.messagingConverter = messagingConverter;
 	}
 
-	public void setDeadLetterPolicy(DeadLetterPolicy deadLetterPolicy) {
+	public void setDeadLetterPolicy(@Nullable DeadLetterPolicy deadLetterPolicy) {
 		this.deadLetterPolicy = deadLetterPolicy;
 	}
 
-	public ReactiveMessageConsumerBuilderCustomizer<V> getConsumerCustomizer() {
+	public @Nullable ReactiveMessageConsumerBuilderCustomizer<V> getConsumerCustomizer() {
 		return this.consumerCustomizer;
 	}
 
-	public void setConsumerCustomizer(ReactiveMessageConsumerBuilderCustomizer<V> consumerCustomizer) {
+	public void setConsumerCustomizer(@Nullable ReactiveMessageConsumerBuilderCustomizer<V> consumerCustomizer) {
 		this.consumerCustomizer = consumerCustomizer;
 	}
 

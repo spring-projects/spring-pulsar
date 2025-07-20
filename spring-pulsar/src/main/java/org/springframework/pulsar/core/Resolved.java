@@ -22,7 +22,7 @@ import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A resolved value or an exception if it could not be resolved.
@@ -34,11 +34,9 @@ import org.springframework.lang.Nullable;
  */
 public final class Resolved<T> {
 
-	@Nullable
-	private final T value;
+	private @Nullable final T value;
 
-	@Nullable
-	private final RuntimeException exception;
+	private @Nullable final RuntimeException exception;
 
 	private Resolved(@Nullable T value, @Nullable RuntimeException exception) {
 		this.value = value;
@@ -135,7 +133,7 @@ public final class Resolved<T> {
 	 * @return the resolved value if a value was resolved and no exception occurred
 	 * @throws RuntimeException if an exception occurred during resolution
 	 */
-	public T orElseThrow() {
+	public @Nullable T orElseThrow() {
 		if (this.value == null && this.exception != null) {
 			throw this.exception;
 		}
@@ -151,7 +149,7 @@ public final class Resolved<T> {
 	 * @throws RuntimeException wrapping the resolution exception if an exception occurred
 	 * during resolution
 	 */
-	public T orElseThrow(Supplier<String> wrappingErrorMessage) {
+	public @Nullable T orElseThrow(Supplier<String> wrappingErrorMessage) {
 		if (this.value == null && this.exception != null) {
 			throw new RuntimeException(wrappingErrorMessage.get(), this.exception);
 		}

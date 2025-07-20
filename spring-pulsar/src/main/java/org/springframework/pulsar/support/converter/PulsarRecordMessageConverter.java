@@ -20,6 +20,7 @@ import java.lang.reflect.Type;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Reader;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.SmartMessageConverter;
@@ -40,7 +41,7 @@ public class PulsarRecordMessageConverter<V> implements PulsarMessageConverter<V
 
 	private final PulsarHeaderMapper headerMapper;
 
-	private SmartMessageConverter messagingConverter;
+	private @Nullable SmartMessageConverter messagingConverter;
 
 	public PulsarRecordMessageConverter(PulsarHeaderMapper headerMapper) {
 		this.headerMapper = headerMapper;
@@ -57,7 +58,7 @@ public class PulsarRecordMessageConverter<V> implements PulsarMessageConverter<V
 		return MessageBuilder.createMessage(extractAndConvertValue(record), this.headerMapper.toSpringHeaders(record));
 	}
 
-	protected org.springframework.messaging.converter.MessageConverter getMessagingConverter() {
+	protected org.springframework.messaging.converter.@Nullable MessageConverter getMessagingConverter() {
 		return this.messagingConverter;
 	}
 

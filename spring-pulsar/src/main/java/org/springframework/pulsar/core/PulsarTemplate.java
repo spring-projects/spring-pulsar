@@ -32,13 +32,13 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.interceptor.ProducerInterceptor;
 import org.apache.pulsar.client.api.transaction.Transaction;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.log.LogAccessor;
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.observation.DefaultPulsarTemplateObservationConvention;
 import org.springframework.pulsar.observation.PulsarMessageSenderContext;
@@ -73,7 +73,7 @@ public class PulsarTemplate<T>
 
 	private final TopicResolver topicResolver;
 
-	private final List<ProducerBuilderCustomizer<T>> interceptorsCustomizers;
+	private @Nullable final List<ProducerBuilderCustomizer<T>> interceptorsCustomizers;
 
 	private final Map<Thread, Transaction> threadBoundTransactions = new HashMap<>();
 
@@ -87,25 +87,21 @@ public class PulsarTemplate<T>
 	/**
 	 * The registry to record observations with.
 	 */
-	@Nullable
-	private ObservationRegistry observationRegistry;
+	private @Nullable ObservationRegistry observationRegistry;
 
 	/**
 	 * The optional custom observation convention to use when recording observations.
 	 */
-	@Nullable
-	private PulsarTemplateObservationConvention observationConvention;
+	private @Nullable PulsarTemplateObservationConvention observationConvention;
 
-	@Nullable
-	private ApplicationContext applicationContext;
+	private @Nullable ApplicationContext applicationContext;
 
 	private String beanName = "";
 
 	/**
 	 * Logs warning when Lambda is used for producer builder customizer.
 	 */
-	@Nullable
-	private LambdaCustomizerWarnLogger lambdaLogger;
+	private @Nullable LambdaCustomizerWarnLogger lambdaLogger;
 
 	/**
 	 * Transaction settings.
@@ -280,6 +276,7 @@ public class PulsarTemplate<T>
 			@Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 		String defaultTopic = Objects.toString(this.producerFactory.getDefaultTopic(), null);
 		String topicName = this.topicResolver.resolveTopic(topic, message, () -> defaultTopic).orElseThrow();
+		Assert.notNull(topicName, "The resolvedTopic must not be null");
 		this.logger.trace(() -> "Sending msg to '%s' topic".formatted(topicName));
 
 		PulsarMessageSenderContext senderContext = PulsarMessageSenderContext.newContext(topicName, this.beanName);
@@ -328,8 +325,7 @@ public class PulsarTemplate<T>
 				DefaultPulsarTemplateObservationConvention.INSTANCE, () -> senderContext, this.observationRegistry);
 	}
 
-	@Nullable
-	private Transaction getTransaction() {
+	private @Nullable Transaction getTransaction() {
 		if (!this.transactions().isEnabled()) {
 			return null;
 		}
@@ -373,7 +369,8 @@ public class PulsarTemplate<T>
 
 	private Producer<T> prepareProducerForSend(@Nullable String topic, @Nullable T message, @Nullable Schema<T> schema,
 			@Nullable Collection<String> encryptionKeys, @Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
-		Schema<T> resolvedSchema = schema == null ? this.schemaResolver.resolveSchema(message).orElseThrow() : schema;
+		Schema<T> resolvedSchema = (schema != null ? schema : this.schemaResolver.resolveSchema(message).orElseThrow());
+		Assert.notNull(resolvedSchema, "The resolvedSchema must not be null");
 		List<ProducerBuilderCustomizer<T>> customizers = new ArrayList<>();
 		if (!CollectionUtils.isEmpty(this.interceptorsCustomizers)) {
 			customizers.addAll(this.interceptorsCustomizers);
@@ -400,8 +397,7 @@ public class PulsarTemplate<T>
 	 * @return the result
 	 * @since 1.1.0
 	 */
-	@Nullable
-	public <R> R executeInTransaction(TemplateCallback<T, R> callback) {
+	@Nullable public <R> R executeInTransaction(TemplateCallback<T, R> callback) {
 		Assert.notNull(callback, "callback must not be null");
 		Assert.state(this.transactions().isEnabled(), "This template does not support transactions");
 		var currentThread = Thread.currentThread();
@@ -443,23 +439,17 @@ public class PulsarTemplate<T>
 
 		private final PulsarTemplate<T> template;
 
-		@Nullable
-		private final T message;
+		private @Nullable final T message;
 
-		@Nullable
-		private String topic;
+		private @Nullable String topic;
 
-		@Nullable
-		private Schema<T> schema;
+		private @Nullable Schema<T> schema;
 
-		@Nullable
-		private Collection<String> encryptionKeys;
+		private @Nullable Collection<String> encryptionKeys;
 
-		@Nullable
-		private TypedMessageBuilderCustomizer<T> messageCustomizer;
+		private @Nullable TypedMessageBuilderCustomizer<T> messageCustomizer;
 
-		@Nullable
-		private ProducerBuilderCustomizer<T> producerCustomizer;
+		private @Nullable ProducerBuilderCustomizer<T> producerCustomizer;
 
 		SendMessageBuilderImpl(PulsarTemplate<T> template, @Nullable T message) {
 			this.template = template;
@@ -524,8 +514,7 @@ public class PulsarTemplate<T>
 		 * @param template the template
 		 * @return the result of the operations or null if no result needed
 		 */
-		@Nullable
-		R doWithTemplate(PulsarTemplate<T> template);
+		@Nullable R doWithTemplate(PulsarTemplate<T> template);
 
 	}
 

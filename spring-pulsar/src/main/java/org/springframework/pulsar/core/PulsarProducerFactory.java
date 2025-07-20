@@ -23,8 +23,8 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 
 /**
@@ -90,7 +90,6 @@ public interface PulsarProducerFactory<T> {
 	 * @return the default topic to use for all created producers or null if no default
 	 * set
 	 */
-	@Nullable
-	String getDefaultTopic();
+	@Nullable String getDefaultTopic();
 
 }

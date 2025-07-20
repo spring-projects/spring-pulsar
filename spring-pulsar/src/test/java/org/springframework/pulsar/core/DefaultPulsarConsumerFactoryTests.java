@@ -33,13 +33,13 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.PulsarClientException.InvalidConfigurationException;
 import org.apache.pulsar.client.api.Schema;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
@@ -52,8 +52,7 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 
 	private static final Schema<String> SCHEMA = Schema.STRING;
 
-	@Nullable
-	protected PulsarClient pulsarClient;
+	@Nullable protected PulsarClient pulsarClient;
 
 	@BeforeEach
 	void createPulsarClient() throws PulsarClientException {

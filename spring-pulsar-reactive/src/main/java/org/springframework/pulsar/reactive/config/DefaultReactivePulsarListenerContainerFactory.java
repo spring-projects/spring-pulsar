@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionType;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
@@ -50,11 +51,11 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 
 	private final ReactivePulsarContainerProperties<T> containerProperties;
 
-	private Boolean autoStartup;
+	private @Nullable Boolean autoStartup;
 
-	private MessageConverter messageConverter;
+	private @Nullable MessageConverter messageConverter;
 
-	private Boolean fluxListener;
+	private @Nullable Boolean fluxListener;
 
 	public DefaultReactivePulsarListenerContainerFactory(ReactivePulsarConsumerFactory<T> consumerFactory,
 			ReactivePulsarContainerProperties<T> containerProperties) {
@@ -70,7 +71,7 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 		return this.containerProperties;
 	}
 
-	public void setAutoStartup(Boolean autoStartup) {
+	public void setAutoStartup(@Nullable Boolean autoStartup) {
 		this.autoStartup = autoStartup;
 	}
 
@@ -78,11 +79,11 @@ public class DefaultReactivePulsarListenerContainerFactory<T> implements Reactiv
 	 * Set the message converter to use if dynamic argument type matching is needed.
 	 * @param messageConverter the converter.
 	 */
-	public void setMessageConverter(MessageConverter messageConverter) {
+	public void setMessageConverter(@Nullable MessageConverter messageConverter) {
 		this.messageConverter = messageConverter;
 	}
 
-	public void setFluxListener(Boolean fluxListener) {
+	public void setFluxListener(@Nullable Boolean fluxListener) {
 		this.fluxListener = fluxListener;
 	}
 

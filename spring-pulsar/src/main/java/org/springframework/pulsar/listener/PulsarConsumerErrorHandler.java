@@ -18,6 +18,7 @@ package org.springframework.pulsar.listener;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
+import org.jspecify.annotations.Nullable;
 
 /**
  *
@@ -51,9 +52,10 @@ public interface PulsarConsumerErrorHandler<T> {
 
 	/**
 	 * Returns the current message in error.
-	 * @return the Pulsar Message currently tracked by the error handler
+	 * @return the Pulsar Message currently tracked by the error handler or null if none
+	 * currently tracked
 	 */
-	Message<T> currentMessage();
+	@Nullable Message<T> currentMessage();
 
 	/**
 	 * Clear the message in error from managing (such as resetting any thread state etc.).

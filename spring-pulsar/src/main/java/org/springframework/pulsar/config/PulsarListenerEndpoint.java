@@ -18,6 +18,8 @@ package org.springframework.pulsar.config;
 
 import java.util.Properties;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.pulsar.listener.AckMode;
 import org.springframework.pulsar.listener.PulsarMessageListenerContainer;
 
@@ -36,11 +38,11 @@ public interface PulsarListenerEndpoint extends ListenerEndpoint<PulsarMessageLi
 		return false;
 	}
 
-	default Properties getConsumerProperties() {
+	default @Nullable Properties getConsumerProperties() {
 		return null;
 	}
 
-	default AckMode getAckMode() {
+	default @Nullable AckMode getAckMode() {
 		return null;
 	}
 

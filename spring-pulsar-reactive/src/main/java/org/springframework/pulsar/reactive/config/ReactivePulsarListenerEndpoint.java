@@ -16,7 +16,8 @@
 
 package org.springframework.pulsar.reactive.config;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.pulsar.config.ListenerEndpoint;
 import org.springframework.pulsar.reactive.config.annotation.ReactivePulsarListenerConfigurationSelector;
 import org.springframework.pulsar.reactive.listener.ReactivePulsarMessageListenerContainer;
@@ -37,8 +38,7 @@ public interface ReactivePulsarListenerEndpoint<T> extends ListenerEndpoint<Reac
 		return false;
 	}
 
-	@Nullable
-	default Boolean getUseKeyOrderedProcessing() {
+	@Nullable default Boolean getUseKeyOrderedProcessing() {
 		return null;
 	}
 

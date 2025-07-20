@@ -23,8 +23,8 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerBuilder;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
+import org.jspecify.annotations.Nullable;
 
-import org.springframework.lang.Nullable;
 import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.util.CollectionUtils;
 
@@ -39,11 +39,9 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 
 	private final ReactivePulsarClient reactivePulsarClient;
 
-	@Nullable
-	private final List<ReactiveMessageConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
+	private @Nullable final List<ReactiveMessageConsumerBuilderCustomizer<T>> defaultConfigCustomizers;
 
-	@Nullable
-	private PulsarTopicBuilder topicBuilder;
+	private @Nullable PulsarTopicBuilder topicBuilder;
 
 	/**
 	 * Construct an instance.
@@ -86,13 +84,14 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 		if (!CollectionUtils.isEmpty(customizers)) {
 			customizers.forEach((c) -> c.customize(consumerBuilder));
 		}
-		if (this.topicBuilder != null) {
-			this.ensureTopicNamesFullyQualified(consumerBuilder);
-		}
+		this.ensureTopicNamesFullyQualified(consumerBuilder);
 		return consumerBuilder.build();
 	}
 
 	protected void ensureTopicNamesFullyQualified(ReactiveMessageConsumerBuilder<T> consumerBuilder) {
+		if (this.topicBuilder == null) {
+			return;
+		}
 		var mutableSpec = consumerBuilder.getMutableSpec();
 		var topics = mutableSpec.getTopicNames();
 		if (!CollectionUtils.isEmpty(topics)) {

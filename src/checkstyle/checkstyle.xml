@@ -79,7 +79,8 @@
 		<module name="AvoidStarImport"/>
 		<module name="AvoidStaticImport">
 			<property name="excludes"
-					  value="org.assertj.core.api.Assertions.*,
+					  value="java.util.Objects.requireNonNull,
+				org.assertj.core.api.Assertions.*,
 				org.assertj.core.api.InstanceOfAssertFactories.type,
 				org.awaitility.Awaitility.*,
 				org.junit.jupiter.api.Assertions.*,

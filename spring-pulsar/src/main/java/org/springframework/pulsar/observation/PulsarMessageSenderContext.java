@@ -18,6 +18,7 @@ package org.springframework.pulsar.observation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.pulsar.observation.PulsarMessageSenderContext.MessageHolder;
 
@@ -48,7 +49,7 @@ public final class PulsarMessageSenderContext extends SenderContext<MessageHolde
 	}
 
 	public Map<String, String> properties() {
-		return getCarrier().properties();
+		return Objects.requireNonNull(getCarrier(), "Carrier should never be null").properties();
 	}
 
 	/**
