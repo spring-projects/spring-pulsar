@@ -12,7 +12,7 @@ protobuf = "3.25.8"
 pulsar = "4.0.5"
 pulsar-reactive = "0.7.0"
 reactor = "2025.0.0-SNAPSHOT"
-spring = "7.0.0-SNAPSHOT"
+spring = "7.0.0-M7"
 # tests
 assertj = "3.27.3"
 awaitility = "4.3.0"
