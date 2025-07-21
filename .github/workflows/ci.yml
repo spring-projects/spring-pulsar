@@ -35,6 +35,7 @@ jobs:
       runjobs: ${{ steps.continue.outputs.runjobs }}
       project_version: ${{ steps.continue.outputs.project_version }}
       boot_version: ${{ steps.continue.outputs.boot_version }}
+      should_deploy_artifacts: ${{ steps.should-deploy-artifacts.outputs.result }}
     steps:
       - uses: actions/checkout@v4
       - id: continue
@@ -47,6 +48,15 @@ jobs:
           echo "project_version=$version" >>$GITHUB_OUTPUT
           bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
           echo "boot_version=$bootVersion" >>$GITHUB_OUTPUT
+      - id: should-deploy-artifacts
+        name: Check Deploy Artifacts using Secrets
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          if [[ -z "$ARTIFACTORY_PASSWORD" ]] ; then
+            echo "result=false" >> $GITHUB_OUTPUT
+          else
+            echo "result=true" >> $GITHUB_OUTPUT
+          fi
   build_jdk_17:
     name: Build (JDK 17)
     needs: [prerequisites]
@@ -97,6 +107,7 @@ jobs:
               -PspringBootVersion="$BOOT_VERSION" \
               -PsampleTests \
               :runAllSampleTests
+
   scan:
     needs: [prerequisites]
     if: ${{ needs.prerequisites.outputs.runjobs && !contains(inputs.run-trivy-scan, 'false') }}
@@ -104,21 +115,12 @@ jobs:
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build_jdk_17, check_samples, scan]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: spring-io/spring-gradle-build-action@v2
-      - name: Deploy artifacts
-        env:
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-          OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
-          OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
-        run: |
-          ./gradlew publishArtifacts finalizeDeployArtifacts \
-              --stacktrace \
-              -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" \
-              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+    uses: spring-io/spring-security-release-tools/.github/workflows/deploy-artifacts.yml@v1
+    with:
+      should-deploy-artifacts: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
+      default-publish-milestones-central: true
+    secrets: inherit
+
   deploy_docs_antora:
     name: Deploy Antora Docs
     needs: [build_jdk_17, check_samples, scan]
@@ -155,31 +157,39 @@ jobs:
       REPO: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}
       VERSION: ${{ needs.prerequisites.outputs.project_version }}
+      TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      MILESTONE_REPO: https://repo1.maven.org/maven2
+      RELEASE_REPO: https://repo1.maven.org/maven2
+      ARTIFACT_PATH: org/springframework/pulsar/spring-pulsar
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
-      - name: Wait for Artifactory artifacts (milestone)
+      - name: Wait for Milestone Artifacts
         if: ${{ contains(needs.prerequisites.outputs.project_version, '-RC') || contains(needs.prerequisites.outputs.project_version, '-M') }}
+        env:
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
         run: |
-          echo "Wait for artifacts of $REPO@$VERSION to appear on Artifactory."
-          until curl -f -s https://repo.spring.io/artifactory/milestone/org/springframework/pulsar/spring-pulsar/$VERSION/ > /dev/null
+          echo "Wait for artifacts of $REPO@$VERSION to appear on milestone repository ($MILESTONE_REPO)."
+          until curl -f -s $MILESTONE_REPO/$ARTIFACT_PATH/$VERSION/ > /dev/null
           do
             sleep 30
             echo "."
           done
-          echo "Artifacts for $REPO@$VERSION have been released to Artifactory."
-      - name: Wait for Maven Central artifacts (GA)
-        if: ${{ !contains(needs.prerequisites.outputs.project_version, '-SNAPSHOT') && !contains(needs.prerequisites.outputs.project_version, '-RC') && !contains(needs.prerequisites.outputs.project_version, '-M') }}
+          echo "Artifacts for $REPO@$VERSION have been released to milestone repository ($MILESTONE_REPO)."
+      - name: Wait for Release Artifacts
+        if: ${{ !contains(needs.prerequisites.outputs.project_version.version, '-RC') && !contains(needs.prerequisites.outputs.project_version, '-M') }}
+        env:
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
         run: |
-          echo "Wait for artifacts of $REPO@$VERSION to appear on Maven Central."
-          until curl -f -s https://repo1.maven.org/maven2/org/springframework/pulsar/spring-pulsar/$VERSION/ > /dev/null
+          echo "Wait for artifacts of $REPO@$VERSION to appear on release repository ($RELEASE_REPO)."
+          until curl -f -s $RELEASE_REPO/$ARTIFACT_PATH/$VERSION/ > /dev/null
           do
             sleep 30
             echo "."
           done
-          echo "Artifacts for $REPO@$VERSION have been released to Maven Central."
+          echo "Artifacts for $REPO@$VERSION have been released to release repository ($RELEASE_REPO)."
       - name: Setup git for release tagging
         run: |
           git config user.name 'github-actions[bot]'
