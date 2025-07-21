@@ -104,3 +104,11 @@ publishing {
 artifactoryPublish {
 	publications(publishing.publications.mavenJava)
 }
+
+tasks.withType(PublishToMavenRepository).configureEach {
+	enabled = false
+}
+
+tasks.withType(PublishToMavenLocal).configureEach {
+	enabled = false
+}
