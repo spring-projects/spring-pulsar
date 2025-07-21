@@ -106,8 +106,6 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	private final Set<Class<?>> nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap<>(64));
 
-	private final ListenerScope listenerScope = new ListenerScope();
-
 	private final AtomicInteger counter = new AtomicInteger();
 
 	private final List<MethodPulsarListenerEndpoint<?>> processedEndpoints = new ArrayList<>();
