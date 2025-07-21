@@ -18,12 +18,10 @@ package org.springframework.pulsar.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.PluginManager;
 
 import org.springframework.pulsar.gradle.check.SonarQubeConventionsPlugin;
-import org.springframework.pulsar.gradle.publish.SpringNexusPublishPlugin;
 
 import io.spring.gradle.convention.ArtifactoryPlugin;
 
@@ -37,15 +35,9 @@ public class RootProjectPlugin implements Plugin<Project> {
 	public void apply(final Project project) {
 		PluginManager pluginManager = project.getPluginManager();
 		pluginManager.apply(BasePlugin.class);
-		pluginManager.apply(SpringNexusPublishPlugin.class);
 		pluginManager.apply(ArtifactoryPlugin.class);
 		pluginManager.apply(SonarQubeConventionsPlugin.class);
 		project.getRepositories().mavenCentral();
-
-		Task finalizeDeployArtifacts = project.task("finalizeDeployArtifacts");
-		if (ProjectUtils.isRelease(project) && project.hasProperty("ossrhUsername")) {
-			finalizeDeployArtifacts.dependsOn(project.getTasks().findByName("closeOssrhStagingRepository"));
-		}
 	}
 
 }
