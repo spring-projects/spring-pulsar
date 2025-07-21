@@ -114,7 +114,7 @@ jobs:
     uses: ./.github/workflows/trivy-scan.yml
   deploy_artifacts:
     name: Deploy Artifacts
-    needs: [build_jdk_17, check_samples, scan]
+    needs: [prerequisites, build_jdk_17, check_samples, scan]
     uses: spring-io/spring-security-release-tools/.github/workflows/deploy-artifacts.yml@v1
     with:
       should-deploy-artifacts: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
