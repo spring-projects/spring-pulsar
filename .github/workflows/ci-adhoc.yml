@@ -82,7 +82,7 @@ jobs:
           ARTIFACTORY_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           ARTIFACTORY_USER_AGENT_NAME: GitHub Actions
           ARTIFACTORY_USER_AGENT_VERSION: Unknown
-          ARTIFACTORY_VCS_REVISION: ${{ github.sha }
+          ARTIFACTORY_VCS_REVISION: ${{ github.sha }}
         run: |
           ./gradlew publishArtifacts \
               --stacktrace \
