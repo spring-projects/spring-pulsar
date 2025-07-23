@@ -40,7 +40,7 @@ public class SpringSigningPlugin implements Plugin<Project> {
 
 	private void sign(Project project) {
 		SigningExtension signing = project.getExtensions().findByType(SigningExtension.class);
-		signing.setRequired((Callable<Boolean>) () -> project.getGradle().getTaskGraph().hasTask("artifactoryPublish"));
+		signing.setRequired((Callable<Boolean>) () -> project.getGradle().getTaskGraph().hasTask("publishArtifacts"));
 		String signingKeyId = (String) project.findProperty("signingKeyId");
 		String signingKey = (String) project.findProperty("signingKey");
 		String signingPassword = (String) project.findProperty("signingPassword");

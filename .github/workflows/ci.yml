@@ -115,12 +115,61 @@ jobs:
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [prerequisites, build_jdk_17, check_samples, scan]
-    uses: spring-io/spring-security-release-tools/.github/workflows/deploy-artifacts.yml@v1
-    with:
-      should-deploy-artifacts: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
-      default-publish-milestones-central: true
-    secrets: inherit
-
+    runs-on: ubuntu-latest
+    if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: spring-io/spring-gradle-build-action@v2
+      - id: branch-name
+        name: Extract Branch Name
+        env:
+          BRANCH: ${{ github.ref_name }}
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          branch=$BRANCH
+          if [[ "$branch" = "main" ]] ; then
+            branch="${VERSION%.*}.x"
+          fi
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+      - id: deploy-location
+        name: Default the Deploy Location
+        env:
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          if [[ "$VERSION" =~ "-SNAPSHOT" ]] ; then
+            deploy_location=artifactory
+          else
+            deploy_location=central
+          fi
+          echo "deploy_location=$deploy_location" >> $GITHUB_OUTPUT
+      - name: Publish artifacts (Artifactory or staged for Central)
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
+          ARTIFACTORY_BUILD_NAME: ${{ github.event.repository.name }}-${{ steps.branch-name.outputs.branch }}
+          ARTIFACTORY_BUILD_NUMBER: ${{ github.run_id }}
+          ARTIFACTORY_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACTORY_USER_AGENT_NAME: GitHub Actions
+          ARTIFACTORY_USER_AGENT_VERSION: Unknown
+          ARTIFACTORY_VCS_REVISION: ${{ github.sha }
+        run: |
+          ./gradlew publishArtifacts \
+              --stacktrace \
+              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+      - name: Publish staged artifacts to Central
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
+        steps:
+          - name: Deploy
+            uses: spring-io/central-publish-action@0cdd90d12e6876341e82860d951e1bcddc1e51b6 # v0.2.0
+            with:
+              token-name: ${{ secrets.SONATYPE_TOKEN_NAME }}
+              token: ${{ secrets.SONATYPE_TOKEN }}
+        uses: spring-io/central-publish-action@v0.2.0
+        with:
+          token-name: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          token: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          dir: build/publications/repos
+          fail-on-existing-checksums: false
   deploy_docs_antora:
     name: Deploy Antora Docs
     needs: [build_jdk_17, check_samples, scan]
