@@ -1,3 +1,5 @@
+import org.springframework.pulsar.gradle.ProjectUtils
+
 plugins {
 	id 'org.springframework.pulsar.spring-docs-module'
 	alias(libs.plugins.antora)
@@ -106,9 +108,9 @@ artifactoryPublish {
 }
 
 tasks.withType(PublishToMavenRepository).configureEach {
-	enabled = false
+	enabled = ProjectUtils.isSnapshot(project)
 }
 
 tasks.withType(PublishToMavenLocal).configureEach {
-	enabled = false
+	enabled = ProjectUtils.isSnapshot(project)
 }
