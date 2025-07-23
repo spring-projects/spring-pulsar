@@ -1,0 +1,113 @@
+name: CI (AdHoc)
+
+on:
+  workflow_dispatch:
+
+env:
+  GCHAT_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
+  DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+  COMMIT_OWNER: ${{ github.event.pusher.name }}
+  COMMIT_SHA: ${{ github.sha }}
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+
+jobs:
+  prerequisites:
+    name: Pre-requisites for building
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    outputs:
+      runjobs: ${{ steps.continue.outputs.runjobs }}
+      project_version: ${{ steps.continue.outputs.project_version }}
+      boot_version: ${{ steps.continue.outputs.boot_version }}
+      should_deploy_artifacts: ${{ steps.should-deploy-artifacts.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: continue
+        name: Determine if should continue
+        run: |
+          # Run jobs if in upstream repository
+          echo "runjobs=true" >>$GITHUB_OUTPUT
+          # Extract version from gradle.properties
+          version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          echo "project_version=$version" >>$GITHUB_OUTPUT
+          bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
+          echo "boot_version=$bootVersion" >>$GITHUB_OUTPUT
+      - id: should-deploy-artifacts
+        name: Check Deploy Artifacts using Secrets
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          if [[ -z "$ARTIFACTORY_PASSWORD" ]] ; then
+            echo "result=false" >> $GITHUB_OUTPUT
+          else
+            echo "result=true" >> $GITHUB_OUTPUT
+          fi
+  deploy_artifacts:
+    name: Deploy Artifacts
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: spring-io/spring-gradle-build-action@v2
+      - id: branch-name
+        name: Extract Branch Name
+        env:
+          BRANCH: ${{ github.ref_name }}
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          branch=$BRANCH
+          if [[ "$branch" = "main" ]] ; then
+            branch="${VERSION%.*}.x"
+          fi
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+      - id: deploy-location
+        name: Default the Deploy Location
+        env:
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          if [[ "$VERSION" =~ "-SNAPSHOT" ]] ; then
+            deploy_location=artifactory
+          else
+            deploy_location=central
+          fi
+          echo "deploy_location=$deploy_location" >> $GITHUB_OUTPUT
+      - name: Publish artifacts (Artifactory or staged for Central)
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
+          ARTIFACTORY_BUILD_NAME: ${{ github.event.repository.name }}-${{ steps.branch-name.outputs.branch }}
+          ARTIFACTORY_BUILD_NUMBER: ${{ github.run_id }}
+          ARTIFACTORY_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACTORY_USER_AGENT_NAME: GitHub Actions
+          ARTIFACTORY_USER_AGENT_VERSION: Unknown
+          ARTIFACTORY_VCS_REVISION: ${{ github.sha }
+        run: |
+          ./gradlew publishArtifacts \
+              --stacktrace \
+              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+  deploy_docs_antora:
+    name: Deploy Antora Docs
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: spring-io/spring-gradle-build-action@v2
+      - name: Run Antora
+        run: |
+          ./gradlew antora
+      - name: Publish Docs
+        uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.20
+        with:
+          docs-username: ${{ secrets.DOCS_USERNAME }}
+          docs-host: ${{ secrets.DOCS_HOST }}
+          docs-ssh-key: ${{ secrets.DOCS_SSH_KEY }}
+          docs-ssh-host-key: ${{ secrets.DOCS_SSH_HOST_KEY }}
+          site-path: spring-pulsar-docs/build/site
+      - name: Bust Clouflare Cache
+        uses: spring-io/spring-doc-actions/bust-cloudflare-antora-cache@v0.0.20
+        with:
+          context-root: spring-pulsar
+          cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          cloudflare-cache-token: ${{ secrets.CLOUDFLARE_CACHE_TOKEN }}
