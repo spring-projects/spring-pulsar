@@ -11,7 +11,8 @@ repositories {
 }
 
 def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
-def pulsarVersion = project.properties['pulsarVersion'] ?: versionCatalog.findVersion("pulsar").orElseThrow().displayName
+// At Pulsar 4.0.6 things break related to jdk8 requirement - hardcoding at 4.0.5 for now
+def pulsarVersion = '4.0.5'
 
 dependencies {
 	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"

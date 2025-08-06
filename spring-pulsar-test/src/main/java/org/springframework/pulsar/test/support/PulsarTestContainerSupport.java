@@ -33,7 +33,7 @@ public interface PulsarTestContainerSupport {
 	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(getPulsarImage());
 
 	static DockerImageName getPulsarImage() {
-		return DockerImageName.parse("apachepulsar/pulsar:4.0.5");
+		return DockerImageName.parse("apachepulsar/pulsar:4.0.6");
 	}
 
 	@BeforeAll
