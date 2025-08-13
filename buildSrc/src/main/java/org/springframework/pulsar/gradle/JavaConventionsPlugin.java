@@ -16,12 +16,8 @@
 
 package org.springframework.pulsar.gradle;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -34,8 +30,6 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.quality.Checkstyle;
 import org.gradle.api.plugins.quality.CheckstyleExtension;
 import org.gradle.api.plugins.quality.CheckstylePlugin;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
@@ -77,15 +71,6 @@ import io.spring.javaformat.gradle.tasks.Format;
  * <li>Enable {@code unchecked}, {@code deprecation}, {@code rawtypes}, and {@code varags}
  * warnings
  * </ul>
- * <li>{@link Jar} tasks are configured to produce jars with LICENSE.txt and NOTICE.txt
- * files and the following manifest entries:
- * <ul>
- * <li>{@code Automatic-Module-Name}
- * <li>{@code Build-Jdk-Spec}
- * <li>{@code Built-By}
- * <li>{@code Implementation-Title}
- * <li>{@code Implementation-Version}
- * </ul>
  * <li>{@code spring-pulsar-dependencies} is used for dependency management</li>
  * </ul>
  *
@@ -107,7 +92,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 			configureSpringJavaFormat(project);
 			configureJavadocConventions(project);
 			configureTestConventions(project);
-			configureJarManifestConventions(project);
 			configureDependencyManagement(project);
 		});
 	}
@@ -160,32 +144,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		});
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> project.getDependencies()
 				.add(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, "org.junit.platform:junit-platform-launcher"));
-	}
-
-	private void configureJarManifestConventions(Project project) {
-		ExtractResources extractLegalResources = project.getTasks().create("extractLegalResources",
-				ExtractResources.class);
-		extractLegalResources.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("legal"));
-		extractLegalResources.setResourcesNames(Arrays.asList("LICENSE.txt", "NOTICE.txt"));
-		extractLegalResources.property("version", project.getVersion().toString());
-		SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-		Set<String> sourceJarTaskNames = sourceSets.stream().map(SourceSet::getSourcesJarTaskName)
-				.collect(Collectors.toSet());
-		Set<String> javadocJarTaskNames = sourceSets.stream().map(SourceSet::getJavadocJarTaskName)
-				.collect(Collectors.toSet());
-		project.getTasks().withType(Jar.class, (jar) -> project.afterEvaluate((evaluated) -> {
-			jar.metaInf((metaInf) -> metaInf.from(extractLegalResources));
-			jar.manifest((manifest) -> {
-				Map<String, Object> attributes = new TreeMap<>();
-				attributes.put("Automatic-Module-Name", project.getName().replace("-", "."));
-				attributes.put("Build-Jdk-Spec", SOURCE_AND_TARGET_COMPATIBILITY);
-				attributes.put("Built-By", "Spring");
-				attributes.put("Implementation-Title",
-						determineImplementationTitle(project, sourceJarTaskNames, javadocJarTaskNames, jar));
-				attributes.put("Implementation-Version", project.getVersion());
-				manifest.attributes(attributes);
-			});
-		}));
 	}
 
 	private String determineImplementationTitle(Project project, Set<String> sourceJarTaskNames,

@@ -21,6 +21,15 @@ shadowJar {
 	manifest {
 		inheritFrom project.tasks.jar.manifest
 	}
+	from("${rootProject.projectDir}/src/dist") {
+		include 'notice.txt'
+		into 'META-INF'
+		expand(version: project.version)
+	}
+	from("${rootProject.projectDir}") {
+		include 'LICENSE.txt'
+		into 'META-INF'
+	}
 	relocate 'com.github.benmanes.caffeine', 'org.springframework.pulsar.shade.com.github.benmanes.caffeine'
 	relocate 'com.google', 'org.springframework.pulsar.shade.com.google'
 	dependencies {
