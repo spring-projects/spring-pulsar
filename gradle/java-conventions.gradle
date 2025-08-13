@@ -5,6 +5,10 @@ def toolchainVersion() {
 	return 17
 }
 
+def linkHomepage() {
+	return 'https://github.com/spring-projects/spring-pulsar'
+}
+
 project.afterEvaluate {
 	subprojects { subproject ->
 		afterEvaluate {
@@ -19,6 +23,28 @@ project.afterEvaluate {
 					options.compilerArgs.add("-parameters")
 					options.compilerArgs.addAll(["-Werror", "-Xlint:unchecked", "-Xlint:rawtypes", "-Xlint:varargs"]);
 					options.release.set(17)
+				}
+				jar {
+					manifest {
+						attributes(
+								'Implementation-Version': archiveVersion,
+								'Created-By': "JDK ${System.properties['java.version']} (${System.properties['java.specification.vendor']})",
+								'Implementation-Title': subproject.name,
+								'Implementation-Vendor-Id': subproject.group,
+								'Implementation-Vendor': 'Broadcom Inc.',
+								'Implementation-URL': linkHomepage(),
+								'Automatic-Module-Name': subproject.name.replace('-', '.')  // for Jigsaw
+						)
+					}
+					from("${rootProject.projectDir}/src/dist") {
+						include 'notice.txt'
+						into 'META-INF'
+						expand(version: project.version)
+					}
+					from("${rootProject.projectDir}") {
+						include 'LICENSE.txt'
+						into 'META-INF'
+					}
 				}
 			}
 		}
