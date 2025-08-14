@@ -27,6 +27,7 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.assertj.core.api.AbstractListAssert;
 import org.assertj.core.api.ObjectAssert;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -103,6 +104,13 @@ public class PulsarTxnTestsBase {
 			.get()).map(Message::getValue);
 	}
 
+	@FunctionalInterface
+	public interface TestPulsarContainerPropertiesCustomizer {
+
+		void customize(PulsarContainerProperties containerProps);
+
+	}
+
 	@Configuration
 	@EnablePulsar
 	public static class TopLevelConfig {
@@ -135,11 +143,15 @@ public class PulsarTxnTestsBase {
 		}
 
 		@Bean
-		PulsarContainerProperties pulsarContainerProperties(PulsarAwareTransactionManager pulsarTransactionManager) {
+		PulsarContainerProperties pulsarContainerProperties(PulsarAwareTransactionManager pulsarTransactionManager,
+				@Nullable TestPulsarContainerPropertiesCustomizer containerPropsCustomizer) {
 			var containerProps = new PulsarContainerProperties();
 			containerProps.transactions().setEnabled(true);
 			containerProps.transactions().setRequired(false);
 			containerProps.transactions().setTransactionManager(pulsarTransactionManager);
+			if (containerPropsCustomizer != null) {
+				containerPropsCustomizer.customize(containerProps);
+			}
 			return containerProps;
 		}
 

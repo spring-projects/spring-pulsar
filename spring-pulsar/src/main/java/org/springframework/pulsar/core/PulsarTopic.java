@@ -58,19 +58,6 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 	}
 
 	/**
-	 * Convenience method to create a topic builder with the specified topic name.
-	 * @param topicName the name of the topic
-	 * @return the topic builder instance
-	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
-	 * {@link PulsarTopicBuilder#PulsarTopicBuilder()} or
-	 * {@link PulsarTopicBuilder#PulsarTopicBuilder(TopicDomain, String, String)}
-	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	public static PulsarTopicBuilder builder(String topicName) {
-		return new PulsarTopicBuilder().name(topicName);
-	}
-
-	/**
 	 * Checks if the topic is partitioned.
 	 * @return true if the topic is partitioned
 	 */
@@ -86,24 +73,6 @@ public record PulsarTopic(String topicName, int numberOfPartitions) {
 		var splitTopic = this.topicName().split("/");
 		var type = splitTopic[0].replace(":", "");
 		return new TopicComponents(TopicDomain.getEnum(type), splitTopic[2], splitTopic[3], splitTopic[4]);
-	}
-
-	/**
-	 * Get the fully-qualified name of this topic in the format
-	 * {@code domain://tenant/namespace/name} where the components have the following
-	 * defaults when not specified in the original topic name used to build this topic.
-	 * <pre>
-	 * - {@code domain} is one of ('persistent', 'non-persistent') with a default of 'persistent'
-	 * - {@code tenant} has default of 'public'
-	 * - {@code namespace} has default of 'default'
-	 * </pre>
-	 * @return the fully-qualified topic name
-	 * @deprecated As of version 1.2.0 topicName must always be fully qualified, use
-	 * {@link #topicName()} instead.
-	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	public String getFullyQualifiedTopicName() {
-		return this.topicName();
 	}
 
 	/**

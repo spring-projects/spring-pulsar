@@ -16,41 +16,9 @@
 
 package org.springframework.pulsar.config;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
-import org.junit.jupiter.api.Test;
-
-import org.springframework.pulsar.core.PulsarReaderFactory;
-import org.springframework.pulsar.reader.PulsarReaderContainerProperties;
-
 /**
  * Unit tests for {@link DefaultPulsarReaderContainerFactory}.
  */
 class DefaultPulsarReaderContainerFactoryTests {
-
-	@SuppressWarnings({ "removal", "unchecked" })
-	@Test
-	void deprecatedCreateReaderContainerWithEndpointCallsReplacementApi() {
-		var containerFactory = spy(new DefaultPulsarReaderContainerFactory<>(mock(PulsarReaderFactory.class),
-				new PulsarReaderContainerProperties()));
-		var endpoint = mock(PulsarReaderEndpoint.class);
-		var createdContainer = containerFactory.createReaderContainer(endpoint);
-		assertThat(createdContainer).isNotNull();
-		verify(containerFactory).createRegisteredContainer(endpoint);
-	}
-
-	@SuppressWarnings({ "removal", "unchecked" })
-	@Test
-	void deprecatedCreateReaderContainerWithTopicsCallsReplacementApi() {
-		var containerFactory = spy(new DefaultPulsarReaderContainerFactory<>(mock(PulsarReaderFactory.class),
-				new PulsarReaderContainerProperties()));
-		var createdContainer = containerFactory.createReaderContainer("my-topic");
-		// reader does not implement this API - still ensure the replacement API is called
-		assertThat(createdContainer).isNull();
-		verify(containerFactory).createContainer("my-topic");
-	}
 
 }
