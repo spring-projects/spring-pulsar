@@ -2,7 +2,7 @@
 # product
 caffeine = "3.2.2"
 commons-compress = "1.26.2"
-jackson = "2.19.2"
+jackson = "2.20.0-rc1"
 jspecify = "1.0.0"
 logback = "1.5.18"
 micrometer = "1.16.0-M1"
