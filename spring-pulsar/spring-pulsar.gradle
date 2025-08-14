@@ -11,9 +11,7 @@ apply from: '../gradle/proto-conventions.gradle'
 dependencies {
 	api 'io.micrometer:micrometer-observation'
 	api (libs.pulsar.client.all) {
-		exclude group: 'org.apache.logging.log4j'
 		exclude group: 'javax.validation', module: 'validation-api'
-		exclude group: 'com.google.protobuf', module: 'protobuf-java'
 	}
 	api 'org.springframework:spring-context'
 	api 'org.springframework:spring-messaging'
