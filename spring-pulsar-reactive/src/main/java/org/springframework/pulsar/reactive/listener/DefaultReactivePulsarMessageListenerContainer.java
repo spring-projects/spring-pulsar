@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,7 +31,7 @@ import org.apache.pulsar.reactive.client.internal.api.ApiImplementationFactory;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.pulsar.PulsarException;
+import org.springframework.core.retry.RetryException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
@@ -143,7 +142,18 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 		setRunning(true);
 		var containerProps = this.getContainerProperties();
 		try {
-			this.pipeline = startPipeline(this.pulsarContainerProperties);
+			if (containerProps.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
+				var retryTemplate = Optional.ofNullable(containerProps.getStartupFailureRetryTemplate())
+					.orElseGet(containerProps::getDefaultStartupFailureRetryTemplate);
+				this.pipeline = retryTemplate.execute(() -> startPipeline(containerProps));
+			}
+			else {
+				this.pipeline = startPipeline(this.pulsarContainerProperties);
+			}
+		}
+		catch (RetryException ex) {
+			this.logger.error(ex, () -> "Unable to re-start reactive pipeline - retries exhausted");
+			this.doStop();
 		}
 		catch (Exception e) {
 			this.logger.error(e, () -> "Error starting Reactive pipeline");
@@ -152,29 +162,6 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 				this.logger.info(() -> "Configured to stop on startup failures - exiting");
 				throw new IllegalStateException("Error starting Reactive pipeline", e);
 			}
-		}
-		// Pipeline started w/o errors - short circuit
-		if (this.pipeline != null && this.pipeline.isRunning()) {
-			return;
-		}
-
-		if (containerProps.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
-			this.logger.info(() -> "Configured to retry on startup failures - retrying");
-			CompletableFuture.supplyAsync(() -> {
-				var retryTemplate = Optional.ofNullable(containerProps.getStartupFailureRetryTemplate())
-					.orElseGet(containerProps::getDefaultStartupFailureRetryTemplate);
-				return retryTemplate
-					.<ReactiveMessagePipeline, PulsarException>execute((__) -> startPipeline(containerProps));
-			}).whenComplete((p, ex) -> {
-				if (ex == null) {
-					this.pipeline = p;
-					setRunning(this.pipeline != null ? this.pipeline.isRunning() : false);
-				}
-				else {
-					this.logger.error(ex, () -> "Unable to start Reactive pipeline");
-					this.doStop();
-				}
-			});
 		}
 	}
 

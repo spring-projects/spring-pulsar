@@ -59,6 +59,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.core.retry.RetryException;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
@@ -133,14 +134,24 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		@SuppressWarnings("unchecked")
 		var messageListener = (MessageListener<T>) containerProperties.getMessageListener();
 		try {
-			this.listenerConsumer = new Listener(messageListener, containerProperties);
+			if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
+				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
+					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
+				this.listenerConsumer = retryTemplate.execute(() -> new Listener(messageListener, containerProperties));
+			}
+			else {
+				this.listenerConsumer = new Listener(messageListener, containerProperties);
+			}
+		}
+		catch (RetryException ex) {
+			this.logger.error(ex, () -> "Unable to re-start listener container [%s] - retries exhausted"
+				.formatted(this.getBeanName()));
+			this.publishConsumerFailedToStart();
 		}
 		catch (Exception e) {
 			var msg = "Error starting listener container [%s]".formatted(this.getBeanName());
 			this.logger.error(e, () -> msg);
-			if (containerProperties.getStartupFailurePolicy() != StartupFailurePolicy.RETRY) {
-				this.publishConsumerFailedToStart();
-			}
+			this.publishConsumerFailedToStart();
 			if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.STOP) {
 				this.logger.info(() -> "Configured to stop on startup failures - exiting");
 				throw new IllegalStateException(msg, e);
@@ -151,26 +162,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			this.logger.debug(() -> "Successfully created completable - submitting to executor");
 			this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
 			waitForStartup(containerProperties.determineConsumerStartTimeout());
-		}
-		else if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
-			this.logger.info(() -> "Configured to retry on startup failure - retrying asynchronously");
-			this.listenerConsumerFuture = consumerExecutor.submitCompletable(() -> {
-				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
-					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
-				this.listenerConsumer = retryTemplate
-					.<Listener, PulsarException>execute((__) -> new Listener(messageListener, containerProperties));
-				this.listenerConsumer.run();
-			}).whenComplete((__, ex) -> {
-				if (ex == null) {
-					this.logger
-						.info(() -> "Successfully re-started listener container [%s]".formatted(this.getBeanName()));
-				}
-				else {
-					this.logger.error(ex, () -> "Unable to re-start listener container [%s] - retries exhausted"
-						.formatted(this.getBeanName()));
-					this.publishConsumerFailedToStart();
-				}
-			});
 		}
 	}
 

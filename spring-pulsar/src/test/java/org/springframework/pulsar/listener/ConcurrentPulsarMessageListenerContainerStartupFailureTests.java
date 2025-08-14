@@ -35,12 +35,14 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * Tests the startup failures policy on the
@@ -153,7 +155,8 @@ class ConcurrentPulsarMessageListenerContainerStartupFailureTests implements Pul
 			containerProps.setStartupFailurePolicy(StartupFailurePolicy.RETRY);
 			containerProps.setSchema(Schema.STRING);
 			containerProps.setConcurrency(3);
-			var retryTemplate = RetryTemplate.builder().maxAttempts(2).fixedBackoff(Duration.ofSeconds(2)).build();
+			var retryTemplate = new RetryTemplate(
+					RetryPolicy.builder().backOff(new FixedBackOff(Duration.ofSeconds(2).toMillis(), 2)).build());
 			containerProps.setStartupFailureRetryTemplate(retryTemplate);
 			var latch = new CountDownLatch(1);
 			containerProps.setMessageListener((PulsarRecordMessageListener<?>) (consumer, msg) -> latch.countDown());

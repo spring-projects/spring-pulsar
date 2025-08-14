@@ -27,6 +27,8 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
@@ -36,10 +38,10 @@ import org.springframework.pulsar.core.TopicResolver;
 import org.springframework.pulsar.core.TransactionProperties;
 import org.springframework.pulsar.observation.PulsarListenerObservationConvention;
 import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.Assert;
+import org.springframework.util.backoff.FixedBackOff;
 
 import io.micrometer.observation.ObservationRegistry;
 
@@ -105,10 +107,8 @@ public class PulsarContainerProperties {
 
 	private @Nullable RetryTemplate startupFailureRetryTemplate;
 
-	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
-		.maxAttempts(3)
-		.fixedBackoff(Duration.ofSeconds(10))
-		.build();
+	private final RetryTemplate defaultStartupFailureRetryTemplate = new RetryTemplate(
+			RetryPolicy.builder().backOff(new FixedBackOff(Duration.ofSeconds(10).toMillis(), 3)).build());
 
 	private StartupFailurePolicy startupFailurePolicy = StartupFailurePolicy.STOP;
 

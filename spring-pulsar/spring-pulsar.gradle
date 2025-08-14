@@ -17,9 +17,6 @@ dependencies {
 	api 'org.springframework:spring-context'
 	api 'org.springframework:spring-messaging'
 	api 'org.springframework:spring-tx'
-	api (libs.spring.retry) {
-		exclude group: 'org.springframework'
-	}
 	api project(':spring-pulsar-cache-provider')
 	implementation project(path: ':spring-pulsar-cache-provider-caffeine', configuration: 'shadow')
 	implementation 'com.fasterxml.jackson.core:jackson-core'
