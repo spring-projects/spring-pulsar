@@ -29,29 +29,4 @@ import org.springframework.pulsar.reader.PulsarMessageReaderContainer;
 public interface ReaderContainerFactory<C extends PulsarMessageReaderContainer, E extends PulsarReaderEndpoint<C>>
 		extends PulsarContainerFactory<C, E> {
 
-	/**
-	 * Create a message reader container for the given endpoint and register the container
-	 * with the listener endpoint registry.
-	 * @param endpoint reader endpoint
-	 * @return the created container
-	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
-	 * {@link PulsarContainerFactory#createRegisteredContainer}
-	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	default C createReaderContainer(E endpoint) {
-		return createRegisteredContainer(endpoint);
-	}
-
-	/**
-	 * Create a message reader container for the given endpoint.
-	 * @param topics the topics to read from
-	 * @return the created container
-	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
-	 * {@link PulsarContainerFactory#createContainer}
-	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	default C createReaderContainer(String... topics) {
-		return createContainer(topics);
-	}
-
 }

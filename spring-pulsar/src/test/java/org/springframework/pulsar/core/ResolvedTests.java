@@ -28,7 +28,6 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 /**
  * Unit tests for {@link Resolved}.
@@ -36,14 +35,6 @@ import org.mockito.Mockito;
  * @author Chris Bono
  */
 class ResolvedTests {
-
-	@SuppressWarnings("removal")
-	@Test
-	void deprecatedGetDelegatesToNewValueMethod() {
-		Resolved<String> resolved = Mockito.spy(Resolved.of("hello"));
-		resolved.get();
-		verify(resolved).value();
-	}
 
 	@SuppressWarnings("unchecked")
 	static Consumer<String> mockValueAction() {

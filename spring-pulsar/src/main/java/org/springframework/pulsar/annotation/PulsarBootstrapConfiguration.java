@@ -49,11 +49,6 @@ public class PulsarBootstrapConfiguration implements ImportBeanDefinitionRegistr
 					new RootBeanDefinition(PulsarTemplateBeanCustomizerPostProcessor.class));
 		}
 
-		if (!registry.containsBeanDefinition("concurrentContainerFactoryCustomizerPostProcessor")) {
-			registry.registerBeanDefinition("concurrentContainerFactoryCustomizerPostProcessor",
-					new RootBeanDefinition(ConcurrentPulsarListenerContainerFactoryBeanCustomizerPostProcessor.class));
-		}
-
 		if (!registry
 			.containsBeanDefinition(PulsarAnnotationSupportBeanNames.PULSAR_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			registry.registerBeanDefinition(

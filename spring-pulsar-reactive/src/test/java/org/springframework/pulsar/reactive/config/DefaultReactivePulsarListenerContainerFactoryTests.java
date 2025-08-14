@@ -18,8 +18,6 @@ package org.springframework.pulsar.reactive.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.pulsar.client.api.SubscriptionType;
@@ -33,18 +31,6 @@ import org.springframework.pulsar.reactive.listener.ReactivePulsarContainerPrope
  * Unit tests for {@link DefaultReactivePulsarListenerContainerFactory}.
  */
 class DefaultReactivePulsarListenerContainerFactoryTests {
-
-	@SuppressWarnings({ "removal", "unchecked" })
-	@Test
-	void deprecatedCreateListenerContainerCallsReplacementApi() {
-		var containerFactory = spy(new DefaultReactivePulsarListenerContainerFactory<String>(
-				mock(ReactivePulsarConsumerFactory.class), new ReactivePulsarContainerProperties<>()));
-		var endpoint = mock(ReactivePulsarListenerEndpoint.class);
-		when(endpoint.getConcurrency()).thenReturn(1);
-		var createdContainer = containerFactory.createListenerContainer(endpoint);
-		assertThat(createdContainer).isNotNull();
-		verify(containerFactory).createRegisteredContainer(endpoint);
-	}
 
 	@SuppressWarnings("unchecked")
 	@Nested

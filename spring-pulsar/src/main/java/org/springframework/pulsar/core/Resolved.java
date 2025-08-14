@@ -75,16 +75,6 @@ public final class Resolved<T> {
 	}
 
 	/**
-	 * Gets the optional resolved value.
-	 * @return an optional with the resolved value or empty if failed to resolve
-	 * @deprecated Use {@link #value()} instead
-	 */
-	@Deprecated(since = "1.1.0", forRemoval = true)
-	public Optional<T> get() {
-		return value();
-	}
-
-	/**
 	 * Gets the resolved value.
 	 * @return an optional with the resolved value or empty if failed to resolve
 	 */

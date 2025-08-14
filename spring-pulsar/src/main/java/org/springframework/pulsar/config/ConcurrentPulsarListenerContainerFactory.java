@@ -51,17 +51,6 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		super(consumerFactory, containerProperties);
 	}
 
-	/**
-	 * Specify the container concurrency.
-	 * @param concurrency the number of consumers to create.
-	 * @deprecated since 1.2.0 for removal in 2.0.0 in favor of
-	 * {@link PulsarContainerProperties#setConcurrency}
-	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	public void setConcurrency(Integer concurrency) {
-		getContainerProperties().setConcurrency(concurrency);
-	}
-
 	@Override
 	public ConcurrentPulsarMessageListenerContainer<T> createContainer(String... topics) {
 		PulsarListenerEndpoint endpoint = new PulsarListenerEndpoint() {

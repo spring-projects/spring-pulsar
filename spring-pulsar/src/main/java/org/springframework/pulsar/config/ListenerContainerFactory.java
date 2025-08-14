@@ -30,17 +30,4 @@ import org.springframework.pulsar.listener.MessageListenerContainer;
 public interface ListenerContainerFactory<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
 		extends PulsarContainerFactory<C, E> {
 
-	/**
-	 * Create a {@link MessageListenerContainer} for the given {@link ListenerEndpoint}.
-	 * Containers created using this method are added to the listener endpoint registry.
-	 * @param endpoint the endpoint to configure
-	 * @return the created container
-	 * @deprecated since 1.2.0 for removal in 1.4.0 in favor of
-	 * {@link PulsarContainerFactory#createRegisteredContainer}
-	 */
-	@Deprecated(since = "1.2.0", forRemoval = true)
-	default C createListenerContainer(E endpoint) {
-		return createRegisteredContainer(endpoint);
-	}
-
 }

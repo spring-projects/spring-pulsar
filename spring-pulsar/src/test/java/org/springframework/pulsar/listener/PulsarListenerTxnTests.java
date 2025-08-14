@@ -33,7 +33,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Configuration;
 import org.springframework.pulsar.annotation.EnablePulsar;
 import org.springframework.pulsar.annotation.PulsarListener;
-import org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactoryCustomizer;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.listener.PulsarListenerTxnTests.BatchListenerWithCommit.BatchListenerWithCommitConfig;
@@ -50,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Tests for the transaction support in {@link PulsarListener @PulsarListener}.
  *
  * @author Chris Bono
+ * @author Andrey Litvitski
  */
 @SuppressWarnings("removal")
 class PulsarListenerTxnTests extends PulsarTxnTestsBase {
@@ -273,9 +273,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			assertThatIllegalStateException().isThrownBy(() -> {
 				var context = new AnnotationConfigApplicationContext();
 				context.register(TopLevelConfig.class, TransactionsDisabledOnListenerConfig.class);
-				context.registerBean("containerPropsRequiredCustomizer",
-						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
-						() -> (cf) -> cf.getContainerProperties().transactions().setRequired(true));
+				context.registerBean("containerPropsRequiredCustomizer", TestPulsarContainerPropertiesCustomizer.class,
+						() -> containerProps -> containerProps.transactions().setRequired(true));
 				context.refresh();
 			}).withMessage("Listener w/ id [%s] requested no transactions but txn are required".formatted(LISTENER_ID));
 		}
@@ -285,8 +284,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			try (var context = new AnnotationConfigApplicationContext()) {
 				context.register(TopLevelConfig.class, TransactionsDisabledOnListenerConfig.class);
 				context.registerBean("containerPropsNotRequiredCustomizer",
-						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
-						() -> (cf) -> cf.getContainerProperties().transactions().setRequired(false));
+						TestPulsarContainerPropertiesCustomizer.class,
+						() -> containerProps -> containerProps.transactions().setRequired(false));
 				context.refresh();
 				var container = context.getBean(PulsarListenerEndpointRegistry.class).getListenerContainer(LISTENER_ID);
 				assertThat(container).isNotNull();
@@ -317,9 +316,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			assertThatException().isThrownBy(() -> {
 				var context = new AnnotationConfigApplicationContext();
 				context.register(TopLevelConfig.class, TransactionsEnabledOnListenerConfig.class);
-				context.registerBean("removeTxnManagerCustomizer",
-						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
-						() -> (cf) -> cf.getContainerProperties().transactions().setTransactionManager(null));
+				context.registerBean("removeTxnManagerCustomizer", TestPulsarContainerPropertiesCustomizer.class,
+						() -> containerProps -> containerProps.transactions().setTransactionManager(null));
 				context.refresh();
 			})
 				.withCauseInstanceOf(IllegalStateException.class)
@@ -332,8 +330,8 @@ class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 			try (var context = new AnnotationConfigApplicationContext()) {
 				context.register(TopLevelConfig.class, TransactionsEnabledOnListenerConfig.class);
 				context.registerBean("containerPropsNotRequiredCustomizer",
-						ConcurrentPulsarListenerContainerFactoryCustomizer.class,
-						() -> (cf) -> cf.getContainerProperties().transactions().setEnabled(false));
+						TestPulsarContainerPropertiesCustomizer.class,
+						() -> containerProps -> containerProps.transactions().setEnabled(false));
 				context.refresh();
 				var container = context.getBean(PulsarListenerEndpointRegistry.class).getListenerContainer(LISTENER_ID);
 				assertThat(container).isNotNull();

@@ -1,5 +1,26 @@
 = What's new?
 
+[[what-s-new-in-2-0-since-1-2]]
+== What's New in 2.0 Since 1.2
+:page-section-summary-toc: 1
+
+This section covers the changes made from version 1.2 to version 2.0.
+
+=== Removals
+The following previously deprecated APIs, which were marked for removal in version 2.0.x, have now been removed:
+
+- `org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory#setConcurrency`
+- `org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactoryCustomizer`
+- `org.springframework.pulsar.config.ListenerContainerFactory#createListenerContainer`
+- `org.springframework.pulsar.config.ReaderContainerFactory#createReaderContainer`
+- `org.springframework.pulsar.config.ProducerBuilderConfigurationUtil`
+- `org.springframework.pulsar.config.PulsarClientProxy#getPartitionsForTopic`
+- `org.springframework.pulsar.config.PulsarTopic#builder`
+- `org.springframework.pulsar.config.PulsarTopic#getFullyQualifiedTopicName`
+- `org.springframework.pulsar.config.Resolved#get`
+- `org.springframework.pulsar.test.support.model.UserPojo`
+- `org.springframework.pulsar.test.support.model.UserRecord`
+
 [[what-s-new-in-1-2-since-1-1]]
 == What's New in 1.2 Since 1.1
 :page-section-summary-toc: 1

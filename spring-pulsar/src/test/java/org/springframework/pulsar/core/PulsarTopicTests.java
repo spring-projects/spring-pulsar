@@ -94,18 +94,4 @@ public class PulsarTopicTests {
 		assertThat(components.name()).isEqualTo("my-topic");
 	}
 
-	@Test
-	@SuppressWarnings({ "deprecation", "removal" })
-	void deprecatedBuilderMethodReturnsValidBuilder() {
-		var fullyQualifiedName = "persistent://public/default/my-topic";
-		assertThat(PulsarTopic.builder("my-topic").build().topicName()).isEqualTo(fullyQualifiedName);
-	}
-
-	@Test
-	@SuppressWarnings({ "deprecation", "removal" })
-	void deprecatedGetFullyQualifiedTopicNameReturnsValidName() {
-		var topic = new PulsarTopic(FULLY_QUALIFIED_TOPIC, 0);
-		assertThat(topic.getFullyQualifiedTopicName()).isEqualTo(FULLY_QUALIFIED_TOPIC);
-	}
-
 }
