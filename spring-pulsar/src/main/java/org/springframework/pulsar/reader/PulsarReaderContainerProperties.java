@@ -27,12 +27,14 @@ import org.apache.pulsar.common.schema.SchemaType;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.SchemaResolver;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
+import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * Container properties for Pulsar {@link Reader}.
@@ -62,10 +64,8 @@ public class PulsarReaderContainerProperties {
 
 	private @Nullable RetryTemplate startupFailureRetryTemplate;
 
-	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
-		.maxAttempts(3)
-		.fixedBackoff(Duration.ofSeconds(10))
-		.build();
+	private final RetryTemplate defaultStartupFailureRetryTemplate = new RetryTemplate(
+			RetryPolicy.builder().backOff(new FixedBackOff(Duration.ofSeconds(10).toMillis(), 3)).build());
 
 	private StartupFailurePolicy startupFailurePolicy = StartupFailurePolicy.STOP;
 

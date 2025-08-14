@@ -34,8 +34,8 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.retry.RetryException;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.ReaderBuilderCustomizer;
@@ -85,44 +85,34 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 		@SuppressWarnings("unchecked")
 		var readerListener = (ReaderListener<T>) containerProperties.getReaderListener();
 		try {
-			this.internalAsyncReader.set(new InternalAsyncReader(readerListener, containerProperties));
+			if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
+				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
+					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
+				this.internalAsyncReader
+					.set(retryTemplate.execute(() -> new InternalAsyncReader(readerListener, containerProperties)));
+			}
+			else {
+				this.internalAsyncReader.set(new InternalAsyncReader(readerListener, containerProperties));
+			}
+		}
+		catch (RetryException ex) {
+			this.logger.error(ex,
+					() -> "Unable to re-start reader container [%s] - retries exhausted".formatted(this.getBeanName()));
+			this.publishReaderFailedToStart();
 		}
 		catch (Exception e) {
 			var msg = "Error starting reader container [%s]".formatted(this.getBeanName());
 			this.logger.error(e, () -> msg);
-			if (containerProperties.getStartupFailurePolicy() != StartupFailurePolicy.RETRY) {
-				this.publishReaderFailedToStart();
-			}
+			this.publishReaderFailedToStart();
 			if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.STOP) {
 				this.logger.info(() -> "Configured to stop on startup failures - exiting");
 				throw new IllegalStateException(msg, e);
 			}
 		}
-
 		if (this.internalAsyncReader.get() != null) {
 			this.logger.debug(() -> "Successfully created completable - submitting to executor");
 			readerExecutor.submitCompletable(this.internalAsyncReader.get());
 			waitForStartup(containerProperties.getReaderStartTimeout());
-		}
-		else if (containerProperties.getStartupFailurePolicy() == StartupFailurePolicy.RETRY) {
-			this.logger.info(() -> "Configured to retry on startup failures - retrying asynchronously");
-			readerExecutor.submitCompletable(() -> {
-				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
-					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
-				this.internalAsyncReader.set(retryTemplate.<InternalAsyncReader, PulsarException>execute(
-						(__) -> new InternalAsyncReader(readerListener, containerProperties)));
-				this.internalAsyncReader.get().run();
-			}).whenComplete((__, ex) -> {
-				if (ex == null) {
-					this.logger
-						.info(() -> "Successfully re-started reader container [%s]".formatted(this.getBeanName()));
-				}
-				else {
-					this.logger.error(ex, () -> "Unable to re-start reader container [%s] - retries exhausted"
-						.formatted(this.getBeanName()));
-					this.publishReaderFailedToStart();
-				}
-			});
 		}
 	}
 
