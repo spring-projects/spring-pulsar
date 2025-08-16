@@ -47,10 +47,15 @@ import org.apache.pulsar.reactive.client.api.MessageSpec;
 import org.apache.pulsar.reactive.client.api.ReactiveMessagePipeline;
 import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.log.LogAccessor;
+import org.springframework.core.retry.RetryListener;
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
+import org.springframework.core.retry.Retryable;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
@@ -63,10 +68,7 @@ import org.springframework.pulsar.reactive.core.ReactivePulsarTemplate;
 import org.springframework.pulsar.test.model.UserRecord;
 import org.springframework.pulsar.test.model.json.UserRecordObjectMapper;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
-import org.springframework.retry.RetryCallback;
-import org.springframework.retry.RetryContext;
-import org.springframework.retry.RetryListener;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.util.backoff.FixedBackOff;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -459,22 +461,19 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 			var thrown = new ArrayList<Throwable>();
 			var retryListener = new RetryListener() {
 				@Override
-				public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback,
-						Throwable throwable) {
-					retryCount.set(context.getRetryCount());
+				public void onRetrySuccess(RetryPolicy retryPolicy, Retryable<?> retryable, @Nullable Object result) {
+					retryCount.incrementAndGet();
 				}
 
 				@Override
-				public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback,
-						Throwable throwable) {
+				public void onRetryFailure(RetryPolicy retryPolicy, Retryable<?> retryable, Throwable throwable) {
+					retryCount.incrementAndGet();
 					thrown.add(throwable);
 				}
 			};
-			var retryTemplate = RetryTemplate.builder()
-				.maxAttempts(2)
-				.fixedBackoff(Duration.ofSeconds(1))
-				.withListener(retryListener)
-				.build();
+			var retryTemplate = new RetryTemplate(
+					RetryPolicy.builder().backOff(new FixedBackOff(Duration.ofSeconds(2).toMillis(), 2)).build());
+			retryTemplate.setRetryListener(retryListener);
 			var containerProps = new ReactivePulsarContainerProperties<String>();
 			containerProps.setStartupFailurePolicy(StartupFailurePolicy.RETRY);
 			containerProps.setStartupFailureRetryTemplate(retryTemplate);
@@ -515,22 +514,20 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 				var thrown = new ArrayList<Throwable>();
 				var retryListener = new RetryListener() {
 					@Override
-					public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback,
-							Throwable throwable) {
-						retryCount.set(context.getRetryCount());
+					public void onRetrySuccess(RetryPolicy retryPolicy, Retryable<?> retryable,
+							@Nullable Object result) {
+						retryCount.incrementAndGet();
 					}
 
 					@Override
-					public <T, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback,
-							Throwable throwable) {
+					public void onRetryFailure(RetryPolicy retryPolicy, Retryable<?> retryable, Throwable throwable) {
+						retryCount.incrementAndGet();
 						thrown.add(throwable);
 					}
 				};
-				var retryTemplate = RetryTemplate.builder()
-					.maxAttempts(3)
-					.fixedBackoff(Duration.ofSeconds(1))
-					.withListener(retryListener)
-					.build();
+				var retryTemplate = new RetryTemplate(
+						RetryPolicy.builder().backOff(new FixedBackOff(Duration.ofSeconds(2).toMillis(), 2)).build());
+				retryTemplate.setRetryListener(retryListener);
 				var latch = new CountDownLatch(1);
 				var containerProps = new ReactivePulsarContainerProperties<String>();
 				containerProps.setStartupFailurePolicy(StartupFailurePolicy.RETRY);
@@ -553,8 +550,8 @@ class DefaultReactivePulsarMessageListenerContainerTests implements PulsarTestCo
 
 				// factory called 3x (initial call + 2 retries)
 				verify(consumerFactory, times(3)).createConsumer(any(), any());
-				// only had to retry once (2nd call in retry template succeeded)
-				assertThat(retryCount).hasValue(1);
+				// had to retry 2x (1st retry fails and 2nd retry passes)
+				assertThat(retryCount).hasValue(2);
 				assertThat(thrown).containsExactly(failCause);
 				// should be able to process messages
 				var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, topic);

@@ -32,7 +32,7 @@ import org.apache.pulsar.reactive.client.internal.api.ApiImplementationFactory;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.log.LogAccessor;
-import org.springframework.pulsar.PulsarException;
+import org.springframework.core.retry.RetryException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.reactive.core.ReactiveMessageConsumerBuilderCustomizer;
 import org.springframework.pulsar.reactive.core.ReactivePulsarConsumerFactory;
@@ -163,8 +163,18 @@ public non-sealed class DefaultReactivePulsarMessageListenerContainer<T>
 			CompletableFuture.supplyAsync(() -> {
 				var retryTemplate = Optional.ofNullable(containerProps.getStartupFailureRetryTemplate())
 					.orElseGet(containerProps::getDefaultStartupFailureRetryTemplate);
-				return retryTemplate
-					.<ReactiveMessagePipeline, PulsarException>execute((__) -> startPipeline(containerProps));
+				try {
+					AtomicBoolean initialAttempt = new AtomicBoolean(true);
+					return retryTemplate.execute(() -> {
+						if (initialAttempt.getAndSet(false)) {
+							throw new RuntimeException("Ignore initial attempt in retry template");
+						}
+						return startPipeline(containerProps);
+					});
+				}
+				catch (RetryException e) {
+					throw new RuntimeException(e);
+				}
 			}).whenComplete((p, ex) -> {
 				if (ex == null) {
 					this.pipeline = p;

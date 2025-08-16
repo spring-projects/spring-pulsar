@@ -26,12 +26,14 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.DefaultSchemaResolver;
 import org.springframework.pulsar.core.DefaultTopicResolver;
 import org.springframework.pulsar.core.SchemaResolver;
 import org.springframework.pulsar.core.TopicResolver;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * Contains runtime properties for a reactive listener container.
@@ -68,10 +70,8 @@ public class ReactivePulsarContainerProperties<T> {
 
 	private RetryTemplate startupFailureRetryTemplate;
 
-	private final RetryTemplate defaultStartupFailureRetryTemplate = RetryTemplate.builder()
-		.maxAttempts(3)
-		.fixedBackoff(Duration.ofSeconds(10))
-		.build();
+	private final RetryTemplate defaultStartupFailureRetryTemplate = new RetryTemplate(
+			RetryPolicy.builder().backOff(new FixedBackOff(Duration.ofSeconds(10).toMillis(), 3)).build());
 
 	private StartupFailurePolicy startupFailurePolicy = StartupFailurePolicy.STOP;
 
