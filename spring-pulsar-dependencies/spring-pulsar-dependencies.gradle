@@ -29,7 +29,6 @@ dependencies {
 		api libs.pulsar.client.all
 		api libs.pulsar.client.reactive.adapter
 		api libs.pulsar.client.reactive.producer.cache.caffeine.shaded
-		api libs.spring.retry
 		api libs.system.lambda
 	}
 }

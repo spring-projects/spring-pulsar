@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.pulsar.client.api.Message;
@@ -34,8 +35,8 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.retry.RetryException;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
 import org.springframework.pulsar.core.PulsarReaderFactory;
 import org.springframework.pulsar.core.ReaderBuilderCustomizer;
@@ -109,8 +110,19 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 			readerExecutor.submitCompletable(() -> {
 				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
 					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
-				this.internalAsyncReader.set(retryTemplate.<InternalAsyncReader, PulsarException>execute(
-						(__) -> new InternalAsyncReader(readerListener, containerProperties)));
+				try {
+					AtomicBoolean initialAttempt = new AtomicBoolean(true);
+					this.internalAsyncReader.set(retryTemplate.execute(() -> {
+						if (initialAttempt.getAndSet(false)) {
+							throw new RuntimeException("Ignore initial attempt in retry template");
+						}
+						return new InternalAsyncReader(readerListener, containerProperties);
+					}));
+				}
+				catch (RetryException e) {
+					throw new RuntimeException(e);
+				}
+				Assert.notNull(this.internalAsyncReader.get(), "internalAsynReader must not be null");
 				this.internalAsyncReader.get().run();
 			}).whenComplete((__, ex) -> {
 				if (ex == null) {

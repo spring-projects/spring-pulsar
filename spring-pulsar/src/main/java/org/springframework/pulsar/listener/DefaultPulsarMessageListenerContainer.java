@@ -59,6 +59,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.core.retry.RetryException;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.config.StartupFailurePolicy;
@@ -146,7 +147,6 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				throw new IllegalStateException(msg, e);
 			}
 		}
-
 		if (this.listenerConsumer != null) {
 			this.logger.debug(() -> "Successfully created completable - submitting to executor");
 			this.listenerConsumerFuture = consumerExecutor.submitCompletable(this.listenerConsumer);
@@ -157,8 +157,19 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			this.listenerConsumerFuture = consumerExecutor.submitCompletable(() -> {
 				var retryTemplate = Optional.ofNullable(containerProperties.getStartupFailureRetryTemplate())
 					.orElseGet(containerProperties::getDefaultStartupFailureRetryTemplate);
-				this.listenerConsumer = retryTemplate
-					.<Listener, PulsarException>execute((__) -> new Listener(messageListener, containerProperties));
+				try {
+					AtomicBoolean initialAttempt = new AtomicBoolean(true);
+					this.listenerConsumer = retryTemplate.execute(() -> {
+						if (initialAttempt.getAndSet(false)) {
+							throw new RuntimeException("Ignore initial attempt in retry template");
+						}
+						return new Listener(messageListener, containerProperties);
+					});
+				}
+				catch (RetryException e) {
+					throw new RuntimeException(e);
+				}
+				Assert.notNull(this.listenerConsumer, "listenerConsumer must not be null");
 				this.listenerConsumer.run();
 			}).whenComplete((__, ex) -> {
 				if (ex == null) {
