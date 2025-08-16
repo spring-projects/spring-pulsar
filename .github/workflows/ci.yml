@@ -37,7 +37,7 @@ jobs:
       boot_version: ${{ steps.continue.outputs.boot_version }}
       should_deploy_artifacts: ${{ steps.should-deploy-artifacts.outputs.result }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: continue
         name: Determine if should continue
         run: |
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Build and run unit tests
         run: |
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Run all sample app tests
         env:
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
       - id: branch-name
         name: Extract Branch Name
@@ -169,7 +169,7 @@ jobs:
     needs: [build_jdk_17, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Run Antora
         run: |
@@ -205,7 +205,7 @@ jobs:
       RELEASE_REPO: https://repo1.maven.org/maven2
       ARTIFACT_PATH: org/springframework/pulsar/spring-pulsar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
