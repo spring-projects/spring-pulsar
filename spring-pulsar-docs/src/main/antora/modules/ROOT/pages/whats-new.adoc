@@ -6,6 +6,16 @@
 
 This section covers the changes made from version 1.2 to version 2.0.
 
+=== Spring Retry replaced with Core Retry
+All usages of Spring Retry have been replaced with a simpler retry mechanism recently introduced by Spring Framework.
+
+This is mostly an internal implementation detail used when restarting message containers.
+This will only affect you if you were providing a custom `RetryTemplate` via a `PulsarContainerFactoryCustomizer` bean.
+
+The `RetryTemplate` class still exists in Core Retry but the package name has changed from `org.springframework.retry.support` to `org.springframework.core.retry` and the API has slightly changed.
+
+See the https://github.com/spring-projects/spring-pulsar/commit/fc4742f419fb882c7a045a742cae259f8ab45cc5[commit] for more details.
+
 === Removals
 The following previously deprecated APIs, which were marked for removal in version 2.0.x, have now been removed:
 
