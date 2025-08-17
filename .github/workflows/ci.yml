@@ -158,7 +158,7 @@ jobs:
               -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
       - name: Publish staged artifacts to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
-        uses: spring-io/central-publish-action@5d1272537c7cc10f8f50336e9d88d7e08d61eee5 # v0.2.0
+        uses: spring-io/central-publish-action@f4011b13b62eccc4db5f7e0fb4bdf37b4b80750f # v0.2.0
         with:
           token-name: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           token: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
