@@ -142,7 +142,9 @@ jobs:
             deploy_location=central
           fi
           echo "deploy_location=$deploy_location" >> $GITHUB_OUTPUT
-      - name: Publish artifacts (Artifactory or staged for Central)
+
+      - name: Publish Artifacts to Artifactory
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'artifactory' }}
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
@@ -153,17 +155,45 @@ jobs:
           ARTIFACTORY_USER_AGENT_VERSION: Unknown
           ARTIFACTORY_VCS_REVISION: ${{ github.sha }}
         run: |
-          ./gradlew publishArtifacts \
+          ./gradlew artifactoryPublish \
               --stacktrace \
               -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
-      - name: Publish staged artifacts to Central
+
+      - name: Stage Local Artifacts for Publishing to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
-        uses: spring-io/central-publish-action@v0.2.0
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          ./gradlew publishAllPublicationsToLocalRepository --stacktrace
+          # rm checksums to work around https://github.com/spring-io/central-publish-action/issues/11
+          find -name "*.md5" | xargs rm -f
+          find -name "*.sha*" | xargs rm -f
+
+      - name: Publish Staged Artifacts to Central
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
+        uses: spring-io/central-publish-action@0cdd90d12e6876341e82860d951e1bcddc1e51b6 # v0.2.0
         with:
           token-name: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           token: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           dir: build/publications/repos
-          fail-on-existing-checksums: false
+
+      - name: Still publish docs module to Artifactory when deploy location is Central
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
+          ARTIFACTORY_BUILD_NAME: ${{ github.event.repository.name }}-${{ steps.branch-name.outputs.branch }}
+          ARTIFACTORY_BUILD_NUMBER: ${{ github.run_id }}
+          ARTIFACTORY_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACTORY_USER_AGENT_NAME: GitHub Actions
+          ARTIFACTORY_USER_AGENT_VERSION: Unknown
+          ARTIFACTORY_VCS_REVISION: ${{ github.sha }}
+        run: |
+          ./gradlew :spring-pulsar-docs:artifactoryPublish \
+              --stacktrace \
+              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+
   deploy_docs_antora:
     name: Deploy Antora Docs
     needs: [build_jdk_17, check_samples, scan]
