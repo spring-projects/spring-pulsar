@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -44,7 +43,6 @@ import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;
 import org.springframework.pulsar.core.DefaultPulsarProducerFactory;
 import org.springframework.pulsar.core.PulsarOperations;
-import org.springframework.pulsar.core.PulsarOperations.SendMessageBuilder;
 import org.springframework.pulsar.core.PulsarTemplate;
 import org.springframework.pulsar.core.TypedMessageBuilderCustomizer;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
@@ -53,31 +51,26 @@ import org.springframework.util.backoff.FixedBackOff;
 /**
  * @author Soby Chacko
  * @author Sauhard Sharma
+ * @@author Chris Bono
  */
-public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContainerSupport {
+class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContainerSupport {
 
 	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Test
-	void whenHappyPathErrorHandlingForRecordMessageListenerThenSendToDlt() throws Exception {
-		var topicName = "default-error-handler-tests-3";
+	void whenRecordListenerWithNonTransientErrorThenSendToDlt() throws Exception {
+		var topicName = "default-error-handler-tests-1";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var container = buildPulsarRecordContainer(pulsarClient, topicName, (__) -> {
 			throw new RuntimeException();
-		}, topicName, -1, false);
-
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 10));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 10);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, List.of(0));
-
 			// Calls to listener - 1 initial + 10 retries
-			// Calls to DLT producer - 1 message full failure
-			verifyContainerBehavior(container, sendMessageBuilderMock, false, 11, 1);
+			// Calls to DLT producer - 1 failure
+			verifyRecordContainerBehavior(container, dltSendMsgBuilder, 11, 1);
 		}
 		finally {
 			safeStopContainer(container);
@@ -86,29 +79,24 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenErrorHandlingForRecordMessageListenerWithTransientErrorThenDontSendToDlt() throws Exception {
-		var topicName = "default-error-handler-tests-3";
+	void whenRecordListenerWithTransientErrorThenDoNotSendToDlt() throws Exception {
+		var topicName = "default-error-handler-tests-2";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		AtomicInteger count = new AtomicInteger(0);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var count = new AtomicInteger(0);
+		var container = buildPulsarRecordContainer(pulsarClient, topicName, (invocation) -> {
 			int currentCount = count.incrementAndGet();
 			if (currentCount <= 3) {
 				throw new RuntimeException();
 			}
 			return new Object();
-		}, topicName, -1, false);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 5));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 5);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, List.of(0));
-
-			// Calls to listener - 1 initial + 2 retries + 1 final
-			// Calls to DLT producer - 0 full failures
-			verifyContainerBehavior(container, sendMessageBuilderMock, false, 4, 0);
+			// Calls to listener - 1 initial failure + 2 retries + 1 final success
+			// Calls to DLT producer - 0 failures
+			verifyRecordContainerBehavior(container, dltSendMsgBuilder, 4, 0);
 		}
 		finally {
 			safeStopContainer(container);
@@ -117,30 +105,25 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenEveryOtherRecordThrowsNonTransientExceptionsRecordMessageListenerThenSendAllFailedMessagesToDlt()
-			throws Exception {
+	void whenRecordListenerWithEveryOtherNonTransientErrorThenSendAllFailedMessagesToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-3";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var container = buildPulsarRecordContainer(pulsarClient, topicName, (invocation) -> {
 			Message<Integer> message = invocation.getArgument(1);
 			if (message.getValue() % 2 == 0) {
 				throw new RuntimeException();
 			}
 			return new Object();
-		}, topicName, -1, false);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 5));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 5);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, IntStream.range(0, 10).boxed().collect(Collectors.toList()));
-
-			// Calls to listener - 5 records fail - 5 * (1 + 5 max retry) = 30 + 5 records
-			// don't fail = 35
-			// Calls to DLT producer - 5 messages full failures
-			verifyContainerBehavior(container, sendMessageBuilderMock, false, 35, 5);
+			// Calls to listener - 5 records succeed and 5 records fail (each w/ 1 initial
+			// call + 5 retries) so
+			// 5 + (5 * (1 + 5)) = 35
+			// Calls to DLT producer - 5 message failures
+			verifyRecordContainerBehavior(container, dltSendMsgBuilder, 35, 5);
 		}
 		finally {
 			safeStopContainer(container);
@@ -149,13 +132,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenBatchRecordListenerFirstOneOnlyErrorAndRecoverThenSendToDlt() throws Exception {
+	void whenBatchListenerWithFirstMsgNonTransientErrorThenSendToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-4";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var container = buildPulsarBatchContainer(pulsarClient, topicName, 10, (invocation) -> {
 			List<Message<Integer>> messages = invocation.getArgument(1);
 			Message<Integer> firstMessage = messages.get(0);
 			if (firstMessage.getValue() == 0) {
@@ -165,17 +145,15 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 			List<MessageId> messageIds = messages.stream().map(Message::getMessageId).collect(Collectors.toList());
 			acknowledgment.acknowledge(messageIds);
 			return new Object();
-		}, topicName, 10, true);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 10));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 10);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, IntStream.range(0, 10).boxed().collect(Collectors.toList()));
-
 			// Calls to listener - 1 initial + 10 retries for failure + 1 final for rest
-			// of the batch = 12 calls
-			// Calls to DLT producer - 1 message full failure
-			verifyContainerBehavior(container, sendMessageBuilderMock, true, 12, 1);
+			// of batch = 12 total
+			// Calls to DLT producer - 1 message failure
+			verifyBatchContainerBehavior(container, dltSendMsgBuilder, 12, 1);
 		}
 		finally {
 			safeStopContainer(container);
@@ -184,13 +162,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenBatchRecordListenerRecordFailsInTheMiddleThenSendToDlt() throws Exception {
+	void whenBatchListenerWithMiddleMsgNonTransientErrorThenSendToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-5";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var container = buildPulsarBatchContainer(pulsarClient, topicName, 10, (invocation) -> {
 			List<Message<Integer>> messages = invocation.getArgument(1);
 			Acknowledgement acknowledgment = invocation.getArgument(2);
 			for (Message<Integer> message : messages) {
@@ -202,17 +177,15 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 				}
 			}
 			return new Object();
-		}, topicName, 10, true);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 10));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 10);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, IntStream.range(0, 10).boxed().collect(Collectors.toList()));
-
 			// Calls to listener - 1 initial + 10 retries for failure + 1 final for rest
-			// of the batch = 12 calls
-			// Calls to DLT producer - 1 message full failure
-			verifyContainerBehavior(container, sendMessageBuilderMock, true, 12, 1);
+			// of batch = 12 total
+			// Calls to DLT producer - 1 message failure
+			verifyBatchContainerBehavior(container, dltSendMsgBuilder, 12, 1);
 		}
 		finally {
 			safeStopContainer(container);
@@ -221,13 +194,10 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenBatchRecordListenerRecordFailsTwiceInTheMiddleThenSendBothFailedMessagesToDlt() throws Exception {
+	void whenBatchListenerWithTwoMiddleMsgsWithNonTransientErrorThenSendBothToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-6";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var container = buildPulsarBatchContainer(pulsarClient, topicName, 10, (invocation) -> {
 			List<Message<Integer>> messages = invocation.getArgument(1);
 			Acknowledgement acknowledgment = invocation.getArgument(2);
 			for (Message<Integer> message : messages) {
@@ -239,18 +209,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 				}
 			}
 			return new Object();
-		}, topicName, 10, true);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 10));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 10);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, IntStream.range(0, 10).boxed().collect(Collectors.toList()));
-
 			// Calls to listener - 1 initial + 10 retries for first failure + 1 for second
 			// half of the batch + 10 retries for the second failure + 1 final for the
-			// rest of the batch = 23 calls
-			// Calls to DLT producer - 2 messages full failures
-			verifyContainerBehavior(container, sendMessageBuilderMock, true, 23, 2);
+			// rest of the batch = 23 calls total
+			// Calls to DLT producer - 2 messages failures
+			verifyBatchContainerBehavior(container, dltSendMsgBuilder, 23, 2);
 		}
 		finally {
 			safeStopContainer(container);
@@ -259,20 +227,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenBatchRecordListenerRecordFailsInTheMiddleButTransientErrorThenDontSendToDlt() throws Exception {
+	void whenBatchListenerWithMiddleMsgTransientErrorThenDoNotSendToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-7";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		AtomicInteger count = new AtomicInteger(0);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var count = new AtomicInteger(0);
+		var container = buildPulsarBatchContainer(pulsarClient, topicName, 10, (invocation) -> {
 			List<Message<Integer>> messages = invocation.getArgument(1);
 			Acknowledgement acknowledgment = invocation.getArgument(2);
 			for (Message<Integer> message : messages) {
 				if (message.getValue() == 5) {
 					int currentCount = count.getAndIncrement();
-
 					if (currentCount < 3) {
 						throw new PulsarBatchListenerFailedException("failed", message);
 					}
@@ -285,17 +249,15 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 				}
 			}
 			return new Object();
-		}, topicName, 10, true);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 10));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 10);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, IntStream.range(0, 10).boxed().collect(Collectors.toList()));
-
 			// Calls to listener - 1 initial + 2 retries + 1 final for the rest of the
-			// batch = 4 calls
-			// Calls to DLT producer - 0 full failures
-			verifyContainerBehavior(container, sendMessageBuilderMock, true, 4, 0);
+			// batch = 4 calls total
+			// Calls to DLT producer - 0 failures
+			verifyBatchContainerBehavior(container, dltSendMsgBuilder, 4, 0);
 		}
 		finally {
 			safeStopContainer(container);
@@ -304,15 +266,11 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenBatchRecordListenerFailsTransientErrorFollowedByNonTransientThenSendAllNonTransientFailedMessageToDlt()
-			throws Exception {
+	void whenBatchListenerWithTransientFollowedByNonTransientThenSendTransientToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-8";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		AtomicInteger count = new AtomicInteger(0);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
+		var count = new AtomicInteger(0);
+		var container = buildPulsarBatchContainer(pulsarClient, topicName, 10, (invocation) -> {
 			List<Message<Integer>> messages = invocation.getArgument(1);
 			Acknowledgement acknowledgment = invocation.getArgument(2);
 			for (Message<Integer> message : messages) {
@@ -333,18 +291,16 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 				}
 			}
 			return new Object();
-		}, topicName, 10, true);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 10));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 10);
 		try {
 			container.start();
 			sendMessages(pulsarClient, topicName, IntStream.range(0, 10).boxed().collect(Collectors.toList()));
-
 			// Calls to listener - 1 initial + 2 retries for transient failure + 1 for
 			// second half of the batch + 10 retries for the second failure + 1 final for
-			// the rest of the batch = 15 calls
+			// the rest of the batch = 15 calls total
 			// Calls to DLT producer - 1 message full failure
-			verifyContainerBehavior(container, sendMessageBuilderMock, true, 15, 1);
+			verifyBatchContainerBehavior(container, dltSendMsgBuilder, 15, 1);
 		}
 		finally {
 			safeStopContainer(container);
@@ -353,39 +309,29 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@Test
-	void whenBatchRecordListenerOneMessageBatchFailsThenSentToDltProperlyThenSendToDlt() throws Exception {
+	void whenBatchListenerOneMessageBatchFailsThenSentToDlt() throws Exception {
 		var topicName = "default-error-handler-tests-9";
 		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
-
-		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
-		var mockPulsarTemplate = createMockPulsarTemplate(sendMessageBuilderMock);
-		var container = buildPulsarContainer(pulsarClient, (invocation) -> {
-			List<Message<Integer>> message = invocation.getArgument(1);
-			Message<Integer> integerMessage = message.get(0);
-			Integer value = integerMessage.getValue();
-			if (value == 0) {
-				throw new PulsarBatchListenerFailedException("failed", integerMessage);
+		var container = buildPulsarBatchContainer(pulsarClient, topicName, 1, (invocation) -> {
+			List<Message<Integer>> messages = invocation.getArgument(1);
+			Message<Integer> firstMessage = messages.get(0);
+			if (firstMessage.getValue() == 0) {
+				throw new PulsarBatchListenerFailedException("failed", firstMessage);
 			}
 			Acknowledgement acknowledgment = invocation.getArgument(2);
-			List<MessageId> messageIds = new ArrayList<>();
-			for (Message<Integer> integerMessage1 : message) {
-				messageIds.add(integerMessage1.getMessageId());
-			}
+			List<MessageId> messageIds = messages.stream().map(Message::getMessageId).collect(Collectors.toList());
 			acknowledgment.acknowledge(messageIds);
 			return new Object();
-		}, topicName, 1, true);
-		container.setPulsarConsumerErrorHandler(createErrorHandler(mockPulsarTemplate, 2));
-
+		});
+		var dltSendMsgBuilder = setRetryDltErrorHandlerOnContainer(container, 2);
 		try {
 			container.start();
 			// Send single message in batch
 			sendMessages(pulsarClient, topicName, List.of(0));
-
-			// Calls to listener - 1 initial + 2 retries for transient failure + 1 for
-			// second half of the batch + 10 retries for the second failure + 1 final for
-			// the rest of the batch = 15 calls
-			// Calls to DLT producer - 1 message full failure
-			verifyContainerBehavior(container, sendMessageBuilderMock, true, 3, 1);
+			// Initial call should fail
+			// Next 2 calls should fail (retries 2)
+			// No more calls after that - msg should go to DLT
+			verifyBatchContainerBehavior(container, dltSendMsgBuilder, 3, 1);
 		}
 		finally {
 			safeStopContainer(container);
@@ -394,55 +340,53 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@SuppressWarnings("unchecked")
-	private DefaultPulsarMessageListenerContainer<Integer> buildPulsarContainer(PulsarClient pulsarClient,
-			Answer<Object> answer, String topicName, int maxNumMessages, boolean isBatch) {
-		PulsarContainerProperties pulsarContainerProperties;
-		PulsarRecordMessageListener<?> pulsarListener;
-		if (isBatch) {
-			pulsarContainerProperties = buildPulsarContainerPropertiesForBatch(maxNumMessages);
-			pulsarListener = mock(PulsarBatchAcknowledgingMessageListener.class);
-			doAnswer(answer).when((PulsarBatchAcknowledgingMessageListener<?>) pulsarListener)
-				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class));
-		}
-		else {
-			pulsarContainerProperties = buildPulsarContainerPropertiesForSingle();
-			pulsarListener = mock(PulsarRecordMessageListener.class);
-			doAnswer(answer).when((PulsarRecordMessageListener<?>) pulsarListener)
-				.received(any(Consumer.class), any(Message.class));
-		}
+	private DefaultPulsarMessageListenerContainer<Integer> buildPulsarRecordContainer(PulsarClient pulsarClient,
+			String topicName, Answer<Object> answerWhenMsgReceivedOnListener) {
+		PulsarRecordMessageListener<?> pulsarListener = mock();
+		doAnswer(answerWhenMsgReceivedOnListener).when(pulsarListener)
+			.received(any(Consumer.class), any(Message.class));
+		var pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setSchema(Schema.INT32);
 		pulsarContainerProperties.setMessageListener(pulsarListener);
-
 		var pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of((consumerBuilder) -> {
 			consumerBuilder.topic(topicName);
 			consumerBuilder.subscriptionName("%s-sub".formatted(topicName));
 		}));
-
 		return new DefaultPulsarMessageListenerContainer<>(pulsarConsumerFactory, pulsarContainerProperties);
 	}
 
-	private PulsarContainerProperties buildPulsarContainerPropertiesForBatch(int maxNumMessages) {
+	@SuppressWarnings("unchecked")
+	private DefaultPulsarMessageListenerContainer<Integer> buildPulsarBatchContainer(PulsarClient pulsarClient,
+			String topicName, int maxNumMessages, Answer<Object> answerWhenMsgReceivedOnListener) {
+		PulsarBatchAcknowledgingMessageListener<?> pulsarListener = mock();
+		doAnswer(answerWhenMsgReceivedOnListener).when(pulsarListener)
+			.received(any(Consumer.class), any(List.class), any(Acknowledgement.class));
 		var pulsarContainerProperties = new PulsarContainerProperties();
 		pulsarContainerProperties.setSchema(Schema.INT32);
 		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
 		pulsarContainerProperties.setBatchListener(true);
 		pulsarContainerProperties.setMaxNumMessages(maxNumMessages);
 		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
-		return pulsarContainerProperties;
-	}
-
-	private PulsarContainerProperties buildPulsarContainerPropertiesForSingle() {
-		var pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setSchema(Schema.INT32);
-		return pulsarContainerProperties;
+		pulsarContainerProperties.setMessageListener(pulsarListener);
+		var pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, List.of((consumerBuilder) -> {
+			consumerBuilder.topic(topicName);
+			consumerBuilder.subscriptionName("%s-sub".formatted(topicName));
+		}));
+		return new DefaultPulsarMessageListenerContainer<>(pulsarConsumerFactory, pulsarContainerProperties);
 	}
 
 	@SuppressWarnings("unchecked")
-	private PulsarTemplate<Integer> createMockPulsarTemplate(SendMessageBuilder<Integer> sendMessageBuilderMock) {
-		PulsarTemplate<Integer> mockPulsarTemplate = mock(RETURNS_DEEP_STUBS);
-		when(mockPulsarTemplate.newMessage(any(Integer.class))
+	private PulsarOperations.SendMessageBuilder<Integer> setRetryDltErrorHandlerOnContainer(
+			DefaultPulsarMessageListenerContainer<?> container, int maxRetries) {
+		PulsarOperations.SendMessageBuilder<Integer> dltSendMsgBuilder = mock();
+		PulsarTemplate<Integer> dltPulsarTemplate = mock(RETURNS_DEEP_STUBS);
+		when(dltPulsarTemplate.newMessage(any(Integer.class))
 			.withTopic(any(String.class))
-			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
-		return mockPulsarTemplate;
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(dltSendMsgBuilder);
+		var errorHandler = new DefaultPulsarConsumerErrorHandler<>(
+				new PulsarDeadLetterPublishingRecoverer<>(dltPulsarTemplate), new FixedBackOff(100, maxRetries));
+		container.setPulsarConsumerErrorHandler(errorHandler);
+		return dltSendMsgBuilder;
 	}
 
 	private void sendMessages(PulsarClient pulsarClient, String topicName, List<Integer> messages) {
@@ -452,30 +396,28 @@ public class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContain
 	}
 
 	@SuppressWarnings("unchecked")
-	private void verifyContainerBehavior(DefaultPulsarMessageListenerContainer<?> container,
-			PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock, boolean isBatch,
-			int expectedReceivedCalls, int expectedSendAsyncCalls) {
-		if (isBatch) {
-			await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(
-						() -> verify((PulsarBatchAcknowledgingMessageListener<?>) container.getContainerProperties()
-							.getMessageListener(), times(expectedReceivedCalls))
-							.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
-		}
-		else {
-			await().atMost(Duration.ofSeconds(10))
-				.untilAsserted(() -> verify(
-						(PulsarRecordMessageListener<?>) container.getContainerProperties().getMessageListener(),
-						times(expectedReceivedCalls))
-					.received(any(Consumer.class), any(Message.class)));
-		}
+	private void verifyRecordContainerBehavior(DefaultPulsarMessageListenerContainer<?> container,
+			PulsarOperations.SendMessageBuilder<Integer> dltSendMsgBuilder, int expectedListenerReceivedCalls,
+			int expectedDltSendMsgCalls) {
+		await().atMost(Duration.ofSeconds(10))
+			.untilAsserted(() -> verify(
+					(PulsarRecordMessageListener<?>) container.getContainerProperties().getMessageListener(),
+					times(expectedListenerReceivedCalls))
+				.received(any(Consumer.class), any(Message.class)));
 		await().atMost(Duration.ofSeconds(30))
-			.untilAsserted(() -> verify(sendMessageBuilderMock, times(expectedSendAsyncCalls)).sendAsync());
+			.untilAsserted(() -> verify(dltSendMsgBuilder, times(expectedDltSendMsgCalls)).sendAsync());
 	}
 
-	private DefaultPulsarConsumerErrorHandler<?> createErrorHandler(PulsarTemplate<?> pulsarTemplate, int retries) {
-		return new DefaultPulsarConsumerErrorHandler<>(new PulsarDeadLetterPublishingRecoverer<>(pulsarTemplate),
-				new FixedBackOff(100, retries));
+	@SuppressWarnings("unchecked")
+	private void verifyBatchContainerBehavior(DefaultPulsarMessageListenerContainer<?> container,
+			PulsarOperations.SendMessageBuilder<Integer> dltSendMsgBuilder, int expectedListenerReceivedCalls,
+			int expectedDltSendMsgCalls) {
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify((PulsarBatchAcknowledgingMessageListener<?>) container.getContainerProperties()
+				.getMessageListener(), times(expectedListenerReceivedCalls))
+				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
+		await().atMost(Duration.ofSeconds(30))
+			.untilAsserted(() -> verify(dltSendMsgBuilder, times(expectedDltSendMsgCalls)).sendAsync());
 	}
 
 	private void safeStopContainer(PulsarMessageListenerContainer container) {
