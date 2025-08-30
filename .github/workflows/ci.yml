@@ -172,7 +172,7 @@ jobs:
 
       - name: Publish Staged Artifacts to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
-        uses: spring-io/central-publish-action@0cdd90d12e6876341e82860d951e1bcddc1e51b6 # v0.2.0
+        uses: spring-io/central-publish-action@0c03960e9b16fdfe70e2443e1d5393cbc3a35622 # v0.3.0
         with:
           token-name: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           token: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
