@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -145,6 +147,12 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		if (!CollectionUtils.isEmpty(topics)) {
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			builderImpl.getConf().setTopicNames(new HashSet<>(fullyQualifiedTopics));
+		}
+		var topicsPattern = builderImpl.getConf().getTopicsPattern();
+		if (topicsPattern != null && StringUtils.isNoneBlank(topicsPattern.pattern())) {
+			var topicsPatternStr = topicsPattern.pattern();
+			var fullyQualifiedTopicsPatternStr = this.topicBuilder.getFullyQualifiedNameForTopic(topicsPatternStr);
+			builderImpl.getConf().setTopicsPattern(Pattern.compile(fullyQualifiedTopicsPatternStr));
 		}
 	}
 
