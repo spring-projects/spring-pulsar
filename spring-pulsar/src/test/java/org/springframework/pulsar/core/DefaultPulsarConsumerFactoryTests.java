@@ -27,12 +27,15 @@ import static org.mockito.Mockito.verify;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.PulsarClientException.InvalidConfigurationException;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.PatternMultiTopicsConsumerImpl;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -271,23 +274,41 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 	@Nested
 	class CreateConsumerUsingPulsarTopicBuilder {
 
-		private DefaultPulsarConsumerFactory<String> consumerFactory;
-
-		private PulsarTopicBuilder pulsarTopicBuilder;
-
-		@BeforeEach
-		void createConsumerFactory() {
-			pulsarTopicBuilder = spy(new PulsarTopicBuilder());
-			consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient, null);
+		@Test
+		void withPulsarTopicBuilderEnsureTopicNamesFullyQualified() throws PulsarClientException {
+			var pulsarTopicBuilder = spy(new PulsarTopicBuilder());
+			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+					null);
 			consumerFactory.setTopicBuilder(pulsarTopicBuilder);
+			try (var consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic1"),
+					"with-pulsar-topic-builder-ensure-topic-names-fully-qualified-sub", null, null)) {
+				assertThat(consumer.getTopic()).isEqualTo("persistent://public/default/topic1");
+				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic1");
+			}
 		}
 
 		@Test
-		void withPulsarTopicBuilder() throws PulsarClientException {
-			try (var consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic1"),
-					"with-pulsar-topic-builder-sub", null, null)) {
-				assertThat(consumer.getTopic()).isEqualTo("persistent://public/default/topic1");
-				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic1");
+		void withPulsarTopicBuilderEnsureTopicsPatternFullyQualified() throws PulsarClientException {
+			var pulsarTopicBuilder = spy(new PulsarTopicBuilder());
+			ConsumerBuilderCustomizer<String> customizer = (builder) -> builder.topicsPattern("topic-.*");
+			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+					List.of(customizer));
+			consumerFactory.setTopicBuilder(pulsarTopicBuilder);
+
+			try (var consumer = consumerFactory.createConsumer(SCHEMA, null,
+					"with-pulsar-topic-builder-ensure-topics-pattern-fully-qualified-sub", null, null)) {
+				assertThat(consumer).isInstanceOf(PatternMultiTopicsConsumerImpl.class);
+				var patternMultiTopicsConsumer = (PatternMultiTopicsConsumerImpl<String>) consumer;
+				var topicsPattern = patternMultiTopicsConsumer.getPattern();
+				assertThat(topicsPattern.inputPattern()).isEqualTo("persistent://public/default/topic-.*");
+				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic-.*");
+				CompletableFuture<?> watcherFuture = assertThat(patternMultiTopicsConsumer)
+					.extracting("watcherFuture", InstanceOfAssertFactories.type(CompletableFuture.class))
+					.actual();
+				// Seems some bugs in PatternMultiTopicsConsumerImpl.closeAsync() method.
+				// If watcherFuture is not completed, invoke pulsarClient.close() first
+				// will cause exception.
+				watcherFuture.join();
 			}
 		}
 

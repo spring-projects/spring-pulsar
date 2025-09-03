@@ -87,6 +87,7 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 			customizers.forEach((c) -> c.customize(consumerBuilder));
 		}
 		this.ensureTopicNamesFullyQualified(consumerBuilder);
+		this.ensureTopicsPatternFullyQualified(consumerBuilder);
 		return consumerBuilder.build();
 	}
 
@@ -100,6 +101,13 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			mutableSpec.setTopicNames(fullyQualifiedTopics);
 		}
+	}
+
+	protected void ensureTopicsPatternFullyQualified(ReactiveMessageConsumerBuilder<T> consumerBuilder) {
+		if (this.topicBuilder == null) {
+			return;
+		}
+		var mutableSpec = consumerBuilder.getMutableSpec();
 		var topicsPattern = mutableSpec.getTopicsPattern();
 		if (topicsPattern != null && StringUtils.isNoneBlank(topicsPattern.pattern())) {
 			var topicsPatternStr = topicsPattern.pattern();

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
@@ -112,7 +113,7 @@ class DefaultReactivePulsarConsumerFactoryTests {
 	class FactoryCreatedWithTopicBuilder {
 
 		@Test
-		void createConsumer() {
+		void createConsumerEnsureTopicNamesFullyQualified() {
 			var topicBuilder = spy(new PulsarTopicBuilder());
 			var consumerFactory = new DefaultReactivePulsarConsumerFactory<String>(
 					AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
@@ -125,6 +126,23 @@ class DefaultReactivePulsarConsumerFactoryTests {
 				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
 				.hasFieldOrPropertyWithValue("topicNames", List.of(fullyQualifiedTopic));
 			verify(topicBuilder).getFullyQualifiedNameForTopic(inputTopic);
+		}
+
+		@Test
+		void createConsumerEnsureTopicsPatternFullyQualified() {
+			var topicBuilder = spy(new PulsarTopicBuilder());
+			var consumerFactory = new DefaultReactivePulsarConsumerFactory<String>(
+					AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
+			consumerFactory.setTopicBuilder(topicBuilder);
+			var inputTopicsPattern = "my-topic-.*";
+			var fullyQualifiedTopicsPattern = "persistent://public/default/my-topic-.*";
+			var consumer = consumerFactory.createConsumer(SCHEMA,
+					Collections.singletonList(builder -> builder.topicsPattern(Pattern.compile(inputTopicsPattern))));
+			ReactiveMessageConsumerSpec reactiveMessageConsumerSpec = assertThat(consumer)
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.actual();
+			assertThat(reactiveMessageConsumerSpec.getTopicsPattern().pattern()).isEqualTo(fullyQualifiedTopicsPattern);
+			verify(topicBuilder).getFullyQualifiedNameForTopic(inputTopicsPattern);
 		}
 
 	}

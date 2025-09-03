@@ -119,6 +119,7 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			customizers.forEach(customizer -> customizer.customize(consumerBuilder));
 		}
 		this.ensureTopicNamesFullyQualified(consumerBuilder);
+		this.ensureTopicsPatternFullyQualified(consumerBuilder);
 		try {
 			return consumerBuilder.subscribe();
 		}
@@ -148,6 +149,13 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			builderImpl.getConf().setTopicNames(new HashSet<>(fullyQualifiedTopics));
 		}
+	}
+
+	protected void ensureTopicsPatternFullyQualified(ConsumerBuilder<T> builder) {
+		if (this.topicBuilder == null) {
+			return;
+		}
+		var builderImpl = (ConsumerBuilderImpl<T>) builder;
 		var topicsPattern = builderImpl.getConf().getTopicsPattern();
 		if (topicsPattern != null && StringUtils.isNoneBlank(topicsPattern.pattern())) {
 			var topicsPatternStr = topicsPattern.pattern();
