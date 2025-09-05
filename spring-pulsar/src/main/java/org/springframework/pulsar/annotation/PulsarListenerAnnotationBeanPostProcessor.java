@@ -38,6 +38,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -52,6 +53,7 @@ import org.springframework.pulsar.config.PulsarListenerContainerFactory;
 import org.springframework.pulsar.config.PulsarListenerEndpoint;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistry;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.listener.PulsarConsumerErrorHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -78,6 +80,7 @@ import org.springframework.util.StringUtils;
  * @author Chris Bono
  * @author Alexander Preuß
  * @author Jihoon Kim
+ * @author Andrey Litvitski
  * @see PulsarListener
  * @see EnablePulsar
  * @see PulsarListenerConfigurer
@@ -109,6 +112,12 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 	private final AtomicInteger counter = new AtomicInteger();
 
 	private final List<MethodPulsarListenerEndpoint<?>> processedEndpoints = new ArrayList<>();
+
+	@Nullable private ObjectProvider<PulsarTopicBuilder> topicBuilder;
+
+	public PulsarListenerAnnotationBeanPostProcessor(@Nullable ObjectProvider<PulsarTopicBuilder> topicBuilder) {
+		this.topicBuilder = topicBuilder;
+	}
 
 	@Override
 	public void afterSingletonsInstantiated() {
@@ -353,15 +362,22 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 
 	private void resolveDeadLetterPolicy(MethodPulsarListenerEndpoint<?> endpoint, PulsarListener pulsarListener) {
 		Object deadLetterPolicy = resolveExpression(pulsarListener.deadLetterPolicy());
-		if (deadLetterPolicy instanceof DeadLetterPolicy) {
-			endpoint.setDeadLetterPolicy((DeadLetterPolicy) deadLetterPolicy);
+		PulsarTopicBuilder builder = this.topicBuilder != null
+				? this.topicBuilder.getIfAvailable(PulsarTopicBuilder::new) : new PulsarTopicBuilder();
+		if (deadLetterPolicy instanceof DeadLetterPolicy unpackedDeadLetterPolicy) {
+			unpackedDeadLetterPolicy.setDeadLetterTopic(
+					builder.getFullyQualifiedNameForTopic(unpackedDeadLetterPolicy.getDeadLetterTopic()));
+			endpoint.setDeadLetterPolicy(unpackedDeadLetterPolicy);
 		}
 		else {
 			String deadLetterPolicyBeanName = resolveExpressionAsString(pulsarListener.deadLetterPolicy(),
 					"deadLetterPolicy");
 			if (StringUtils.hasText(deadLetterPolicyBeanName)) {
-				endpoint.setDeadLetterPolicy(
-						requireNonNullBeanFactory().getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class));
+				DeadLetterPolicy unpackedDeadLetterPolicy = requireNonNullBeanFactory()
+					.getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class);
+				unpackedDeadLetterPolicy.setDeadLetterTopic(
+						builder.getFullyQualifiedNameForTopic(unpackedDeadLetterPolicy.getDeadLetterTopic()));
+				endpoint.setDeadLetterPolicy(unpackedDeadLetterPolicy);
 			}
 		}
 	}

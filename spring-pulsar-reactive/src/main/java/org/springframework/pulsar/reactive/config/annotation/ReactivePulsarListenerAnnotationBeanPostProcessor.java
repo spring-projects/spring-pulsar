@@ -36,6 +36,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -51,6 +52,7 @@ import org.springframework.pulsar.annotation.PulsarHeaderObjectMapperUtils;
 import org.springframework.pulsar.annotation.PulsarListenerConfigurer;
 import org.springframework.pulsar.config.PulsarAnnotationSupportBeanNames;
 import org.springframework.pulsar.config.PulsarListenerEndpointRegistrar;
+import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.pulsar.reactive.config.MethodReactivePulsarListenerEndpoint;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerContainerFactory;
 import org.springframework.pulsar.reactive.config.ReactivePulsarListenerEndpoint;
@@ -82,6 +84,7 @@ import org.springframework.util.StringUtils;
  * @author Christophe Bornet
  * @author Soby Chacko
  * @author Jihoon Kim
+ * @author Andrey Litvitski
  * @see ReactivePulsarListener
  * @see EnableReactivePulsar
  * @see PulsarListenerConfigurer
@@ -112,6 +115,13 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 	private final AtomicInteger counter = new AtomicInteger();
 
 	private final List<MethodReactivePulsarListenerEndpoint<?>> processedEndpoints = new ArrayList<>();
+
+	@Nullable private ObjectProvider<PulsarTopicBuilder> topicBuilder;
+
+	public ReactivePulsarListenerAnnotationBeanPostProcessor(
+			@Nullable ObjectProvider<PulsarTopicBuilder> topicBuilder) {
+		this.topicBuilder = topicBuilder;
+	}
 
 	@Override
 	public void afterSingletonsInstantiated() {
@@ -280,15 +290,22 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 	private void resolveDeadLetterPolicy(MethodReactivePulsarListenerEndpoint<?> endpoint,
 			ReactivePulsarListener reactivePulsarListener) {
 		Object deadLetterPolicy = resolveExpression(reactivePulsarListener.deadLetterPolicy());
-		if (deadLetterPolicy instanceof DeadLetterPolicy) {
-			endpoint.setDeadLetterPolicy((DeadLetterPolicy) deadLetterPolicy);
+		PulsarTopicBuilder builder = this.topicBuilder != null
+				? this.topicBuilder.getIfAvailable(PulsarTopicBuilder::new) : new PulsarTopicBuilder();
+		if (deadLetterPolicy instanceof DeadLetterPolicy unpackedDeadLetterPolicy) {
+			unpackedDeadLetterPolicy.setDeadLetterTopic(
+					builder.getFullyQualifiedNameForTopic(unpackedDeadLetterPolicy.getDeadLetterTopic()));
+			endpoint.setDeadLetterPolicy(unpackedDeadLetterPolicy);
 		}
 		else {
 			String deadLetterPolicyBeanName = resolveExpressionAsString(reactivePulsarListener.deadLetterPolicy(),
 					"deadLetterPolicy");
 			if (StringUtils.hasText(deadLetterPolicyBeanName)) {
-				endpoint.setDeadLetterPolicy(
-						requireNonNullBeanFactory().getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class));
+				DeadLetterPolicy unpackedDeadLetterPolicy = requireNonNullBeanFactory()
+					.getBean(deadLetterPolicyBeanName, DeadLetterPolicy.class);
+				unpackedDeadLetterPolicy.setDeadLetterTopic(
+						builder.getFullyQualifiedNameForTopic(unpackedDeadLetterPolicy.getDeadLetterTopic()));
+				endpoint.setDeadLetterPolicy(unpackedDeadLetterPolicy);
 			}
 		}
 	}
