@@ -16,8 +16,8 @@ def pulsarVersion = project.properties['pulsarVersion'] ?: versionCatalog.findVe
 dependencies {
 	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"
 	implementation "org.apache.pulsar:pulsar-functions-api:${pulsarVersion}"
-	compileOnly 'org.projectlombok:lombok:1.18.38'
-	annotationProcessor 'org.projectlombok:lombok:1.18.38'
+	compileOnly 'org.projectlombok:lombok:1.18.40'
+	annotationProcessor 'org.projectlombok:lombok:1.18.40'
 }
 
 // Customization of jar to make a simple Uber function jar
