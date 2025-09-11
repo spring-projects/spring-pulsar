@@ -16,12 +16,11 @@
 
 package org.springframework.pulsar.function;
 
-import javax.annotation.Nullable;
-
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.common.functions.UpdateOptions;
 import org.apache.pulsar.common.io.SinkConfig;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.PulsarException;
 
