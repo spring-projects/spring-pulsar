@@ -138,7 +138,7 @@ class DefaultReactivePulsarConsumerFactoryTests {
 			var fullyQualifiedTopicsPattern = "persistent://public/default/my-topic-.*";
 			var consumer = consumerFactory.createConsumer(SCHEMA,
 					Collections.singletonList(builder -> builder.topicsPattern(Pattern.compile(inputTopicsPattern))));
-			ReactiveMessageConsumerSpec reactiveMessageConsumerSpec = assertThat(consumer)
+			var reactiveMessageConsumerSpec = assertThat(consumer)
 				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
 				.actual();
 			assertThat(reactiveMessageConsumerSpec.getTopicsPattern().pattern()).isEqualTo(fullyQualifiedTopicsPattern);

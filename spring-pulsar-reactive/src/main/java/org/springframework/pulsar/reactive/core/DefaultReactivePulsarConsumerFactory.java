@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumerBuilder;
@@ -29,6 +28,7 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.core.PulsarTopicBuilder;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Default implementation for {@link ReactivePulsarConsumerFactory}.
@@ -109,10 +109,12 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 		}
 		var mutableSpec = consumerBuilder.getMutableSpec();
 		var topicsPattern = mutableSpec.getTopicsPattern();
-		if (topicsPattern != null && StringUtils.isNoneBlank(topicsPattern.pattern())) {
+		if (topicsPattern != null && StringUtils.hasText(topicsPattern.pattern())) {
 			var topicsPatternStr = topicsPattern.pattern();
-			var fullyQualifiedTopicsPatternStr = this.topicBuilder.getFullyQualifiedNameForTopic(topicsPatternStr);
-			mutableSpec.setTopicsPattern(Pattern.compile(fullyQualifiedTopicsPatternStr));
+			var fqTopicsPatternStr = this.topicBuilder.getFullyQualifiedNameForTopic(topicsPatternStr);
+			if (!topicsPatternStr.equals(fqTopicsPatternStr)) {
+				mutableSpec.setTopicsPattern(Pattern.compile(fqTopicsPatternStr));
+			}
 		}
 	}
 
