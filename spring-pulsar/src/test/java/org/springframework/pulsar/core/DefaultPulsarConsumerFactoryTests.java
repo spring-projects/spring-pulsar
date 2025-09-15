@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -280,7 +281,7 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 					null);
 			consumerFactory.setTopicBuilder(pulsarTopicBuilder);
-			try (var consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic1"),
+			try (Consumer<String> consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic1"),
 					"with-pulsar-topic-builder-ensure-topic-names-fully-qualified-sub", null, null)) {
 				assertThat(consumer.getTopic()).isEqualTo("persistent://public/default/topic1");
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic1");
@@ -302,14 +303,20 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				var topicsPattern = patternMultiTopicsConsumer.getPattern();
 				assertThat(topicsPattern.inputPattern()).isEqualTo("persistent://public/default/topic-.*");
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic-.*");
-				CompletableFuture<?> watcherFuture = assertThat(patternMultiTopicsConsumer)
-					.extracting("watcherFuture", InstanceOfAssertFactories.type(CompletableFuture.class))
-					.actual();
-				// Seems some bugs in PatternMultiTopicsConsumerImpl.closeAsync() method.
-				// If watcherFuture is not completed, invoke pulsarClient.close() first
-				// will cause exception.
-				watcherFuture.join();
+				temporarilyDealWithPulsar24698(patternMultiTopicsConsumer);
 			}
+		}
+
+		// TODO remove when Pulsar client updates to 4.2.0
+		private void temporarilyDealWithPulsar24698(PatternMultiTopicsConsumerImpl<String> consumer) {
+			// See https://github.com/apache/pulsar/pull/24698
+			// If this is not here there will be numerous exceptions when
+			// PulsarClient.close
+			CompletableFuture<?> watcherFuture = assertThat(consumer)
+				.extracting("watcherFuture", InstanceOfAssertFactories.type(CompletableFuture.class))
+				.actual();
+			watcherFuture.join();
+
 		}
 
 	}

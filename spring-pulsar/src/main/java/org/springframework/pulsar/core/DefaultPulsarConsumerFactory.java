@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -36,6 +35,7 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.PulsarException;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Default implementation for {@link PulsarConsumerFactory}.
@@ -157,10 +157,12 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 		}
 		var builderImpl = (ConsumerBuilderImpl<T>) builder;
 		var topicsPattern = builderImpl.getConf().getTopicsPattern();
-		if (topicsPattern != null && StringUtils.isNoneBlank(topicsPattern.pattern())) {
+		if (topicsPattern != null && StringUtils.hasText(topicsPattern.pattern())) {
 			var topicsPatternStr = topicsPattern.pattern();
-			var fullyQualifiedTopicsPatternStr = this.topicBuilder.getFullyQualifiedNameForTopic(topicsPatternStr);
-			builderImpl.getConf().setTopicsPattern(Pattern.compile(fullyQualifiedTopicsPatternStr));
+			var fqTopicsPatternStr = this.topicBuilder.getFullyQualifiedNameForTopic(topicsPatternStr);
+			if (!topicsPatternStr.equals(fqTopicsPatternStr)) {
+				builderImpl.getConf().setTopicsPattern(Pattern.compile(fqTopicsPatternStr));
+			}
 		}
 	}
 
