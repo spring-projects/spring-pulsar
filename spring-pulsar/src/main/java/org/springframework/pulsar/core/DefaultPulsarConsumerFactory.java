@@ -146,6 +146,20 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			builderImpl.getConf().setTopicNames(new HashSet<>(fullyQualifiedTopics));
 		}
+		if (builderImpl.getConf().getDeadLetterPolicy() != null) {
+			var dlt = builderImpl.getConf().getDeadLetterPolicy().getDeadLetterTopic();
+			if (dlt != null) {
+				builderImpl.getConf()
+					.getDeadLetterPolicy()
+					.setDeadLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(dlt));
+			}
+			var rlt = builderImpl.getConf().getDeadLetterPolicy().getRetryLetterTopic();
+			if (rlt != null) {
+				builderImpl.getConf()
+					.getDeadLetterPolicy()
+					.setRetryLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(rlt));
+			}
+		}
 	}
 
 }
