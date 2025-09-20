@@ -101,6 +101,18 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			mutableSpec.setTopicNames(fullyQualifiedTopics);
 		}
+		if (mutableSpec.getDeadLetterPolicy() != null) {
+			var dlt = mutableSpec.getDeadLetterPolicy().getDeadLetterTopic();
+			if (dlt != null) {
+				mutableSpec.getDeadLetterPolicy()
+					.setDeadLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(dlt));
+			}
+			var rlt = mutableSpec.getDeadLetterPolicy().getRetryLetterTopic();
+			if (rlt != null) {
+				mutableSpec.getDeadLetterPolicy()
+					.setRetryLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(rlt));
+			}
+		}
 	}
 
 	protected void ensureTopicsPatternFullyQualified(ReactiveMessageConsumerBuilder<T> consumerBuilder) {
