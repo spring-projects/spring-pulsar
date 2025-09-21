@@ -24,7 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.reactive.client.adapter.AdaptedReactivePulsarClientFactory;
 import org.apache.pulsar.reactive.client.api.ReactiveMessageConsumer;
@@ -143,6 +145,33 @@ class DefaultReactivePulsarConsumerFactoryTests {
 				.actual();
 			assertThat(reactiveMessageConsumerSpec.getTopicsPattern().pattern()).isEqualTo(fullyQualifiedTopicsPattern);
 			verify(topicBuilder).getFullyQualifiedNameForTopic(inputTopicsPattern);
+		}
+
+		@Test
+		void createConsumerEnsureDeadLetterPolicyTopicsFullyQualified() throws PulsarClientException {
+			var topicBuilder = spy(new PulsarTopicBuilder());
+			var consumerFactory = new DefaultReactivePulsarConsumerFactory<String>(
+					AdaptedReactivePulsarClientFactory.create((PulsarClient) null), null);
+			consumerFactory.setTopicBuilder(topicBuilder);
+			var deadLetterTopic = "with-topic-builder-reactive-ensure-dlp-dlt-fq";
+			var retryLetterTopic = "%s-retry".formatted(deadLetterTopic);
+			var deadLetterPolicy = DeadLetterPolicy.builder()
+				.maxRedeliverCount(2)
+				.deadLetterTopic(deadLetterTopic)
+				.retryLetterTopic(retryLetterTopic)
+				.build();
+			var consumer = consumerFactory.createConsumer(SCHEMA,
+					Collections.singletonList(builder -> builder.deadLetterPolicy(deadLetterPolicy)));
+			var reactiveMessageConsumerSpec = assertThat(consumer)
+				.extracting("consumerSpec", InstanceOfAssertFactories.type(ReactiveMessageConsumerSpec.class))
+				.actual();
+
+			assertThat(reactiveMessageConsumerSpec.getDeadLetterPolicy().getDeadLetterTopic())
+				.isEqualTo("persistent://public/default/%s".formatted(deadLetterTopic));
+			assertThat(reactiveMessageConsumerSpec.getDeadLetterPolicy().getRetryLetterTopic())
+				.isEqualTo("persistent://public/default/%s".formatted(retryLetterTopic));
+			verify(topicBuilder).getFullyQualifiedNameForTopic(deadLetterTopic);
+			verify(topicBuilder).getFullyQualifiedNameForTopic(retryLetterTopic);
 		}
 
 	}

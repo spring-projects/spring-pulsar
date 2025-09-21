@@ -18,6 +18,7 @@ package org.springframework.pulsar.reactive.core;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Schema;
@@ -27,6 +28,7 @@ import org.apache.pulsar.reactive.client.api.ReactivePulsarClient;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.core.PulsarTopicBuilder;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -101,17 +103,23 @@ public class DefaultReactivePulsarConsumerFactory<T> implements ReactivePulsarCo
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			mutableSpec.setTopicNames(fullyQualifiedTopics);
 		}
+
 		if (mutableSpec.getDeadLetterPolicy() != null) {
-			var dlt = mutableSpec.getDeadLetterPolicy().getDeadLetterTopic();
-			if (dlt != null) {
-				mutableSpec.getDeadLetterPolicy()
-					.setDeadLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(dlt));
-			}
-			var rlt = mutableSpec.getDeadLetterPolicy().getRetryLetterTopic();
-			if (rlt != null) {
-				mutableSpec.getDeadLetterPolicy()
-					.setRetryLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(rlt));
-			}
+			var deadLetterPolicy = mutableSpec.getDeadLetterPolicy();
+			fullyQualifyDeadLetterPolicyTopic(deadLetterPolicy::getDeadLetterTopic,
+					deadLetterPolicy::setDeadLetterTopic);
+			fullyQualifyDeadLetterPolicyTopic(deadLetterPolicy::getRetryLetterTopic,
+					deadLetterPolicy::setRetryLetterTopic);
+		}
+	}
+
+	protected void fullyQualifyDeadLetterPolicyTopic(Supplier<String> topicGetter,
+			java.util.function.Consumer<String> topicSetter) {
+		Assert.notNull(this.topicBuilder, "topicBuilder must not be null");
+		var topicName = topicGetter.get();
+		if (StringUtils.hasText(topicName)) {
+			var fqTopicName = this.topicBuilder.getFullyQualifiedNameForTopic(topicName);
+			topicSetter.accept(fqTopicName);
 		}
 	}
 
