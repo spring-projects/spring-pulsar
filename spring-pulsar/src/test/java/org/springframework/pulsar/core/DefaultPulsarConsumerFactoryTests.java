@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
+import org.apache.pulsar.client.api.DeadLetterPolicy;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.PulsarClientException.InvalidConfigurationException;
@@ -273,10 +274,10 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 	}
 
 	@Nested
-	class CreateConsumerUsingPulsarTopicBuilder {
+	class CreateConsumerWithTopicBuilder {
 
 		@Test
-		void withPulsarTopicBuilderEnsureTopicNamesFullyQualified() throws PulsarClientException {
+		void ensureTopicNamesFullyQualified() throws PulsarClientException {
 			var pulsarTopicBuilder = spy(new PulsarTopicBuilder());
 			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
 					null);
@@ -289,7 +290,7 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 		}
 
 		@Test
-		void withPulsarTopicBuilderEnsureTopicsPatternFullyQualified() throws PulsarClientException {
+		void ensureTopicsPatternFullyQualified() throws PulsarClientException {
 			var pulsarTopicBuilder = spy(new PulsarTopicBuilder());
 			ConsumerBuilderCustomizer<String> customizer = (builder) -> builder.topicsPattern("topic-.*");
 			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
@@ -304,6 +305,32 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				assertThat(topicsPattern.inputPattern()).isEqualTo("persistent://public/default/topic-.*");
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic-.*");
 				temporarilyDealWithPulsar24698(patternMultiTopicsConsumer);
+			}
+		}
+
+		@Test
+		void ensureDeadLetterPolicyTopicsFullyQualified() throws PulsarClientException {
+			var pulsarTopicBuilder = spy(new PulsarTopicBuilder());
+			var deadLetterTopic = "with-pulsar-topic-builder-ensure-dlp-dlt-fq";
+			var retryLetterTopic = "%s-retry".formatted(deadLetterTopic);
+			var deadLetterPolicy = DeadLetterPolicy.builder()
+				.maxRedeliverCount(2)
+				.deadLetterTopic(deadLetterTopic)
+				.retryLetterTopic(retryLetterTopic)
+				.build();
+			ConsumerBuilderCustomizer<String> customizer = (builder) -> builder.deadLetterPolicy(deadLetterPolicy);
+			DefaultPulsarConsumerFactory<String> consumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+					List.of(customizer));
+			consumerFactory.setTopicBuilder(pulsarTopicBuilder);
+
+			try (Consumer<String> consumer = consumerFactory.createConsumer(SCHEMA, Collections.singletonList("topic1"),
+					"%s-sub".formatted(deadLetterTopic), null, null)) {
+				assertThat(consumer).extracting("deadLetterPolicy.deadLetterTopic")
+					.isEqualTo("persistent://public/default/%s".formatted(deadLetterTopic));
+				assertThat(consumer).extracting("deadLetterPolicy.retryLetterTopic")
+					.isEqualTo("persistent://public/default/%s".formatted(retryLetterTopic));
+				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic(deadLetterTopic);
+				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic(retryLetterTopic);
 			}
 		}
 

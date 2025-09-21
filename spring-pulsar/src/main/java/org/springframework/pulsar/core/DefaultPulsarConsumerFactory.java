@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -34,6 +35,7 @@ import org.apache.pulsar.client.impl.ConsumerBuilderImpl;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.pulsar.PulsarException;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -149,19 +151,23 @@ public class DefaultPulsarConsumerFactory<T> implements PulsarConsumerFactory<T>
 			var fullyQualifiedTopics = topics.stream().map(this.topicBuilder::getFullyQualifiedNameForTopic).toList();
 			builderImpl.getConf().setTopicNames(new HashSet<>(fullyQualifiedTopics));
 		}
+
 		if (builderImpl.getConf().getDeadLetterPolicy() != null) {
-			var dlt = builderImpl.getConf().getDeadLetterPolicy().getDeadLetterTopic();
-			if (dlt != null) {
-				builderImpl.getConf()
-					.getDeadLetterPolicy()
-					.setDeadLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(dlt));
-			}
-			var rlt = builderImpl.getConf().getDeadLetterPolicy().getRetryLetterTopic();
-			if (rlt != null) {
-				builderImpl.getConf()
-					.getDeadLetterPolicy()
-					.setRetryLetterTopic(this.topicBuilder.getFullyQualifiedNameForTopic(rlt));
-			}
+			var deadLetterPolicy = builderImpl.getConf().getDeadLetterPolicy();
+			fullyQualifyDeadLetterPolicyTopic(deadLetterPolicy::getDeadLetterTopic,
+					deadLetterPolicy::setDeadLetterTopic);
+			fullyQualifyDeadLetterPolicyTopic(deadLetterPolicy::getRetryLetterTopic,
+					deadLetterPolicy::setRetryLetterTopic);
+		}
+	}
+
+	protected void fullyQualifyDeadLetterPolicyTopic(Supplier<String> topicGetter,
+			java.util.function.Consumer<String> topicSetter) {
+		Assert.notNull(this.topicBuilder, "topicBuilder must not be null");
+		var topicName = topicGetter.get();
+		if (StringUtils.hasText(topicName)) {
+			var fqTopicName = this.topicBuilder.getFullyQualifiedNameForTopic(topicName);
+			topicSetter.accept(fqTopicName);
 		}
 	}
 
