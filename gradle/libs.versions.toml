@@ -14,7 +14,7 @@ pulsar-reactive = "0.7.0"
 reactor = "2025.0.0-M7"
 spring = "7.0.0-M9"
 # tests
-assertj = "3.27.4"
+assertj = "3.27.6"
 awaitility = "4.3.0"
 jacoco = "0.8.9"
 json-path = "2.9.0"
