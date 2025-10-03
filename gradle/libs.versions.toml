@@ -4,6 +4,7 @@ caffeine = "3.2.2"
 commons-compress = "1.26.2"
 jackson = "2.20.0"
 jspecify = "1.0.0"
+jsr305 = "3.0.2"
 logback = "1.5.19"
 micrometer = "1.16.0-M3"
 micrometer-docs-gen = "1.0.4"
@@ -43,6 +44,7 @@ protobuf-plugin = "0.9.5"
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer" }
 micrometer-docs-gen = { module = "io.micrometer:micrometer-docs-generator", version.ref = "micrometer-docs-gen" }
