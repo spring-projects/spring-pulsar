@@ -41,7 +41,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - javaVersion: 17
+          - javaVersion: 25
+            springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
+            pulsarVersion: "${{ needs.prerequisites.outputs.pulsar_version }}"
+            samplesTarget: ':runAllSampleTests'
+          - javaVersion: 24
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
             springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
             pulsarVersion: "${{ needs.prerequisites.outputs.pulsar_version }}"
@@ -50,22 +55,30 @@ jobs:
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
             springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
             pulsarVersion: "${{ needs.prerequisites.outputs.pulsar_version }}"
-            samplesTarget: ':runAllSampleTests -x :spring-pulsar-sample-apps:sample-pulsar-functions:sample-signup-function:test'
-          - javaVersion: 17
-            springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
-            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
-            pulsarVersion: "3.2.4"
             samplesTarget: ':runAllSampleTests'
           - javaVersion: 17
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
             springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
-            pulsarVersion: "4.1.0"
+            pulsarVersion: "${{ needs.prerequisites.outputs.pulsar_version }}"
+            samplesTarget: ':runAllSampleTests'
+          - javaVersion: 17
+            springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
+            pulsarVersion: "3.3.8"
+            samplesTarget: ':runAllSampleTests'
+          - javaVersion: 17
+            springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
+            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
+            pulsarVersion: "3.2.4"
             samplesTarget: ':runAllSampleTests'
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: "${{ matrix.javaVersion }}"
+          distribution: 'liberica'
       - name: Check samples project
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos

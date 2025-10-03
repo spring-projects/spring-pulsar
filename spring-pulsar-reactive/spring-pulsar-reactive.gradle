@@ -25,9 +25,13 @@ dependencies {
 		// unwanted transitive deps excluded
 		exclude group: "org.apache.pulsar", module: "pulsar-client-reactive-adapter"
 	}
+
+	compileOnly(libs.jsr305 ) // for Reactor
+
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation libs.jspecify
+
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'com.fasterxml.jackson.datatype:jackson-datatype-joda'

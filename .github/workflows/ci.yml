@@ -57,14 +57,17 @@ jobs:
           else
             echo "result=true" >> $GITHUB_OUTPUT
           fi
-  build_jdk_17:
-    name: Build (JDK 17)
+  build_jdk_25:
+    name: Build (JDK 25)
     needs: [prerequisites]
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Build and run unit tests
         run: |
           ./gradlew clean build -x integrationTest \
@@ -91,6 +94,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Run all sample app tests
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
@@ -107,19 +113,21 @@ jobs:
               -PspringBootVersion="$BOOT_VERSION" \
               -PsampleTests \
               :runAllSampleTests
-
   scan:
     needs: [prerequisites]
     if: ${{ needs.prerequisites.outputs.runjobs && !contains(inputs.run-trivy-scan, 'false') }}
     uses: ./.github/workflows/trivy-scan.yml
   deploy_artifacts:
     name: Deploy Artifacts
-    needs: [prerequisites, build_jdk_17, check_samples, scan]
+    needs: [prerequisites, build_jdk_25, check_samples, scan]
     runs-on: ubuntu-latest
     if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - id: branch-name
         name: Extract Branch Name
         env:
@@ -196,11 +204,14 @@ jobs:
 
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_jdk_17, check_samples, scan]
+    needs: [build_jdk_25, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Run Antora
         run: |
           ./gradlew antora
@@ -239,6 +250,9 @@ jobs:
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Wait for Milestone Artifacts
         if: ${{ contains(needs.prerequisites.outputs.project_version, '-RC') || contains(needs.prerequisites.outputs.project_version, '-M') }}
         env:

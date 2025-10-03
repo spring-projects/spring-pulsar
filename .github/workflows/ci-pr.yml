@@ -37,6 +37,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Check format (short circuit)
         run: |
           ./gradlew checkFormat
@@ -70,6 +73,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Run integration tests
         run: |
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
@@ -90,6 +96,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Run all sample app tests
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos

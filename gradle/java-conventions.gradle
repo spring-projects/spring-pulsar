@@ -2,7 +2,7 @@ def toolchainVersion() {
 	if (project.hasProperty('testToolchain')) {
 		return project.property('testToolchain').toString().toInteger()
 	}
-	return 17
+	return 25
 }
 
 def linkHomepage() {
@@ -18,10 +18,20 @@ project.afterEvaluate {
 						languageVersion = JavaLanguageVersion.of(toolchainVersion())
 					}
 				}
-				tasks.withType(JavaCompile).configureEach {
+				tasks.withType(JavaCompile.class)
+						.matching(compileTask -> compileTask.getName().startsWith(JavaPlugin.COMPILE_JAVA_TASK_NAME)).configureEach {
 					options.encoding = "UTF-8"
-					options.compilerArgs.add("-parameters")
-					options.compilerArgs.addAll(["-Werror", "-Xlint:unchecked", "-Xlint:rawtypes", "-Xlint:varargs"]);
+					options.compilerArgs.addAll([
+							"-parameters", "-Xlint:unchecked", "-Xlint:rawtypes", "-Xlint:varargs", "-Xlint:deprecation",
+							"-Werror"])
+					options.release.set(17)
+				}
+				tasks.withType(JavaCompile.class)
+						.matching(compileTask -> compileTask.getName().startsWith(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)
+								|| compileTask.getName().equals("compileTestFixturesJava")).configureEach {
+					options.encoding = "UTF-8"
+					options.compilerArgs.addAll([
+							"-parameters", "-Xlint:unchecked", "-Xlint:rawtypes", "-Xlint:varargs", "-Xlint:deprecation"])
 					options.release.set(17)
 				}
 				jar {

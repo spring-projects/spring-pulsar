@@ -30,7 +30,6 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.quality.Checkstyle;
 import org.gradle.api.plugins.quality.CheckstyleExtension;
 import org.gradle.api.plugins.quality.CheckstylePlugin;
-import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
@@ -84,8 +83,6 @@ import io.spring.javaformat.gradle.tasks.Format;
  */
 public class JavaConventionsPlugin implements Plugin<Project> {
 
-	private static final String SOURCE_AND_TARGET_COMPATIBILITY = "17";
-
 	@Override
 	public void apply(Project project) {
 		project.getPlugins().withType(JavaBasePlugin.class, (java) -> {
@@ -117,7 +114,7 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 	private void configureJavadocConventions(Project project) {
 		project.getTasks().withType(Javadoc.class, (javadoc) -> {
 			CoreJavadocOptions options = (CoreJavadocOptions) javadoc.getOptions();
-			options.source("17");
+			options.source("25");
 			options.encoding("UTF-8");
 			options.addStringOption("Xdoclint:none", "-quiet");
 		});
@@ -146,17 +143,6 @@ public class JavaConventionsPlugin implements Plugin<Project> {
 		});
 		project.getPlugins().withType(JavaPlugin.class, (javaPlugin) -> project.getDependencies()
 				.add(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, "org.junit.platform:junit-platform-launcher"));
-	}
-
-	private String determineImplementationTitle(Project project, Set<String> sourceJarTaskNames,
-			Set<String> javadocJarTaskNames, Jar jar) {
-		if (sourceJarTaskNames.contains(jar.getName())) {
-			return "Source for " + project.getName();
-		}
-		if (javadocJarTaskNames.contains(jar.getName())) {
-			return "Javadoc for " + project.getName();
-		}
-		return project.getDescription();
 	}
 
 	private void configureDependencyManagement(Project project) {
