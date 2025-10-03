@@ -4,7 +4,11 @@ plugins {
 
 group = 'org.springframework.pulsar.sample'
 description = 'Sample Signup Pulsar Function'
-sourceCompatibility = '1.8'
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories { 
 	mavenCentral()

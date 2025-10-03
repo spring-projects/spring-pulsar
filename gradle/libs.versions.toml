@@ -33,7 +33,7 @@ antora-yml = "0.0.1"
 download = "5.6.0"
 grgit = "5.2.2"
 nohttp = "0.0.11"
-shadow = "8.1.1"
+shadow = "9.2.2"
 versions = "0.52.0"
 version-catalog-update = "0.8.5"
 protobuf-plugin = "0.9.5"
@@ -75,7 +75,7 @@ antora = { id = "org.antora", version.ref = "antora" }
 antora-yml = { id = "io.spring.antora.generate-antora-yml", version.ref = "antora-yml" }
 download = { id = "de.undercouch.download", version.ref = "download" }
 grgit = { id = "org.ajoberstar.grgit", version.ref = "grgit" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dep-mgmt = { id = "io.spring.dependency-management", version.ref = "spring-dep-mgmt" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }

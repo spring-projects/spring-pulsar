@@ -15,12 +15,8 @@ jar {
 	archiveClassifier.set('original')
 }
 
-shadowJar {
-	archiveClassifier.set(null)
-	dependsOn(project.tasks.jar)
-	manifest {
-		inheritFrom project.tasks.jar.manifest
-	}
+tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+	archiveClassifier = ''
 	from("${rootProject.projectDir}/src/dist") {
 		include 'notice.txt'
 		into 'META-INF'
@@ -33,22 +29,19 @@ shadowJar {
 	relocate 'com.github.benmanes.caffeine', 'org.springframework.pulsar.shade.com.github.benmanes.caffeine'
 	relocate 'com.google', 'org.springframework.pulsar.shade.com.google'
 	dependencies {
-		exclude(dependency {
+		exclude {
 			!['com.github.ben-manes.caffeine', 'com.google.errorprone'].contains(it.moduleGroup)
-		})
+		}
 	}
 }
-
-tasks.build.dependsOn tasks.shadowJar
 
 // disable module metadata - otherwise original jar will be used when published
 tasks.withType(GenerateModuleMetadata) {
 	enabled = false
 }
 
-// delay the maven publishing - instead add shadowJar to the publication
-components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
-	skip()
+shadow {
+	addShadowVariantIntoJavaComponent = false
 }
 
 publishing {

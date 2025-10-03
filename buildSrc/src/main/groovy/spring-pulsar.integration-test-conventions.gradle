@@ -14,6 +14,13 @@
  * the License.
  */
 
+sourceSets {
+	intTest {
+		compileClasspath += sourceSets.main.output + project.configurations.intTestCompileClasspath
+		runtimeClasspath += sourceSets.main.output + project.configurations.intTestRuntimeClasspath
+	}
+}
+
 configurations {
 	intTestImplementation {
 		extendsFrom testImplementation
@@ -28,13 +35,6 @@ configurations {
 	intTestRuntimeClasspath {
 		extendsFrom intTestRuntime
 		canBeResolved = true
-	}
-}
-
-sourceSets {
-	intTest {
-		compileClasspath += sourceSets.main.output + project.configurations.intTestCompileClasspath
-		runtimeClasspath += sourceSets.main.output + project.configurations.intTestRuntimeClasspath
 	}
 }
 
