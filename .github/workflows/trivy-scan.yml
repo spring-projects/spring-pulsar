@@ -39,6 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
       - name: Publish to local repo (poms)
         run: |
           ./gradlew publishMavenJavaPublicationToLocalRepository
