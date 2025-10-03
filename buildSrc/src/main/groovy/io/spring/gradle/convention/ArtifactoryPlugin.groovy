@@ -26,22 +26,22 @@ class ArtifactoryPlugin implements Plugin<Project> {
 	@Override
 	void apply(Project project) {
 		project.plugins.apply('com.jfrog.artifactory')
-		boolean isSnapshot = ProjectUtils.isSnapshot(project);
-		boolean isMilestone = ProjectUtils.isMilestone(project);
+		boolean isSnapshot = ProjectUtils.isSnapshot(project)
+		boolean isMilestone = ProjectUtils.isMilestone(project)
+		def repoKey = isSnapshot ? 'libs-snapshot-local' :
+				(isMilestone ? 'libs-milestone-local' : 'libs-release-local')
 		project.artifactory {
 			contextUrl = 'https://repo.spring.io'
 			publish {
 				repository {
-					repoKey = isSnapshot ? 'libs-snapshot-local' :
-							(isMilestone ? 'libs-milestone-local' : 'libs-release-local')
-					if(project.hasProperty('artifactoryUsername')) {
-						username = artifactoryUsername
-						password = artifactoryPassword
+					repoKey = "${repoKey}"
+					if (project.hasProperty('artifactoryUsername')) {
+						username = "${project.artifactoryUsername}"
+						password = "${project.artifactoryPassword}"
 					}
 				}
 			}
 		}
-
 		project.plugins.withType(MavenPublishPlugin) {
 			project.artifactory {
 				publish {

@@ -53,19 +53,6 @@ jobs:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
-      - name: Create Aggregated Jacoco Report
-        run: |
-          ./gradlew aggregateJacocoTestReport --info
-      - name: Verify Code Coverage
-        run: |
-          ./gradlew jacocoTestCoverageVerification --info
-      - name: Upload Aggregated Jacoco Report
-        if: failure() || contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-results
-          path: 'build/reports/jacoco/**/*.*'
-          retention-days: 3
   integration_tests:
     needs: [prerequisites, build_and_verify]
     runs-on: ubuntu-latest

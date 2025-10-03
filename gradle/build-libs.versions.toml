@@ -2,7 +2,7 @@
 asciidoc-gradle = "3.3.2"
 commons-codec = "1.18.0"
 commons-compress = "1.26.2"
-groovy = "2.5.17"
+groovy = "4.0.27"
 jackson = "2.19.1"
 javaformat = "0.0.47"
 jfrog = "6.0.1"
