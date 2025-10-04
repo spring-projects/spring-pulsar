@@ -84,7 +84,7 @@ jobs:
           ./gradlew clean build -x check publishMavenJavaPublicationToLocalRepository
       - uses: spring-io/spring-gradle-build-action@v2
         with:
-          java-version: {{ matrix.javaVersion }}
+          java-version: ${{ matrix.javaVersion }}
           distribution: 'liberica'
       - name: Check samples (Java {{ matrix.javaVersion }})
         env:
