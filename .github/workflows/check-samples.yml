@@ -77,9 +77,16 @@ jobs:
       - uses: actions/checkout@v5
       - uses: spring-io/spring-gradle-build-action@v2
         with:
-          java-version: "${{ matrix.javaVersion }}"
+          java-version: '25'
           distribution: 'liberica'
-      - name: Check samples project
+      - name: Build Java 25
+        run: |
+          ./gradlew clean build -x check publishMavenJavaPublicationToLocalRepository
+      - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: {{ matrix.javaVersion }}
+          distribution: 'liberica'
+      - name: Check samples (Java {{ matrix.javaVersion }})
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ matrix.springPulsarVersion }}
@@ -87,7 +94,6 @@ jobs:
           PULSAR_VERSION: ${{ matrix.pulsarVersion }}
           JAVA_VERSION: ${{ matrix.javaVersion }}
         run: |
-          ./gradlew publishMavenJavaPublicationToLocalRepository
           ./gradlew \
             --init-script ./spring-pulsar-sample-apps/sample-apps-check-ci.gradle \
             -PlocalRepositoryPath="$LOCAL_REPOSITORY_PATH" \
