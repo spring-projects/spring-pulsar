@@ -24,7 +24,6 @@ env:
 
 jobs:
   prerequisites:
-    name: Pre-requisites for building
     runs-on: ubuntu-latest
     if: github.repository == 'spring-projects/spring-pulsar'
     outputs:
@@ -47,7 +46,6 @@ jobs:
           pulsarVersion=$(cat gradle/libs.versions.toml | grep "pulsar = \"" | cut -d '"' -f2)
           echo "pulsar_version=$pulsarVersion" >>$GITHUB_OUTPUT
   check_samples:
-    name: Check Samples project
     needs: [prerequisites]
     strategy:
       matrix:
@@ -97,7 +95,7 @@ jobs:
         with:
           java-version: ${{ matrix.javaVersion }}
           distribution: 'liberica'
-      - name: Check samples (Java {{ matrix.javaVersion }})
+      - name: Check samples (Java ${{ matrix.javaVersion }})
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ matrix.springPulsarVersion }}
