@@ -5,18 +5,17 @@ plugins {
 group = 'org.springframework.pulsar.sample'
 description = 'Sample Signup Pulsar Function'
 
-java {
-	sourceCompatibility = JavaVersion.VERSION_1_8
-	targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-repositories { 
+repositories {
 	mavenCentral()
 }
 
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
 def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
-// At Pulsar 4.0.6 things break related to jdk8 requirement - hardcoding at 4.0.5 for now
-def pulsarVersion = '4.0.7'
+def pulsarVersion = project.properties['pulsarVersion'] ?: versionCatalog.findVersion("pulsar").orElseThrow().displayName
 
 dependencies {
 	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"
