@@ -297,6 +297,11 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		}
 
 		@Override
+		public <V> TypedMessageBuilder<V> newMessage(Schema<V> schema, Transaction txn) {
+			return this.producer.newMessage(schema, txn);
+		}
+
+		@Override
 		public long getLastSequenceId() {
 			return this.producer.getLastSequenceId();
 		}
