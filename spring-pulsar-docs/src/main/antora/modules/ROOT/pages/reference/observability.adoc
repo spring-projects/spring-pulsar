@@ -6,9 +6,6 @@
 
 Spring for Apache Pulsar includes a way to manage observability through https://micrometer.io/[Micrometer].
 
-NOTE: Observability has not been added to the Reactive components yet
-
-
 [[observation]]
 == Micrometer Observations
 The `PulsarTemplate` and `PulsarListener` are instrumented with the Micrometer observations API.

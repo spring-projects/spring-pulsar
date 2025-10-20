@@ -79,8 +79,8 @@ public MyTopicResolver topicResolver() {
 
 == Producer global default
 The final location consulted (when producing) is the system-wide producer default topic.
-It is configured via the `spring.pulsar.producer.topic-name` property when using the imperative API and the `spring.pulsar.reactive.sender.topic-name` property when using the reactive API.
+It is configured via the `spring.pulsar.producer.topic-name` property.
 
 == Consumer global default
 The final location consulted (when consuming) is the system-wide consumer default topic.
-It is configured via the `spring.pulsar.consumer.topics` or `spring.pulsar.consumer.topics-pattern` property when using the imperative API and one of the `spring.pulsar.reactive.consumer.topics` or `spring.pulsar.reactive.consumer.topics-pattern` property when using the reactive API.
+It is configured via the `spring.pulsar.consumer.topics` or `spring.pulsar.consumer.topics-pattern` property.

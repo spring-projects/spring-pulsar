@@ -17,6 +17,9 @@ The `RetryTemplate` class still exists in Core Retry but the package name has ch
 See the https://github.com/spring-projects/spring-pulsar/commit/fc4742f419fb882c7a045a742cae259f8ab45cc5[commit] for more details.
 
 === Removals
+
+==== Previously deprecated APIs
+
 The following previously deprecated APIs, which were marked for removal in version 2.0.x, have now been removed:
 
 - `org.springframework.pulsar.config.ConcurrentPulsarListenerContainerFactory#setConcurrency`
@@ -30,6 +33,9 @@ The following previously deprecated APIs, which were marked for removal in versi
 - `org.springframework.pulsar.config.Resolved#get`
 - `org.springframework.pulsar.test.support.model.UserPojo`
 - `org.springframework.pulsar.test.support.model.UserRecord`
+
+==== Reactive Support
+Reactive support has been removed from Spring Pulsar `2.0.0` - there is no longer a `spring-pulsar-reactive` module published.
 
 [[what-s-new-in-1-2-since-1-1]]
 == What's New in 1.2 Since 1.1
@@ -47,7 +53,7 @@ See xref:./reference/default-tenant-namespace.adoc[Default Tenant / Namespace] f
 
 === Message Container Startup Policy
 You can now configure the message listener container startup failure policy to `stop`, `continue`, or `retry`.
-For more details see the corresponding section for one of the supported containers xref:./reference/pulsar/message-consumption.adoc#message-listener-startup-failure[@PulsarListener], xref:./reference/pulsar/message-consumption.adoc#message-reader-startup-failure[@PulsarReader], or xref:./reference/reactive-pulsar/reactive-message-consumption.adoc#message-listener-startup-failure[@ReactivePulsarListener]
+For more details see the corresponding section for one of the supported containers xref:./reference/pulsar/message-consumption.adoc#message-listener-startup-failure[@PulsarListener] or xref:./reference/pulsar/message-consumption.adoc#message-reader-startup-failure[@PulsarReader].
 
 === Message Container Factory Customizers (Spring Boot)
 Spring Boot has introduced a generic message container factory customizer `org.springframework.boot.pulsar.autoconfigure.PulsarContainerFactoryCustomizer<T extends PulsarContainerFactory<?, ?>>` that can be used to further configure one or more of the auto-configured container factories that back the following listener annotations:
@@ -55,9 +61,6 @@ Spring Boot has introduced a generic message container factory customizer `org.s
 - For `@PulsarListener` register one or more PulsarContainerFactoryCustomizer<ConcurrentPulsarListenerContainerFactory<?>> beans.
 
 - For `@PulsarReader` register one or more PulsarContainerFactoryCustomizer<DefaultPulsarReaderContainerFactory<?>> beans.
-
-- For `@ReactivePulsarListener` register one or more PulsarContainerFactoryCustomizer<DefaultReactivePulsarListenerContainerFactory<?>> beans.
-
 
 === Deprecations
 

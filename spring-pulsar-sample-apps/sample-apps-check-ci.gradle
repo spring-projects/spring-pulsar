@@ -22,7 +22,6 @@ allprojects {
 			force "org.springframework.pulsar:spring-pulsar:$springPulsarVersion"
 			force "org.springframework.pulsar:spring-pulsar-cache-provider:$springPulsarVersion"
 			force "org.springframework.pulsar:spring-pulsar-cache-provider-caffeine:$springPulsarVersion"
-			force "org.springframework.pulsar:spring-pulsar-reactive:$springPulsarVersion"
 			force "org.springframework.pulsar:spring-pulsar-dependencies:$springPulsarVersion"
 		}
 	}
@@ -37,7 +36,6 @@ allprojects {
 				includeVersion "org.springframework.pulsar", "spring-pulsar", "$springPulsarVersion"
 				includeVersion "org.springframework.pulsar", "spring-pulsar-cache-provider", "$springPulsarVersion"
 				includeVersion "org.springframework.pulsar", "spring-pulsar-cache-provider-caffeine", "$springPulsarVersion"
-				includeVersion "org.springframework.pulsar", "spring-pulsar-reactive", "$springPulsarVersion"
 				includeVersion "org.springframework.pulsar", "spring-pulsar-dependencies", "$springPulsarVersion"
 			}
 		}

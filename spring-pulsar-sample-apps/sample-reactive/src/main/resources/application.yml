@@ -1,5 +1,0 @@
-spring:
-  docker:
-    compose:
-      # when run from Intellij via "Run" button, path must be set from project root
-      file: spring-pulsar-sample-apps/sample-reactive/compose.yaml

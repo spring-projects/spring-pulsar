@@ -34,11 +34,6 @@ class SamplePulsarApplicationSslTests {
 
 		}
 
-		@Nested
-		class ReactiveAppTests implements SpringBootTestReactiveApp {
-
-		}
-
 	}
 
 	@Nested
@@ -47,11 +42,6 @@ class SamplePulsarApplicationSslTests {
 
 		@Nested
 		class ImperativeAppTests implements SpringBootTestImperativeApp {
-
-		}
-
-		@Nested
-		class ReactiveAppTests implements SpringBootTestReactiveApp {
 
 		}
 

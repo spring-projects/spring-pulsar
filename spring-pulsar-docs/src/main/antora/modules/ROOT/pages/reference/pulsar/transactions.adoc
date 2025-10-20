@@ -15,8 +15,6 @@ Spring for Apache Pulsar provides the following:
 * Transactional `@PulsarListener`
 * Transaction synchronization with other transaction managers
 
-NOTE: Transaction support has not been added to the Reactive components yet
-
 Transaction support is disabled by default.
 To enable support when using Spring Boot, simply set the `spring.pulsar.transaction.enabled` property.
 Further configuration options are outlined in each component section below.

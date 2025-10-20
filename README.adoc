@@ -92,9 +92,6 @@ Provides a Gradle https://docs.gradle.org/current/userguide/java_platform_plugin
 === spring-pulsar-docs
 Provides reference docs and handles aggregating javadocs.
 
-=== spring-pulsar-reactive
-Provides the API to access Apache Pulsar using a Reactive client.
-
 === spring-pulsar-sample-apps
 Provides sample applications to illustrate Spring for Apache Pulsar functionality as well as provide ability for quick manual verification during development.
 

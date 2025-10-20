@@ -18,5 +18,4 @@ If you are interested in adding native image support to your own application the
 
 Although there is no reference to Spring for Apache Pulsar in the aforementioned guide, you can find specific examples at the following coordinates:
 
-* https://github.com/spring-projects/spring-aot-smoke-tests/tree/main/integration/spring-pulsar[Spring for Apache Pulsar (imperative)]
-* https://github.com/spring-projects/spring-aot-smoke-tests/tree/main/integration/spring-pulsar-reactive[Spring for Apache Pulsar (reactive)]
+* https://github.com/spring-projects/spring-aot-smoke-tests/tree/main/integration/spring-pulsar[Spring for Apache Pulsar]
