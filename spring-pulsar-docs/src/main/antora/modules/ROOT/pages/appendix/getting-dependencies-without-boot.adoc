@@ -72,7 +72,7 @@ dependencies {
 ----
 ======
 
-If you use additional features (such as Reactive), you need to also include the appropriate dependencies.
+If you use additional features you need to also include the appropriate dependencies.
 
 Spring for Apache Pulsar builds against Spring Framework {spring-framework-version} but should generally work with any newer version of Spring Framework 6.x.
 Many users are likely to run afoul of the fact that Spring for Apache Pulsar's transitive dependencies resolve Spring Framework {spring-framework-version}, which can cause strange classpath problems.

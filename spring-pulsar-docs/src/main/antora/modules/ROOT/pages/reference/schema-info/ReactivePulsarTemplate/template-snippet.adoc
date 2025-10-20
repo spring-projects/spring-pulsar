@@ -1,6 +1,0 @@
-[source,java,subs="attributes,verbatim"]
-----
-void sendUserAsBytes(ReactivePulsarTemplate<byte[]> template, byte[] userAsBytes) {
-	template.send("user-topic", userAsBytes, Schema.AUTO_PRODUCE_BYTES()).subscribe();
-}
-----

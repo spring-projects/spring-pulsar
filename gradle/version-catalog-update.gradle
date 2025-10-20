@@ -12,9 +12,7 @@ def isNonStable = { String version ->
 def trustedLibPrefixes = [
 		"org.springframework.",
 		"io.micrometer.",
-		"io.spring.dependency-management:",
-		"org.apache.pulsar:pulsar-client-reactive",
-		"io.projectreactor:reactor"
+		"io.spring.dependency-management:"
 ]
 
 tasks.named("dependencyUpdates").configure {

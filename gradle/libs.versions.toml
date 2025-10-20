@@ -11,8 +11,6 @@ micrometer-docs-gen = "1.0.4"
 micrometer-tracing = "1.6.0-RC1"
 protobuf = "3.25.8"
 pulsar = "4.1.1"
-pulsar-reactive = "0.7.0"
-reactor = "2025.0.0-M7"
 spring = "7.0.0-M9"
 # tests
 assertj = "3.27.6"
@@ -23,8 +21,8 @@ junit = "6.0.0"
 hamcrest = "3.0"
 mockito = "5.17.0"
 spring-dep-mgmt = "1.1.7"
-spring-boot = "4.0.0-SNAPSHOT"
-spring-boot-for-docs = "4.0.0-SNAPSHOT"
+spring-boot = "4.0.0-M3"
+spring-boot-for-docs = "4.0.0-M3"
 spring-cloud-stream = "5.0.0-SNAPSHOT"
 system-lambda = "1.2.1"
 testcontainers = "1.21.3"
@@ -52,10 +50,6 @@ micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", vers
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 pulsar-client-all = { module = "org.apache.pulsar:pulsar-client-all", version.ref = "pulsar" }
-pulsar-client-reactive-api = { module = "org.apache.pulsar:pulsar-client-reactive-api", version.ref = "pulsar-reactive" }
-pulsar-client-reactive-adapter = { module = "org.apache.pulsar:pulsar-client-reactive-adapter", version.ref = "pulsar-reactive" }
-pulsar-client-reactive-producer-cache-caffeine-shaded = { module = "org.apache.pulsar:pulsar-client-reactive-producer-cache-caffeine-shaded", version.ref = "pulsar-reactive" }
-reactor-bom = { module = "io.projectreactor:reactor-bom", version.ref = "reactor" }
 spring-bom = { module = "org.springframework:spring-framework-bom", version.ref = "spring" }
 # Testing libs
 assertj-bom = { module = "org.assertj:assertj-bom", version.ref = "assertj" }
@@ -66,7 +60,6 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 mockito-bom = { module = "org.mockito:mockito-bom", version.ref = "mockito" }
 spring-boot-starter-amqp = { module = "org.springframework.boot:spring-boot-starter-amqp", version.ref = "spring-boot" }
 spring-boot-starter-pulsar = { module = "org.springframework.boot:spring-boot-starter-pulsar", version.ref = "spring-boot" }
-spring-boot-starter-pulsar-reactive = { module = "org.springframework.boot:spring-boot-starter-pulsar-reactive", version.ref = "spring-boot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }
 system-lambda = { module = "com.github.stefanbirkner:system-lambda", version.ref = "system-lambda" }

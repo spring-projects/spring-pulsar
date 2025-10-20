@@ -14,7 +14,6 @@ repositories {
 
 dependencies {
 	intTestImplementation project(':spring-pulsar')
-	intTestImplementation project(':spring-pulsar-reactive')
 	intTestImplementation project(':spring-pulsar-test')
 	intTestImplementation 'org.awaitility:awaitility'
 	intTestImplementation 'org.testcontainers:junit-jupiter'
@@ -25,9 +24,6 @@ dependencies {
 	// Exclude spring-pulsar from boot in order to use current changes in project
 	intTestImplementation(libs.spring.boot.starter.pulsar) {
 		exclude group: "org.springframework.pulsar", module: "spring-pulsar"
-	}
-	intTestImplementation(libs.spring.boot.starter.pulsar.reactive) {
-		exclude group: "org.springframework.pulsar", module: "spring-pulsar-reactive"
 	}
 	intTestImplementation libs.spring.boot.testcontainers
 	intTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'

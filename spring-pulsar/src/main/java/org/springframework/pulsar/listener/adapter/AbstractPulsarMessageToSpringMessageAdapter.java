@@ -254,32 +254,11 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 					this.simpleExtraction = true;
 				}
 			}
-			else if (isFlux(parameterizedType.getRawType()) && parameterizedType.getActualTypeArguments().length == 1) {
-
-				Type paramType = parameterizedType.getActualTypeArguments()[0];
-				boolean messageHasGeneric = paramType instanceof ParameterizedType
-						&& ((ParameterizedType) paramType).getRawType()
-							.equals(org.springframework.messaging.Message.class);
-				this.isSpringMessageFlux = paramType.equals(org.springframework.messaging.Message.class)
-						|| messageHasGeneric;
-				if (messageHasGeneric) {
-					genericParameterType = ((ParameterizedType) paramType).getActualTypeArguments()[0];
-				}
-			}
 			else {
 				this.isConsumerRecords = parameterizedType.getRawType().equals(Messages.class);
 			}
 		}
 		return genericParameterType;
-	}
-
-	/**
-	 * Determine if the type is a reactive Flux.
-	 * @param type type to check
-	 * @return false as the imperative side does not know about Flux
-	 */
-	protected boolean isFlux(Type type) {
-		return false;
 	}
 
 	protected boolean parameterIsType(Type parameterType, Type type) {

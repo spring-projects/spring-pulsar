@@ -14,7 +14,6 @@ project.afterEvaluate {
 
 		dependsOn(
 			':spring-pulsar:compileJava',
-			':spring-pulsar-reactive:compileJava',
 			':spring-pulsar-cache-provider:compileJava',
 			':spring-pulsar-cache-provider:test',
 			':spring-pulsar-cache-provider-caffeine:compileJava')

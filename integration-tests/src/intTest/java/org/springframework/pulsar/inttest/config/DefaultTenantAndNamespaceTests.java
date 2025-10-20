@@ -24,7 +24,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.awaitility.Awaitility;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,25 +63,6 @@ class DefaultTenantAndNamespaceTests {
 			TestVerifyUtils.verifyProduceConsume(output, 10, (i) -> ImperativeAppConfig.MSG_PREFIX + i);
 			TestVerifyUtils.verifyTopicsLocatedInTenantAndNamespace(pulsarAdmin, ImperativeAppConfig.TENANT,
 					ImperativeAppConfig.NAMESPACE, ImperativeAppConfig.NFQ_TOPIC);
-		}
-
-	}
-
-	@Nested
-	@SpringBootTest(classes = ReactiveAppConfig.class,
-			properties = { "spring.pulsar.defaults.topic.tenant=my-tenant-r",
-					"spring.pulsar.defaults.topic.namespace=my-namespace-r" })
-	@ExtendWith(OutputCaptureExtension.class)
-	@ActiveProfiles("inttest.pulsar.reactive")
-	@Disabled("Flaky -> see https://github.com/spring-projects/spring-pulsar/issues/1040")
-	class WithReactiveApp {
-
-		@Test
-		void produceConsumeWithDefaultTenantNamespace(CapturedOutput output,
-				@Autowired PulsarAdministration pulsarAdmin) {
-			TestVerifyUtils.verifyProduceConsume(output, 10, (i) -> ReactiveAppConfig.MSG_PREFIX + i);
-			TestVerifyUtils.verifyTopicsLocatedInTenantAndNamespace(pulsarAdmin, ReactiveAppConfig.TENANT,
-					ReactiveAppConfig.NAMESPACE, ReactiveAppConfig.NFQ_TOPIC);
 		}
 
 	}

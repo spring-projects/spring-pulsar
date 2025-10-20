@@ -27,11 +27,9 @@ def generateAttributes() {
 	def springCloudStreamVersion = versionCatalog.findVersion("spring-cloud-stream").orElseThrow().displayName
 	def pulsarClientVersion = versionCatalog.findVersion("pulsar").orElseThrow().displayName
 	def pulsarClientVersionFamily = pulsarClientVersion.tokenize(".")[0] + "." + pulsarClientVersion.tokenize(".")[1] + ".x"
-	def pulsarClientReactiveVersion = versionCatalog.findVersion("pulsar-reactive").orElseThrow().displayName
 	return ['is-snapshot-version': project.version.endsWith("-SNAPSHOT"),
 			'pulsar-client-version': pulsarClientVersion ?: 'current',
 			'pulsar-client-version-family': pulsarClientVersionFamily ?: 'current',
-			'pulsar-client-reactive-version': pulsarClientReactiveVersion ?: 'current',
 			'spring-boot-version': springBootVersionForDocs ?: 'current',
 			'spring-cloud-stream-version': springCloudStreamVersion ?: 'current',
 			'spring-framework-version': springFrameworkVersion ?: 'current',

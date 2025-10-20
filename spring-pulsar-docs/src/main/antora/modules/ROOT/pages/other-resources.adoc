@@ -9,4 +9,3 @@ In addition to this reference documentation, we recommend a number of other reso
 - https://pulsar.apache.org/[Apache Pulsar Project Home Page]
 - {apache-pulsar-docs}/client-libraries-java/[Apache Pulsar Java Client]
 - https://github.com/apache/pulsar[Apache Pulsar GitHub Repository]
-- https://github.com/apache/pulsar-client-reactive[Apache Pulsar Reactive Client GitHub Repository]
