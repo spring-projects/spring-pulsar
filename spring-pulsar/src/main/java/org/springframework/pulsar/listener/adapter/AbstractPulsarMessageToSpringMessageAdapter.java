@@ -28,11 +28,11 @@ import org.apache.pulsar.client.api.Messages;
 import org.apache.pulsar.client.api.Reader;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.context.expression.MapAccessor;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.log.LogAccessor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.MapAccessor;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeConverter;
 import org.springframework.messaging.converter.MessageConversionException;
@@ -132,6 +132,7 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 		return this.isPulsarMessageList;
 	}
 
+	@SuppressWarnings("removal")
 	public void setBeanResolver(BeanResolver beanResolver) {
 		this.evaluationContext.setBeanResolver(beanResolver);
 		this.evaluationContext.setTypeConverter(new StandardTypeConverter());
