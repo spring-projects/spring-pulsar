@@ -46,8 +46,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.pulsar.PulsarContainer;
 
 import org.springframework.pulsar.core.ConsumerBuilderCustomizer;
 import org.springframework.pulsar.core.DefaultPulsarConsumerFactory;

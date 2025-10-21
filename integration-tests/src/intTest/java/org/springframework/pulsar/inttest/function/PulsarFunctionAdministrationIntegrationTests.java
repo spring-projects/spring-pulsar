@@ -46,9 +46,9 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.pulsar.PulsarContainer;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.SpringApplication;
