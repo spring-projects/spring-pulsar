@@ -52,6 +52,7 @@ public class HandlerAdapter {
 		this.delegatingHandler = delegatingHandler;
 	}
 
+	@SuppressWarnings("NullAway")
 	public @Nullable Object invoke(Message<?> message, @Nullable Object... providedArgs) throws Exception {
 		if (this.invokerHandlerMethod != null) {
 			return this.invokerHandlerMethod.invoke(message, providedArgs);
