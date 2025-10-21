@@ -18,7 +18,7 @@ package org.springframework.pulsar.inttest.app;
 
 import java.time.Duration;
 
-import org.testcontainers.containers.PulsarContainer;
+import org.testcontainers.pulsar.PulsarContainer;
 import org.testcontainers.utility.MountableFile;
 
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;

@@ -16,9 +16,9 @@ dependencies {
 	intTestImplementation project(':spring-pulsar')
 	intTestImplementation project(':spring-pulsar-test')
 	intTestImplementation 'org.awaitility:awaitility'
-	intTestImplementation 'org.testcontainers:junit-jupiter'
-	intTestImplementation 'org.testcontainers:pulsar'
-	intTestImplementation 'org.testcontainers:rabbitmq'
+	intTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	intTestImplementation 'org.testcontainers:testcontainers-pulsar'
+	intTestImplementation 'org.testcontainers:testcontainers-rabbitmq'
 	intTestImplementation libs.spring.boot.starter.test
 	intTestImplementation libs.spring.boot.starter.amqp
 	// Exclude spring-pulsar from boot in order to use current changes in project

@@ -39,8 +39,8 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testImplementation 'org.springframework:spring-test'
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:pulsar'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-pulsar'
 
 	// Output capture used by PulsarFunctionAdministrationTests
 	testImplementation libs.system.lambda
@@ -48,7 +48,7 @@ dependencies {
 
 	// Used by PulsarMixedTransactionTests (Pulsar + DB)
 	testImplementation 'org.springframework:spring-jdbc'
-	testImplementation "org.testcontainers:mysql"
+	testImplementation "org.testcontainers:testcontainers-mysql"
 	testImplementation 'mysql:mysql-connector-java:8.0.33'
 
 	// Used by UserRecordDe/serializer in test fixtures
