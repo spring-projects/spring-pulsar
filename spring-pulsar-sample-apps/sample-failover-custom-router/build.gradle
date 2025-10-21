@@ -21,6 +21,7 @@ ext['pulsar.version'] = "${pulsarVersion}"
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-pulsar'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-jackson2'
 	implementation 'org.springframework.boot:spring-boot-zipkin'
 	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
