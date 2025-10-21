@@ -44,6 +44,7 @@ import org.apache.pulsar.client.api.transaction.Transaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -252,11 +253,13 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 			.withMessage("Transactional record listeners can not use batch ack mode");
 	}
 
+	@Disabled("Flaky test see spring-pulsar/issues/1294")
 	@Test
 	void batchListenerUsesBatchAckWhenSharedSub() throws Exception {
 		batchListenerUsesProperBatchAckForSubscriptionType("batch-lstr-batch-ack", SubscriptionType.Shared);
 	}
 
+	@Disabled("Flaky test see spring-pulsar/issues/1294")
 	@Test
 	void batchListenerUsesCumulativeAckWhenNotSharedSub() throws Exception {
 		batchListenerUsesProperBatchAckForSubscriptionType("batch-lstr-cumltv-ack", SubscriptionType.Exclusive);
