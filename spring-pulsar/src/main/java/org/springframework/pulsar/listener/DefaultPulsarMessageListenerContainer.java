@@ -77,8 +77,6 @@ import org.springframework.pulsar.transaction.PulsarAwareTransactionManager;
 import org.springframework.pulsar.transaction.PulsarTransactionUtils;
 import org.springframework.scheduling.SchedulingAwareRunnable;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -604,14 +602,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		private void dispatchMessageToListenerInTxn(Message<T> message, AtomicBoolean inRetryMode) {
 			try {
 				requireNonNull(this.transactionTemplate, "transactionTemplate must not be null")
-					.execute(new TransactionCallbackWithoutResult() {
-						@Override
-						protected void doInTransactionWithoutResult(TransactionStatus status) {
-							RuntimeException aborted = dispatchMessageToListener(message, inRetryMode,
-									getTransaction());
-							if (aborted != null) {
-								throw aborted;
-							}
+					.executeWithoutResult((status) -> {
+						RuntimeException aborted = dispatchMessageToListener(message, inRetryMode, getTransaction());
+						if (aborted != null) {
+							throw aborted;
 						}
 					});
 			}
