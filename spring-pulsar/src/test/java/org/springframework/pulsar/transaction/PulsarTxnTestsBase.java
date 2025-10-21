@@ -29,8 +29,8 @@ import org.assertj.core.api.AbstractListAssert;
 import org.assertj.core.api.ObjectAssert;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
-import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.pulsar.PulsarContainer;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
