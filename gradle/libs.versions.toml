@@ -11,7 +11,7 @@ micrometer-docs-gen = "1.0.4"
 micrometer-tracing = "1.6.0-RC1"
 protobuf = "3.25.8"
 pulsar = "4.1.1"
-spring = "7.0.0-RC1"
+spring = "7.0.0-RC2"
 # tests
 assertj = "3.27.6"
 awaitility = "4.3.0"
