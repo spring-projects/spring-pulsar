@@ -45,7 +45,7 @@ jobs:
           ./gradlew clean build -x integrationTest --continue --scan
       - name: Upload Test Results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
@@ -58,7 +58,7 @@ jobs:
           ./gradlew jacocoTestCoverageVerification --info
       - name: Upload Aggregated Jacoco Report
         if: failure() || contains(github.event.pull_request.labels.*.name, 'ci/upload-jacoco')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: jacoco-results
           path: 'build/reports/jacoco/**/*.*'
@@ -75,7 +75,7 @@ jobs:
           ./gradlew integrationTest --rerun-tasks -DdownloadRabbitConnector=true --scan
       - name: Capture Test Results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
