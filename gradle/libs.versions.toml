@@ -1,6 +1,6 @@
 [versions]
 # product
-caffeine = "3.2.2"
+caffeine = "3.2.3"
 commons-compress = "1.26.2"
 jackson = "2.20.0"
 jspecify = "1.0.0"
