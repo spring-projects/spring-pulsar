@@ -11,7 +11,7 @@ micrometer-tracing = "1.4.11"
 protobuf = "3.25.8"
 pulsar = "3.3.9"
 pulsar-reactive = "0.7.0"
-reactor = "2024.0.11"
+reactor = "2024.0.12"
 spring = "6.2.12"
 # tests
 assertj = "3.27.6"
