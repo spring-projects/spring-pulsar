@@ -5,7 +5,7 @@ plugins {
 	alias(libs.plugins.grgit) apply false
 	alias(libs.plugins.versions)
 	alias(libs.plugins.version.catalog.update)
-	id 'io.spring.nullability' version '0.0.7' apply false
+	id 'io.spring.nullability' version '0.0.8' apply false
 }
 
 description = 'Spring for Apache Pulsar'
