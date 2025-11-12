@@ -304,7 +304,6 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				var topicsPattern = patternMultiTopicsConsumer.getPattern();
 				assertThat(topicsPattern.inputPattern()).isEqualTo("persistent://public/default/topic-.*");
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic-.*");
-				temporarilyDealWithPulsar24698(patternMultiTopicsConsumer);
 			}
 		}
 
@@ -332,18 +331,6 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic(deadLetterTopic);
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic(retryLetterTopic);
 			}
-		}
-
-		// TODO remove when Pulsar client updates to 4.2.0
-		private void temporarilyDealWithPulsar24698(PatternMultiTopicsConsumerImpl<String> consumer) {
-			// See https://github.com/apache/pulsar/pull/24698
-			// If this is not here there will be numerous exceptions when
-			// PulsarClient.close
-			CompletableFuture<?> watcherFuture = assertThat(consumer)
-				.extracting("watcherFuture", InstanceOfAssertFactories.type(CompletableFuture.class))
-				.actual();
-			watcherFuture.join();
-
 		}
 
 	}
