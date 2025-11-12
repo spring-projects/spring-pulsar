@@ -111,4 +111,5 @@ jobs:
             -PpulsarVersion="$PULSAR_VERSION" \
             -PtestToolchain="$JAVA_VERSION" \
             -PsampleTests \
+            -x compileJava \
             ${{ matrix.samplesTarget }}
