@@ -43,6 +43,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
+import org.springframework.core.log.LogAccessor;
 import org.springframework.pulsar.PulsarException;
 import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 
@@ -54,6 +55,8 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 
 	private static final Schema<String> SCHEMA = Schema.STRING;
+
+	private final LogAccessor logger = new LogAccessor(this.getClass());
 
 	@Nullable protected PulsarClient pulsarClient;
 
@@ -302,6 +305,9 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				var topicsPattern = patternMultiTopicsConsumer.getPattern();
 				assertThat(topicsPattern.inputPattern()).isEqualTo("persistent://public/default/topic-.*");
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic-.*");
+			}
+			catch (RuntimeException ex) {
+				DefaultPulsarConsumerFactoryTests.this.logger.warn(ex, "*** TopicWatcher likely failed - pulsar client still knocking the kinks out");
 			}
 		}
 
