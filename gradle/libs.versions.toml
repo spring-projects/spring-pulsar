@@ -25,7 +25,7 @@ spring-boot = "4.0.0-SNAPSHOT"
 spring-boot-for-docs = "4.0.0-SNAPSHOT"
 spring-cloud-stream = "5.0.0-SNAPSHOT"
 system-lambda = "1.2.1"
-testcontainers = "2.0.1"
+testcontainers = "2.0.2"
 # plugins
 antora = "1.0.0"
 antora-yml = "0.0.1"
