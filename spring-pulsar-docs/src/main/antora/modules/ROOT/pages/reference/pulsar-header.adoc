@@ -44,7 +44,7 @@ During inbound mapping, they are mapped as `String`.
 By default, only `org.springframework.util.MimeType` and `org.springframework.http.MediaType` are mapped this way.
 
 ===== Custom ObjectMapper
-The JSON mapper uses a reasonable configured Jasckson `ObjectMapper` to handle serialization of header values.
+The JSON mapper uses a reasonable configured Jackson 2 `ObjectMapper` to handle serialization of header values.
 However, to provide a custom object mapper one must simply provide an `ObjectMapper` bean with the name `pulsarHeaderObjectMapper`.
 For example:
 [source, java]
@@ -60,6 +60,10 @@ static class PulsarHeadersCustomObjectMapperTestConfig {
     }
 }
 ----
+
+IMPORTANT: The object mapper in the example above should be an instance of `com.fasterxml.jackson.databind.ObjectMapper`, **not** the shaded `org.apache.pulsar.shade.com.fasterxml.jackson.databind.ObjectMapper`.
+
+IMPORTANT: The xref:reference/custom-object-mapper.adoc#jackson2vs3[same limitations] regarding Jackson 2 vs. Jackson 3 apply here }
 
 === Inbound/Outbound Patterns
 On the inbound side, by default, all Pulsar headers (message metadata plus user properties) are mapped to `MessageHeaders`.
