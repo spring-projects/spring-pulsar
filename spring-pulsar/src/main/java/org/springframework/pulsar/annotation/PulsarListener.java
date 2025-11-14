@@ -128,8 +128,10 @@ public @interface PulsarListener {
 	String autoStartup() default "";
 
 	/**
-	 * Activate batch consumption.
-	 * @return whether this listener is in batch mode or not.
+	 * Whether the listener method that is the target of the annotation expects a list of
+	 * messages or a single message. This does <b>not</b> influence whether messages are
+	 * pulled from the Pulsar consumer in batches.
+	 * @return whether the listener method expects a list of messages or a single message.
 	 */
 	boolean batch() default false;
 
