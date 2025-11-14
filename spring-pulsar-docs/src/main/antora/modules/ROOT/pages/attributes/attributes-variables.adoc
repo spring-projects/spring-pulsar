@@ -9,8 +9,8 @@
 :github: https://github.com/spring-projects/spring-pulsar
 :javadocs: https://docs.spring.io/spring-pulsar/docs/{spring-pulsar-version}/api
 :spring-framework-docs: https://spring.io/projects/spring-framework#learn
-:spring-boot-docs: https://docs.spring.io/spring-boot/docs/{spring-boot-version}/reference/htmlsingle
-:spring-boot-pulsar-config-props: {spring-boot-docs}/#application-properties.integration
+:spring-boot-docs: https://docs.spring.io/spring-boot/{spring-boot-version}
+:spring-boot-pulsar-config-props: {spring-boot-docs}/appendix/application-properties/index.html#appendix.application-properties.integration
 :spring-cloud-stream-docs: https://docs.spring.io/spring-cloud-stream/docs/{spring-cloud-stream-version}/reference/html/
 :spring-cloud-function: https://spring.io/projects/spring-cloud-function
 
