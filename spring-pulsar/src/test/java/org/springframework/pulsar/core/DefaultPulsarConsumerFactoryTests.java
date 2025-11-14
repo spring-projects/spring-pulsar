@@ -307,7 +307,8 @@ class DefaultPulsarConsumerFactoryTests implements PulsarTestContainerSupport {
 				verify(pulsarTopicBuilder).getFullyQualifiedNameForTopic("topic-.*");
 			}
 			catch (RuntimeException ex) {
-				DefaultPulsarConsumerFactoryTests.this.logger.warn(ex, "*** TopicWatcher likely failed - pulsar client still knocking the kinks out");
+				DefaultPulsarConsumerFactoryTests.this.logger.warn(ex,
+						"*** TopicWatcher likely failed - pulsar client still knocking the kinks out");
 			}
 		}
 
