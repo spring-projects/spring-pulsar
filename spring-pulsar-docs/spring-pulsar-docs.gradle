@@ -108,9 +108,9 @@ artifactoryPublish {
 }
 
 tasks.withType(PublishToMavenRepository).configureEach {
-	enabled = ProjectUtils.isSnapshot(project)
+	enabled = ProjectUtils.isSnapshot(project) || project.hasProperty('forceLocalPublish')
 }
 
 tasks.withType(PublishToMavenLocal).configureEach {
-	enabled = ProjectUtils.isSnapshot(project)
+	enabled = ProjectUtils.isSnapshot(project) || project.hasProperty('forceLocalPublish')
 }

@@ -1,0 +1,86 @@
+name: Deploy Docs Ad Hoc
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch-or-tag:
+        description: 'Branch or tag name to deploy docs for (e.g. v2.0.0)'
+        required: true
+        type: string
+env:
+  GCHAT_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
+  DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+  COMMIT_OWNER: ${{ github.event.pusher.name }}
+  COMMIT_SHA: ${{ github.sha }}
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+
+jobs:
+  deploy_docs_artifactory:
+    name: Deploy Docs To Artifactory
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.branch-or-tag }}
+      - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
+      - name: Stage Local spring-pulsar-docs Artifacts for Publishing to Artifactory
+        id: stage-spring-pulsar-docs
+        shell: bash
+        run: |
+          sed -i "s/version=2.0.1-SNAPSHOT/version=2.0.0/g" gradle.properties
+          cat gradle.properties
+          ./gradlew \
+              -PdeploymentRepository=$(pwd)/deployment-repository \
+              -PforceLocalPublish=true \
+              :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
+          echo "deployRepo=$(pwd)/deployment-repository" >> $GITHUB_OUTPUT
+          echo "ls -R $(pwd)/deployment-repository"
+          ls -R $(pwd)/deployment-repository
+      - name: Publish Staged spring-pulsar-docs to Artifactory
+        uses: spring-io/artifactory-deploy-action@dc1913008c0599f0c4b1fdafb6ff3c502b3565ea # v0.0.2
+        with:
+          artifact-properties: |
+            /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
+          uri: 'https://repo.spring.io'
+          repository: 'libs-release-local'
+          build-name: 'spring-pulsar-2.0.x'
+          folder: 'deployment-repository'
+          signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  deploy_docs_antora:
+    name: Deploy Antora Docs
+    runs-on: ubuntu-latest
+    if: github.repository == 'spring-projects/spring-pulsar'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.branch-or-tag }}
+      - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
+      - name: Run Antora
+        run: |
+          ./gradlew antora
+      - name: Publish Docs
+        uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.21
+        with:
+          docs-username: ${{ secrets.DOCS_USERNAME }}
+          docs-host: ${{ secrets.DOCS_HOST }}
+          docs-ssh-key: ${{ secrets.DOCS_SSH_KEY }}
+          docs-ssh-host-key: ${{ secrets.DOCS_SSH_HOST_KEY }}
+          site-path: spring-pulsar-docs/build/site
+      - name: Bust Clouflare Cache
+        uses: spring-io/spring-doc-actions/bust-cloudflare-antora-cache@v0.0.21
+        with:
+          context-root: spring-pulsar
+          cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          cloudflare-cache-token: ${{ secrets.CLOUDFLARE_CACHE_TOKEN }}

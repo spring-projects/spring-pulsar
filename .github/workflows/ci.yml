@@ -127,21 +127,25 @@ jobs:
           fi
           echo "deploy_location=$deploy_location" >> $GITHUB_OUTPUT
 
-      - name: Publish Artifacts to Artifactory
+      - name: Stage Local Artifacts for Publishing to Artifactory
         if: ${{ steps.deploy-location.outputs.deploy_location == 'artifactory' }}
-        env:
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-          ARTIFACTORY_BUILD_NAME: ${{ github.event.repository.name }}-${{ steps.branch-name.outputs.branch }}
-          ARTIFACTORY_BUILD_NUMBER: ${{ github.run_id }}
-          ARTIFACTORY_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          ARTIFACTORY_USER_AGENT_NAME: GitHub Actions
-          ARTIFACTORY_USER_AGENT_VERSION: Unknown
-          ARTIFACTORY_VCS_REVISION: ${{ github.sha }}
+        shell: bash
         run: |
-          ./gradlew artifactoryPublish \
-              --stacktrace \
-              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository publishAllPublicationsToDeploymentRepository
+      - name: Publish Staged Artifacts to Artifactory
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'artifactory' }}
+        uses: spring-io/artifactory-deploy-action@dc1913008c0599f0c4b1fdafb6ff3c502b3565ea # v0.0.2
+        with:
+          artifact-properties: |
+            /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
+          uri: 'https://repo.spring.io'
+          repository: 'libs-snapshot-local'
+          build-name: 'spring-pulsar-2.0.x'
+          folder: 'deployment-repository'
+          signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
       - name: Stage Local Artifacts for Publishing to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
@@ -153,7 +157,6 @@ jobs:
           # rm checksums to work around https://github.com/spring-io/central-publish-action/issues/11
           find -name "*.md5" | xargs rm -f
           find -name "*.sha*" | xargs rm -f
-
       - name: Publish Staged Artifacts to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
         uses: spring-io/central-publish-action@0c03960e9b16fdfe70e2443e1d5393cbc3a35622 # v0.3.0
@@ -162,21 +165,25 @@ jobs:
           token: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           dir: build/publications/repos
 
-      - name: Still publish docs module to Artifactory when deploy location is Central
+      - name: Still publish docs module to Artifactory when deploy location is Central (stage)
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
-        env:
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-          ARTIFACTORY_BUILD_NAME: ${{ github.event.repository.name }}-${{ steps.branch-name.outputs.branch }}
-          ARTIFACTORY_BUILD_NUMBER: ${{ github.run_id }}
-          ARTIFACTORY_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          ARTIFACTORY_USER_AGENT_NAME: GitHub Actions
-          ARTIFACTORY_USER_AGENT_VERSION: Unknown
-          ARTIFACTORY_VCS_REVISION: ${{ github.sha }}
+        shell: bash
         run: |
-          ./gradlew :spring-pulsar-docs:artifactoryPublish \
-              --stacktrace \
-              -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
+          ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
+      - name: Still publish docs module to Artifactory when deploy location is Central (publish)
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
+        uses: spring-io/artifactory-deploy-action@dc1913008c0599f0c4b1fdafb6ff3c502b3565ea # v0.0.2
+        with:
+          artifact-properties: |
+            /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
+          uri: 'https://repo.spring.io'
+          repository: 'libs-release-local'
+          build-name: 'spring-pulsar-2.0.x'
+          folder: 'deployment-repository'
+          signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
   deploy_docs_antora:
     name: Deploy Antora Docs
