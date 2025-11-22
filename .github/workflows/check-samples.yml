@@ -32,7 +32,7 @@ jobs:
       boot_version: ${{ steps.continue.outputs.boot_version }}
       pulsar_version: ${{ steps.continue.outputs.pulsar_version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - id: continue
         name: Determine if should continue
         run: |
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '25'
