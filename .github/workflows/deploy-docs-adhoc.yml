@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'spring-projects/spring-pulsar'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch-or-tag }}
       - uses: spring-io/spring-gradle-build-action@v2
@@ -43,7 +43,7 @@ jobs:
           echo "ls -R $(pwd)/deployment-repository"
           ls -R $(pwd)/deployment-repository
       - name: Publish Staged spring-pulsar-docs to Artifactory
-        uses: spring-io/artifactory-deploy-action@dc1913008c0599f0c4b1fdafb6ff3c502b3565ea # v0.0.2
+        uses: spring-io/artifactory-deploy-action@926d7f7cc810569395346bf3a4d91b380b3e355b # v0.0.4
         with:
           artifact-properties: |
             /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'spring-projects/spring-pulsar'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch-or-tag }}
       - uses: spring-io/spring-gradle-build-action@v2

@@ -37,7 +37,7 @@ jobs:
       boot_version: ${{ steps.continue.outputs.boot_version }}
       should_deploy_artifacts: ${{ steps.should-deploy-artifacts.outputs.result }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - id: continue
         name: Determine if should continue
         run: |
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '25'
@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '25'
@@ -134,7 +134,7 @@ jobs:
           ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository publishAllPublicationsToDeploymentRepository
       - name: Publish Staged Artifacts to Artifactory
         if: ${{ steps.deploy-location.outputs.deploy_location == 'artifactory' }}
-        uses: spring-io/artifactory-deploy-action@dc1913008c0599f0c4b1fdafb6ff3c502b3565ea # v0.0.2
+        uses: spring-io/artifactory-deploy-action@926d7f7cc810569395346bf3a4d91b380b3e355b # v0.0.4
         with:
           artifact-properties: |
             /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
@@ -172,7 +172,7 @@ jobs:
           ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
       - name: Still publish docs module to Artifactory when deploy location is Central (publish)
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
-        uses: spring-io/artifactory-deploy-action@dc1913008c0599f0c4b1fdafb6ff3c502b3565ea # v0.0.2
+        uses: spring-io/artifactory-deploy-action@926d7f7cc810569395346bf3a4d91b380b3e355b # v0.0.4
         with:
           artifact-properties: |
             /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
@@ -190,7 +190,7 @@ jobs:
     needs: [build_jdk_25, check_samples, scan]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '25'
@@ -229,7 +229,7 @@ jobs:
       RELEASE_REPO: https://repo1.maven.org/maven2
       ARTIFACT_PATH: org/springframework/pulsar/spring-pulsar
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2
