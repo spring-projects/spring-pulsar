@@ -37,7 +37,7 @@ jobs:
       TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db,aquasec/trivy-db,ghcr.io/aquasecurity/trivy-db
       TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db,aquasec/trivy-java-db,ghcr.io/aquasecurity/trivy-java-db
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: spring-io/spring-gradle-build-action@v2
       - name: Publish to local repo (poms)
         run: |
