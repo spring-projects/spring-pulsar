@@ -1,0 +1,51 @@
+name: Update to next Spring Boot version
+
+on:
+  workflow_dispatch:
+    inputs:
+      springBootVersion:
+        description: 'Spring Boot version to target'
+        required: true
+        type: string
+permissions:
+  contents: read
+
+jobs:
+  update_boot_version:
+    name: Update Spring Boot version
+    if: github.repository == 'spring-projects/spring-pulsar'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
+      - name: Update version and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
+          echo "Current Spring Boot version is $bootVersion"
+
+          workBranch="update-boot-$bootVersion"
+          git checkout -b $workBranch
+          ./gradlew updateToNextBootSnapshotVersion
+
+          bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
+          echo "Next Spring Boot version is $bootVersion"
+
+          git commit -am "Update to Spring Boot $bootVersion"
+          git push origin $workBranch
+
+          gh pr create --title "Update Spring Boot to $bootVersion" \
+            --base $BRANCH
