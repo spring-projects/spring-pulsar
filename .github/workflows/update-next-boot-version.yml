@@ -41,6 +41,10 @@ jobs:
           bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
           echo "Current Spring Boot version is $bootVersion"
 
+          milestone=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          milestone="${string%-*}"
+          echo "Current milestone is $milestone"
+
           workBranch="update-boot-$bootVersion"
           git checkout -b $workBranch
           ./gradlew updateToNextBootSnapshotVersion
@@ -53,4 +57,6 @@ jobs:
 
           gh pr create --title "Update Spring Boot to $bootVersion" \
             --body "Merge to update to next Spring Boot version." \
-            --base $BRANCH
+            --base $BRANCH \
+            --label "type: dependency upgrade" \
+            --milestone $milestone 
