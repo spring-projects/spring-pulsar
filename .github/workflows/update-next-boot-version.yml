@@ -2,7 +2,11 @@ name: Update to next Spring Boot version
 
 on:
   workflow_dispatch:
-
+    inputs:
+      base-branch:
+        description: "Base branch to update (e.g. '1.2.x'). HOWEVER always use workflow from: main"
+        required: true
+        type: string
 permissions:
   contents: read
 
@@ -17,15 +21,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.base-branch }}
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - name: Set up Gradle w/ Java 17 (0.x)
-        if: github.ref != 'refs/heads/main'
+        if: inputs.base-branch == '1.2.x'
         uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '17'
           distribution: 'temurin'
       - name: Set up Gradle w/ Java 25 (main)
-        if: github.ref == 'refs/heads/main'
+        if: inputs.base-branch != '1.2.x'
         uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '25'
@@ -33,18 +38,22 @@ jobs:
       - name: Update version and create PR
         env:
           GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
-          BRANCH: ${{ github.ref_name }}
+          BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-
           bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
           echo "Current Spring Boot version is $bootVersion"
-
+          milestone=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
+          milestone="${milestone%-*}"
+          echo "Current milestone is $milestone"
           workBranch="update-boot-$bootVersion"
-          git checkout -b $workBranch
-          ./gradlew updateToNextBootSnapshotVersion
+          echo "Work branch is $workBranch (based from $BASE_BRANCH)"
 
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'          
+          git fetch origin
+          git checkout -b $workBranch origin/$BASE_BRANCH
+  
+          ./gradlew updateToNextBootSnapshotVersion
           bootVersion=$(cat gradle/libs.versions.toml | grep "spring-boot = \"" | cut -d '"' -f2)
           echo "Next Spring Boot version is $bootVersion"
 
@@ -53,4 +62,6 @@ jobs:
 
           gh pr create --title "Update Spring Boot to $bootVersion" \
             --body "Merge to update to next Spring Boot version." \
-            --base $BRANCH
+            --base $BASE_BRANCH \
+            --label "type: dependency-upgrade" \
+            --milestone $milestone
