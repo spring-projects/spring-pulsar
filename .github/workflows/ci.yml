@@ -199,7 +199,7 @@ jobs:
         run: |
           ./gradlew antora
       - name: Publish Docs
-        uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.21
+        uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.22
         with:
           docs-username: ${{ secrets.DOCS_USERNAME }}
           docs-host: ${{ secrets.DOCS_HOST }}
@@ -207,7 +207,7 @@ jobs:
           docs-ssh-host-key: ${{ secrets.DOCS_SSH_HOST_KEY }}
           site-path: spring-pulsar-docs/build/site
       - name: Bust Clouflare Cache
-        uses: spring-io/spring-doc-actions/bust-cloudflare-antora-cache@v0.0.21
+        uses: spring-io/spring-doc-actions/bust-cloudflare-antora-cache@v0.0.22
         with:
           context-root: spring-pulsar
           cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
