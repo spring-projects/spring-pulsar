@@ -169,7 +169,13 @@ jobs:
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
         shell: bash
         run: |
-          ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
+          ./gradlew \
+            -PdeploymentRepository=$(pwd)/deployment-repository \
+            -PforceLocalPublish=true \
+            :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository \
+          echo "deployRepo=$(pwd)/deployment-repository" >> $GITHUB_OUTPUT
+          echo "ls -R $(pwd)/deployment-repository"
+          ls -R $(pwd)/deployment-repository          
       - name: Still publish docs module to Artifactory when deploy location is Central (publish)
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
         uses: spring-io/artifactory-deploy-action@926d7f7cc810569395346bf3a4d91b380b3e355b # v0.0.4

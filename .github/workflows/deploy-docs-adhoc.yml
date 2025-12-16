@@ -33,12 +33,10 @@ jobs:
         id: stage-spring-pulsar-docs
         shell: bash
         run: |
-          sed -i "s/version=2.0.1-SNAPSHOT/version=2.0.0/g" gradle.properties
-          cat gradle.properties
           ./gradlew \
-              -PdeploymentRepository=$(pwd)/deployment-repository \
-              -PforceLocalPublish=true \
-              :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
+            -PdeploymentRepository=$(pwd)/deployment-repository \
+            -PforceLocalPublish=true \
+            :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
           echo "deployRepo=$(pwd)/deployment-repository" >> $GITHUB_OUTPUT
           echo "ls -R $(pwd)/deployment-repository"
           ls -R $(pwd)/deployment-repository
