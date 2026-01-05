@@ -217,9 +217,8 @@ public class PulsarRuntimeHints implements RuntimeHintsRegistrar {
 					TypeReference.of("org.springframework.core.DecoratingProxy"));
 
 		// Register required properties files
-		hints.resources()
-			.registerPatternIfPresent(classLoader, "org/apache/pulsar/shade/org/asynchttpclient/config/",
-					builder -> builder.includes("*.properties"));
+		hints.resources().registerPattern("org/apache/pulsar/shade/org/asynchttpclient/config/ahc-version.properties");
+		hints.resources().registerPattern("org/apache/pulsar/shade/org/asynchttpclient/config/ahc-default.properties");
 	}
 
 }
