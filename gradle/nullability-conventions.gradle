@@ -8,8 +8,4 @@ allprojects {
 		return
 	}
 	apply plugin: 'io.spring.nullability'
-
-	nullability {
-		requireExplicitNullMarking = false
-	}
 }
