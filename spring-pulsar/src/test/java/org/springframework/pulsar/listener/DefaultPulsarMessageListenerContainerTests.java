@@ -489,12 +489,12 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 	@Test
 	void partitionedTopicAckBatchModeAckedRestartNoRedelivery() throws Exception {
 		PulsarClient pulsarClient = PulsarClient.builder()
-				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-				.build();
+			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+			.build();
 		String topic = "test-partitioned-topic";
 		PulsarAdmin pulsarAdmin = PulsarAdmin.builder()
-				.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
-				.build();
+			.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
+			.build();
 		int numPartitions = 10;
 		pulsarAdmin.topics().createPartitionedTopic(topic, numPartitions);
 
@@ -523,9 +523,13 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		}
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
-		PartitionedTopicStats partitionedTopicStats = pulsarAdmin.topics()
+		// The above latch.await() cannot ensure all acks are received by the broker, so
+		// we wait until the backlog is 0.
+		Awaitility.await().pollInterval(1, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+			PartitionedTopicStats partitionedTopicStats = pulsarAdmin.topics()
 				.getPartitionedStats(topic, false, true, true, false);
-		assertThat(partitionedTopicStats.getBacklogSize()).isEqualTo(0);
+			assertThat(partitionedTopicStats.getBacklogSize()).isEqualTo(0);
+		});
 		container.stop();
 
 		Deque<String> restartReceivedMessages = new ConcurrentLinkedDeque<>();
