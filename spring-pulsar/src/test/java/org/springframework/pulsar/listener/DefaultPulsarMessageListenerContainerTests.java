@@ -486,6 +486,73 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		pulsarClient.close();
 	}
 
+	@Test
+	void partitionedTopicAckBatchModeAckedRestartNoRedelivery() throws Exception {
+		PulsarClient pulsarClient = PulsarClient.builder()
+				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.build();
+		String topic = "test-partitioned-topic";
+		PulsarAdmin pulsarAdmin = PulsarAdmin.builder()
+				.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
+				.build();
+		int numPartitions = 10;
+		pulsarAdmin.topics().createPartitionedTopic(topic, numPartitions);
+
+		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
+				List.of((consumerBuilder) -> {
+					consumerBuilder.topic(topic);
+					consumerBuilder.subscriptionName(topic + "-sub");
+				}));
+
+		int messagesNum = 100;
+		CountDownLatch latch = new CountDownLatch(messagesNum);
+		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setBatchListener(true);
+		pulsarContainerProperties.setMessageListener(
+				(PulsarBatchMessageListener<?>) (consumer, msg) -> msg.forEach(message -> latch.countDown()));
+		pulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, pulsarContainerProperties);
+		container.start();
+
+		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
+				topic);
+		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+		for (int i = 0; i < messagesNum; i++) {
+			pulsarTemplate.sendAsync("hello oneby wang " + i);
+		}
+		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+
+		PartitionedTopicStats partitionedTopicStats = pulsarAdmin.topics()
+				.getPartitionedStats(topic, false, true, true, false);
+		assertThat(partitionedTopicStats.getBacklogSize()).isEqualTo(0);
+		container.stop();
+
+		Deque<String> restartReceivedMessages = new ConcurrentLinkedDeque<>();
+		PulsarContainerProperties restartPulsarContainerProperties = new PulsarContainerProperties();
+		restartPulsarContainerProperties.setBatchListener(true);
+		restartPulsarContainerProperties.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msg) -> {
+			for (Message<Object> message : msg) {
+				restartReceivedMessages.offer(((String) message.getValue()));
+			}
+		});
+		restartPulsarContainerProperties.setSchema(Schema.STRING);
+		DefaultPulsarMessageListenerContainer<String> restartContainer = new DefaultPulsarMessageListenerContainer<>(
+				pulsarConsumerFactory, restartPulsarContainerProperties);
+		restartContainer.start();
+		for (int i = 0; i < numPartitions; i++) {
+			pulsarTemplate.sendAsync("hello stacey " + i);
+		}
+
+		Awaitility.await().untilAsserted(() -> assertThat(restartReceivedMessages.size()).isEqualTo(numPartitions));
+		for (String message : restartReceivedMessages) {
+			assertThat(message).startsWith("hello stacey ");
+		}
+
+		restartContainer.stop();
+		pulsarClient.close();
+	}
+
 	private void safeStopContainer(PulsarMessageListenerContainer container) {
 		try {
 			container.stop();
@@ -659,73 +726,6 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			pulsarClient.close();
 		}
 
-	}
-
-	@Test
-	void partitionedTopicAckBatchModeAckedRestartNoRedelivery() throws Exception {
-		PulsarClient pulsarClient = PulsarClient.builder()
-			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
-			.build();
-		String topic = "test-partitioned-topic";
-		PulsarAdmin pulsarAdmin = PulsarAdmin.builder()
-			.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
-			.build();
-		int numPartitions = 10;
-		pulsarAdmin.topics().createPartitionedTopic(topic, numPartitions);
-
-		DefaultPulsarConsumerFactory<String> pulsarConsumerFactory = new DefaultPulsarConsumerFactory<>(pulsarClient,
-				List.of((consumerBuilder) -> {
-					consumerBuilder.topic(topic);
-					consumerBuilder.subscriptionName(topic + "-sub");
-				}));
-
-		int messagesNum = 100;
-		CountDownLatch latch = new CountDownLatch(messagesNum);
-		PulsarContainerProperties pulsarContainerProperties = new PulsarContainerProperties();
-		pulsarContainerProperties.setBatchListener(true);
-		pulsarContainerProperties.setMessageListener(
-				(PulsarBatchMessageListener<?>) (consumer, msg) -> msg.forEach(message -> latch.countDown()));
-		pulsarContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarMessageListenerContainer<String> container = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, pulsarContainerProperties);
-		container.start();
-
-		DefaultPulsarProducerFactory<String> pulsarProducerFactory = new DefaultPulsarProducerFactory<>(pulsarClient,
-				topic);
-		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
-		for (int i = 0; i < messagesNum; i++) {
-			pulsarTemplate.sendAsync("hello oneby wang " + i);
-		}
-		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-
-		PartitionedTopicStats partitionedTopicStats = pulsarAdmin.topics()
-			.getPartitionedStats(topic, false, true, true, false);
-		assertThat(partitionedTopicStats.getBacklogSize()).isEqualTo(0);
-		container.stop();
-
-		Deque<String> restartReceivedMessages = new ConcurrentLinkedDeque<>();
-		PulsarContainerProperties restartPulsarContainerProperties = new PulsarContainerProperties();
-		restartPulsarContainerProperties.setBatchListener(true);
-		restartPulsarContainerProperties.setMessageListener((PulsarBatchMessageListener<?>) (consumer, msg) -> {
-			for (Message<Object> message : msg) {
-				restartReceivedMessages.offer(((String) message.getValue()));
-			}
-		});
-		restartPulsarContainerProperties.setSchema(Schema.STRING);
-		DefaultPulsarMessageListenerContainer<String> restartContainer = new DefaultPulsarMessageListenerContainer<>(
-				pulsarConsumerFactory, restartPulsarContainerProperties);
-		restartContainer.start();
-		for (int i = 0; i < numPartitions; i++) {
-			pulsarTemplate.sendAsync("hello stacey " + i);
-		}
-
-		Awaitility.await().untilAsserted(() -> assertThat(restartReceivedMessages.size()).isEqualTo(numPartitions));
-		for (String message : restartReceivedMessages) {
-			assertThat(message).startsWith("hello stacey ");
-		}
-
-		restartContainer.stop();
-		pulsarClient.close();
 	}
 
 }
