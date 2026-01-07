@@ -17,7 +17,6 @@
 package org.springframework.pulsar.listener;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.function.UnaryOperator.identity;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -37,6 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -857,7 +857,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				else {
 					Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
 					Map<String, Message<T>> topicName2LastMessage = stream
-						.collect(Collectors.toMap(Message::getTopicName, identity(), (a, b) -> b));
+						.collect(Collectors.toMap(Message::getTopicName, Function.identity(), (a, b) -> b));
 					topicName2LastMessage.values()
 						.forEach(lastMsg -> AckUtils.handleAckCumulative(this.consumer, lastMsg, txn));
 				}
