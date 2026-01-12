@@ -440,7 +440,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		});
 		var consumerFactory = new DefaultPulsarConsumerFactory<String>(mock(PulsarClient.class), List.of());
 		var container = new DefaultPulsarMessageListenerContainer<>(consumerFactory, containerProps);
-		assertThatIllegalStateException().isThrownBy(() -> container.start())
+		assertThatIllegalStateException().isThrownBy(container::start)
 			.withCauseInstanceOf(IllegalStateException.class)
 			.havingRootCause()
 			.withMessage("Transactional batch listeners do not support AckMode.RECORD");
@@ -486,12 +486,12 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 		pulsarClient.close();
 	}
 
-	@Test
+	@Test // GH-1344
 	void partitionedTopicAckBatchModeAckedRestartNoRedelivery() throws Exception {
 		PulsarClient pulsarClient = PulsarClient.builder()
 			.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
 			.build();
-		String topic = "test-partitioned-topic";
+		String topic = "dpmlct-batch-ack-prtnd-topic";
 		PulsarAdmin pulsarAdmin = PulsarAdmin.builder()
 			.serviceHttpUrl(PulsarTestContainerSupport.getHttpServiceUrl())
 			.build();
@@ -519,7 +519,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				topic);
 		PulsarTemplate<String> pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
 		for (int i = 0; i < messagesNum; i++) {
-			pulsarTemplate.sendAsync("hello oneby wang " + i);
+			pulsarTemplate.sendAsync("hello one world " + i);
 		}
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
@@ -545,12 +545,12 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 				pulsarConsumerFactory, restartPulsarContainerProperties);
 		restartContainer.start();
 		for (int i = 0; i < numPartitions; i++) {
-			pulsarTemplate.sendAsync("hello stacey " + i);
+			pulsarTemplate.sendAsync("hello two world " + i);
 		}
 
 		Awaitility.await().untilAsserted(() -> assertThat(restartReceivedMessages.size()).isEqualTo(numPartitions));
 		for (String message : restartReceivedMessages) {
-			assertThat(message).startsWith("hello stacey ");
+			assertThat(message).startsWith("hello two world ");
 		}
 
 		restartContainer.stop();
@@ -585,7 +585,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			var failCause = new PulsarException("please-stop");
 			when(consumerFactory.createConsumer(any(Schema.class), any(), any(), any(), any())).thenThrow(failCause);
 			// start container and expect ex thrown
-			assertThatIllegalStateException().isThrownBy(() -> container.start())
+			assertThatIllegalStateException().isThrownBy(container::start)
 				.withMessageStartingWith("Error starting listener container")
 				.withCause(failCause);
 			assertThat(container.isRunning()).isFalse();

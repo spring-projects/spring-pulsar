@@ -856,10 +856,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				}
 				else {
 					Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
-					Map<String, Message<T>> topicName2LastMessage = stream
+					Map<String, Message<T>> lastMessageByTopicName = stream
 						.collect(Collectors.toMap(Message::getTopicName, Function.identity(), (a, b) -> b));
-					topicName2LastMessage.values()
-						.forEach(lastMsg -> AckUtils.handleAckCumulative(this.consumer, lastMsg, txn));
+					lastMessageByTopicName
+						.forEach((__, lastMsg) -> AckUtils.handleAckCumulative(this.consumer, lastMsg, txn));
 				}
 			}
 			catch (PulsarException pe) {
