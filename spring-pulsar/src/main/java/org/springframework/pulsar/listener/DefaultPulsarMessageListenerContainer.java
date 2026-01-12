@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -843,8 +844,10 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 				}
 				else {
 					Stream<Message<T>> stream = StreamSupport.stream(messages.spliterator(), true);
-					Message<T> last = stream.reduce((a, b) -> b).orElse(null);
-					AckUtils.handleAckCumulative(this.consumer, last, txn);
+					Map<String, Message<T>> lastMessageByTopicName = stream
+						.collect(Collectors.toMap(Message::getTopicName, Function.identity(), (a, b) -> b));
+					lastMessageByTopicName
+						.forEach((__, lastMsg) -> AckUtils.handleAckCumulative(this.consumer, lastMsg, txn));
 				}
 			}
 			catch (PulsarException pe) {
