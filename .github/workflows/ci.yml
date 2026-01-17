@@ -284,7 +284,7 @@ jobs:
           echo "changelog.contributors.exclude.names=$repositoryTeam" > changelog.properties
           echo "changelog.issues.generate-links=$repositoryVisibility" >> changelog.properties
       - name: Generate Changelog
-        uses: spring-io/github-changelog-generator@v0.0.12
+        uses: spring-io/github-changelog-generator@v0.0.13
         with:
           milestone: ${{ env.VERSION }}
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
