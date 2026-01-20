@@ -172,7 +172,7 @@ jobs:
           ./gradlew \
             -PdeploymentRepository=$(pwd)/deployment-repository \
             -PforceLocalPublish=true \
-            :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository \
+            :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
           echo "deployRepo=$(pwd)/deployment-repository" >> $GITHUB_OUTPUT
           echo "ls -R $(pwd)/deployment-repository"
           ls -R $(pwd)/deployment-repository          

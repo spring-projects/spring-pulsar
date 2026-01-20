@@ -1,21 +1,7 @@
-name: CI (Release AdHoc)
+name: CI (Ad Hoc 2.0.2)
 
 on:
-  push:
-    branches:
-      - 'main'
-      - '1.2.x'
-    paths-ignore:
-      - '.github/**'
-  schedule:
-    - cron: '0 11 * * *' # Once per day at 11am UTC
   workflow_dispatch:
-    inputs:
-      run-trivy-scan:
-        description: 'Run Trivy scan ?'
-        default: true
-        required: false
-        type: boolean
 
 env:
   GCHAT_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
@@ -57,9 +43,70 @@ jobs:
           else
             echo "result=true" >> $GITHUB_OUTPUT
           fi
+
+  deploy_artifacts:
+    name: Deploy Artifacts
+    needs: [prerequisites]
+    runs-on: ubuntu-latest
+    if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: spring-io/spring-gradle-build-action@v2
+        with:
+          java-version: '25'
+          distribution: 'liberica'
+      - id: branch-name
+        name: Extract Branch Name
+        env:
+          BRANCH: ${{ github.ref_name }}
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          branch=$BRANCH
+          if [[ "$branch" = "main" ]] ; then
+            branch="${VERSION%.*}.x"
+          fi
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+      - id: deploy-location
+        name: Default the Deploy Location
+        env:
+          VERSION: ${{ needs.prerequisites.outputs.project_version }}
+        run: |
+          if [[ "$VERSION" =~ "-SNAPSHOT" ]] ; then
+            deploy_location=artifactory
+          else
+            deploy_location=central
+          fi
+          echo "deploy_location=$deploy_location" >> $GITHUB_OUTPUT
+
+      - name: Still publish docs module to Artifactory when deploy location is Central (stage)
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
+        shell: bash
+        run: |
+          ./gradlew \
+            -PdeploymentRepository=$(pwd)/deployment-repository \
+            -PforceLocalPublish=true \
+            :spring-pulsar-docs:publishAllPublicationsToDeploymentRepository
+          echo "deployRepo=$(pwd)/deployment-repository" >> $GITHUB_OUTPUT
+          echo "ls -R $(pwd)/deployment-repository"
+          ls -R $(pwd)/deployment-repository          
+      - name: Still publish docs module to Artifactory when deploy location is Central (publish)
+        if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
+        uses: spring-io/artifactory-deploy-action@926d7f7cc810569395346bf3a4d91b380b3e355b # v0.0.4
+        with:
+          artifact-properties: |
+            /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
+          uri: 'https://repo.spring.io'
+          repository: 'libs-release-local'
+          build-name: 'spring-pulsar-2.0.x'
+          folder: 'deployment-repository'
+          signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
   perform_release:
     name: Perform Release
-    needs: [prerequisites]
+    needs: [prerequisites, deploy_artifacts]
     runs-on: ubuntu-latest
     permissions:
       contents: write
