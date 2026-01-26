@@ -13,7 +13,7 @@ protobuf = "3.25.8"
 pulsar = "4.1.2"
 spring = "7.0.3"
 # tests
-assertj = "3.27.6"
+assertj = "3.27.7"
 awaitility = "4.3.0"
 jacoco = "0.8.9"
 json-path = "2.9.0"
