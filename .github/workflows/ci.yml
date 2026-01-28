@@ -301,10 +301,10 @@ jobs:
           fi
       - name: Announce Release in Chat
         if: env.GCHAT_WEBHOOK_URL
-        run: |
-          curl -X POST '${{ env.GCHAT_WEBHOOK_URL }}' \
-              -H 'Content-Type: application/json' \
-              -d '{ text: "${{ github.event.repository.name }}-announcing `${{ env.VERSION }}`"}'
+        uses: spring-io/spring-release-actions/announce-on-gchat@49a254651a0206277abd4df99cf308b5d753dc97 # 0.0.1
+        with:
+          version: ${{ env.VERSION }}
+          gchat-webhook-url: ${{ env.GCHAT_WEBHOOK_URL }}
       - name: Update next snapshot version
         run: |
           echo "Updating $REPO@$VERSION to next snapshot version."
