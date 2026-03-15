@@ -10,7 +10,7 @@ micrometer = "1.16.3"
 micrometer-docs-gen = "1.0.4"
 micrometer-tracing = "1.6.3"
 protobuf = "3.25.8"
-pulsar = "4.1.2"
+pulsar = "4.1.3"
 spring = "7.0.5"
 # tests
 assertj = "3.27.7"
