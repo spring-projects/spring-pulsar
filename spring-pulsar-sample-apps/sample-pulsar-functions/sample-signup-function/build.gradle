@@ -21,8 +21,8 @@ dependencies {
 	implementation "org.apache.pulsar:pulsar-client-all:${pulsarVersion}"
 	implementation "org.apache.pulsar:pulsar-functions-api:${pulsarVersion}"
 	implementation libs.jspecify
-	compileOnly 'org.projectlombok:lombok:1.18.42'
-	annotationProcessor 'org.projectlombok:lombok:1.18.42'
+	compileOnly 'org.projectlombok:lombok:1.18.44'
+	annotationProcessor 'org.projectlombok:lombok:1.18.44'
 }
 
 // Customization of jar to make a simple Uber function jar
