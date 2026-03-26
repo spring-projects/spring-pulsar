@@ -55,6 +55,11 @@ jobs:
             springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
             pulsarVersion: "${{ needs.prerequisites.outputs.pulsar_version }}"
             samplesTarget: ':runAllSampleTests'
+          - javaVersion: 25
+            springBootVersion: "4.1.0-SNAPSHOT"
+            springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
+            pulsarVersion: "${{ needs.prerequisites.outputs.pulsar_version }}"
+            samplesTarget: ':runAllSampleTests'
           - javaVersion: 24
             springBootVersion: "${{ needs.prerequisites.outputs.boot_version }}"
             springPulsarVersion: "${{ needs.prerequisites.outputs.project_version }}"
@@ -95,7 +100,7 @@ jobs:
         with:
           java-version: ${{ matrix.javaVersion }}
           distribution: 'liberica'
-      - name: Check samples (Java ${{ matrix.javaVersion }})
+      - name: Check samples (Java ${{ matrix.javaVersion }} / Boot ${{ matrix.springBootVersion }} / Pulsar ${{ matrix.pulsarVersion }} / Spring Pulsar ${{ matrix.springPulsarVersion }})
         env:
           LOCAL_REPOSITORY_PATH: ${{ github.workspace }}/build/publications/repos
           VERSION: ${{ matrix.springPulsarVersion }}
