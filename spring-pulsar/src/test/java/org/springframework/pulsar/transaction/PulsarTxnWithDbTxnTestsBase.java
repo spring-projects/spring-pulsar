@@ -26,9 +26,9 @@ import org.assertj.core.api.ListAssert;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,7 @@ class PulsarTxnWithDbTxnTestsBase extends PulsarTxnTestsBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(PulsarTxnWithDbTxnTestsBase.class);
 
-	static MySQLContainer<?> MYSQL_CONTAINER = new MySQLContainer<>(DockerImageName.parse("mysql:9.2"))
+	static MySQLContainer MYSQL_CONTAINER = new MySQLContainer(DockerImageName.parse("mysql:9.2"))
 		.withInitScript("transaction/init.sql")
 		.withLogConsumer(new Slf4jLogConsumer(LOG));
 
