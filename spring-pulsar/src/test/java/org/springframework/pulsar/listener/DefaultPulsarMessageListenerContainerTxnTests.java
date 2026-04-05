@@ -19,6 +19,7 @@ package org.springframework.pulsar.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -253,13 +254,11 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 			.withMessage("Transactional record listeners can not use batch ack mode");
 	}
 
-	@Disabled("Flaky test see spring-pulsar/issues/1294")
 	@Test
 	void batchListenerUsesBatchAckWhenSharedSub() throws Exception {
 		batchListenerUsesProperBatchAckForSubscriptionType("batch-lstr-batch-ack", SubscriptionType.Shared);
 	}
 
-	@Disabled("Flaky test see spring-pulsar/issues/1294")
 	@Test
 	void batchListenerUsesCumulativeAckWhenNotSharedSub() throws Exception {
 		batchListenerUsesProperBatchAckForSubscriptionType("batch-lstr-cumltv-ack", SubscriptionType.Exclusive);
@@ -286,10 +285,10 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 		var outputMsgs = inputMsgs.stream().map((m) -> m.concat("-out")).toList();
 		assertMessagesAvailableInOutputTopic(topicOut, outputMsgs);
 		if (subscriptionType == SubscriptionType.Shared) {
-			verify(spyConsumer).acknowledgeAsync(any(Messages.class), any(Transaction.class));
+			verify(spyConsumer, atLeastOnce()).acknowledgeAsync(any(Messages.class), any(Transaction.class));
 		}
 		else {
-			verify(spyConsumer).acknowledgeCumulativeAsync(any(MessageId.class), any(Transaction.class));
+			verify(spyConsumer, atLeastOnce()).acknowledgeCumulativeAsync(any(MessageId.class), any(Transaction.class));
 		}
 	}
 
