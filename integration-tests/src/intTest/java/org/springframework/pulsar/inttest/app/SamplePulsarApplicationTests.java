@@ -33,7 +33,8 @@ class SamplePulsarApplicationTests {
 	@SuppressWarnings("unused")
 	@Container
 	@ServiceConnection
-	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage());
+	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
+		.withEnv("PULSAR_PREFIX_advertisedAddress", "localhost");
 
 	@Nested
 	class ImperativeAppTests implements SpringBootTestImperativeApp {

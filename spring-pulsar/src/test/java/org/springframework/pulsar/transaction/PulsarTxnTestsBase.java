@@ -64,6 +64,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 public class PulsarTxnTestsBase {
 
 	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
+		.withEnv("PULSAR_PREFIX_advertisedAddress", "localhost")
 		.withTransactions();
 
 	@BeforeAll

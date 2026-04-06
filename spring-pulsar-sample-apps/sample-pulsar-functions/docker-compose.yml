@@ -2,8 +2,8 @@ version: '3.5'
 
 services:
   pulsar:
-    image: kezhenxu94/pulsar:latest
-    command: bin/pulsar standalone
+    image: 'apachepulsar/pulsar:4.2.0'
+    command: 'bin/pulsar standalone --advertised-address localhost '
     ports:
       - "6650:6650"
       - "8080:8080"

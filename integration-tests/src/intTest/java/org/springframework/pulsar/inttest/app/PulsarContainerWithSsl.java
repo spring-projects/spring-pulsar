@@ -48,6 +48,9 @@ final class PulsarContainerWithSsl extends PulsarContainer {
 		withStartupTimeout(Duration.ofMinutes(3));
 		withEnv("PF_ENV_DEBUG", "1");
 
+		// Advertise on localhost
+		withEnv("PULSAR_PREFIX_advertisedAddress", "localhost");
+
 		// TLS ports
 		addExposedPorts(BROKER_TLS_PORT, BROKER_HTTP_TLS_PORT);
 		withEnv("PULSAR_PREFIX_brokerServicePortTls", String.valueOf(BROKER_TLS_PORT));

@@ -57,6 +57,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 class PulsarTemplateLocalTransactionTests {
 
 	private static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
+		.withEnv("PULSAR_PREFIX_advertisedAddress", "localhost")
 		.withTransactions();
 
 	private PulsarClient client;
