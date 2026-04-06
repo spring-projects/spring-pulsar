@@ -68,6 +68,7 @@ import org.springframework.pulsar.transaction.PulsarTransactionUtils;
 class DefaultPulsarMessageListenerContainerTxnTests {
 
 	private static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
+		.withEnv("PULSAR_PREFIX_advertisedAddress", "localhost")
 		.withTransactions();
 
 	private PulsarClient client;
