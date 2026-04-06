@@ -47,7 +47,8 @@ class DefaultTenantAndNamespaceTests {
 	@SuppressWarnings("unused")
 	@Container
 	@ServiceConnection
-	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage());
+	static PulsarContainer PULSAR_CONTAINER = new PulsarContainer(PulsarTestContainerSupport.getPulsarImage())
+		.withEnv("PULSAR_PREFIX_advertisedAddress", "localhost");
 
 	@Nested
 	@SpringBootTest(classes = ImperativeAppConfig.class,

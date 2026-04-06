@@ -30,7 +30,8 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers(disabledWithoutDocker = true)
 public interface PulsarTestContainerSupport {
 
-	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(getPulsarImage());
+	PulsarContainer PULSAR_CONTAINER = new PulsarContainer(getPulsarImage()).withEnv("PULSAR_PREFIX_advertisedAddress",
+			"localhost");
 
 	static DockerImageName getPulsarImage() {
 		return DockerImageName.parse("apachepulsar/pulsar:4.2.0");

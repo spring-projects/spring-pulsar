@@ -87,7 +87,8 @@ class PulsarFunctionAdministrationIntegrationTests {
 	private static final String PULSAR_TOPIC = "pft_foo-topic";
 
 	private static final PulsarContainer PULSAR_CONTAINER = new PulsarContainer(
-			PulsarTestContainerSupport.getPulsarImage());
+			PulsarTestContainerSupport.getPulsarImage())
+		.withEnv("PULSAR_PREFIX_advertisedAddress", "localhost");
 
 	private static final RabbitMQContainer RABBITMQ_CONTAINER = new RabbitMQContainer("rabbitmq");
 
