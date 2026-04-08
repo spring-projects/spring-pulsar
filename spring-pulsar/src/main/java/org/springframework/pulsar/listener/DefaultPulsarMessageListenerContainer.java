@@ -555,7 +555,7 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 		}
 
 		private boolean transactional() {
-			return this.transactionTemplate != null && this.transactionManager != null;
+			return this.transactionTemplate != null && this.transactionManager != null && this.containerProperties.transactions().isEnabled();
 		}
 
 		private void invokeRecordListener(Messages<T> messages, AtomicBoolean inRetryMode) {
