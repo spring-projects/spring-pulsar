@@ -52,7 +52,7 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           releaseVersion="${{ inputs.releaseVersion }}"
           releaseBranch="release-initiate/$releaseVersion"
-          baseBranch="${{ github.ref_name }}
+          baseBranch="${{ github.ref_name }}"
           git checkout -b $releaseBranch
           ./gradlew :updateToReleaseVersion -PreleaseVersion=$releaseVersion        
           git commit -am "[Release $releaseVersion] Update version"
