@@ -19,6 +19,8 @@ package org.springframework.pulsar.cache.provider;
 import java.time.Duration;
 import java.util.ServiceLoader;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Interface to create instances of {@link CacheProvider}.
  *
@@ -63,11 +65,13 @@ public interface CacheProviderFactory<K, V> {
 
 		/**
 		 * Called when an entry is evicted from the cache.
-		 * @param key the cache key
-		 * @param value the cached value
+		 * @param key the cache key, or {@code null} depending on cache implementation and
+		 * eviction cause
+		 * @param value the cached value, or {@code null} depending on cache
+		 * implementation and eviction cause
 		 * @param reason the reason for the eviction
 		 */
-		void onEviction(K key, V value, String reason);
+		void onEviction(@Nullable K key, @Nullable V value, String reason);
 
 	}
 

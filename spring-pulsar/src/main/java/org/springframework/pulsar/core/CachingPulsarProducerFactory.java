@@ -91,6 +91,9 @@ public class CachingPulsarProducerFactory<T> extends DefaultPulsarProducerFactor
 		var cacheFactory = CacheProviderFactory.<ProducerCacheKey<T>, Producer<T>>load();
 		this.producerCache = cacheFactory.create(cacheExpireAfterAccess, cacheMaximumSize, cacheInitialCapacity,
 				(key, producer, cause) -> {
+					if (producer == null) {
+						return;
+					}
 					this.logger.debug(() -> "Producer %s evicted from cache due to %s"
 						.formatted(ProducerUtils.formatProducer(producer), cause));
 					closeProducer(producer, true);
