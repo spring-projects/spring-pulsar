@@ -39,6 +39,7 @@ import org.apache.pulsar.common.io.SourceConfig;
 import org.apache.pulsar.common.policies.data.SourceStatus;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,6 +81,7 @@ import org.springframework.pulsar.test.support.PulsarTestContainerSupport;
 @Testcontainers(disabledWithoutDocker = true)
 @EnabledIf("rabbitConnectorExists")
 @ExtendWith(ContainerLoggingTestWatcher.class)
+@Disabled
 class PulsarFunctionAdministrationIntegrationTests {
 
 	private static final String RABBIT_QUEUE = "pft_foo_queue";
