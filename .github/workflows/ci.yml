@@ -186,7 +186,7 @@ jobs:
 
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_jdk_17, check_samples, scan]
+    needs: [build_jdk_17, check_samples]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
