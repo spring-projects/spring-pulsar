@@ -10,12 +10,6 @@ on:
   schedule:
     - cron: '0 11 * * *' # Once per day at 11am UTC
   workflow_dispatch:
-#    inputs:
-#      run-trivy-scan:
-#        description: 'Run Trivy scan ?'
-#        default: true
-#        required: false
-#        type: boolean
 
 env:
   GCHAT_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
@@ -87,11 +81,6 @@ jobs:
     needs: [prerequisites]
     uses: ./.github/workflows/check-samples.yml
     secrets: inherit
-
-#  scan:
-#    needs: [prerequisites]
-#    if: ${{ needs.prerequisites.outputs.runjobs && !contains(inputs.run-trivy-scan, 'false') }}
-#    uses: ./.github/workflows/trivy-scan.yml
 
   deploy_artifacts:
     name: Deploy Artifacts
