@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.pulsar.client.api.Consumer;
@@ -34,6 +35,7 @@ import org.springframework.expression.BeanResolver;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeConverter;
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.converter.SmartMessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
@@ -87,6 +89,10 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 
 	private Type fallbackType = Object.class;
 
+	private @Nullable ObjectMapper headerObjectMapper;
+
+	private @Nullable List<String> headerTrustedPackages;
+
 	public AbstractPulsarMessageToSpringMessageAdapter(Object bean, Method method) {
 		this.bean = bean;
 		this.messageConverter = new PulsarRecordMessageConverter<V>(JsonPulsarHeaderMapper.builder().build());
@@ -111,8 +117,37 @@ public abstract class AbstractPulsarMessageToSpringMessageAdapter<V> {
 	public void setObjectMapper(ObjectMapper objectMapper) {
 		Assert.isTrue(!this.customConverterSet, "Cannot set the ObjectMapper on a custom messageConverter - "
 				+ "set the ObjectMapper on the custom converter instead");
-		this.messageConverter = new PulsarRecordMessageConverter<V>(
-				JsonPulsarHeaderMapper.builder().objectMapper(objectMapper).build());
+		this.headerObjectMapper = objectMapper;
+		rebuildDefaultConverter();
+	}
+
+	/**
+	 * Add packages to trust for header deserialization. Trust is by exact package match;
+	 * sub-packages are not trusted transitively. The given packages are added to
+	 * {@link JsonPulsarHeaderMapper#DEFAULT_TRUSTED_PACKAGES}, which are always included.
+	 * Pass {@code "*"} as the sole entry to trust all packages (not recommended when
+	 * consuming from untrusted sources).
+	 * @param trustedPackages packages to add to the trusted list for header
+	 * deserialization
+	 */
+	public void setTrustedPackages(String... trustedPackages) {
+		Assert.isTrue(!this.customConverterSet,
+				"Cannot set trusted packages on a custom messageConverter - configure the converter directly");
+		this.headerTrustedPackages = Arrays.asList(trustedPackages);
+		rebuildDefaultConverter();
+	}
+
+	private void rebuildDefaultConverter() {
+		var builder = JsonPulsarHeaderMapper.builder();
+		ObjectMapper localObjectMapper = this.headerObjectMapper;
+		if (localObjectMapper != null) {
+			builder.objectMapper(localObjectMapper);
+		}
+		List<String> localTrustedPackages = this.headerTrustedPackages;
+		if (localTrustedPackages != null) {
+			builder.trustedPackages(localTrustedPackages.toArray(new String[0]));
+		}
+		this.messageConverter = new PulsarRecordMessageConverter<>(builder.build());
 	}
 
 	protected Type getType() {

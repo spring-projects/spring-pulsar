@@ -633,6 +633,11 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 		@Configuration
 		static class PulsarListenerWithHeadersConfig {
 
+			@Bean(name = "pulsarHeaderTrustedPackages")
+			String[] pulsarHeaderTrustedPackages() {
+				return new String[] { "org.springframework.pulsar.test.model" };
+			}
+
 			@ReactivePulsarListener(topics = "rplt-simpleListenerWithHeaders",
 					subscriptionName = "rplt-simple-listener-with-headers-sub",
 					consumerCustomizer = "subscriptionInitialPositionEarliest")
@@ -731,6 +736,11 @@ class ReactivePulsarListenerTests extends ReactivePulsarListenerTestsBase {
 
 		@Configuration(proxyBeanMethods = false)
 		static class PulsarHeadersCustomObjectMapperTestConfig {
+
+			@Bean(name = "pulsarHeaderTrustedPackages")
+			String[] pulsarHeaderTrustedPackages() {
+				return new String[] { "org.springframework.pulsar.test.model" };
+			}
 
 			@Bean(name = "pulsarHeaderObjectMapper")
 			ObjectMapper customObjectMapper() {

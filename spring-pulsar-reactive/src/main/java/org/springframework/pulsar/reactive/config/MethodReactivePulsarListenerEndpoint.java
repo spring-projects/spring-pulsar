@@ -74,6 +74,8 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	private ObjectMapper objectMapper;
 
+	private @Nullable List<String> trustedPackages;
+
 	private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
 	private SmartMessageConverter messagingConverter;
@@ -228,6 +230,9 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 		if (this.objectMapper != null) {
 			listener.setObjectMapper(this.objectMapper);
 		}
+		if (this.trustedPackages != null) {
+			listener.setTrustedPackages(this.trustedPackages.toArray(String[]::new));
+		}
 		var resolver = getBeanResolver();
 		if (resolver != null) {
 			listener.setBeanResolver(resolver);
@@ -237,6 +242,10 @@ public class MethodReactivePulsarListenerEndpoint<V> extends AbstractReactivePul
 
 	public void setObjectMapper(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
+	}
+
+	public void setTrustedPackages(String... trustedPackages) {
+		this.trustedPackages = Arrays.asList(trustedPackages);
 	}
 
 	public void setMessagingConverter(SmartMessageConverter messagingConverter) {

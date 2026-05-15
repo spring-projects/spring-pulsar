@@ -291,6 +291,9 @@ public class ReactivePulsarListenerAnnotationBeanPostProcessor<V> extends Abstra
 		PulsarHeaderObjectMapperUtils.customMapper(this.beanFactory)
 			.ifPresent((objectMapper) -> this.processedEndpoints
 				.forEach((endpoint) -> endpoint.setObjectMapper(objectMapper)));
+		PulsarHeaderObjectMapperUtils.trustedPackages(this.beanFactory)
+			.ifPresent(
+					(packages) -> this.processedEndpoints.forEach((endpoint) -> endpoint.setTrustedPackages(packages)));
 		if (this.processedEndpoints.size() == 1) {
 			MethodReactivePulsarListenerEndpoint<?> endpoint = this.processedEndpoints.get(0);
 			if (endpoint.getConsumerCustomizer() != null) {

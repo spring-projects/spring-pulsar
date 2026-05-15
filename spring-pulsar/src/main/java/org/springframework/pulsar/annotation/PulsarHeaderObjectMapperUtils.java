@@ -26,7 +26,8 @@ import org.springframework.util.Assert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Resolves the {@link ObjectMapper} to use when serializing JSON header values.
+ * Resolves header mapper configuration beans (object mapper and trusted packages) for use
+ * during JSON header deserialization.
  *
  * @author Chris Bono
  * @since 1.2.0
@@ -34,6 +35,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public final class PulsarHeaderObjectMapperUtils {
 
 	private static final String PULSAR_HEADER_OBJECT_MAPPER_BEAN_NAME = "pulsarHeaderObjectMapper";
+
+	private static final String PULSAR_HEADER_TRUSTED_PACKAGES_BEAN_NAME = "pulsarHeaderTrustedPackages";
 
 	private static final LogAccessor LOG = new LogAccessor(PulsarHeaderObjectMapperUtils.class);
 
@@ -43,7 +46,7 @@ public final class PulsarHeaderObjectMapperUtils {
 	/**
 	 * Gets the optional {@link ObjectMapper} to use when deserializing JSON header
 	 * values. The mapper bean is expected to be registered with the name
-	 * 'pulsarHeaderObjectMapper'.
+	 * {@code 'pulsarHeaderObjectMapper'}.
 	 * @param beanFactory the bean factory that may contain the mapper bean
 	 * @return optional mapper or empty if bean not registered under the expected name
 	 */
@@ -55,6 +58,28 @@ public final class PulsarHeaderObjectMapperUtils {
 		catch (NoSuchBeanDefinitionException ex) {
 			LOG.debug(() -> "No '%s' bean defined - will use standard object mapper for header values"
 				.formatted(PULSAR_HEADER_OBJECT_MAPPER_BEAN_NAME));
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Gets the optional trusted packages to use when deserializing JSON header values.
+	 * The bean is expected to be a {@code String[]} registered with the name
+	 * {@code 'pulsarHeaderTrustedPackages'}. Trust is by exact package match;
+	 * sub-packages must be listed explicitly. Pass {@code "*"} as the sole entry to trust
+	 * all packages.
+	 * @param beanFactory the bean factory that may contain the trusted packages bean
+	 * @return optional trusted packages or empty if bean not registered under the
+	 * expected name
+	 */
+	public static Optional<String[]> trustedPackages(BeanFactory beanFactory) {
+		Assert.notNull(beanFactory, "beanFactory must not be null");
+		try {
+			return Optional.of(beanFactory.getBean(PULSAR_HEADER_TRUSTED_PACKAGES_BEAN_NAME, String[].class));
+		}
+		catch (NoSuchBeanDefinitionException ex) {
+			LOG.debug(() -> "No '%s' bean defined - will use default trusted packages for header deserialization"
+				.formatted(PULSAR_HEADER_TRUSTED_PACKAGES_BEAN_NAME));
 		}
 		return Optional.empty();
 	}

@@ -241,6 +241,9 @@ public class PulsarReaderAnnotationBeanPostProcessor<V> extends AbstractPulsarAn
 		PulsarHeaderObjectMapperUtils.customMapper(this.beanFactory)
 			.ifPresent((objectMapper) -> this.processedEndpoints
 				.forEach((endpoint) -> endpoint.setObjectMapper(objectMapper)));
+		PulsarHeaderObjectMapperUtils.trustedPackages(this.beanFactory)
+			.ifPresent(
+					(packages) -> this.processedEndpoints.forEach((endpoint) -> endpoint.setTrustedPackages(packages)));
 		if (this.processedEndpoints.size() == 1) {
 			MethodPulsarReaderEndpoint<?> endpoint = this.processedEndpoints.get(0);
 			if (endpoint.getReaderBuilderCustomizer() != null) {

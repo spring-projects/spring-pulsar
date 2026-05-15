@@ -30,8 +30,6 @@ import java.util.UUID;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.pulsar.support.header.JsonPulsarHeaderMapper.NonTrustedHeaderType;
@@ -76,35 +74,56 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 
 		@Test
 		void pulsarMessageWithUntrustedUserProperty() {
-			// Once trustedPackages is set, all others are untrusted
+			// Types outside the defaults and user-specified packages are untrusted;
+			// java.util.UUID is in DEFAULT_TRUSTED_PACKAGES so use a non-default type.
 			var mapper = JsonPulsarHeaderMapper.builder().trustedPackages("com.acme").build();
-			var uuid = UUID.randomUUID();
-			var serializedUuid = "\"%s\"".formatted(uuid.toString());
+			var headerValue = "\"some-value\"";
+			var untrustedType = "com.example.CustomType";
 			var customHeaders = new HashMap<String, String>();
-			customHeaders.put("uuid", serializedUuid);
-			customHeaders.put(JSON_TYPES, "{\"uuid\":\"%s\"}".formatted(UUID.class.getName()));
+			customHeaders.put("custom", headerValue);
+			customHeaders.put(JSON_TYPES, "{\"custom\":\"%s\"}".formatted(untrustedType));
 			var pulsarMessage = mockPulsarMessage(true, customHeaders);
 			var springHeaders = mapper.toSpringHeaders(pulsarMessage);
-			assertThat(springHeaders).containsEntry("uuid",
-					new NonTrustedHeaderType(serializedUuid, UUID.class.getName()));
+			assertThat(springHeaders).containsEntry("custom", new NonTrustedHeaderType(headerValue, untrustedType));
 		}
 
-		@ParameterizedTest
-		@ValueSource(booleans = { true, false })
-		void pulsarMessageWithUpstreamNth(boolean nowTrusted) throws JsonProcessingException {
-			var mapper = JsonPulsarHeaderMapper.builder()
-				.trustedPackages(nowTrusted ? UUID.class.getPackageName() : "com.acme")
-				.build();
-			var uuid = UUID.randomUUID();
-			var serializedUuid = "\"%s\"".formatted(uuid.toString());
-			var upstreamNth = new NonTrustedHeaderType(serializedUuid, UUID.class.getName());
-			var serializedUpstreamNth = JacksonUtils.enhancedObjectMapper().writeValueAsString(upstreamNth);
-			var customHeaders = new HashMap<String, String>();
-			customHeaders.put("uuid", serializedUpstreamNth);
-			customHeaders.put(JSON_TYPES, "{\"uuid\":\"%s\"}".formatted(NonTrustedHeaderType.class.getName()));
-			var pulsarMessage = mockPulsarMessage(true, customHeaders);
-			var springHeaders = mapper.toSpringHeaders(pulsarMessage);
-			assertThat(springHeaders).containsEntry("uuid", nowTrusted ? uuid : upstreamNth);
+		@Nested
+		class WhenIncomingHeaderWasPreviouslyUntrusted {
+
+			@Test
+			void innerTypeIsDecodedIfTrustedByThisConsumer() throws JsonProcessingException {
+				// java.util.UUID is in DEFAULT_TRUSTED_PACKAGES so the wrapper is
+				// unwrapped.
+				var mapper = JsonPulsarHeaderMapper.builder().build();
+				var uuid = UUID.randomUUID();
+				var serializedUuid = "\"%s\"".formatted(uuid.toString());
+				var wrappedHeader = new NonTrustedHeaderType(serializedUuid, UUID.class.getName());
+				var serializedWrappedHeader = JacksonUtils.enhancedObjectMapper().writeValueAsString(wrappedHeader);
+				var customHeaders = new HashMap<String, String>();
+				customHeaders.put("uuid", serializedWrappedHeader);
+				customHeaders.put(JSON_TYPES, "{\"uuid\":\"%s\"}".formatted(NonTrustedHeaderType.class.getName()));
+				var pulsarMessage = mockPulsarMessage(true, customHeaders);
+				var springHeaders = mapper.toSpringHeaders(pulsarMessage);
+				assertThat(springHeaders).containsEntry("uuid", uuid);
+			}
+
+			@Test
+			void innerTypeRemainsWrappedIfUntrustedByThisConsumer() throws JsonProcessingException {
+				// com.example.CustomType is not in defaults so the wrapper is passed
+				// through.
+				var mapper = JsonPulsarHeaderMapper.builder().build();
+				var headerValue = "\"some-value\"";
+				var untrustedType = "com.example.CustomType";
+				var wrappedHeader = new NonTrustedHeaderType(headerValue, untrustedType);
+				var serializedWrappedHeader = JacksonUtils.enhancedObjectMapper().writeValueAsString(wrappedHeader);
+				var customHeaders = new HashMap<String, String>();
+				customHeaders.put("custom", serializedWrappedHeader);
+				customHeaders.put(JSON_TYPES, "{\"custom\":\"%s\"}".formatted(NonTrustedHeaderType.class.getName()));
+				var pulsarMessage = mockPulsarMessage(true, customHeaders);
+				var springHeaders = mapper.toSpringHeaders(pulsarMessage);
+				assertThat(springHeaders).containsEntry("custom", wrappedHeader);
+			}
+
 		}
 
 	}
@@ -132,6 +151,47 @@ class JsonPulsarHeaderMapperTests extends AbstractPulsarHeaderMapperTests {
 			var headers = Collections.<String, Object>singletonMap("uuid", uuid);
 			assertThat(mapper.toPulsarHeaders(new MessageHeaders(headers))).containsEntry("uuid", uuid.toString())
 				.doesNotContainKey(JSON_TYPES);
+		}
+
+	}
+
+	@Nested
+	class TrustedPackagesTests {
+
+		@Test
+		void subpackagesOfDefaultsAreNotTrustedTransitively() {
+			var mapper = JsonPulsarHeaderMapper.builder().build();
+			assertThat(mapper.trusted("java.util.logging.FileHandler")).isFalse();
+			assertThat(mapper.trusted("java.lang.reflect.Method")).isFalse();
+			assertThat(mapper.trusted("java.util.concurrent.ForkJoinPool")).isFalse();
+		}
+
+		@Test
+		void exactMatchAgainstDefaultsStillWorks() {
+			var mapper = JsonPulsarHeaderMapper.builder().build();
+			assertThat(mapper.trusted("java.util.HashMap")).isTrue();
+			assertThat(mapper.trusted("java.lang.String")).isTrue();
+			assertThat(mapper.trusted("java.util.UUID")).isTrue();
+		}
+
+		@Test
+		void userPackagesAreAdditiveToDefaults() {
+			var mapper = JsonPulsarHeaderMapper.builder().trustedPackages("com.acme").build();
+			assertThat(mapper.trusted("com.acme.OrderEvent")).isTrue();
+			// defaults must still be trusted
+			assertThat(mapper.trusted("java.util.HashMap")).isTrue();
+			assertThat(mapper.trusted("java.lang.String")).isTrue();
+		}
+
+		@Test
+		void userAddedSubpackagesMustBeAddedExplicitly() {
+			var mapper = JsonPulsarHeaderMapper.builder().trustedPackages("com.acme").build();
+			assertThat(mapper.trusted("com.acme.OrderEvent")).isTrue();
+			assertThat(mapper.trusted("com.acme.events.OrderEvent")).isFalse();
+			var mapperWithSubpackage = JsonPulsarHeaderMapper.builder()
+				.trustedPackages("com.acme", "com.acme.events")
+				.build();
+			assertThat(mapperWithSubpackage.trusted("com.acme.events.OrderEvent")).isTrue();
 		}
 
 	}

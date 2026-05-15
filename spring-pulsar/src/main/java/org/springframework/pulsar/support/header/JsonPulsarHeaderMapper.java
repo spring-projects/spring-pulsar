@@ -54,6 +54,15 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 	private static final Set<String> TRUSTED_ARRAY_TYPES = new HashSet<>(
 			Arrays.asList("[B", "[I", "[J", "[F", "[D", "[C"));
 
+	/**
+	 * Packages trusted by default for JSON header deserialization. These packages cover
+	 * the types commonly used in message headers. Add additional packages via
+	 * {@link JsonPulsarHeaderMapperBuilder#trustedPackages(String...)}; use {@code "*"}
+	 * to trust all packages (not recommended for untrusted message sources).
+	 */
+	public static final List<String> DEFAULT_TRUSTED_PACKAGES = List.of("java.lang", "java.net", "java.util",
+			"org.springframework.util");
+
 	private static final List<String> DEFAULT_TO_STRING_CLASSES = Arrays.asList("org.springframework.util.MimeType",
 			"org.springframework.http.MediaType");
 
@@ -96,12 +105,12 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
 		Objects.requireNonNull(trustedPackages, "trustedPackages must not be null");
 		Objects.requireNonNull(toStringClasses, "toStringClasses must not be null");
-		for (var trusted : trustedPackages) {
-			if ("*".equals(trusted)) {
-				this.trustedPackages.clear();
-				break;
-			}
-			this.trustedPackages.add(trusted);
+		if (trustedPackages.contains("*")) {
+			// Wildcard — leave this.trustedPackages empty to signal trust-all.
+		}
+		else {
+			this.trustedPackages.addAll(DEFAULT_TRUSTED_PACKAGES);
+			this.trustedPackages.addAll(trustedPackages);
 		}
 		this.toStringClasses.addAll(toStringClasses);
 	}
@@ -257,6 +266,23 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 
 	// Trusted ------
 
+	/**
+	 * Determines whether a type is trusted for JSON deserialization.
+	 * <p>
+	 * A type is trusted when any of the following is true:
+	 * <ul>
+	 * <li>It is {@link NonTrustedHeaderType} itself (always needed for propagation).</li>
+	 * <li>It is one of the primitive-array short-forms in
+	 * {@link #TRUSTED_ARRAY_TYPES}.</li>
+	 * <li>The set of trusted packages is empty — which only occurs when the caller has
+	 * explicitly passed {@code "*"} via the builder — meaning all types are trusted.</li>
+	 * <li>The type's package name <em>exactly</em> matches one of the trusted package
+	 * entries. Sub-packages are not trusted transitively; add them explicitly if
+	 * needed.</li>
+	 * </ul>
+	 * @param requestedType fully-qualified class name to evaluate
+	 * @return {@code true} if the type may be deserialized from a message header
+	 */
 	protected boolean trusted(String requestedType) {
 		if (requestedType.equals(NonTrustedHeaderType.class.getName())) {
 			return true;
@@ -265,6 +291,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 			return true;
 		}
 		if (this.trustedPackages.isEmpty()) {
+			// Empty only after explicit "*" wildcard — trust everything.
 			return true;
 		}
 		var type = requestedType.startsWith("[") ? requestedType.substring(2) : requestedType;
@@ -274,7 +301,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		}
 		var packageName = type.substring(0, lastDot);
 		for (var trustedPackage : this.trustedPackages) {
-			if (packageName.equals(trustedPackage) || packageName.startsWith(trustedPackage + ".")) {
+			if (packageName.equals(trustedPackage)) {
 				return true;
 			}
 		}
@@ -318,7 +345,7 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 
 		private ObjectMapper objectMapper;
 
-		private final Set<String> trustedPackages = new HashSet<>();
+		private final Set<String> trustedPackages = new LinkedHashSet<>();
 
 		private final Set<String> toStringClasses = new HashSet<>();
 
@@ -337,14 +364,20 @@ public class JsonPulsarHeaderMapper extends AbstractPulsarHeaderMapper<ToPulsarH
 		}
 
 		/**
-		 * Add packages to the list of trusted packages used when constructing objects
-		 * from JSON.
+		 * Add packages to the trusted list used when deserializing JSON header values.
+		 * Trust is by exact package match; a class is trusted only if its declaring
+		 * package appears in this list. Sub-packages are not trusted transitively — add
+		 * them explicitly if needed.
 		 * <p>
-		 * <strong>NOTE:</strong>If a class for a non-trusted package is encountered, the
-		 * header is returned to the application with value of type
-		 * {@link NonTrustedHeaderType}.
-		 * @param packages the packages to include in the trusted list - if any entry is
-		 * {@code "*"} all packages are trusted
+		 * The specified packages are added to
+		 * {@link JsonPulsarHeaderMapper#DEFAULT_TRUSTED_PACKAGES}, which are always
+		 * included. Pass {@code "*"} as the sole entry to trust all packages instead (not
+		 * recommended when consuming from untrusted sources).
+		 * <p>
+		 * If a class for a non-trusted package is encountered, the header is returned to
+		 * the application with value of type {@link NonTrustedHeaderType}.
+		 * @param packages the packages to add to the trusted list - if any entry is
+		 * {@code "*"} all packages are trusted and the defaults are ignored
 		 * @return current builder
 		 */
 		public JsonPulsarHeaderMapperBuilder trustedPackages(String... packages) {
