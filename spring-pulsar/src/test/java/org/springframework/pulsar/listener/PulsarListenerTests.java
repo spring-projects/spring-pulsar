@@ -845,6 +845,11 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 		@Configuration
 		static class PulsarListenerWithHeadersConfig {
 
+			@Bean(name = "pulsarHeaderTrustedPackages")
+			String[] pulsarHeaderTrustedPackages() {
+				return new String[] { "org.springframework.pulsar.test.model" };
+			}
+
 			@PulsarListener(subscriptionName = "plt-simple-listener-with-headers-sub",
 					topics = "plt-simpleListenerWithHeaders")
 			void simpleListenerWithHeaders(String data, @Header(PulsarHeaders.MESSAGE_ID) MessageId messageId,
@@ -988,6 +993,11 @@ class PulsarListenerTests extends PulsarListenerTestsBase {
 
 		@Configuration(proxyBeanMethods = false)
 		static class PulsarHeadersCustomObjectMapperTestConfig {
+
+			@Bean(name = "pulsarHeaderTrustedPackages")
+			String[] pulsarHeaderTrustedPackages() {
+				return new String[] { "org.springframework.pulsar.test.model" };
+			}
 
 			@Bean(name = "pulsarHeaderObjectMapper")
 			ObjectMapper customObjectMapper() {

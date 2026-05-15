@@ -79,6 +79,11 @@ class PulsarReaderHeaderTests extends PulsarReaderTestsBase {
 		@Configuration(proxyBeanMethods = false)
 		static class WithStandardObjectMapperTestConfig {
 
+			@Bean(name = "pulsarHeaderTrustedPackages")
+			String[] pulsarHeaderTrustedPackages() {
+				return new String[] { "org.springframework.pulsar.test.model" };
+			}
+
 			@PulsarReader(topics = TOPIC, startMessageId = "earliest")
 			public void listenWithHeaders(org.apache.pulsar.client.api.Message<String> msg,
 					@Header("user") UserRecord user) {
@@ -122,6 +127,11 @@ class PulsarReaderHeaderTests extends PulsarReaderTestsBase {
 
 		@Configuration(proxyBeanMethods = false)
 		static class WithCustomObjectMapperTestConfig {
+
+			@Bean(name = "pulsarHeaderTrustedPackages")
+			String[] pulsarHeaderTrustedPackages() {
+				return new String[] { "org.springframework.pulsar.test.model" };
+			}
 
 			@Bean(name = "pulsarHeaderObjectMapper")
 			ObjectMapper customObjectMapper() {

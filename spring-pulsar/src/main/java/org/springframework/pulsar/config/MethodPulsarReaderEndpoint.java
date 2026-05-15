@@ -67,6 +67,8 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 	private @Nullable ObjectMapper objectMapper;
 
+	private @Nullable List<String> trustedPackages;
+
 	private @Nullable SmartMessageConverter messagingConverter;
 
 	private @Nullable MessageHandlerMethodFactory messageHandlerMethodFactory;
@@ -105,6 +107,18 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 
 	public void setObjectMapper(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
+	}
+
+	/**
+	 * Add packages to trust for header deserialization. Trust is by exact package match;
+	 * sub-packages are not trusted transitively. The given packages are added to
+	 * {@link org.springframework.pulsar.support.header.JsonPulsarHeaderMapper#DEFAULT_TRUSTED_PACKAGES},
+	 * which are always included. Pass {@code "*"} as the sole entry to trust all packages
+	 * (not recommended for untrusted message sources).
+	 * @param trustedPackages packages to add to the trusted list for header deserialization
+	 */
+	public void setTrustedPackages(String... trustedPackages) {
+		this.trustedPackages = List.of(trustedPackages);
 	}
 
 	@Override
@@ -198,6 +212,10 @@ public class MethodPulsarReaderEndpoint<V> extends AbstractPulsarReaderEndpoint<
 		}
 		if (this.objectMapper != null) {
 			listener.setObjectMapper(this.objectMapper);
+		}
+		List<String> localTrustedPackages = this.trustedPackages;
+		if (localTrustedPackages != null) {
+			listener.setTrustedPackages(localTrustedPackages.toArray(new String[0]));
 		}
 		var resolver = getBeanResolver();
 		if (resolver != null) {

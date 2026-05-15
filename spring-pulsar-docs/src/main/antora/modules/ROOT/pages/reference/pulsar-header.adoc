@@ -79,8 +79,53 @@ The `JsonPulsarHeaderMapper` uses a "`special`" header (with a key of `spring_js
 This header is used on the inbound side (Pulsar -> Spring) to provide appropriate conversion of each header value to the original type.
 
 ===== Trusted Packages
-By default, the JSON mapper deserializes classes in all packages.
-However, if you receive messages from untrusted sources, you may wish to add only those packages you trust via the `trustedPackages` property on a custom configured `JsonPulsarHeaderMapper` bean you provide.
+By default, the JSON mapper deserializes header types whose package exactly matches one of the following safe defaults: `java.lang`, `java.net`, `java.util`, and `org.springframework.util`.
+A class whose package is not in the trusted list is returned to the application as a `NonTrustedHeaderType` wrapper rather than being deserialized.
+
+Trust is evaluated by exact package match.
+Sub-packages are not trusted transitively: trusting `java.util` does NOT automatically trust `java.util.concurrent` or `java.util.logging`.
+Each package you need must be listed explicitly.
+
+To extend the trusted set for annotation-driven listeners (`@PulsarListener` / `@PulsarReader`) without replacing the entire converter, register a `String[]` bean named `pulsarHeaderTrustedPackages` in your application context:
+
+[source,java]
+----
+@Bean(name = "pulsarHeaderTrustedPackages")
+String[] pulsarHeaderTrustedPackages() {
+    return new String[] { "com.example.events", "com.example.dto" };
+}
+----
+
+The framework picks up this bean automatically and applies it to every listener and reader endpoint, composing it with any custom `pulsarHeaderObjectMapper` bean you may also have defined.
+
+If you are constructing a `JsonPulsarHeaderMapper` directly via the builder, pass the packages there instead:
+
+[source,java]
+----
+@Bean
+JsonPulsarHeaderMapper headerMapper() {
+    return JsonPulsarHeaderMapper.builder()
+        .trustedPackages("com.example.events", "com.example.dto")
+        .build();
+}
+----
+
+To trust all packages — for example, in a fully-controlled, internal messaging environment — pass `"*"` as the sole entry in either approach:
+
+[source,java]
+----
+// via bean
+@Bean(name = "pulsarHeaderTrustedPackages")
+String[] pulsarHeaderTrustedPackages() {
+    return new String[] { "*" };
+}
+
+// via builder
+JsonPulsarHeaderMapper.builder().trustedPackages("*").build();
+----
+
+WARNING: Using `"*"` allows any class reachable on the classpath to be loaded and partially instantiated during deserialization of incoming message headers.
+Do not use it when consuming messages from untrusted or external sources.
 
 ===== ToString Classes
 Certain types are not suitable for JSON serialization, and a simple `toString()` serialization might be preferred for these types.

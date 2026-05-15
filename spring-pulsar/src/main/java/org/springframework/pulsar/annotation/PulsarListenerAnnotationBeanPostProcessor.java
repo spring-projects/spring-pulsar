@@ -284,6 +284,9 @@ public class PulsarListenerAnnotationBeanPostProcessor<V> extends AbstractPulsar
 		PulsarHeaderObjectMapperUtils.customMapper(requireNonNullBeanFactory())
 			.ifPresent((objectMapper) -> this.processedEndpoints
 				.forEach((endpoint) -> endpoint.setObjectMapper(objectMapper)));
+		PulsarHeaderObjectMapperUtils.trustedPackages(requireNonNullBeanFactory())
+			.ifPresent((packages) -> this.processedEndpoints
+				.forEach((endpoint) -> endpoint.setTrustedPackages(packages)));
 		if (this.processedEndpoints.size() == 1) {
 			MethodPulsarListenerEndpoint<?> endpoint = this.processedEndpoints.get(0);
 			if (endpoint.getConsumerBuilderCustomizer() != null) {
