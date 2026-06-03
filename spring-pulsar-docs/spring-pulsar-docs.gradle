@@ -8,6 +8,10 @@ plugins {
 
 apply from: "${rootDir}/gradle/antora-docs.gradle"
 
+node {
+	version = "24.15.0"
+}
+
 description = 'Spring for Apache Pulsar Docs'
 
 configurations {
