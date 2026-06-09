@@ -19,9 +19,7 @@ package org.springframework.pulsar.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +73,7 @@ public class PulsarTemplate<T>
 
 	private @Nullable final List<ProducerBuilderCustomizer<T>> interceptorsCustomizers;
 
-	private final Map<Thread, Transaction> threadBoundTransactions = new HashMap<>();
+	private final ThreadLocal<Transaction> threadBoundTransactions = new ThreadLocal<>();
 
 	private final boolean isProducerFactoryCaching;
 
@@ -197,9 +195,9 @@ public class PulsarTemplate<T>
 			return;
 		}
 		this.observationRegistry = this.applicationContext.getBeanProvider(ObservationRegistry.class)
-			.getIfUnique(() -> this.observationRegistry);
+				.getIfUnique(() -> this.observationRegistry);
 		this.observationConvention = this.applicationContext.getBeanProvider(PulsarTemplateObservationConvention.class)
-			.getIfUnique(() -> this.observationConvention);
+				.getIfUnique(() -> this.observationConvention);
 	}
 
 	@Override
@@ -260,7 +258,7 @@ public class PulsarTemplate<T>
 		try {
 			return doSendAsync(topic, message, schema, encryptionKeys, typedMessageBuilderCustomizer,
 					producerCustomizer)
-				.get();
+					.get();
 		}
 		catch (PulsarException ex) {
 			throw ex;
@@ -341,7 +339,7 @@ public class PulsarTemplate<T>
 			this.logger.trace(() -> "No txn found but allowNonTransactional is true - returning null");
 			return null;
 		}
-		Transaction txn = this.threadBoundTransactions.get(Thread.currentThread());
+		Transaction txn = this.threadBoundTransactions.get();
 		if (txn != null) {
 			this.logger.trace(() -> "Found local template txn [%s]".formatted(txn));
 			return txn;
@@ -363,7 +361,7 @@ public class PulsarTemplate<T>
 		if (!this.transactions().isEnabled()) {
 			return false;
 		}
-		return this.threadBoundTransactions.get(Thread.currentThread()) != null
+		return this.threadBoundTransactions.get() != null
 				|| PulsarTransactionUtils.inTransaction(this.producerFactory.getPulsarClient());
 	}
 
@@ -400,11 +398,10 @@ public class PulsarTemplate<T>
 	@Nullable public <R> R executeInTransaction(TemplateCallback<T, R> callback) {
 		Assert.notNull(callback, "callback must not be null");
 		Assert.state(this.transactions().isEnabled(), "This template does not support transactions");
-		var currentThread = Thread.currentThread();
-		var txn = this.threadBoundTransactions.get(currentThread);
+		var txn = this.threadBoundTransactions.get();
 		Assert.state(txn == null, "Nested calls to 'executeInTransaction' are not allowed");
 		txn = newPulsarTransaction();
-		this.threadBoundTransactions.put(currentThread, txn);
+		this.threadBoundTransactions.set(txn);
 		try {
 			R result = callback.doWithTemplate(this);
 			txn.commit().get();
@@ -417,7 +414,7 @@ public class PulsarTemplate<T>
 			throw PulsarException.unwrap(ex);
 		}
 		finally {
-			this.threadBoundTransactions.remove(currentThread);
+			this.threadBoundTransactions.remove();
 		}
 	}
 
