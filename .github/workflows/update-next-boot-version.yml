@@ -19,7 +19,7 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.base-branch }}
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}

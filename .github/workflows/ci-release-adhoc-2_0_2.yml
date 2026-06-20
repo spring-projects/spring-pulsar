@@ -23,7 +23,7 @@ jobs:
       boot_version: ${{ steps.continue.outputs.boot_version }}
       should_deploy_artifacts: ${{ steps.should-deploy-artifacts.outputs.result }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - id: continue
         name: Determine if should continue
         run: |
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: '25'
@@ -121,7 +121,7 @@ jobs:
       RELEASE_REPO: https://repo1.maven.org/maven2
       ARTIFACT_PATH: org/springframework/pulsar/spring-pulsar
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
       - uses: spring-io/spring-gradle-build-action@v2

@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'spring-projects/spring-pulsar'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.branch-or-tag }}
       - uses: spring-io/spring-gradle-build-action@v2
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'spring-projects/spring-pulsar'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.branch-or-tag }}
       - uses: spring-io/spring-gradle-build-action@v2
