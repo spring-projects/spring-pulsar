@@ -772,8 +772,12 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			// Make sure either the exception or the exception cause is batch exception
 			if (!(exception instanceof PulsarBatchListenerFailedException)) {
 				exception = exception.getCause();
-				Assert.isInstanceOf(PulsarBatchListenerFailedException.class, exception,
-						"Batch listener should throw PulsarBatchListenerFailedException on errors.");
+				if (!(exception instanceof PulsarBatchListenerFailedException)) {
+					DefaultPulsarMessageListenerContainer.this.logger.warn(() ->
+							"Batch listener should throw PulsarBatchListenerFailedException - nacking entire batch.");
+					messageList.forEach(this.consumer::negativeAcknowledge);
+					return Collections.emptyList();
+				}
 			}
 
 			PulsarBatchListenerFailedException pulsarBatchListenerFailedException = (PulsarBatchListenerFailedException) exception;
@@ -790,6 +794,12 @@ public class DefaultPulsarMessageListenerContainer<T> extends AbstractPulsarMess
 			// out of retries then the sublist does not include the message in error (it
 			// instead gets recovered).
 			int indexOfFailedMessage = messageList.indexOf(pulsarMessage);
+			if (indexOfFailedMessage < 0) {
+				DefaultPulsarMessageListenerContainer.this.logger.warn(() ->
+						"Failed message not found in current batch - nacking entire batch.");
+				messageList.forEach(this.consumer::negativeAcknowledge);
+				return Collections.emptyList();
+			}
 			messageList = messageList.subList(indexOfFailedMessage, messageList.size());
 			boolean toBeRetried = consumerErrorHandler.shouldRetryMessage(pulsarBatchListenerFailedException,
 					pulsarMessage);

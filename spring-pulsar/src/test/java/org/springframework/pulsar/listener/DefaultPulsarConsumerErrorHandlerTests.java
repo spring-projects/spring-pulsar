@@ -16,6 +16,7 @@
 
 package org.springframework.pulsar.listener;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -418,6 +419,65 @@ class DefaultPulsarConsumerErrorHandlerTests implements PulsarTestContainerSuppo
 				.received(any(Consumer.class), any(List.class), any(Acknowledgement.class)));
 		await().atMost(Duration.ofSeconds(30))
 			.untilAsserted(() -> verify(dltSendMsgBuilder, times(expectedDltSendMsgCalls)).sendAsync());
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void whenBatchListenerThrowsPlainRuntimeExceptionWithErrorHandlerThenContainerContinues() throws Exception {
+		var topicName = "default-error-handler-tests-10";
+		var pulsarClient = PulsarClient.builder().serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl()).build();
+		var pulsarConsumerFactory = new DefaultPulsarConsumerFactory<Integer>(pulsarClient,
+				List.of((consumerBuilder) -> {
+					consumerBuilder.topic(topicName);
+					consumerBuilder.subscriptionName("%s-sub".formatted(topicName));
+				}));
+		var pulsarContainerProperties = new PulsarContainerProperties();
+		pulsarContainerProperties.setSchema(Schema.INT32);
+		pulsarContainerProperties.setAckMode(AckMode.MANUAL);
+		pulsarContainerProperties.setBatchListener(true);
+		pulsarContainerProperties.setMaxNumMessages(5);
+		pulsarContainerProperties.setBatchTimeoutMillis(60_000);
+		var callCount = new AtomicInteger(0);
+		PulsarBatchAcknowledgingMessageListener<?> pulsarBatchMessageListener = mock();
+		doAnswer(invocation -> {
+			int count = callCount.incrementAndGet();
+			if (count == 1) {
+				throw new RuntimeException("not a PulsarBatchListenerFailedException");
+			}
+			Acknowledgement acknowledgment = invocation.getArgument(2);
+			List<Message<Integer>> messages = invocation.getArgument(1);
+			messages.forEach(m -> acknowledgment.acknowledge(m.getMessageId()));
+			return new Object();
+		}).when(pulsarBatchMessageListener).received(any(Consumer.class), any(List.class), any(Acknowledgement.class));
+		pulsarContainerProperties.setMessageListener(pulsarBatchMessageListener);
+		var container = new DefaultPulsarMessageListenerContainer<>(pulsarConsumerFactory, pulsarContainerProperties);
+		PulsarTemplate<Integer> mockPulsarTemplate = mock(RETURNS_DEEP_STUBS);
+		PulsarOperations.SendMessageBuilder<Integer> sendMessageBuilderMock = mock();
+		when(mockPulsarTemplate.newMessage(any(Integer.class))
+			.withTopic(any(String.class))
+			.withMessageCustomizer(any(TypedMessageBuilderCustomizer.class))).thenReturn(sendMessageBuilderMock);
+		container.setPulsarConsumerErrorHandler(new DefaultPulsarConsumerErrorHandler<>(
+				new PulsarDeadLetterPublishingRecoverer<>(mockPulsarTemplate), new FixedBackOff(100, 3)));
+		try {
+			container.start();
+			var pulsarProducerFactory = new DefaultPulsarProducerFactory<Integer>(pulsarClient, topicName);
+			var pulsarTemplate = new PulsarTemplate<>(pulsarProducerFactory);
+			for (int i = 1; i <= 5; i++) {
+				pulsarTemplate.sendAsync(i);
+			}
+			await().atMost(Duration.ofSeconds(10)).until(() -> callCount.get() >= 1);
+			assertThat(container.isRunning()).isTrue();
+			// A second batch proves the listener thread survived the plain RuntimeException
+			for (int i = 6; i <= 10; i++) {
+				pulsarTemplate.sendAsync(i);
+			}
+			await().atMost(Duration.ofSeconds(30)).until(() -> callCount.get() >= 2);
+			assertThat(container.isRunning()).isTrue();
+		}
+		finally {
+			safeStopContainer(container);
+			pulsarClient.close();
+		}
 	}
 
 	private void safeStopContainer(PulsarMessageListenerContainer container) {

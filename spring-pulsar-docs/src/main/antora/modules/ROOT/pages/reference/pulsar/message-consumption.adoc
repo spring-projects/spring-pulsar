@@ -871,7 +871,7 @@ Once again, we provide the `pulsarConsumerErrorHandler` property with the `Pulsa
 When you use a batch listener (as shown in the preceding example) and want to use the `PulsarConsumerErrorHandler` from Spring for Apache Pulsar, you need to use manual acknowledgment.
 This way, you can acknowledge all the successful individual messages.
 For the ones that fail, you must throw a `PulsarBatchListenerFailedException` with the message on which it fails.
-Without this exception, the framework does not know what to do with the failure.
+If you throw any other exception, the framework will nack the entire batch and log a warning, rather than applying the per-message retry and recovery logic provided by the error handler.
 On retry, the container sends a new batch of messages, starting with the failed message to the listener.
 If it fails again, it is retried, until the retries are exhausted, at which point the message is sent to the DLT.
 At that point, the message is acknowledged by the container, and the listener is handed over with the subsequent messages in the original batch.
