@@ -1,0 +1,23 @@
+name: Post-Release
+
+on:
+  push:
+    tags:
+      - v*
+
+run-name: Post-release for ${{ github.ref_name }}
+
+jobs:
+  release:
+    # Commercial-only: in OSS, post-release automation runs inside ci.yml's perform_release job.
+    if: ${{ vars.COMMERCIAL }}
+    permissions:
+      contents: write
+      issues: write
+
+    uses: spring-io/spring-github-workflows/.github/workflows/spring-post-release.yml@main
+    with:
+      preview: true
+    secrets:
+      GH_ACTIONS_REPO_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+      SPRING_RELEASE_CHAT_WEBHOOK_URL: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}

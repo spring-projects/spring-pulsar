@@ -1,0 +1,11 @@
+artifactory:
+  artifacts:
+    - pattern: "/**/spring-*-docs.zip"
+      properties:
+        zip.deployed: "false"
+        zip.name: "spring-pulsar"
+        zip.type: "docs"
+maven-central:
+  excludes:
+    - "/**/*.zip"
+    - "/**/*.zip.asc"

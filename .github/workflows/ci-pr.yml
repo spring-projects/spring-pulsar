@@ -5,6 +5,7 @@ on:
     branches:
       - 'main'
       - '1.2.x'
+      - '*.x-internal'
     paths-ignore:
       - '.github/**'
 
@@ -12,7 +13,7 @@ jobs:
   prerequisites:
     name: Pre-requisites for building
     runs-on: ubuntu-latest
-    if: github.repository == 'spring-projects/spring-pulsar'
+    if: github.repository_owner == 'spring-projects'
     outputs:
       runjobs: ${{ steps.continue.outputs.runjobs }}
       project_version: ${{ steps.continue.outputs.project_version }}
