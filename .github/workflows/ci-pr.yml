@@ -5,14 +5,20 @@ on:
     branches:
       - 'main'
       - '1.2.x'
+      - '*.x-internal'
     paths-ignore:
       - '.github/**'
+
+# The secrets in PRs are available only for Dependabot scope. Used only by private repositories.
+env:
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_RO_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_RO_PASSWORD }}
 
 jobs:
   prerequisites:
     name: Pre-requisites for building
     runs-on: ubuntu-latest
-    if: github.repository == 'spring-projects/spring-pulsar'
+    if: github.repository_owner == 'spring-projects'
     outputs:
       runjobs: ${{ steps.continue.outputs.runjobs }}
       project_version: ${{ steps.continue.outputs.project_version }}

@@ -5,6 +5,7 @@ on:
     branches:
       - 'main'
       - '1.2.x'
+      - '*.x-internal'
     paths-ignore:
       - '.github/**'
   schedule:
@@ -16,15 +17,15 @@ env:
   DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
   COMMIT_OWNER: ${{ github.event.pusher.name }}
   COMMIT_SHA: ${{ github.sha }}
-  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  ARTIFACTORY_USERNAME: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD }}
   GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
 
 jobs:
   prerequisites:
     name: Pre-requisites for building
     runs-on: ubuntu-latest
-    if: github.repository == 'spring-projects/spring-pulsar'
+    if: github.repository_owner == 'spring-projects'
     outputs:
       runjobs: ${{ steps.continue.outputs.runjobs }}
       project_version: ${{ steps.continue.outputs.project_version }}
@@ -45,6 +46,8 @@ jobs:
       - id: should-deploy-artifacts
         name: Check Deploy Artifacts using Secrets
         if: ${{ runner.os == 'Linux' }}
+        env:
+          ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD || secrets.ARTIFACTORY_PASSWORD }}
         run: |
           if [[ -z "$ARTIFACTORY_PASSWORD" ]] ; then
             echo "result=false" >> $GITHUB_OUTPUT
@@ -127,14 +130,14 @@ jobs:
         with:
           artifact-properties: |
             /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
-          uri: 'https://repo.spring.io'
-          repository: 'libs-snapshot-local'
+          uri: ${{ vars.COMMERCIAL && 'https://usw1.packages.broadcom.com' || 'https://repo.spring.io' }}
+          repository: ${{ vars.COMMERCIAL && 'spring-enterprise-maven-dev-local' || 'libs-snapshot-local' }}
           build-name: 'spring-pulsar-2.0.x'
           folder: 'deployment-repository'
           signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
           signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          username: ${{ secrets.ARTIFACTORY_USERNAME }}
-          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          username: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME || secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD || secrets.ARTIFACTORY_PASSWORD }}
 
       - name: Stage Local Artifacts for Publishing to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
@@ -184,6 +187,8 @@ jobs:
     name: Deploy Antora Docs
     needs: [build_jdk_25, check_samples]
     runs-on: ubuntu-latest
+    # OSS-only: commercial docs are handled separately and the docs secrets do not exist here.
+    if: ${{ !vars.COMMERCIAL }}
     steps:
       - uses: actions/checkout@v7
       - uses: spring-io/spring-gradle-build-action@v2
@@ -214,7 +219,8 @@ jobs:
     permissions:
       contents: write
     timeout-minutes: 120
-    if: ${{ !endsWith(needs.prerequisites.outputs.project_version, '-SNAPSHOT') }}
+    # OSS-only: commercial releases are performed by the release-train workflows.
+    if: ${{ !vars.COMMERCIAL && !endsWith(needs.prerequisites.outputs.project_version, '-SNAPSHOT') }}
     env:
       REPO: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}

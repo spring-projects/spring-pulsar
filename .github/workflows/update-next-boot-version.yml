@@ -13,7 +13,7 @@ permissions:
 jobs:
   update_boot_version:
     name: Update Spring Boot version
-    if: github.repository == 'spring-projects/spring-pulsar'
+    if: github.repository_owner == 'spring-projects'
     runs-on: ubuntu-latest
     permissions:
       contents: read

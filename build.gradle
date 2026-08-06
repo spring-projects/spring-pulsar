@@ -1,3 +1,7 @@
+buildscript {
+	ext.isCI = System.getenv('GITHUB_ACTION')
+}
+
 plugins {
 	id 'io.spring.nohttp'
 	id 'org.springframework.pulsar.root-project'
@@ -13,6 +17,10 @@ description = 'Spring for Apache Pulsar'
 apply from: 'gradle/version-catalog-update.gradle'
 apply from: 'gradle/java-conventions.gradle'
 apply from: 'gradle/nullability-conventions.gradle'
+
+if (System.getenv('ARTIFACTORY_USERNAME')) {
+	apply from: "${rootProject.projectDir}/commercial-settings.gradle"
+}
 
 allprojects {
 	group = 'org.springframework.pulsar'

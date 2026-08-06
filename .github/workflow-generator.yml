@@ -1,0 +1,23 @@
+workflow:
+  generator:
+    project:
+      java:
+        versions:
+          primary: 25
+    workflows:
+      release-train:
+        join:
+          watch: false
+        ready:
+          watch: false
+        leave:
+          watch: false
+        build:
+          env:
+            ARTIFACTORY_USERNAME: secrets.COMMERCIAL_ARTIFACTORY_USERNAME
+            ARTIFACTORY_PASSWORD: secrets.COMMERCIAL_ARTIFACTORY_PASSWORD
+        test:
+          runs-on: ubuntu22-4-16
+          env:
+            ARTIFACTORY_USERNAME: secrets.COMMERCIAL_ARTIFACTORY_USERNAME
+            ARTIFACTORY_PASSWORD: secrets.COMMERCIAL_ARTIFACTORY_PASSWORD
