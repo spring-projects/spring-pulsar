@@ -31,7 +31,7 @@ jobs:
       id: "prevent-re-runs"
       run: |-
         if [ "$GITHUB_RUN_ATTEMPT" -gt 1 ]; then
-          echo "Re-runs are prohibited. Use the 'Release Train – Retry' workflow to retry build failures"
+          echo "Re-runs are prohibited. Use the 'Release Train – Retry' workflow to retry build failures"
           exit 1
         fi
     - name: "Set up Java"

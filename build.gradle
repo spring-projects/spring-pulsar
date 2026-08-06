@@ -18,11 +18,8 @@ apply from: 'gradle/version-catalog-update.gradle'
 apply from: 'gradle/java-conventions.gradle'
 apply from: 'gradle/nullability-conventions.gradle'
 
-// Commercial build support: applied only when the COMMERCIAL repository variable is
-// propagated into the environment (i.e. in the spring-pulsar-commercial repository).
-// Inert in OSS builds where COMMERCIAL is unset.
-if (System.getenv('COMMERCIAL')) {
-	apply from: 'commercial-settings.gradle'
+if (System.getenv('ARTIFACTORY_USERNAME')) {
+	apply from: "${rootProject.projectDir}/commercial-settings.gradle"
 }
 
 allprojects {

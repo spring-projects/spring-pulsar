@@ -9,6 +9,10 @@ on:
     paths-ignore:
       - '.github/**'
 
+env:
+  ARTIFACTORY_USERNAME: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD }}
+
 jobs:
   prerequisites:
     name: Pre-requisites for building

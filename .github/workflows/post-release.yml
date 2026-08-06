@@ -9,8 +9,6 @@ run-name: Post-release for ${{ github.ref_name }}
 
 jobs:
   release:
-    # Commercial-only: in OSS, post-release automation runs inside ci.yml's perform_release job.
-    if: ${{ vars.COMMERCIAL }}
     permissions:
       contents: write
       issues: write
