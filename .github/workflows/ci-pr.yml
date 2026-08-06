@@ -9,9 +9,10 @@ on:
     paths-ignore:
       - '.github/**'
 
+# The secrets in PRs are available only for Dependabot scope. Used only by private repositories.
 env:
-  ARTIFACTORY_USERNAME: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME }}
-  ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD }}
+  ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_RO_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_RO_PASSWORD }}
 
 jobs:
   prerequisites:
