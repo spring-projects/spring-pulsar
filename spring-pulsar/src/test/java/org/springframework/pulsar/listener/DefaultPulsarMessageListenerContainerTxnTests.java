@@ -79,6 +79,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 
 	@BeforeAll
 	static void startContainer() {
+		PulsarTestContainerSupport.stopContainer();
 		PULSAR_CONTAINER.start();
 	}
 

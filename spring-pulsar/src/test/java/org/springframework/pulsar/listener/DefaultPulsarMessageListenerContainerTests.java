@@ -712,7 +712,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			try {
 				// start container and expect started after retries
 				container.start();
-				await().atMost(Duration.ofSeconds(300)).until(container::isRunning);
+				await().atMost(Duration.ofSeconds(60)).until(container::isRunning);
 
 				// factory called 3x (initial call + 2 retries)
 				verify(consumerFactory, times(3)).createConsumer(any(Schema.class), any(), any(), any(), any());
