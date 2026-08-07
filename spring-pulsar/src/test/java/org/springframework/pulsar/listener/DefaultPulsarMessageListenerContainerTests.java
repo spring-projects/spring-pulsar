@@ -669,6 +669,7 @@ class DefaultPulsarMessageListenerContainerTests implements PulsarTestContainerS
 			var topic = "dpmlct-wsf-retry";
 			var pulsarClient = PulsarClient.builder()
 				.serviceUrl(PulsarTestContainerSupport.getPulsarBrokerUrl())
+				.operationTimeout(5, TimeUnit.SECONDS)
 				.build();
 			var consumerFactory = spy(
 					new DefaultPulsarConsumerFactory<String>(pulsarClient, List.of((consumerBuilder) -> {
