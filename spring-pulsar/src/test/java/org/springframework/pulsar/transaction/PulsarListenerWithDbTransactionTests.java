@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.common.util.ObjectMapperFactory;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +47,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
  *
  * @author Chris Bono
  */
+@Disabled("Temporarily disabled - requires a dedicated Pulsar container with transactions that causes memory pressure when run concurrently with the shared test container")
 class PulsarListenerWithDbTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 	@Nested

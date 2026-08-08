@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Chris Bono
  * @author Andrey Litvitski
  */
+@Disabled("Temporarily disabled - requires a dedicated Pulsar container with transactions that causes memory pressure when run concurrently with the shared test container")
 @SuppressWarnings("removal")
 class PulsarListenerTxnTests extends PulsarTxnTestsBase {
 
