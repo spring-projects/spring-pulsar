@@ -8,6 +8,7 @@ antora {
 tasks.named("generateAntoraYml") {
 	asciidocAttributes = project.provider( { generateAttributes() } )
 	baseAntoraYmlFile = file('src/main/antora/antora.yml')
+	version = project.version.toString().replaceAll(/-INTERNAL/, '')
 }
 
 tasks.create(name: 'createAntoraPartials', type: Sync) {
