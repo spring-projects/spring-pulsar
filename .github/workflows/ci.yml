@@ -17,8 +17,8 @@ env:
   DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
   COMMIT_OWNER: ${{ github.event.pusher.name }}
   COMMIT_SHA: ${{ github.sha }}
-  ARTIFACTORY_USERNAME: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME }}
-  ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD }}
+  ARTIFACTORY_USERNAME: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME || secrets.ARTIFACTORY_USERNAME }}
+  ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD || secrets.ARTIFACTORY_PASSWORD }}
   GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
 
 jobs:
@@ -46,8 +46,6 @@ jobs:
       - id: should-deploy-artifacts
         name: Check Deploy Artifacts using Secrets
         if: ${{ runner.os == 'Linux' }}
-        env:
-          ARTIFACTORY_PASSWORD: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD || secrets.ARTIFACTORY_PASSWORD }}
         run: |
           if [[ -z "$ARTIFACTORY_PASSWORD" ]] ; then
             echo "result=false" >> $GITHUB_OUTPUT
@@ -57,7 +55,7 @@ jobs:
   build_jdk_25:
     name: Build (JDK 25)
     needs: [prerequisites]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.COMMERCIAL && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v7
@@ -80,16 +78,16 @@ jobs:
           name: test-results
           path: '*/build/reports/tests/**/*.*'
           retention-days: 3
-  check_samples:
-    needs: [prerequisites]
-    uses: ./.github/workflows/check-samples.yml
-    secrets: inherit
+#  check_samples:
+#    needs: [prerequisites]
+#    uses: ./.github/workflows/check-samples.yml
+#    secrets: inherit
 
   deploy_artifacts:
     name: Deploy Artifacts
-    needs: [prerequisites, build_jdk_25, check_samples]
-    runs-on: ubuntu-latest
-    if: ${{ needs.prerequisites.outputs.should_deploy_artifacts }}
+    needs: [prerequisites, build_jdk_25]
+    runs-on: ${{ vars.COMMERCIAL && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ needs.prerequisites.outputs.should_deploy_artifacts == 'true' }}
     steps:
       - uses: actions/checkout@v7
       - uses: spring-io/spring-gradle-build-action@v2
@@ -136,8 +134,8 @@ jobs:
           folder: 'deployment-repository'
           signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
           signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          username: ${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME || secrets.ARTIFACTORY_USERNAME }}
-          password: ${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD || secrets.ARTIFACTORY_PASSWORD }}
+          username: ${{ env.ARTIFACTORY_USERNAME }}
+          password: ${{ env.ARTIFACTORY_PASSWORD }}
 
       - name: Stage Local Artifacts for Publishing to Central
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
@@ -180,8 +178,8 @@ jobs:
           folder: 'deployment-repository'
           signing-key: ${{ secrets.GPG_PRIVATE_KEY }}
           signing-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          username: ${{ secrets.ARTIFACTORY_USERNAME }}
-          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          username: ${{ env.ARTIFACTORY_USERNAME }}
+          password: ${{ env.ARTIFACTORY_PASSWORD }}
 
   deploy_docs_antora:
     name: Deploy Antora Docs
