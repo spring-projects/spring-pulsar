@@ -183,7 +183,7 @@ jobs:
 
   deploy_docs_antora:
     name: Deploy Antora Docs
-    needs: [build_jdk_25, check_samples]
+    needs: build_jdk_25
     runs-on: ubuntu-latest
     # OSS-only: commercial docs are handled separately and the docs secrets do not exist here.
     if: ${{ !vars.COMMERCIAL }}
