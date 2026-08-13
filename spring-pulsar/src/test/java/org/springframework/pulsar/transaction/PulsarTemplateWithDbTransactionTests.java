@@ -18,7 +18,6 @@ package org.springframework.pulsar.transaction;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +40,6 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
  *
  * @author Chris Bono
  */
-@Disabled("Temporarily disabled - requires a dedicated Pulsar container with transactions that causes memory pressure when run concurrently with the shared test container")
 class PulsarTemplateWithDbTransactionTests extends PulsarTxnWithDbTxnTestsBase {
 
 	@Nested

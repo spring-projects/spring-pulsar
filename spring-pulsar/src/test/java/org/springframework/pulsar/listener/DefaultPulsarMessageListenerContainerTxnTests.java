@@ -45,7 +45,6 @@ import org.apache.pulsar.client.api.transaction.Transaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.pulsar.PulsarContainer;
@@ -65,7 +64,6 @@ import org.springframework.pulsar.transaction.PulsarTransactionUtils;
  *
  * @author Chris Bono
  */
-@Disabled("Temporarily disabled - requires a dedicated Pulsar container with transactions that causes memory pressure when run concurrently with the shared test container")
 @Testcontainers(disabledWithoutDocker = true)
 class DefaultPulsarMessageListenerContainerTxnTests {
 
@@ -81,6 +79,7 @@ class DefaultPulsarMessageListenerContainerTxnTests {
 
 	@BeforeAll
 	static void startContainer() {
+		PulsarTestContainerSupport.stopContainer();
 		PULSAR_CONTAINER.start();
 	}
 
