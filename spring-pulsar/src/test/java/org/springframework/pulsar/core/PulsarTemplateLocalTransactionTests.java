@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pulsar.client.api.Message;
@@ -141,6 +142,41 @@ class PulsarTemplateLocalTransactionTests {
 		t2.start();
 		assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
 		assertMessagesCommitted(topic, List.of("msg1"));
+	}
+
+	@Test
+	void concurrentTransactionsAreAllRolledBackOnFailure() throws Exception {
+		String topic = "pttt-send-concurrent-rollback-topic";
+		var pulsarTemplate = newTransactionalTemplate();
+		int numThreads = 32;
+		var executor = Executors.newFixedThreadPool(numThreads);
+		var startLatch = new CountDownLatch(1);
+		var doneLatch = new CountDownLatch(numThreads);
+		try {
+			for (int i = 0; i < numThreads; i++) {
+				var msg = "msg" + i;
+				executor.execute(() -> {
+					try {
+						startLatch.await();
+						pulsarTemplate.executeInTransaction((template) -> {
+							template.send(topic, msg);
+							throw new PulsarException("5150");
+						});
+					}
+					catch (Exception ignored) {
+					}
+					finally {
+						doneLatch.countDown();
+					}
+				});
+			}
+			startLatch.countDown();
+			assertThat(doneLatch.await(30, TimeUnit.SECONDS)).isTrue();
+		}
+		finally {
+			executor.shutdownNow();
+		}
+		assertMessagesCommitted(topic, Collections.emptyList());
 	}
 
 	@Test
