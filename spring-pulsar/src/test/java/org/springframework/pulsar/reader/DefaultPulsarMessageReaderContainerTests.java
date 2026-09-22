@@ -182,6 +182,36 @@ public class DefaultPulsarMessageReaderContainerTests implements PulsarTestConta
 		}
 	}
 
+	@Test
+	void readerContinuesAfterListenerThrowsException() throws Exception {
+		var latch = new CountDownLatch(1);
+		var containerProps = new PulsarReaderContainerProperties();
+		containerProps.setReaderListener((ReaderListener<?>) (reader, msg) -> {
+			if ("fail".equals(msg.getValue())) {
+				throw new IllegalStateException("Listener failed for " + msg.getValue());
+			}
+			latch.countDown();
+		});
+		containerProps.setStartMessageId(MessageId.earliest);
+		containerProps.setTopics(List.of("dprlct-004"));
+		containerProps.setSchema(Schema.STRING);
+
+		var readerFactory = new DefaultPulsarReaderFactory<String>(pulsarClient);
+		var container = new DefaultPulsarMessageReaderContainer<>(readerFactory, containerProps);
+		try {
+			container.start();
+			var producerFactory = new DefaultPulsarProducerFactory<>(pulsarClient, "dprlct-004",
+					List.of((pb) -> pb.topic("dprlct-004")));
+			var pulsarTemplate = new PulsarTemplate<>(producerFactory);
+			pulsarTemplate.send("fail");
+			pulsarTemplate.send("hello after failure");
+			assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		}
+		finally {
+			safeStopContainer(container);
+		}
+	}
+
 	private void safeStopContainer(PulsarMessageReaderContainer container) {
 		try {
 			container.stop();
