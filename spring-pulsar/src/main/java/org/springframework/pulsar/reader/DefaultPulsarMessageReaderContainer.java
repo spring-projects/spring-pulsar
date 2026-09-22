@@ -231,6 +231,10 @@ public class DefaultPulsarMessageReaderContainer<T> extends AbstractPulsarMessag
 				catch (PulsarClientException e) {
 					DefaultPulsarMessageReaderContainer.this.logger.error(e, () -> "Error receiving messages.");
 				}
+				catch (Exception e) {
+					DefaultPulsarMessageReaderContainer.this.logger.error(e,
+							() -> "Error processing message in reader listener.");
+				}
 			}
 		}
 
