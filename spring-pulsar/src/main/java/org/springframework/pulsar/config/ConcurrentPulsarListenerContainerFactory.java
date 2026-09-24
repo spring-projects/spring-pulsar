@@ -77,6 +77,10 @@ public class ConcurrentPulsarListenerContainerFactory<T>
 		containerProps.setTopicResolver(factoryProps.getTopicResolver());
 		containerProps.setSubscriptionType(factoryProps.getSubscriptionType());
 		containerProps.setSubscriptionName(factoryProps.getSubscriptionName());
+		// Set the retry template before the policy as setting a non-null template
+		// implicitly switches the policy to RETRY
+		containerProps.setStartupFailureRetryTemplate(factoryProps.getStartupFailureRetryTemplate());
+		containerProps.setStartupFailurePolicy(factoryProps.getStartupFailurePolicy());
 		var factoryTxnProps = factoryProps.transactions();
 		var containerTxnProps = containerProps.transactions();
 		containerTxnProps.setEnabled(factoryTxnProps.isEnabled());

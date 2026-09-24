@@ -24,6 +24,8 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.pulsar.core.PulsarConsumerFactory;
 import org.springframework.pulsar.listener.PulsarContainerProperties;
@@ -147,6 +149,60 @@ class ConcurrentPulsarListenerContainerFactoryTests {
 			assertThat(container.getContainerProperties())
 				.extracting(PulsarContainerProperties::getConsumerTaskExecutor)
 				.isSameAs(executor);
+		}
+
+	}
+
+	@SuppressWarnings("unchecked")
+	@Nested
+	class StartupFailurePolicyFrom {
+
+		@Test
+		void factoryPropsUsedWhenSpecified() {
+			var factoryProps = new PulsarContainerProperties();
+			factoryProps.setStartupFailurePolicy(StartupFailurePolicy.CONTINUE);
+			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
+					mock(PulsarConsumerFactory.class), factoryProps);
+			var endpoint = mock(PulsarListenerEndpoint.class);
+			when(endpoint.getConcurrency()).thenReturn(1);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
+			assertThat(createdContainer.getContainerProperties().getStartupFailurePolicy())
+				.isEqualTo(StartupFailurePolicy.CONTINUE);
+		}
+
+		@Test
+		void defaultUsedWhenNotSetOnFactoryProps() {
+			var factoryProps = new PulsarContainerProperties();
+			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
+					mock(PulsarConsumerFactory.class), factoryProps);
+			var endpoint = mock(PulsarListenerEndpoint.class);
+			when(endpoint.getConcurrency()).thenReturn(1);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
+			assertThat(createdContainer.getContainerProperties().getStartupFailurePolicy())
+				.isEqualTo(StartupFailurePolicy.STOP);
+		}
+
+	}
+
+	@SuppressWarnings("unchecked")
+	@Nested
+	class StartupFailureRetryTemplateFrom {
+
+		@Test
+		void factoryPropsUsedWhenSpecified() {
+			var factoryProps = new PulsarContainerProperties();
+			var retryTemplate = new RetryTemplate(RetryPolicy.builder().maxRetries(3).build());
+			factoryProps.setStartupFailureRetryTemplate(retryTemplate);
+			var containerFactory = new ConcurrentPulsarListenerContainerFactory<String>(
+					mock(PulsarConsumerFactory.class), factoryProps);
+			var endpoint = mock(PulsarListenerEndpoint.class);
+			when(endpoint.getConcurrency()).thenReturn(1);
+			var createdContainer = containerFactory.createRegisteredContainer(endpoint);
+			assertThat(createdContainer.getContainerProperties().getStartupFailureRetryTemplate())
+				.isSameAs(retryTemplate);
+			// Setting the retry template implicitly switches the policy to RETRY
+			assertThat(createdContainer.getContainerProperties().getStartupFailurePolicy())
+				.isEqualTo(StartupFailurePolicy.RETRY);
 		}
 
 	}
