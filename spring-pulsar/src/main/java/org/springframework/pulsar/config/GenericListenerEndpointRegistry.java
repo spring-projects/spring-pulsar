@@ -60,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  * @author Christophe Bornet
  * @author Chris Bono
+ * @author Hyun Lee
  */
 public class GenericListenerEndpointRegistry<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
 		implements PulsarListenerContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
@@ -139,6 +140,23 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 		finally {
 			this.containersLock.unlock();
 		}
+	}
+
+	/**
+	 * Unregister the listener container with the provided id.
+	 * <p>
+	 * IMPORTANT: this method only removes the container from the registry. It does not
+	 * stop or destroy the container; call {@link MessageListenerContainer#stop()} or
+	 * {@link MessageListenerContainer#destroy()} before or after calling this method to
+	 * shut it down.
+	 * @param id the id of the container
+	 * @return the removed container or {@code null} if no container was registered with
+	 * that id
+	 * @since 2.0.8
+	 */
+	@Nullable public C unregisterListenerContainer(String id) {
+		Assert.hasText(id, "Container identifier must not be empty");
+		return this.listenerContainers.remove(id);
 	}
 
 	protected C createListenerContainer(E endpoint, ListenerContainerFactory<? extends C, E> factory) {
