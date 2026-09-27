@@ -60,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Soby Chacko
  * @author Christophe Bornet
  * @author Chris Bono
+ * @author Hyun Lee
  */
 public class GenericListenerEndpointRegistry<C extends MessageListenerContainer, E extends ListenerEndpoint<C>>
 		implements PulsarListenerContainerRegistry, DisposableBean, SmartLifecycle, ApplicationContextAware,
@@ -135,6 +136,9 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 					"Another endpoint is already registered with id '" + id + "'");
 			C container = createListenerContainer(endpoint, factory);
 			this.listenerContainers.put(id, container);
+			if (startImmediately) {
+				startIfNecessary(container);
+			}
 		}
 		finally {
 			this.containersLock.unlock();
