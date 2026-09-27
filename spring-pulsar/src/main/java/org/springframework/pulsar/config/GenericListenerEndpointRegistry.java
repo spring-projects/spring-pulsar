@@ -136,6 +136,9 @@ public class GenericListenerEndpointRegistry<C extends MessageListenerContainer,
 					"Another endpoint is already registered with id '" + id + "'");
 			C container = createListenerContainer(endpoint, factory);
 			this.listenerContainers.put(id, container);
+			if (startImmediately) {
+				startIfNecessary(container);
+			}
 		}
 		finally {
 			this.containersLock.unlock();
