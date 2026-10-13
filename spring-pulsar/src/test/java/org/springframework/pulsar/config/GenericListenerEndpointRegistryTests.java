@@ -43,12 +43,12 @@ class GenericListenerEndpointRegistryTests {
 	}
 
 	@Test
-	void registerWithStartImmediatelyStartsContainerOnceContextIsRefreshed() {
+	void registerWithStartImmediatelyDoesNotStartContainerWithoutAutoStartupAfterContextIsRefreshed() {
 		var applicationContext = mock(ConfigurableApplicationContext.class);
 		this.registry.setApplicationContext(applicationContext);
 		this.registry.onApplicationEvent(new ContextRefreshedEvent(applicationContext));
 		var container = registerContainer(false, true);
-		verify(container).start();
+		verify(container, never()).start();
 	}
 
 	@Test

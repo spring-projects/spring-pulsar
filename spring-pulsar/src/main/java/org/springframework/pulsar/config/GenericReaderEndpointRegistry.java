@@ -134,6 +134,10 @@ public class GenericReaderEndpointRegistry<C extends PulsarMessageReaderContaine
 					"Another endpoint is already registered with id '" + id + "'");
 			C container = createReaderContainer(endpoint, factory);
 			this.readerContainers.put(id, container);
+			// Honor autoStartup even if the context has already been refreshed
+			if (startImmediately && container.isAutoStartup()) {
+				container.start();
+			}
 		}
 		finally {
 			this.containersLock.unlock();
