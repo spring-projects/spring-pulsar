@@ -33,4 +33,4 @@ runs:
                     }
                 }" > repositories-init.gradle
 
-        ./gradlew build publishAllPublicationsToDeploymentRepository --init-script repositories-init.gradle -x test -x integrationTest
+        ./gradlew build publishAllPublicationsToDeploymentRepository --init-script repositories-init.gradle -x test -x integrationTest --no-build-cache
