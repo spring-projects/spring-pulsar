@@ -20,12 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Consumer;
 
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SchemaSerializationException;
+import org.apache.pulsar.client.api.schema.SchemaDefinition;
 import org.apache.pulsar.client.api.schema.SchemaDefinitionBuilder;
 import org.apache.pulsar.client.api.schema.SchemaReader;
 import org.apache.pulsar.client.api.schema.SchemaWriter;
-import org.apache.pulsar.client.impl.schema.JSONSchema;
-import org.apache.pulsar.client.impl.schema.SchemaDefinitionBuilderImpl;
 
 import org.springframework.core.log.LogAccessor;
 import org.springframework.util.Assert;
@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
  * provide schema definitions that use custom object mappers when de/serializing objects.
  *
  * @author Chris Bono
+ * @author Seungtaek Lim
  * @since 1.2.0
  */
 public interface JSONSchemaUtil {
@@ -51,7 +52,7 @@ public interface JSONSchemaUtil {
 	 * @param <T> the type of objects the resulting schema represents
 	 * @return the schema instance
 	 */
-	static <T> JSONSchema<T> schemaForTypeWithObjectMapper(Class<T> objectType, ObjectMapper objectMapper) {
+	static <T> Schema<T> schemaForTypeWithObjectMapper(Class<T> objectType, ObjectMapper objectMapper) {
 		return JSONSchemaUtil.schemaForTypeWithObjectMapper(objectType, objectMapper, (b) -> {
 		});
 	}
@@ -65,15 +66,16 @@ public interface JSONSchemaUtil {
 	 * @param <T> the type of objects the resulting schema represents
 	 * @return the schema instance
 	 */
-	static <T> JSONSchema<T> schemaForTypeWithObjectMapper(Class<T> objectType, ObjectMapper objectMapper,
+	static <T> Schema<T> schemaForTypeWithObjectMapper(Class<T> objectType, ObjectMapper objectMapper,
 			Consumer<SchemaDefinitionBuilder<T>> schemaDefinitionBuilderCustomizer) {
 		var reader = new CustomJacksonJsonReader<>(objectMapper, objectType);
 		var writer = new CustomJacksonJsonWriter<T>(objectMapper);
-		var schemaDefinitionBuilder = new SchemaDefinitionBuilderImpl<T>().withPojo(objectType)
+		var schemaDefinitionBuilder = SchemaDefinition.<T>builder()
+			.withPojo(objectType)
 			.withSchemaReader(reader)
 			.withSchemaWriter(writer);
 		schemaDefinitionBuilderCustomizer.accept(schemaDefinitionBuilder);
-		return JSONSchema.of(schemaDefinitionBuilder.build());
+		return Schema.JSON(schemaDefinitionBuilder.build());
 	}
 
 	/**

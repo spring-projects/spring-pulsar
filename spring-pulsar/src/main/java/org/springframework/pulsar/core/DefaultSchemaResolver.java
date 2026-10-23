@@ -33,9 +33,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.client.impl.schema.AvroSchema;
-import org.apache.pulsar.client.impl.schema.JSONSchema;
-import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -61,6 +58,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Alexander Preuß
  * @author Chris Bono
  * @author Aleksei Arsenev
+ * @author Seungtaek Lim
  */
 public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAware {
 
@@ -250,12 +248,12 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 				case LOCAL_TIME -> Schema.LOCAL_TIME;
 				case LOCAL_DATE_TIME -> Schema.LOCAL_DATE_TIME;
 				case JSON -> jsonSchemaForMessageType(requireNonNullMessageClass(schemaType, messageType));
-				case AVRO -> AvroSchema.of(requireNonNullMessageClass(schemaType, messageType));
+				case AVRO -> Schema.AVRO(requireNonNullMessageClass(schemaType, messageType));
 				case PROTOBUF -> {
 					// WARN! Leave GeneratedMessageV3 fully-qualified as the dependency is
 					// optional
 					Class<?> messageClass = requireNonNullMessageClass(schemaType, messageType);
-					yield ProtobufSchema.of((Class<? extends com.google.protobuf.GeneratedMessageV3>) messageClass);
+					yield Schema.PROTOBUF((Class<? extends com.google.protobuf.GeneratedMessageV3>) messageClass);
 				}
 				case KEY_VALUE -> {
 					yield getMessageKeyValueSchema(requireNonNullMessageType(schemaType, messageType));
@@ -280,11 +278,11 @@ public class DefaultSchemaResolver implements SchemaResolver, BeanClassLoaderAwa
 		}
 	}
 
-	private <T> JSONSchema<T> jsonSchemaForMessageType(Class<T> messageType) {
+	private <T> Schema<T> jsonSchemaForMessageType(Class<T> messageType) {
 		if (this.objectMapper != null) {
 			return JSONSchemaUtil.schemaForTypeWithObjectMapper(messageType, this.objectMapper);
 		}
-		return JSONSchema.of(messageType);
+		return Schema.JSON(messageType);
 	}
 
 	private Class<?> requireNonNullMessageClass(SchemaType schemaType, @Nullable ResolvableType messageType) {

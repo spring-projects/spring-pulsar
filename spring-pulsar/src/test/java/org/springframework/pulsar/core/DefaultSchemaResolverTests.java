@@ -39,10 +39,6 @@ import java.util.stream.Stream;
 
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.KeyValueSchema;
-import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
-import org.apache.pulsar.client.impl.schema.AvroSchema;
-import org.apache.pulsar.client.impl.schema.JSONSchema;
-import org.apache.pulsar.client.impl.schema.ProtobufSchema;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -268,13 +264,13 @@ class DefaultSchemaResolverTests {
 		@Test
 		void structSchemas() {
 			assertThat(resolver.resolveSchema(SchemaType.JSON, ResolvableType.forType(Foo.class)).orElseThrow())
-				.isInstanceOf(JSONSchema.class)
+				.satisfies((s) -> assertThat(s.getSchemaInfo().getType()).isEqualTo(SchemaType.JSON))
 				.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Foo.class));
 			assertThat(resolver.resolveSchema(SchemaType.AVRO, ResolvableType.forType(Foo.class)).orElseThrow())
-				.isInstanceOf(AvroSchema.class)
+				.satisfies((s) -> assertThat(s.getSchemaInfo().getType()).isEqualTo(SchemaType.AVRO))
 				.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Foo.class));
 			assertThat(resolver.resolveSchema(SchemaType.PROTOBUF, ResolvableType.forType(Person.class)).orElseThrow())
-				.isInstanceOf(ProtobufSchema.class)
+				.satisfies((s) -> assertThat(s.getSchemaInfo().getType()).isEqualTo(SchemaType.PROTOBUF))
 				.hasFieldOrPropertyWithValue("schema.fullName", sanitizedClassName(Proto.Person.class));
 			ResolvableType kvType = ResolvableType.forClassWithGenerics(KeyValue.class, String.class, Integer.class);
 			assertThat(resolver.resolveSchema(SchemaType.KEY_VALUE, kvType).orElseThrow())
@@ -289,12 +285,12 @@ class DefaultSchemaResolverTests {
 		@Test
 		void autoConsumeSchema() {
 			assertThat(resolver.resolveSchema(SchemaType.AUTO_CONSUME, ResolvableType.forType(Foo.class)).orElseThrow())
-				.isInstanceOf(AutoConsumeSchema.class);
+				.isInstanceOf(Schema.AUTO_CONSUME().getClass());
 			assertThat(
 					resolver.resolveSchema(SchemaType.AUTO_CONSUME, ResolvableType.forType(String.class)).orElseThrow())
-				.isInstanceOf(AutoConsumeSchema.class);
+				.isInstanceOf(Schema.AUTO_CONSUME().getClass());
 			assertThat(resolver.resolveSchema(SchemaType.AUTO_CONSUME, null).orElseThrow())
-				.isInstanceOf(AutoConsumeSchema.class);
+				.isInstanceOf(Schema.AUTO_CONSUME().getClass());
 		}
 
 		@ParameterizedTest
@@ -393,7 +389,8 @@ class DefaultSchemaResolverTests {
 			void whenResolverHasObjectMapperThenReturnsCustomJsonSchema() {
 				var objectMapper = new ObjectMapper();
 				resolver.setObjectMapper(objectMapper);
-				var schema = mock(JSONSchema.class);
+				@SuppressWarnings("unchecked")
+				Schema<Foo> schema = mock(Schema.class);
 				try (MockedStatic<JSONSchemaUtil> util = Mockito.mockStatic(JSONSchemaUtil.class)) {
 					util.when(() -> JSONSchemaUtil.schemaForTypeWithObjectMapper(Foo.class, objectMapper))
 						.thenReturn(schema);
@@ -406,7 +403,8 @@ class DefaultSchemaResolverTests {
 			@Test
 			void whenResolverDoesNotHaveObjectMapperThenReturnsDefaultJsonSchema() {
 				var objectMapper = new ObjectMapper();
-				var schema = mock(JSONSchema.class);
+				@SuppressWarnings("unchecked")
+				Schema<Foo> schema = mock(Schema.class);
 				try (MockedStatic<JSONSchemaUtil> util = Mockito.mockStatic(JSONSchemaUtil.class)) {
 					util.when(() -> JSONSchemaUtil.schemaForTypeWithObjectMapper(Foo.class, objectMapper))
 						.thenReturn(schema);
@@ -427,7 +425,8 @@ class DefaultSchemaResolverTests {
 		void annotatedMessageType() {
 			resolver = spy(resolver);
 			var resolvedSchema = resolver.resolveSchema(JsonMsgType.class, false).orElseThrow();
-			assertThat(resolvedSchema).isInstanceOf(JSONSchema.class)
+			assertThat(resolvedSchema)
+				.satisfies((s) -> assertThat(s.getSchemaInfo().getType()).isEqualTo(SchemaType.JSON))
 				.extracting("schema.fullName")
 				.asString()
 				.endsWith(JsonMsgType.class.getSimpleName());
@@ -447,7 +446,8 @@ class DefaultSchemaResolverTests {
 				.asInstanceOf(InstanceOfAssertFactories.type(KeyValueSchema.class))
 				.satisfies((keyValueSchema -> {
 					assertThat(keyValueSchema.getKeySchema()).isEqualTo(Schema.STRING);
-					assertThat(keyValueSchema.getValueSchema()).isInstanceOf(JSONSchema.class)
+					assertThat(keyValueSchema.getValueSchema())
+						.satisfies((s) -> assertThat(s.getSchemaInfo().getType()).isEqualTo(SchemaType.JSON))
 						.extracting("schema.fullName")
 						.asString()
 						.endsWith(KeyValueMsgType.class.getSimpleName());
