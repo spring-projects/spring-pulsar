@@ -2,7 +2,7 @@
 :docs: https://docs.spring.io/spring-pulsar/reference
 :github: https://github.com/spring-projects/spring-pulsar
 
-**#Announcement#**: The Spring for Apache Pulsar project, along with all maintenance and future development, now lives as https://github.com/apache/pulsar-spring[Apache Pulsar support for Spring]. Please read the blog post https://spring.io/blog/2026/11/10/spring-pulsar-new-home-asf[announcement] for more details.
+**#Announcement#**: The Spring for Apache Pulsar project, along with all maintenance and future development, now lives as https://github.com/apache/pulsar-spring[Apache Pulsar support for Spring] at the Apache Software Foundation. Please read the blog post https://spring.io/blog/2026/11/10/spring-pulsar-new-home-asf[announcement] for more details.
 
 ---
 Spring for Apache Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
