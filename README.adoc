@@ -1,7 +1,10 @@
-= Spring for Apache Pulsar image:https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A["Revved up by Develocity", link="https://ge.spring.io/scans?search.rootProjectNames=spring-pulsar-dist"]
+= Spring for Apache Pulsar has moved and is no longer maintained as a Spring project
 :docs: https://docs.spring.io/spring-pulsar/reference
 :github: https://github.com/spring-projects/spring-pulsar
 
+**#Announcement#**: The Spring for Apache Pulsar project, along with all maintenance and future development, now lives as https://github.com/apache/pulsar-spring[Apache Pulsar support for Spring]. Please read the blog post https://spring.io/blog/2026/11/10/spring-pulsar-new-home-asf[announcement] for more details.
+
+---
 Spring for Apache Pulsar provides a basic Spring-friendly API for developing https://pulsar.apache.org/[Apache Pulsar] applications.
 
 **#TIP#**: Most of the ideas in this project are borrowed from the Spring for Apache Kafka project, thus a familiarity with it would help.
