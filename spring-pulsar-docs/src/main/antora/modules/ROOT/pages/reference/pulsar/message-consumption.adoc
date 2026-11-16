@@ -990,3 +990,31 @@ TIP: If your application only has a single `@PulsarReader` and a single `PulsarR
 [[message-reader-startup-failure]]
 :container-class: DefaultPulsarReaderContainerFactory
 include::../message-listener-startup-failure.adoc[leveloffset=+2]
+
+[[pulsar-table-view]]
+== Pulsar TableView Support
+The framework provides support for using {apache-pulsar-docs}/client-libraries-tableviews/[Pulsar TableView] via the `PulsarTableViewFactory`.
+A table view is a continuously updated key-value view of a compacted topic: for every key of the messages of the topic, it holds the value of the latest message with that key.
+
+The `DefaultPulsarTableViewFactory` creates table views with a `PulsarClient`, applies the `TableViewBuilderCustomizer` instances of its default configuration to every created table view, and the customizers passed in when creating a table view to that single table view.
+Non-fully-qualified topic names are fully-qualified when a `PulsarTopicBuilder` is set on the factory.
+The following example creates a factory and a table view of the `user-topic` topic:
+
+[source, java]
+----
+@Bean
+PulsarTableViewFactory<User> userTableViewFactory(PulsarClient pulsarClient) {
+    return new DefaultPulsarTableViewFactory<>(pulsarClient,
+            List.of((builder) -> builder.autoUpdatePartitionsInterval(10, TimeUnit.SECONDS)));
+}
+
+@Bean(destroyMethod = "close")
+TableView<User> userTableView(PulsarTableViewFactory<User> userTableViewFactory) {
+    return userTableViewFactory.createTableView("user-topic", Schema.JSON(User.class), null);
+}
+----
+
+A table view keeps reading its topic until it is closed, so close it when it is no longer needed, as the `destroyMethod` of the bean above does.
+When a topic is passed in when creating the table view, it overrides the topic set by the default configuration of the factory.
+
+NOTE: Spring Boot does not auto-configure a `PulsarTableViewFactory` yet, so define the bean as shown above.
