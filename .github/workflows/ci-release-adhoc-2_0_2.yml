@@ -91,7 +91,7 @@ jobs:
           ls -R $(pwd)/deployment-repository          
       - name: Still publish docs module to Artifactory when deploy location is Central (publish)
         if: ${{ steps.deploy-location.outputs.deploy_location == 'central' }}
-        uses: spring-io/artifactory-deploy-action@9cb1c7df78cd8d1223de1dde974819fa6378af9f # v0.0.6
+        uses: spring-io/artifactory-deploy-action@860632611280011966e3f460520dca3733bd9a93 # v0.0.8
         with:
           artifact-properties: |
             /**/*docs-*.zip::zip.name=spring-pulsar,zip.type=docs,zip.deployed=false
@@ -187,7 +187,7 @@ jobs:
           fi
       - name: Announce Release in Chat
         if: env.GCHAT_WEBHOOK_URL
-        uses: spring-io/spring-release-actions/announce-on-gchat@0.0.7
+        uses: spring-io/spring-release-actions/announce-on-gchat@0.0.9
         with:
           version: ${{ env.VERSION }}
           gchat-webhook-url: ${{ env.GCHAT_WEBHOOK_URL }}
